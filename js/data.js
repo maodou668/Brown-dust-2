@@ -132,6 +132,59 @@ const CHARACTERS = {
     skills: ['heal_wave', 'slash'],
     desc: '随身携带药剂的少女，治疗虽弱但可靠。',
   },
+
+  // ========== 第二部新增角色 ==========
+  // ---------- 5★ ----------
+  refithea: {
+    id: 'refithea', name: '蕾菲西亚', title: '圣光圣女',
+    rarity: 5, cls: 'healer', element: 'light', color: '#ffe7a0',
+    base: { hp: 1050, atk: 130, def: 72, spd: 102, crit: 0.10 },
+    grow: { hp: 96, atk: 12, def: 6 },
+    skills: ['grand_heal', 'holy_light'],
+    desc: '降临人间的圣女，掌握足以逆转生死的奇迹圣光，是全队的生命线。',
+  },
+  rigenette: {
+    id: 'rigenette', name: '莉洁奈特', title: '苍穹剑姬',
+    rarity: 5, cls: 'warrior', element: 'wind', color: '#7ad6ff',
+    base: { hp: 1200, atk: 175, def: 90, spd: 118, crit: 0.22 },
+    grow: { hp: 112, atk: 17, def: 8 },
+    skills: ['tempest_blade', 'gale_strike'],
+    desc: '空骑士团团长，剑速快若苍穹疾风，对单体的爆发冠绝全军。',
+  },
+  olstein: {
+    id: 'olstein', name: '奥尔斯坦', title: '不动壁垒',
+    rarity: 5, cls: 'defender', element: 'earth', color: '#d4a85a',
+    base: { hp: 1650, atk: 110, def: 140, spd: 68, crit: 0.08 },
+    grow: { hp: 152, atk: 9, def: 13 },
+    skills: ['taunt_shield', 'rock_guard'],
+    desc: '号称「不动」的传奇守护者，他的盾后，是任何敌人都无法逾越的防线。',
+  },
+  // ---------- 4★ ----------
+  glacia: {
+    id: 'glacia', name: '格蕾西亚', title: '冰封术士',
+    rarity: 4, cls: 'mage', element: 'water', color: '#9bd6ff',
+    base: { hp: 830, atk: 150, def: 58, spd: 94, crit: 0.15 },
+    grow: { hp: 78, atk: 14, def: 5 },
+    skills: ['frost_nova', 'water_lance'],
+    desc: '寡言的冰系术士，以霜冻封锁敌方全体，并削弱其防御。',
+  },
+  liatris: {
+    id: 'liatris', name: '莉亚特丽丝', title: '红莲狙击手',
+    rarity: 4, cls: 'archer', element: 'fire', color: '#ff7a5a',
+    base: { hp: 880, atk: 165, def: 62, spd: 114, crit: 0.26 },
+    grow: { hp: 82, atk: 16, def: 5 },
+    skills: ['blazing_arrow', 'piercing_shot'],
+    desc: '百发百中的红莲狙击手，一箭点燃，专破高血量目标。',
+  },
+  // ---------- 3★ ----------
+  loen: {
+    id: 'loen', name: '罗恩', title: '黎明骑士',
+    rarity: 3, cls: 'warrior', element: 'light', color: '#ffd97a',
+    base: { hp: 1050, atk: 128, def: 80, spd: 92, crit: 0.12 },
+    grow: { hp: 98, atk: 12, def: 7 },
+    skills: ['slash', 'holy_smite'],
+    desc: '正直热血的黎明骑士，立志成为照亮黑暗的光。',
+  },
 };
 
 /**
@@ -217,6 +270,27 @@ const SKILLS = {
     desc: '为全体友方提供等同于自身 80% 攻击力的护盾，并嘲讽敌人。',
     extra: { type: 'taunt' },
   },
+  // ----- 第二部新增技能 -----
+  grand_heal: {
+    name: '圣光普照', target: 'allyAll', effect: 'heal',
+    power: 1.9, sp: 4, icon: '🌈',
+    desc: '降下圣光，为全体友方恢复 190% 攻击力的大量生命值。',
+  },
+  holy_light: {
+    name: '愈光术', target: 'allySingle', effect: 'heal',
+    power: 2.4, sp: 0, icon: '💗',
+    desc: '为单个友方恢复 240% 攻击力的生命值。',
+  },
+  tempest_blade: {
+    name: '苍穹一闪', target: 'enemySingle', effect: 'damage',
+    power: 2.8, sp: 4, icon: '🌀',
+    desc: '以极致剑速对单个敌人造成 280% 攻击力的风属性爆发伤害。',
+  },
+  blazing_arrow: {
+    name: '红莲烈箭', target: 'enemySingle', effect: 'damage',
+    power: 2.3, sp: 3, icon: '🔥',
+    desc: '点燃箭矢射穿目标，造成 230% 攻击力的火焰伤害。',
+  },
 };
 
 /**
@@ -259,6 +333,23 @@ const ENEMIES = {
     id: 'troll_king', name: '巨魔王', element: 'earth', color: '#4a7a3a',
     base: { hp: 4200, atk: 160, def: 130, spd: 70, crit: 0.10 },
     skills: ['earth_slam', 'power_strike'],
+    isBoss: true,
+  },
+  // ---------- 第二部新增敌人 ----------
+  revenant: {
+    id: 'revenant', name: '亡魂骑士', element: 'dark', color: '#6a6a8a',
+    base: { hp: 1300, atk: 160, def: 90, spd: 100, crit: 0.12 },
+    skills: ['slash', 'power_strike'],
+  },
+  dark_knight: {
+    id: 'dark_knight', name: '黑暗骑士', element: 'dark', color: '#4a3a6a',
+    base: { hp: 2200, atk: 175, def: 120, spd: 88, crit: 0.14 },
+    skills: ['power_strike', 'holy_smite'],
+  },
+  shadow_empress: {
+    id: 'shadow_empress', name: '暗影女皇 · 涅夫提斯', element: 'dark', color: '#7a2a6a',
+    base: { hp: 6800, atk: 235, def: 115, spd: 110, crit: 0.22 },
+    skills: ['shadow_volley', 'frost_nova', 'inferno'],
     isBoss: true,
   },
 };
@@ -322,6 +413,32 @@ const STAGES = [
     ],
     reward: { gold: 1500, exp: 800, gem: 100 },
     isBoss: true,
+    endStory: 'epilogue',
+  },
+  // ========== 第二部 · 永夜降临 ==========
+  {
+    id: 6, name: '破碎边境', recommend: 17,
+    desc: '魔王虽除，黑暗却未散去。边境的亡魂在永夜中徘徊不去。',
+    enemies: [
+      { id: 'dark_knight', level: 17, pos: 'front' },
+      { id: 'revenant', level: 17, pos: 'front' },
+      { id: 'revenant', level: 17, pos: 'back' },
+      { id: 'dark_mage', level: 16, pos: 'back' },
+    ],
+    reward: { gold: 1800, exp: 1000, gem: 60 },
+  },
+  {
+    id: 7, name: '永夜回廊 · 女皇', recommend: 21,
+    desc: '操纵永夜的暗影女皇涅夫提斯，才是这一切黑暗真正的源头。',
+    enemies: [
+      { id: 'shadow_empress', level: 21, pos: 'back' },
+      { id: 'dark_knight', level: 20, pos: 'front' },
+      { id: 'dark_knight', level: 20, pos: 'front' },
+      { id: 'revenant', level: 20, pos: 'back' },
+    ],
+    reward: { gold: 3000, exp: 1600, gem: 120 },
+    isBoss: true,
+    endStory: 'epilogue2',
   },
 ];
 
@@ -332,9 +449,9 @@ const GACHA = {
   cost: 100,          // 每次抽卡消耗宝石
   rates: { 5: 0.03, 4: 0.12, 3: 0.85 },
   pool: {
-    5: ['lecliss', 'justia', 'seir'],
-    4: ['rou', 'helena', 'diana', 'garcia'],
-    3: ['teried', 'lia', 'mina'],
+    5: ['lecliss', 'justia', 'seir', 'refithea', 'rigenette', 'olstein'],
+    4: ['rou', 'helena', 'diana', 'garcia', 'glacia', 'liatris'],
+    3: ['teried', 'lia', 'mina', 'loen'],
   },
 };
 

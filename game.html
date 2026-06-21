@@ -730,6 +730,59 @@ const CHARACTERS = {
     skills: ['heal_wave', 'slash'],
     desc: '随身携带药剂的少女，治疗虽弱但可靠。',
   },
+
+  // ========== 第二部新增角色 ==========
+  // ---------- 5★ ----------
+  refithea: {
+    id: 'refithea', name: '蕾菲西亚', title: '圣光圣女',
+    rarity: 5, cls: 'healer', element: 'light', color: '#ffe7a0',
+    base: { hp: 1050, atk: 130, def: 72, spd: 102, crit: 0.10 },
+    grow: { hp: 96, atk: 12, def: 6 },
+    skills: ['grand_heal', 'holy_light'],
+    desc: '降临人间的圣女，掌握足以逆转生死的奇迹圣光，是全队的生命线。',
+  },
+  rigenette: {
+    id: 'rigenette', name: '莉洁奈特', title: '苍穹剑姬',
+    rarity: 5, cls: 'warrior', element: 'wind', color: '#7ad6ff',
+    base: { hp: 1200, atk: 175, def: 90, spd: 118, crit: 0.22 },
+    grow: { hp: 112, atk: 17, def: 8 },
+    skills: ['tempest_blade', 'gale_strike'],
+    desc: '空骑士团团长，剑速快若苍穹疾风，对单体的爆发冠绝全军。',
+  },
+  olstein: {
+    id: 'olstein', name: '奥尔斯坦', title: '不动壁垒',
+    rarity: 5, cls: 'defender', element: 'earth', color: '#d4a85a',
+    base: { hp: 1650, atk: 110, def: 140, spd: 68, crit: 0.08 },
+    grow: { hp: 152, atk: 9, def: 13 },
+    skills: ['taunt_shield', 'rock_guard'],
+    desc: '号称「不动」的传奇守护者，他的盾后，是任何敌人都无法逾越的防线。',
+  },
+  // ---------- 4★ ----------
+  glacia: {
+    id: 'glacia', name: '格蕾西亚', title: '冰封术士',
+    rarity: 4, cls: 'mage', element: 'water', color: '#9bd6ff',
+    base: { hp: 830, atk: 150, def: 58, spd: 94, crit: 0.15 },
+    grow: { hp: 78, atk: 14, def: 5 },
+    skills: ['frost_nova', 'water_lance'],
+    desc: '寡言的冰系术士，以霜冻封锁敌方全体，并削弱其防御。',
+  },
+  liatris: {
+    id: 'liatris', name: '莉亚特丽丝', title: '红莲狙击手',
+    rarity: 4, cls: 'archer', element: 'fire', color: '#ff7a5a',
+    base: { hp: 880, atk: 165, def: 62, spd: 114, crit: 0.26 },
+    grow: { hp: 82, atk: 16, def: 5 },
+    skills: ['blazing_arrow', 'piercing_shot'],
+    desc: '百发百中的红莲狙击手，一箭点燃，专破高血量目标。',
+  },
+  // ---------- 3★ ----------
+  loen: {
+    id: 'loen', name: '罗恩', title: '黎明骑士',
+    rarity: 3, cls: 'warrior', element: 'light', color: '#ffd97a',
+    base: { hp: 1050, atk: 128, def: 80, spd: 92, crit: 0.12 },
+    grow: { hp: 98, atk: 12, def: 7 },
+    skills: ['slash', 'holy_smite'],
+    desc: '正直热血的黎明骑士，立志成为照亮黑暗的光。',
+  },
 };
 
 /**
@@ -815,6 +868,27 @@ const SKILLS = {
     desc: '为全体友方提供等同于自身 80% 攻击力的护盾，并嘲讽敌人。',
     extra: { type: 'taunt' },
   },
+  // ----- 第二部新增技能 -----
+  grand_heal: {
+    name: '圣光普照', target: 'allyAll', effect: 'heal',
+    power: 1.9, sp: 4, icon: '🌈',
+    desc: '降下圣光，为全体友方恢复 190% 攻击力的大量生命值。',
+  },
+  holy_light: {
+    name: '愈光术', target: 'allySingle', effect: 'heal',
+    power: 2.4, sp: 0, icon: '💗',
+    desc: '为单个友方恢复 240% 攻击力的生命值。',
+  },
+  tempest_blade: {
+    name: '苍穹一闪', target: 'enemySingle', effect: 'damage',
+    power: 2.8, sp: 4, icon: '🌀',
+    desc: '以极致剑速对单个敌人造成 280% 攻击力的风属性爆发伤害。',
+  },
+  blazing_arrow: {
+    name: '红莲烈箭', target: 'enemySingle', effect: 'damage',
+    power: 2.3, sp: 3, icon: '🔥',
+    desc: '点燃箭矢射穿目标，造成 230% 攻击力的火焰伤害。',
+  },
 };
 
 /**
@@ -857,6 +931,23 @@ const ENEMIES = {
     id: 'troll_king', name: '巨魔王', element: 'earth', color: '#4a7a3a',
     base: { hp: 4200, atk: 160, def: 130, spd: 70, crit: 0.10 },
     skills: ['earth_slam', 'power_strike'],
+    isBoss: true,
+  },
+  // ---------- 第二部新增敌人 ----------
+  revenant: {
+    id: 'revenant', name: '亡魂骑士', element: 'dark', color: '#6a6a8a',
+    base: { hp: 1300, atk: 160, def: 90, spd: 100, crit: 0.12 },
+    skills: ['slash', 'power_strike'],
+  },
+  dark_knight: {
+    id: 'dark_knight', name: '黑暗骑士', element: 'dark', color: '#4a3a6a',
+    base: { hp: 2200, atk: 175, def: 120, spd: 88, crit: 0.14 },
+    skills: ['power_strike', 'holy_smite'],
+  },
+  shadow_empress: {
+    id: 'shadow_empress', name: '暗影女皇 · 涅夫提斯', element: 'dark', color: '#7a2a6a',
+    base: { hp: 6800, atk: 235, def: 115, spd: 110, crit: 0.22 },
+    skills: ['shadow_volley', 'frost_nova', 'inferno'],
     isBoss: true,
   },
 };
@@ -920,6 +1011,32 @@ const STAGES = [
     ],
     reward: { gold: 1500, exp: 800, gem: 100 },
     isBoss: true,
+    endStory: 'epilogue',
+  },
+  // ========== 第二部 · 永夜降临 ==========
+  {
+    id: 6, name: '破碎边境', recommend: 17,
+    desc: '魔王虽除，黑暗却未散去。边境的亡魂在永夜中徘徊不去。',
+    enemies: [
+      { id: 'dark_knight', level: 17, pos: 'front' },
+      { id: 'revenant', level: 17, pos: 'front' },
+      { id: 'revenant', level: 17, pos: 'back' },
+      { id: 'dark_mage', level: 16, pos: 'back' },
+    ],
+    reward: { gold: 1800, exp: 1000, gem: 60 },
+  },
+  {
+    id: 7, name: '永夜回廊 · 女皇', recommend: 21,
+    desc: '操纵永夜的暗影女皇涅夫提斯，才是这一切黑暗真正的源头。',
+    enemies: [
+      { id: 'shadow_empress', level: 21, pos: 'back' },
+      { id: 'dark_knight', level: 20, pos: 'front' },
+      { id: 'dark_knight', level: 20, pos: 'front' },
+      { id: 'revenant', level: 20, pos: 'back' },
+    ],
+    reward: { gold: 3000, exp: 1600, gem: 120 },
+    isBoss: true,
+    endStory: 'epilogue2',
   },
 ];
 
@@ -930,9 +1047,9 @@ const GACHA = {
   cost: 100,          // 每次抽卡消耗宝石
   rates: { 5: 0.03, 4: 0.12, 3: 0.85 },
   pool: {
-    5: ['lecliss', 'justia', 'seir'],
-    4: ['rou', 'helena', 'diana', 'garcia'],
-    3: ['teried', 'lia', 'mina'],
+    5: ['lecliss', 'justia', 'seir', 'refithea', 'rigenette', 'olstein'],
+    4: ['rou', 'helena', 'diana', 'garcia', 'glacia', 'liatris'],
+    3: ['teried', 'lia', 'mina', 'loen'],
   },
 };
 
@@ -965,6 +1082,7 @@ const CHAR_LORE = {
   rou: {
     lore: '自幼在神殿长大的祭司，能听见「光」的低语。她温柔得近乎天真，却拥有让重伤者起死回生的奇迹之力。',
     quotes: ['光会指引我们的。', '别怕，我在这里。', '受伤了？交给我吧。'],
+    side: 'side_rou',
   },
   helena: {
     lore: '四处流浪的剑客，追求「快」到极致的剑技。性格爽朗，行侠仗义，最看不惯欺凌弱小之人。',
@@ -974,10 +1092,12 @@ const CHAR_LORE = {
   diana: {
     lore: '出身书香门第的天才法师，冷静理性到近乎冷漠。她钻研魔法只为求知，却在旅途中第一次尝到「为他人施法」的温度。',
     quotes: ['数据不会骗人。', '情绪会干扰判断……不过，偶尔也无妨。', '水能穿石，亦能护人。'],
+    side: 'side_diana',
   },
   garcia: {
     lore: '矿山出身的壮汉，沉默如山。他相信「站着不倒」，就是对同伴最好的承诺。',
     quotes: ['有我在，塌不了。', '……（沉默地挡在最前方）', '放心打，后面有我顶着。'],
+    side: 'side_garcia',
   },
   teried: {
     lore: '怀抱英雄梦的乡村少年，立志组建自己的佣兵团、亲手终结这场魔王之乱。虽然还稚嫩，但那股不肯认输的劲头，能感染身边每一个人。',
@@ -987,11 +1107,41 @@ const CHAR_LORE = {
   lia: {
     lore: '草原部族的女猎手，与自然为伴长大。开朗直率，把每个同伴都当作族人一般守护。',
     quotes: ['我的箭，从不空手而归。', '草原教会我，独行者走不远。', '一起去狩猎吧！'],
+    side: 'side_lia',
   },
   mina: {
     lore: '跟着祖母学制药的少女，背着比自己还大的药箱四处奔走。胆子小，却总在关键时刻鼓起勇气，为同伴递上救命的药剂。',
     quotes: ['药……药我配好了！', '前辈，别逞强呀！', '我、我也能帮上忙的！'],
     side: 'side_mina',
+  },
+
+  // ========== 第二部新增角色 ==========
+  refithea: {
+    lore: '自圣山降临人间的圣女，言行温柔却带着不容置疑的坚定。她相信即使在最深的永夜里，也总有一束光值得守护。传闻她的祈祷能将濒死之人从死亡边缘唤回。',
+    quotes: ['请把伤痛，都交给我吧。', '只要还有一丝光，就还有希望。', '我的祈祷，会一直陪着你们。'],
+    side: 'side_refithea',
+  },
+  rigenette: {
+    lore: '苍空骑士团的年轻团长，天生的剑术奇才。她厌恶冗长的客套，信奉「快剑斩断一切犹豫」。在战场上，她的剑往往比敌人的尖叫更快抵达。',
+    quotes: ['犹豫，是会送命的。', '我的剑，比风更快。', '想挡住我？再快一点吧。'],
+    side: 'side_rigenette',
+  },
+  olstein: {
+    lore: '身经百战却从未让身后之人倒下的传奇守护者，人称「不动」。他沉默、固执，把「守护」二字刻进了骨头里。只要他还站着，防线就永远不会崩。',
+    quotes: ['我的身后，寸土不让。', '尽管放心，撞上来的都得碎。', '盾在，人就在。'],
+    side: 'side_olstein',
+  },
+  glacia: {
+    lore: '极北雪原走出的冰系术士，寡言冷静。她用霜冻封锁敌人的同时，也在慢慢融化自己心头多年的坚冰。',
+    quotes: ['……冻住吧。', '话太多会浪费魔力。', '别急，慢慢来。'],
+  },
+  liatris: {
+    lore: '佣兵公会挂名的金牌狙击手，自信又毒舌。她从不失手，也从不为失手找借口——因为根本没有。',
+    quotes: ['锁定，然后——命中。', '我的箭从不需要第二发。', '这点距离，闭着眼都行。'],
+  },
+  loen: {
+    lore: '黎明骑士团的新人，正直得有些笨拙。他把每一个誓言都当真，立志成为故事里那样照亮黑暗的骑士。',
+    quotes: ['以黎明之名！', '我会守护好每一个人！', '前辈们，请看我的！'],
   },
 };
 
@@ -1664,7 +1814,10 @@ const UI = {
       { id: 'stage3', name: '第三章 · 废弃矿洞' },
       { id: 'stage4', name: '第四章 · 诅咒山脊' },
       { id: 'stage5', name: '第五章 · 魔王城' },
-      { id: 'epilogue', name: '终章 · 未完待续' },
+      { id: 'epilogue', name: '第一部终章 · 魔王陨落' },
+      { id: 'stage6', name: '第二部 · 破碎边境' },
+      { id: 'stage7', name: '第二部 · 永夜回廊' },
+      { id: 'epilogue2', name: '第二部终章 · 曙光' },
     ];
     // 角色支线：从拥有的角色中筛出有支线的
     const sideSeen = new Set();
@@ -2331,6 +2484,82 @@ const STORY = {
     { who: 'helena', side: 'left', speaker: '海莲娜', text: '哈！有志气。记住——剑要快，心要稳。护着想护的人，剑才有意义。' },
     { clear: true, text: '疾风剑士的剑，始终指向正义。' },
   ],
+  side_rou: [
+    { bg: 'town', text: '神殿的回廊里，萝正轻声为受伤的旅人祈祷。' },
+    { who: 'rou', side: 'left', speaker: '萝', text: '光告诉我……这世上的痛，没有一种是该被独自承受的。' },
+    { who: 'mina', side: 'right', speaker: '米娜', text: '萝姐姐，你总是这么温柔……' },
+    { who: 'rou', side: 'left', speaker: '萝', text: '因为有人也曾这样温柔地，把我从黑暗里牵了出来呀。' },
+    { clear: true, text: '她把曾得到的温柔，加倍还给了世界。' },
+  ],
+  side_diana: [
+    { bg: 'cave', text: '深夜，黛安娜在摇曳的烛光下翻阅着古老的魔导书。' },
+    { who: 'diana', side: 'left', speaker: '黛安娜', text: '魔法本是冰冷的公式……我研究它，只为求知。' },
+    { who: 'teried', side: 'right', speaker: '泰瑞德', text: '可你今天那道水墙，救了我们所有人。' },
+    { who: 'diana', side: 'left', speaker: '黛安娜', text: '……是吗。原来「为他人施法」，会让这冰冷的公式，变得有点温度。' },
+    { clear: true, text: '天才法师，第一次为「知识」之外的东西心动。' },
+  ],
+  side_garcia: [
+    { bg: 'ridge', text: '战后的山脊，加西亚独自检查着布满裂痕的巨盾。' },
+    { who: 'garcia', side: 'left', speaker: '加西亚', text: '……盾裂了，没关系。只要人没倒。' },
+    { who: 'mina', side: 'right', speaker: '米娜', text: '加西亚先生，你又把伤口藏起来了！让我看看！' },
+    { who: 'garcia', side: 'left', speaker: '加西亚', text: '……（沉默片刻）谢谢。下次，我还会挡在前面。' },
+    { clear: true, text: '沉默如山的男人，用脊背写下了承诺。' },
+  ],
+  side_lia: [
+    { bg: 'forest', text: '草原的风穿过林梢，莉亚仰头眯眼，搭弓瞄准远方。' },
+    { who: 'lia', side: 'left', speaker: '莉亚', text: '在部族里，独自狩猎的人走不远。要走远，就得有同伴。' },
+    { who: 'teried', side: 'right', speaker: '泰瑞德', text: '所以你才加入我们？' },
+    { who: 'lia', side: 'left', speaker: '莉亚', text: '嗯！你们就是我的新部族啦。这一箭，为大家而射！' },
+    { clear: true, text: '草原的女猎手，找到了新的族人。' },
+  ],
+  side_refithea: [
+    { bg: 'castle', text: '圣山之巅，蕾菲西亚俯瞰着被永夜笼罩的大地。' },
+    { who: 'refithea', side: 'left', speaker: '蕾菲西亚', text: '魔王虽除，黑暗却仍在蔓延……这一次的敌人，更加深沉。' },
+    { who: 'teried', side: 'right', speaker: '泰瑞德', text: '圣女大人，您愿意与我们同行吗？' },
+    { who: 'refithea', side: 'left', speaker: '蕾菲西亚', text: '当然。只要还有一束光值得守护，我就不会停下祈祷。' },
+    { who: 'refithea', side: 'left', speaker: '蕾菲西亚', text: '把你们的伤痛交给我吧——让我们一起，把光带回这片土地。' },
+    { clear: true, text: '圣女的加入，为佣兵团点亮了永夜中的灯火。' },
+  ],
+  side_rigenette: [
+    { bg: 'ridge', text: '苍空之下，莉洁奈特拔剑，剑光快得几乎看不见残影。' },
+    { who: 'rigenette', side: 'left', speaker: '莉洁奈特', text: '苍空骑士团……如今只剩我一人了。' },
+    { who: 'helena', side: 'right', speaker: '海莲娜', text: '同为追求「快」的剑客，我懂那份孤独。' },
+    { who: 'rigenette', side: 'left', speaker: '莉洁奈特', text: '哼，难得遇上能跟上我剑速的人。那就——并肩飞驰吧。' },
+    { clear: true, text: '两道疾风，自此交汇成同一阵风暴。' },
+  ],
+  side_olstein: [
+    { bg: 'cave', text: '营地最外围，奥尔斯坦如一座沉默的雕像般伫立守夜。' },
+    { who: 'olstein', side: 'left', speaker: '奥尔斯坦', text: '我守了一辈子的防线，从未让身后之人倒下。' },
+    { who: 'teried', side: 'right', speaker: '泰瑞德', text: '不累吗？一直站在最前面。' },
+    { who: 'olstein', side: 'left', speaker: '奥尔斯坦', text: '累。但只要身后还有想守护的人，这双脚，就不会退后半步。' },
+    { clear: true, text: '「不动」之名，是用一生的脊梁换来的。' },
+  ],
+
+  // ---------- 第二部 · 关卡剧情 ----------
+  stage6: [
+    { bg: 'forest_deep', text: '魔王陨落数月后，边境却被一层挥之不去的永夜笼罩。' },
+    { who: 'refithea', side: 'right', speaker: '蕾菲西亚', text: '这些亡魂……是被某种力量强行从安息中唤醒的。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '又是黑暗……看来魔王，并不是终点。' },
+    { who: 'refithea', side: 'right', speaker: '蕾菲西亚', text: '小心。真正的源头，恐怕还藏在永夜的最深处。' },
+  ],
+  stage7: [
+    { bg: 'castle', text: '永夜回廊的尽头，暗影女皇涅夫提斯端坐于黑曜王座之上。' },
+    { who: 'E:shadow_empress', side: 'right', speaker: '暗影女皇 · 涅夫提斯', text: '哦……是你们终结了那头蠢熊巴尔？真是帮了本皇一个忙呢。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '原来魔王，也只是你的一枚棋子……' },
+    { who: 'E:shadow_empress', side: 'right', speaker: '暗影女皇 · 涅夫提斯', text: '永夜，才是这世界的归宿。来吧，做本皇王座下，第一批长眠的祭品。' },
+    { who: 'rigenette', side: 'left', speaker: '莉洁奈特', text: '废话太多了。我的剑，可不会等你说完。' },
+  ],
+
+  // ---------- 第二部 · 结局 ----------
+  epilogue2: [
+    { bg: 'castle', text: '随着女皇的哀鸣消散，笼罩边境的永夜，终于裂开了一道曙光。' },
+    { who: 'refithea', side: 'right', speaker: '蕾菲西亚', text: '光……回来了。大地，终于能够安睡了。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '从一个魔王，到一位女皇……我们走得比想象中更远。' },
+    { clear: true, bg: 'town', text: '佣兵团的名字，开始在大陆的每个角落被人传颂。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '但只要还有黑暗，我们的旅途，就不会结束。' },
+    { who: 'rigenette', side: 'right', speaker: '莉洁奈特', text: '那就继续飞驰吧。下一阵风，已经在路上了。' },
+    { clear: true, bg: 'forest', text: '——佣兵团的传说，仍在续写。' },
+  ],
 };
 
 window.Story = Story;
@@ -2619,11 +2848,11 @@ const BattleUI = {
       m.querySelector('#res-ok').onclick = () => {
         UI.closeModal(m);
         UI.updateResources();
-        // 击败最终 BOSS（终关）后播放终章
-        const isFinal = this.stage.id === window.GameData.STAGES[window.GameData.STAGES.length - 1].id;
-        if (isFinal && !Story.seen('epilogue')) {
+        // 章节结局：由关卡数据的 endStory 驱动（如魔王城→终章，永夜回廊→第二部结局）
+        const endStory = this.stage.endStory;
+        if (endStory && window.STORY && window.STORY[endStory] && !Story.seen(endStory)) {
           this.exit();
-          Story.play('epilogue');
+          Story.play(endStory);
         } else {
           this.exit();
         }

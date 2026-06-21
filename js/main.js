@@ -280,11 +280,11 @@ const BattleUI = {
       m.querySelector('#res-ok').onclick = () => {
         UI.closeModal(m);
         UI.updateResources();
-        // 击败最终 BOSS（终关）后播放终章
-        const isFinal = this.stage.id === window.GameData.STAGES[window.GameData.STAGES.length - 1].id;
-        if (isFinal && !Story.seen('epilogue')) {
+        // 章节结局：由关卡数据的 endStory 驱动（如魔王城→终章，永夜回廊→第二部结局）
+        const endStory = this.stage.endStory;
+        if (endStory && window.STORY && window.STORY[endStory] && !Story.seen(endStory)) {
           this.exit();
-          Story.play('epilogue');
+          Story.play(endStory);
         } else {
           this.exit();
         }

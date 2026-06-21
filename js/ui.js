@@ -108,7 +108,10 @@ const UI = {
       { id: 'stage3', name: '第三章 · 废弃矿洞' },
       { id: 'stage4', name: '第四章 · 诅咒山脊' },
       { id: 'stage5', name: '第五章 · 魔王城' },
-      { id: 'epilogue', name: '终章 · 未完待续' },
+      { id: 'epilogue', name: '第一部终章 · 魔王陨落' },
+      { id: 'stage6', name: '第二部 · 破碎边境' },
+      { id: 'stage7', name: '第二部 · 永夜回廊' },
+      { id: 'epilogue2', name: '第二部终章 · 曙光' },
     ];
     // 角色支线：从拥有的角色中筛出有支线的
     const sideSeen = new Set();

@@ -314,6 +314,82 @@ const STORY = {
     { who: 'helena', side: 'left', speaker: '海莲娜', text: '哈！有志气。记住——剑要快，心要稳。护着想护的人，剑才有意义。' },
     { clear: true, text: '疾风剑士的剑，始终指向正义。' },
   ],
+  side_rou: [
+    { bg: 'town', text: '神殿的回廊里，萝正轻声为受伤的旅人祈祷。' },
+    { who: 'rou', side: 'left', speaker: '萝', text: '光告诉我……这世上的痛，没有一种是该被独自承受的。' },
+    { who: 'mina', side: 'right', speaker: '米娜', text: '萝姐姐，你总是这么温柔……' },
+    { who: 'rou', side: 'left', speaker: '萝', text: '因为有人也曾这样温柔地，把我从黑暗里牵了出来呀。' },
+    { clear: true, text: '她把曾得到的温柔，加倍还给了世界。' },
+  ],
+  side_diana: [
+    { bg: 'cave', text: '深夜，黛安娜在摇曳的烛光下翻阅着古老的魔导书。' },
+    { who: 'diana', side: 'left', speaker: '黛安娜', text: '魔法本是冰冷的公式……我研究它，只为求知。' },
+    { who: 'teried', side: 'right', speaker: '泰瑞德', text: '可你今天那道水墙，救了我们所有人。' },
+    { who: 'diana', side: 'left', speaker: '黛安娜', text: '……是吗。原来「为他人施法」，会让这冰冷的公式，变得有点温度。' },
+    { clear: true, text: '天才法师，第一次为「知识」之外的东西心动。' },
+  ],
+  side_garcia: [
+    { bg: 'ridge', text: '战后的山脊，加西亚独自检查着布满裂痕的巨盾。' },
+    { who: 'garcia', side: 'left', speaker: '加西亚', text: '……盾裂了，没关系。只要人没倒。' },
+    { who: 'mina', side: 'right', speaker: '米娜', text: '加西亚先生，你又把伤口藏起来了！让我看看！' },
+    { who: 'garcia', side: 'left', speaker: '加西亚', text: '……（沉默片刻）谢谢。下次，我还会挡在前面。' },
+    { clear: true, text: '沉默如山的男人，用脊背写下了承诺。' },
+  ],
+  side_lia: [
+    { bg: 'forest', text: '草原的风穿过林梢，莉亚仰头眯眼，搭弓瞄准远方。' },
+    { who: 'lia', side: 'left', speaker: '莉亚', text: '在部族里，独自狩猎的人走不远。要走远，就得有同伴。' },
+    { who: 'teried', side: 'right', speaker: '泰瑞德', text: '所以你才加入我们？' },
+    { who: 'lia', side: 'left', speaker: '莉亚', text: '嗯！你们就是我的新部族啦。这一箭，为大家而射！' },
+    { clear: true, text: '草原的女猎手，找到了新的族人。' },
+  ],
+  side_refithea: [
+    { bg: 'castle', text: '圣山之巅，蕾菲西亚俯瞰着被永夜笼罩的大地。' },
+    { who: 'refithea', side: 'left', speaker: '蕾菲西亚', text: '魔王虽除，黑暗却仍在蔓延……这一次的敌人，更加深沉。' },
+    { who: 'teried', side: 'right', speaker: '泰瑞德', text: '圣女大人，您愿意与我们同行吗？' },
+    { who: 'refithea', side: 'left', speaker: '蕾菲西亚', text: '当然。只要还有一束光值得守护，我就不会停下祈祷。' },
+    { who: 'refithea', side: 'left', speaker: '蕾菲西亚', text: '把你们的伤痛交给我吧——让我们一起，把光带回这片土地。' },
+    { clear: true, text: '圣女的加入，为佣兵团点亮了永夜中的灯火。' },
+  ],
+  side_rigenette: [
+    { bg: 'ridge', text: '苍空之下，莉洁奈特拔剑，剑光快得几乎看不见残影。' },
+    { who: 'rigenette', side: 'left', speaker: '莉洁奈特', text: '苍空骑士团……如今只剩我一人了。' },
+    { who: 'helena', side: 'right', speaker: '海莲娜', text: '同为追求「快」的剑客，我懂那份孤独。' },
+    { who: 'rigenette', side: 'left', speaker: '莉洁奈特', text: '哼，难得遇上能跟上我剑速的人。那就——并肩飞驰吧。' },
+    { clear: true, text: '两道疾风，自此交汇成同一阵风暴。' },
+  ],
+  side_olstein: [
+    { bg: 'cave', text: '营地最外围，奥尔斯坦如一座沉默的雕像般伫立守夜。' },
+    { who: 'olstein', side: 'left', speaker: '奥尔斯坦', text: '我守了一辈子的防线，从未让身后之人倒下。' },
+    { who: 'teried', side: 'right', speaker: '泰瑞德', text: '不累吗？一直站在最前面。' },
+    { who: 'olstein', side: 'left', speaker: '奥尔斯坦', text: '累。但只要身后还有想守护的人，这双脚，就不会退后半步。' },
+    { clear: true, text: '「不动」之名，是用一生的脊梁换来的。' },
+  ],
+
+  // ---------- 第二部 · 关卡剧情 ----------
+  stage6: [
+    { bg: 'forest_deep', text: '魔王陨落数月后，边境却被一层挥之不去的永夜笼罩。' },
+    { who: 'refithea', side: 'right', speaker: '蕾菲西亚', text: '这些亡魂……是被某种力量强行从安息中唤醒的。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '又是黑暗……看来魔王，并不是终点。' },
+    { who: 'refithea', side: 'right', speaker: '蕾菲西亚', text: '小心。真正的源头，恐怕还藏在永夜的最深处。' },
+  ],
+  stage7: [
+    { bg: 'castle', text: '永夜回廊的尽头，暗影女皇涅夫提斯端坐于黑曜王座之上。' },
+    { who: 'E:shadow_empress', side: 'right', speaker: '暗影女皇 · 涅夫提斯', text: '哦……是你们终结了那头蠢熊巴尔？真是帮了本皇一个忙呢。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '原来魔王，也只是你的一枚棋子……' },
+    { who: 'E:shadow_empress', side: 'right', speaker: '暗影女皇 · 涅夫提斯', text: '永夜，才是这世界的归宿。来吧，做本皇王座下，第一批长眠的祭品。' },
+    { who: 'rigenette', side: 'left', speaker: '莉洁奈特', text: '废话太多了。我的剑，可不会等你说完。' },
+  ],
+
+  // ---------- 第二部 · 结局 ----------
+  epilogue2: [
+    { bg: 'castle', text: '随着女皇的哀鸣消散，笼罩边境的永夜，终于裂开了一道曙光。' },
+    { who: 'refithea', side: 'right', speaker: '蕾菲西亚', text: '光……回来了。大地，终于能够安睡了。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '从一个魔王，到一位女皇……我们走得比想象中更远。' },
+    { clear: true, bg: 'town', text: '佣兵团的名字，开始在大陆的每个角落被人传颂。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '但只要还有黑暗，我们的旅途，就不会结束。' },
+    { who: 'rigenette', side: 'right', speaker: '莉洁奈特', text: '那就继续飞驰吧。下一阵风，已经在路上了。' },
+    { clear: true, bg: 'forest', text: '——佣兵团的传说，仍在续写。' },
+  ],
 };
 
 window.Story = Story;
