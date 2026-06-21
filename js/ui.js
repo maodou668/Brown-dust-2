@@ -273,12 +273,86 @@ const UI = {
     this.screenEl.innerHTML = `
       <div class="section-title">章节冒险 <span class="muted" style="font-weight:400;font-size:11px;">· 在场景中走动，到达目标触发剧情与战斗</span></div>
       ${chapters}
-      <p class="muted" style="text-align:center;margin-top:10px;">用方向键移动，跟随 ▼ 指引到达目标</p>`;
+      <p class="muted" style="text-align:center;margin-top:10px;">用方向键移动，跟随 ▼ 指引到达目标</p>
+      ${this.trialSectionHtml()}`;
     this.screenEl.querySelectorAll('.chapter-card[data-ch]').forEach(card => {
       const id = card.dataset.ch;
       if (!id) return;
       card.addEventListener('click', () => World.openChapter(id));
     });
+    this.screenEl.querySelectorAll('.trial-card[data-trial]').forEach(card => {
+      card.addEventListener('click', () => this.showTrialConfirm(parseInt(card.dataset.trial, 10)));
+    });
+  },
+
+  /** 试炼之塔区块 HTML */
+  trialSectionHtml() {
+    const trials = window.GameData.TRIALS || [];
+    const max = Game.state.trialMax || 0;
+    const cards = trials.map((t, i) => {
+      const unlocked = i <= max;          // 第 1 层默认开放；逐层解锁
+      const cleared = i < max;            // 已通关的层
+      const enemyNames = t.enemies.map(e => window.GameData.ENEMIES[e.id].name);
+      const bossName = t.isBoss ? enemyNames[0] : null;
+      return `<div class="trial-card ${unlocked ? '' : 'locked'} ${cleared ? 'done' : ''}" ${unlocked ? `data-trial="${i}"` : ''}>
+        <div class="trial-floor">${t.isBoss ? '👑' : '🗼'}<span>${t.tier}F</span></div>
+        <div class="trial-info">
+          <h3>${unlocked ? t.name : `试炼之塔 · 第 ${t.tier} 层`} ${cleared ? '<span class="clear-mark">✓</span>' : ''}</h3>
+          <p>${unlocked ? t.desc : '通关上一层后开启'}</p>
+          ${unlocked ? `<div class="trial-meta"><span class="muted">推荐 Lv.${t.recommend}</span>${bossName ? `<span class="trial-boss">BOSS ${bossName}</span>` : ''}<span class="trial-reward">🪙${t.reward.gold} 💎${t.reward.gem}</span></div>` : ''}
+        </div>
+        <div class="trial-go">${unlocked ? (cleared ? '再战 ›' : '挑战 ›') : '🔒'}</div>
+      </div>`;
+    }).join('');
+    return `
+      <div class="section-title" style="margin-top:20px;">🗼 试炼之塔 <span class="muted" style="font-weight:400;font-size:11px;">· 逐层强化的循环挑战，越高层奖励越丰厚</span></div>
+      <div class="trial-progress muted">当前进度：${max} / ${trials.length} 层</div>
+      ${cards}`;
+  },
+
+  /** 试炼出战确认 */
+  showTrialConfirm(idx) {
+    const trial = window.GameData.TRIALS[idx];
+    if (!trial) return;
+    if (Game.state.team.length === 0) {
+      this.toast('请先在「主页」编入出战队伍');
+      Main.switchScreen('home');
+      return;
+    }
+    const teamHtml = Game.state.team.map(uid => {
+      const o = Game.getOwned(uid);
+      const c = window.GameData.CHARACTERS[o.charId];
+      return `<div class="team-slot filled border-${this.rarityClass(c.rarity)}" style="max-width:64px;">
+        <div class="char-portrait"><div class="avatar" style="font-size:26px;">${this.charAvatar(o.charId)}</div>
+        <span class="pname">Lv.${o.level}</span></div></div>`;
+    }).join('');
+    const enemyHtml = trial.enemies.map(e => {
+      const def = window.GameData.ENEMIES[e.id];
+      return `<span style="font-size:11px;background:var(--panel);padding:3px 7px;border-radius:6px;">${def.name} Lv.${e.level}</span>`;
+    }).join(' ');
+    const m = this.openModal(`
+      <h2>${trial.name}</h2>
+      <p class="muted" style="margin:6px 0 12px;">${trial.desc}</p>
+      <div class="muted" style="margin-bottom:6px;">敌方阵容 · 推荐 Lv.${trial.recommend}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${enemyHtml}</div>
+      <div class="muted" style="margin-bottom:6px;">我方出战（${Game.state.team.length}/5）</div>
+      <div class="team-slots">${teamHtml}</div>
+      <div class="close-row">
+        <button class="btn secondary" id="tc-cancel">取消</button>
+        <button class="btn" id="tc-fight">登塔 ⚔️</button>
+      </div>
+    `);
+    m.querySelector('#tc-cancel').onclick = () => this.closeModal(m);
+    m.querySelector('#tc-fight').onclick = () => {
+      this.closeModal(m);
+      BattleUI.start(trial, () => {
+        if (Battle.result === 'win' && idx + 1 > (Game.state.trialMax || 0)) {
+          Game.state.trialMax = idx + 1;
+          Game.save();
+        }
+        this.renderStages();
+      });
+    };
   },
 
   /** 出战确认 */

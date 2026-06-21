@@ -444,6 +444,83 @@ const STAGES = [
 ];
 
 /**
+ * 试炼之塔：通关主线后的循环挑战。逐层强化的精英/魔王波次，
+ * 越高层奖励越丰厚、掉落稀有度越高。复用战斗引擎，关卡形态与 STAGES 一致。
+ * id 用 100+ 区段，避免与主线关卡 id 冲突；id 越大掉落加成越高。
+ */
+const TRIALS = [
+  {
+    id: 101, tier: 1, name: '试炼之塔 · 第 1 层', recommend: 16,
+    desc: '塔灵唤出沉睡的暗影狼群与游荡的食人魔，作为登塔者的第一道考验。',
+    enemies: [
+      { id: 'ogre', level: 16, pos: 'front' },
+      { id: 'wolf', level: 16, pos: 'front' },
+      { id: 'dark_mage', level: 16, pos: 'back' },
+      { id: 'goblin_archer', level: 16, pos: 'back' },
+    ],
+    reward: { gold: 1200, exp: 700, gem: 50 },
+  },
+  {
+    id: 102, tier: 2, name: '试炼之塔 · 第 2 层', recommend: 19,
+    desc: '亡魂骑士在塔中游荡，黑暗法师以禁咒守护着上行之路。',
+    enemies: [
+      { id: 'revenant', level: 19, pos: 'front' },
+      { id: 'revenant', level: 19, pos: 'front' },
+      { id: 'dark_mage', level: 19, pos: 'back' },
+      { id: 'dark_mage', level: 19, pos: 'back' },
+    ],
+    reward: { gold: 1600, exp: 900, gem: 55 },
+  },
+  {
+    id: 103, tier: 3, name: '试炼之塔 · 第 3 层 · 守关', recommend: 23,
+    desc: '巨魔王的残念盘踞中层，撞碎一切胆敢登塔者的意志。',
+    enemies: [
+      { id: 'troll_king', level: 23, pos: 'front' },
+      { id: 'dark_knight', level: 22, pos: 'front' },
+      { id: 'dark_mage', level: 22, pos: 'back' },
+      { id: 'dark_mage', level: 22, pos: 'back' },
+    ],
+    reward: { gold: 2200, exp: 1300, gem: 70 },
+    isBoss: true,
+  },
+  {
+    id: 104, tier: 4, name: '试炼之塔 · 第 4 层', recommend: 27,
+    desc: '黑暗骑士军团列阵以待，前排铁壁难破，后排禁咒不绝。',
+    enemies: [
+      { id: 'dark_knight', level: 27, pos: 'front' },
+      { id: 'dark_knight', level: 27, pos: 'front' },
+      { id: 'revenant', level: 26, pos: 'back' },
+      { id: 'dark_mage', level: 26, pos: 'back' },
+    ],
+    reward: { gold: 2800, exp: 1700, gem: 80 },
+  },
+  {
+    id: 105, tier: 5, name: '试炼之塔 · 第 5 层 · 魔王回响', recommend: 31,
+    desc: '魔王巴尔的回响在塔顶重现，狂暴之力丝毫不逊于本体。',
+    enemies: [
+      { id: 'demon_lord', level: 31, pos: 'back' },
+      { id: 'dark_knight', level: 30, pos: 'front' },
+      { id: 'dark_knight', level: 30, pos: 'front' },
+      { id: 'dark_mage', level: 30, pos: 'back' },
+    ],
+    reward: { gold: 4000, exp: 2400, gem: 100 },
+    isBoss: true,
+  },
+  {
+    id: 106, tier: 6, name: '试炼之塔 · 塔顶 · 永夜女皇', recommend: 36,
+    desc: '塔顶的永夜女皇涅夫提斯，是登塔者所能遭遇的最强存在。',
+    enemies: [
+      { id: 'shadow_empress', level: 36, pos: 'back' },
+      { id: 'dark_knight', level: 35, pos: 'front' },
+      { id: 'dark_knight', level: 35, pos: 'front' },
+      { id: 'revenant', level: 35, pos: 'back' },
+    ],
+    reward: { gold: 6000, exp: 3600, gem: 150 },
+    isBoss: true,
+  },
+];
+
+/**
  * 抽卡池：概率与对应角色
  */
 const GACHA = {
@@ -457,4 +534,4 @@ const GACHA = {
 };
 
 // 暴露到全局
-window.GameData = { CLASSES, ELEMENTS, CHARACTERS, SKILLS, ENEMIES, STAGES, GACHA };
+window.GameData = { CLASSES, ELEMENTS, CHARACTERS, SKILLS, ENEMIES, STAGES, TRIALS, GACHA };

@@ -815,6 +815,34 @@ body {
 .chapter-prog span { font-size: 10px; color: var(--text-dim); }
 .chapter-go { color: var(--accent); font-size: 13px; font-weight: 700; white-space: nowrap; }
 
+/* 试炼之塔 */
+.trial-progress { font-size: 11px; margin: -4px 0 10px; }
+.trial-card {
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  background: linear-gradient(160deg, rgba(58,42,26,.5), var(--panel));
+  border: 1px solid rgba(255,155,61,.18);
+  border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; transition: transform .1s, border-color .2s;
+}
+.trial-card:not(.locked):active { transform: scale(.98); }
+.trial-card:not(.locked):hover { border-color: #ff9b3d; }
+.trial-card.locked { opacity: .5; cursor: default; }
+.trial-card.done { border-color: rgba(74,214,109,.3); }
+.trial-floor {
+  width: 50px; height: 50px; border-radius: 12px; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 22px;
+  background: radial-gradient(circle at 50% 35%, rgba(255,155,61,.3), var(--panel-2));
+}
+.trial-floor span { font-size: 10px; font-weight: 800; color: #ffb84a; margin-top: 1px; }
+.trial-info { flex: 1; min-width: 0; }
+.trial-info h3 { font-size: 14px; margin-bottom: 3px; }
+.trial-info p { font-size: 11px; color: var(--text-dim); line-height: 1.4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trial-meta { display: flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap; }
+.trial-meta span { font-size: 10px; }
+.trial-boss { color: #ff7a6a; font-weight: 700; }
+.trial-reward { color: var(--gold); font-weight: 700; }
+.trial-go { color: #ff9b3d; font-size: 13px; font-weight: 700; white-space: nowrap; }
+
 /* 探索：当前目标条 */
 .world-obj {
   position: absolute; top: 44px; left: 0; right: 0; text-align: center; z-index: 2;

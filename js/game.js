@@ -29,6 +29,7 @@ const Game = {
     if (this.state.spark == null) this.state.spark = 0;
     if (this.state.powder == null) this.state.powder = 0;
     if (this.state.firstTen == null) this.state.firstTen = false;
+    if (this.state.trialMax == null) this.state.trialMax = 0;
     if (!this.state.daily) this.state.daily = { lastClaim: null, streak: 0 };
     if (!this.state.quests) this.state.quests = { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} };
     if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
@@ -96,6 +97,7 @@ const Game = {
       // 抽卡保底计数（距上次 5★）
       pity: 0,
       firstTen: false, // 首次十连保底（必出 5★）是否已用
+      trialMax: 0,     // 试炼之塔已通关的最高层数（用于解锁下一层）
       // 保底货币
       spark: 0,    // 闪耀之星：每抽 +1，200 兑换自选服装
       powder: 0,   // 希望之粉：每抽 +10，商店兑换必出 5★

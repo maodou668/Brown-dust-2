@@ -822,6 +822,34 @@ body {
 .chapter-prog span { font-size: 10px; color: var(--text-dim); }
 .chapter-go { color: var(--accent); font-size: 13px; font-weight: 700; white-space: nowrap; }
 
+/* 试炼之塔 */
+.trial-progress { font-size: 11px; margin: -4px 0 10px; }
+.trial-card {
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  background: linear-gradient(160deg, rgba(58,42,26,.5), var(--panel));
+  border: 1px solid rgba(255,155,61,.18);
+  border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; transition: transform .1s, border-color .2s;
+}
+.trial-card:not(.locked):active { transform: scale(.98); }
+.trial-card:not(.locked):hover { border-color: #ff9b3d; }
+.trial-card.locked { opacity: .5; cursor: default; }
+.trial-card.done { border-color: rgba(74,214,109,.3); }
+.trial-floor {
+  width: 50px; height: 50px; border-radius: 12px; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 22px;
+  background: radial-gradient(circle at 50% 35%, rgba(255,155,61,.3), var(--panel-2));
+}
+.trial-floor span { font-size: 10px; font-weight: 800; color: #ffb84a; margin-top: 1px; }
+.trial-info { flex: 1; min-width: 0; }
+.trial-info h3 { font-size: 14px; margin-bottom: 3px; }
+.trial-info p { font-size: 11px; color: var(--text-dim); line-height: 1.4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trial-meta { display: flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap; }
+.trial-meta span { font-size: 10px; }
+.trial-boss { color: #ff7a6a; font-weight: 700; }
+.trial-reward { color: var(--gold); font-weight: 700; }
+.trial-go { color: #ff9b3d; font-size: 13px; font-weight: 700; white-space: nowrap; }
+
 /* 探索：当前目标条 */
 .world-obj {
   position: absolute; top: 44px; left: 0; right: 0; text-align: center; z-index: 2;
@@ -1447,6 +1475,83 @@ const STAGES = [
 ];
 
 /**
+ * 试炼之塔：通关主线后的循环挑战。逐层强化的精英/魔王波次，
+ * 越高层奖励越丰厚、掉落稀有度越高。复用战斗引擎，关卡形态与 STAGES 一致。
+ * id 用 100+ 区段，避免与主线关卡 id 冲突；id 越大掉落加成越高。
+ */
+const TRIALS = [
+  {
+    id: 101, tier: 1, name: '试炼之塔 · 第 1 层', recommend: 16,
+    desc: '塔灵唤出沉睡的暗影狼群与游荡的食人魔，作为登塔者的第一道考验。',
+    enemies: [
+      { id: 'ogre', level: 16, pos: 'front' },
+      { id: 'wolf', level: 16, pos: 'front' },
+      { id: 'dark_mage', level: 16, pos: 'back' },
+      { id: 'goblin_archer', level: 16, pos: 'back' },
+    ],
+    reward: { gold: 1200, exp: 700, gem: 50 },
+  },
+  {
+    id: 102, tier: 2, name: '试炼之塔 · 第 2 层', recommend: 19,
+    desc: '亡魂骑士在塔中游荡，黑暗法师以禁咒守护着上行之路。',
+    enemies: [
+      { id: 'revenant', level: 19, pos: 'front' },
+      { id: 'revenant', level: 19, pos: 'front' },
+      { id: 'dark_mage', level: 19, pos: 'back' },
+      { id: 'dark_mage', level: 19, pos: 'back' },
+    ],
+    reward: { gold: 1600, exp: 900, gem: 55 },
+  },
+  {
+    id: 103, tier: 3, name: '试炼之塔 · 第 3 层 · 守关', recommend: 23,
+    desc: '巨魔王的残念盘踞中层，撞碎一切胆敢登塔者的意志。',
+    enemies: [
+      { id: 'troll_king', level: 23, pos: 'front' },
+      { id: 'dark_knight', level: 22, pos: 'front' },
+      { id: 'dark_mage', level: 22, pos: 'back' },
+      { id: 'dark_mage', level: 22, pos: 'back' },
+    ],
+    reward: { gold: 2200, exp: 1300, gem: 70 },
+    isBoss: true,
+  },
+  {
+    id: 104, tier: 4, name: '试炼之塔 · 第 4 层', recommend: 27,
+    desc: '黑暗骑士军团列阵以待，前排铁壁难破，后排禁咒不绝。',
+    enemies: [
+      { id: 'dark_knight', level: 27, pos: 'front' },
+      { id: 'dark_knight', level: 27, pos: 'front' },
+      { id: 'revenant', level: 26, pos: 'back' },
+      { id: 'dark_mage', level: 26, pos: 'back' },
+    ],
+    reward: { gold: 2800, exp: 1700, gem: 80 },
+  },
+  {
+    id: 105, tier: 5, name: '试炼之塔 · 第 5 层 · 魔王回响', recommend: 31,
+    desc: '魔王巴尔的回响在塔顶重现，狂暴之力丝毫不逊于本体。',
+    enemies: [
+      { id: 'demon_lord', level: 31, pos: 'back' },
+      { id: 'dark_knight', level: 30, pos: 'front' },
+      { id: 'dark_knight', level: 30, pos: 'front' },
+      { id: 'dark_mage', level: 30, pos: 'back' },
+    ],
+    reward: { gold: 4000, exp: 2400, gem: 100 },
+    isBoss: true,
+  },
+  {
+    id: 106, tier: 6, name: '试炼之塔 · 塔顶 · 永夜女皇', recommend: 36,
+    desc: '塔顶的永夜女皇涅夫提斯，是登塔者所能遭遇的最强存在。',
+    enemies: [
+      { id: 'shadow_empress', level: 36, pos: 'back' },
+      { id: 'dark_knight', level: 35, pos: 'front' },
+      { id: 'dark_knight', level: 35, pos: 'front' },
+      { id: 'revenant', level: 35, pos: 'back' },
+    ],
+    reward: { gold: 6000, exp: 3600, gem: 150 },
+    isBoss: true,
+  },
+];
+
+/**
  * 抽卡池：概率与对应角色
  */
 const GACHA = {
@@ -1460,7 +1565,7 @@ const GACHA = {
 };
 
 // 暴露到全局
-window.GameData = { CLASSES, ELEMENTS, CHARACTERS, SKILLS, ENEMIES, STAGES, GACHA };
+window.GameData = { CLASSES, ELEMENTS, CHARACTERS, SKILLS, ENEMIES, STAGES, TRIALS, GACHA };
 
 
 // ============================================================
@@ -1825,6 +1930,7 @@ const Game = {
     if (this.state.spark == null) this.state.spark = 0;
     if (this.state.powder == null) this.state.powder = 0;
     if (this.state.firstTen == null) this.state.firstTen = false;
+    if (this.state.trialMax == null) this.state.trialMax = 0;
     if (!this.state.daily) this.state.daily = { lastClaim: null, streak: 0 };
     if (!this.state.quests) this.state.quests = { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} };
     if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
@@ -1892,6 +1998,7 @@ const Game = {
       // 抽卡保底计数（距上次 5★）
       pity: 0,
       firstTen: false, // 首次十连保底（必出 5★）是否已用
+      trialMax: 0,     // 试炼之塔已通关的最高层数（用于解锁下一层）
       // 保底货币
       spark: 0,    // 闪耀之星：每抽 +1，200 兑换自选服装
       powder: 0,   // 希望之粉：每抽 +10，商店兑换必出 5★
@@ -3184,12 +3291,86 @@ const UI = {
     this.screenEl.innerHTML = `
       <div class="section-title">章节冒险 <span class="muted" style="font-weight:400;font-size:11px;">· 在场景中走动，到达目标触发剧情与战斗</span></div>
       ${chapters}
-      <p class="muted" style="text-align:center;margin-top:10px;">用方向键移动，跟随 ▼ 指引到达目标</p>`;
+      <p class="muted" style="text-align:center;margin-top:10px;">用方向键移动，跟随 ▼ 指引到达目标</p>
+      ${this.trialSectionHtml()}`;
     this.screenEl.querySelectorAll('.chapter-card[data-ch]').forEach(card => {
       const id = card.dataset.ch;
       if (!id) return;
       card.addEventListener('click', () => World.openChapter(id));
     });
+    this.screenEl.querySelectorAll('.trial-card[data-trial]').forEach(card => {
+      card.addEventListener('click', () => this.showTrialConfirm(parseInt(card.dataset.trial, 10)));
+    });
+  },
+
+  /** 试炼之塔区块 HTML */
+  trialSectionHtml() {
+    const trials = window.GameData.TRIALS || [];
+    const max = Game.state.trialMax || 0;
+    const cards = trials.map((t, i) => {
+      const unlocked = i <= max;          // 第 1 层默认开放；逐层解锁
+      const cleared = i < max;            // 已通关的层
+      const enemyNames = t.enemies.map(e => window.GameData.ENEMIES[e.id].name);
+      const bossName = t.isBoss ? enemyNames[0] : null;
+      return `<div class="trial-card ${unlocked ? '' : 'locked'} ${cleared ? 'done' : ''}" ${unlocked ? `data-trial="${i}"` : ''}>
+        <div class="trial-floor">${t.isBoss ? '👑' : '🗼'}<span>${t.tier}F</span></div>
+        <div class="trial-info">
+          <h3>${unlocked ? t.name : `试炼之塔 · 第 ${t.tier} 层`} ${cleared ? '<span class="clear-mark">✓</span>' : ''}</h3>
+          <p>${unlocked ? t.desc : '通关上一层后开启'}</p>
+          ${unlocked ? `<div class="trial-meta"><span class="muted">推荐 Lv.${t.recommend}</span>${bossName ? `<span class="trial-boss">BOSS ${bossName}</span>` : ''}<span class="trial-reward">🪙${t.reward.gold} 💎${t.reward.gem}</span></div>` : ''}
+        </div>
+        <div class="trial-go">${unlocked ? (cleared ? '再战 ›' : '挑战 ›') : '🔒'}</div>
+      </div>`;
+    }).join('');
+    return `
+      <div class="section-title" style="margin-top:20px;">🗼 试炼之塔 <span class="muted" style="font-weight:400;font-size:11px;">· 逐层强化的循环挑战，越高层奖励越丰厚</span></div>
+      <div class="trial-progress muted">当前进度：${max} / ${trials.length} 层</div>
+      ${cards}`;
+  },
+
+  /** 试炼出战确认 */
+  showTrialConfirm(idx) {
+    const trial = window.GameData.TRIALS[idx];
+    if (!trial) return;
+    if (Game.state.team.length === 0) {
+      this.toast('请先在「主页」编入出战队伍');
+      Main.switchScreen('home');
+      return;
+    }
+    const teamHtml = Game.state.team.map(uid => {
+      const o = Game.getOwned(uid);
+      const c = window.GameData.CHARACTERS[o.charId];
+      return `<div class="team-slot filled border-${this.rarityClass(c.rarity)}" style="max-width:64px;">
+        <div class="char-portrait"><div class="avatar" style="font-size:26px;">${this.charAvatar(o.charId)}</div>
+        <span class="pname">Lv.${o.level}</span></div></div>`;
+    }).join('');
+    const enemyHtml = trial.enemies.map(e => {
+      const def = window.GameData.ENEMIES[e.id];
+      return `<span style="font-size:11px;background:var(--panel);padding:3px 7px;border-radius:6px;">${def.name} Lv.${e.level}</span>`;
+    }).join(' ');
+    const m = this.openModal(`
+      <h2>${trial.name}</h2>
+      <p class="muted" style="margin:6px 0 12px;">${trial.desc}</p>
+      <div class="muted" style="margin-bottom:6px;">敌方阵容 · 推荐 Lv.${trial.recommend}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${enemyHtml}</div>
+      <div class="muted" style="margin-bottom:6px;">我方出战（${Game.state.team.length}/5）</div>
+      <div class="team-slots">${teamHtml}</div>
+      <div class="close-row">
+        <button class="btn secondary" id="tc-cancel">取消</button>
+        <button class="btn" id="tc-fight">登塔 ⚔️</button>
+      </div>
+    `);
+    m.querySelector('#tc-cancel').onclick = () => this.closeModal(m);
+    m.querySelector('#tc-fight').onclick = () => {
+      this.closeModal(m);
+      BattleUI.start(trial, () => {
+        if (Battle.result === 'win' && idx + 1 > (Game.state.trialMax || 0)) {
+          Game.state.trialMax = idx + 1;
+          Game.save();
+        }
+        this.renderStages();
+      });
+    };
   },
 
   /** 出战确认 */
