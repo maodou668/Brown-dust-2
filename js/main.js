@@ -36,20 +36,10 @@ const BattleUI = {
           </div>
         </div>
         <div class="battle-field bg-${scene}">
-          <div class="battle-floor"></div>
           <div class="bfx-particles" id="bfx"></div>
-          <div class="enemy-zone">
-            <div class="row-label">— 敌方后排 —</div>
-            <div class="unit-row" id="enemy-back"></div>
-            <div class="row-label">— 敌方前排 —</div>
-            <div class="unit-row" id="enemy-front"></div>
-          </div>
-          <div class="ally-zone">
-            <div class="unit-row" id="ally-front"></div>
-            <div class="row-label">— 我方前排 —</div>
-            <div class="unit-row" id="ally-back"></div>
-            <div class="row-label">— 我方后排 —</div>
-          </div>
+          <div class="stage-ground enemy"></div>
+          <div class="stage-ground ally"></div>
+          <div class="battle-stage" id="battle-stage"></div>
           <div class="skill-banner" id="skill-banner"></div>
         </div>
         <div class="battle-ctrl">
@@ -121,8 +111,16 @@ const BattleUI = {
     else Main.refreshCurrent();
   },
 
-  // ---------- 渲染单位 ----------
-  unitHtml(c) {
+  // ---------- 渲染单位（斜俯视角舞台，近大远小） ----------
+  // 各排在舞台中的纵向位置/缩放/横向间距（百分比）
+  ROWCFG: {
+    enemy_back:  { y: 17, s: 0.72, sp: 16 },
+    enemy_front: { y: 35, s: 0.84, sp: 20 },
+    ally_front:  { y: 58, s: 0.94, sp: 23 },
+    ally_back:   { y: 80, s: 1.06, sp: 27 },
+  },
+
+  unitHtml(c, side, pos, idx, count) {
     const isAlly = c.side === 'ally';
     const charDef = isAlly ? window.GameData.CHARACTERS[c.charId] : window.GameData.ENEMIES[c.charId];
     const icon = isAlly ? window.GameData.CLASSES[charDef.cls].icon : '👹';
@@ -131,9 +129,14 @@ const BattleUI = {
     const stIcon = { poison: '☠️', burn: '🔥', stun: '💫', silence: '🔇' };
     const statusHtml = (c.statuses || []).filter(s => s.turns > 0)
       .map(s => `<span class="st-badge" title="${s.type}">${stIcon[s.type] || ''}</span>`).join('');
+    const cfg = this.ROWCFG[side + '_' + pos];
+    const x = 50 + (idx - (count - 1) / 2) * cfg.sp;
+    const z = Math.round(cfg.y * 10);
+    const style = `left:${x}%; top:${cfg.y}%; --uscale:${cfg.s}; z-index:${z};`;
     return `
-      <div class="unit ${c.alive ? '' : 'dead'} ${c.enraged ? 'enraged' : ''}" data-uid="${c.uid}"
-           style="background:linear-gradient(180deg, ${c.color}33, var(--panel));">
+      <div class="unit ${c.alive ? '' : 'dead'} ${c.enraged ? 'enraged' : ''} ${isAlly ? 'ally-unit' : ''}" data-uid="${c.uid}"
+           style="${style}background:linear-gradient(180deg, ${c.color}44, var(--panel));">
+        <div class="u-shadow"></div>
         ${c.isBoss ? '<span class="u-boss">BOSS</span>' : ''}
         <span class="u-elem">${window.GameData.ELEMENTS[c.element].icon}</span>
         ${statusHtml ? `<div class="u-status">${statusHtml}</div>` : ''}
@@ -148,22 +151,104 @@ const BattleUI = {
 
   refresh() {
     if (!this.root) return;
-    const fill = (id, list) => {
-      const elx = this.root.querySelector('#' + id);
-      elx.innerHTML = list.map(c => this.unitHtml(c)).join('') || '<span class="muted" style="font-size:10px;"> </span>';
-    };
-    fill('enemy-front', Battle.enemies().filter(c => c.pos === 'front'));
-    fill('enemy-back', Battle.enemies().filter(c => c.pos === 'back'));
-    fill('ally-front', Battle.allies().filter(c => c.pos === 'front'));
-    fill('ally-back', Battle.allies().filter(c => c.pos === 'back'));
+    const stage = this.root.querySelector('#battle-stage');
+    if (!stage) return;
+    let html = '';
+    [['enemy', 'back'], ['enemy', 'front'], ['ally', 'front'], ['ally', 'back']].forEach(([side, pos]) => {
+      const list = Battle.combatants.filter(c => c.side === side && c.pos === pos);
+      list.forEach((c, i) => { html += this.unitHtml(c, side, pos, i, list.length); });
+    });
+    stage.innerHTML = html;
     this.root.querySelector('#battle-round').textContent = `第 ${Battle.round} 回合`;
 
-    // 标记当前行动者
     const cur = Battle.current();
     if (cur) {
-      const ce = this.root.querySelector(`.unit[data-uid="${cur.uid}"]`);
+      const ce = stage.querySelector(`.unit[data-uid="${cur.uid}"]`);
       if (ce) ce.classList.add('active-turn');
     }
+    this.attachDrag();
+  },
+
+  /** 仅更新单个单位的血量/SP/状态（不重建，保留动画） */
+  updateUnitDom(c) {
+    if (!c || !this.root) return;
+    const el = this.root.querySelector(`.unit[data-uid="${c.uid}"]`);
+    if (!el) return;
+    const hpFill = el.querySelector('.fill.hp'); if (hpFill) hpFill.style.width = Math.max(0, c.hp / c.maxHp * 100) + '%';
+    const hpText = el.querySelector('.u-hp-text'); if (hpText) hpText.textContent = `${c.hp}/${c.maxHp}`;
+    const spFill = el.querySelector('.fill.sp'); if (spFill) spFill.style.width = (c.sp / c.maxSp * 100) + '%';
+    el.classList.toggle('dead', !c.alive);
+    el.classList.toggle('enraged', !!c.enraged);
+    // 护盾
+    let sh = el.querySelector('.shield-tag');
+    if (c.shield > 0) { if (!sh) { sh = UI.el('<span class="shield-tag"></span>'); el.appendChild(sh); } sh.textContent = '🛡' + c.shield; }
+    else if (sh) sh.remove();
+    // 状态图标
+    const stIcon = { poison: '☠️', burn: '🔥', stun: '💫', silence: '🔇' };
+    const active = (c.statuses || []).filter(s => s.turns > 0);
+    let su = el.querySelector('.u-status');
+    if (active.length) {
+      if (!su) { su = UI.el('<div class="u-status"></div>'); el.insertBefore(su, el.querySelector('.u-art')); }
+      su.innerHTML = active.map(s => `<span class="st-badge">${stIcon[s.type] || ''}</span>`).join('');
+    } else if (su) su.remove();
+  },
+
+  /** 拖动调整我方站位（前后排/左右） */
+  attachDrag() {
+    const stage = this.root && this.root.querySelector('#battle-stage');
+    if (!stage) return;
+    stage.querySelectorAll('.unit.ally-unit').forEach(el => {
+      el.addEventListener('pointerdown', (e) => this.onDragStart(e, el));
+    });
+  },
+
+  onDragStart(e, el) {
+    // 仅在空闲（非动画、未选技能、非自动）时允许拖动
+    if (this.busy || this.selectedSkill || this.auto) return;
+    const uid = el.dataset.uid;
+    const c = Battle.combatants.find(x => x.uid === uid);
+    if (!c || !c.alive) return;
+    e.preventDefault();
+    const startX = e.clientX, startY = e.clientY;
+    let dragging = false;
+    const move = (ev) => {
+      const dx = ev.clientX - startX, dy = ev.clientY - startY;
+      if (!dragging && Math.hypot(dx, dy) > 8) { dragging = true; el.classList.add('dragging'); this.setHint('拖动到目标位置交换站位'); }
+      if (dragging) { el.style.transform = `translate(calc(-50% + ${dx}px), calc(-100% + ${dy}px)) scale(var(--uscale))`; }
+    };
+    const up = (ev) => {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      el.classList.remove('dragging');
+      if (!dragging) return;
+      // 找放置目标：最近的我方单位
+      const targetUid = this.dropTargetUid(ev.clientX, ev.clientY, uid);
+      if (targetUid) this.swapFormation(uid, targetUid);
+      else this.refresh();
+    };
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+  },
+
+  dropTargetUid(px, py, selfUid) {
+    let best = null, bestD = 70;
+    this.root.querySelectorAll('.unit.ally-unit').forEach(el => {
+      if (el.dataset.uid === selfUid) return;
+      const r = el.getBoundingClientRect();
+      const d = Math.hypot(px - (r.left + r.width / 2), py - (r.top + r.height / 2));
+      if (d < bestD) { bestD = d; best = el.dataset.uid; }
+    });
+    return best;
+  },
+
+  /** 交换两名我方单位的站位（前后排互换） */
+  swapFormation(uidA, uidB) {
+    const a = Battle.combatants.find(c => c.uid === uidA);
+    const b = Battle.combatants.find(c => c.uid === uidB);
+    if (!a || !b) { this.refresh(); return; }
+    const ap = a.pos; a.pos = b.pos; b.pos = ap;
+    this.setHint('站位已调整');
+    this.refresh();
   },
 
   // ---------- 回合流程 ----------
@@ -375,21 +460,21 @@ const BattleUI = {
         if (e.crit) this.screenShake();
         this.floatText(e.target, e.amount, 'damage', e.crit);
       }
-      this.refresh();
+      this.updateUnitDom(e.target);
     } else if (e.type === 'heal') {
       this.impactFlash(e.target, true);
       this.floatText(e.target, e.amount, 'heal', false);
-      this.refresh();
+      this.updateUnitDom(e.target);
     } else if (e.type === 'knockback') {
       this.knockFloat(e.target, e.kind === 'collide' ? '💥 撞击!' : '↩ 击退!');
     } else if (e.type === 'status') {
       const nm = { poison: '☠️中毒', burn: '🔥灼烧', stun: '💫眩晕', silence: '🔇沉默' }[e.status] || '';
       this.knockFloat(e.target, nm);
-      this.refresh();
+      this.updateUnitDom(e.target);
     } else if (e.type === 'enrage') {
       this.showSkillBanner('狂暴!');
       this.screenShake();
-      this.refresh();
+      this.updateUnitDom(e.target);
     } else if (e.type === 'end') {
       setTimeout(() => this.showResult(e.result), 700);
     }
@@ -402,7 +487,7 @@ const BattleUI = {
     const dy = attacker.side === 'ally' ? -18 : 18;
     el.animate(
       [{ transform: 'translateY(0)' }, { transform: `translateY(${dy}px) scale(1.08)`, offset: 0.4 }, { transform: 'translateY(0)' }],
-      { duration: 360, easing: 'ease-out' }
+      { duration: 360, easing: 'ease-out', composite: 'add' }
     );
     el.classList.add('lunging');
     setTimeout(() => el.classList.remove('lunging'), 360);
@@ -459,10 +544,10 @@ const BattleUI = {
     ft.style.top = (rect.top + 10) + 'px';
     document.body.appendChild(ft);
     setTimeout(() => ft.remove(), 1000);
-    // 受击抖动
+    // 受击抖动（叠加到基础定位变换上）
     unitEl.animate(
       [{ transform: 'translateX(0)' }, { transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(0)' }],
-      { duration: 200 }
+      { duration: 200, composite: 'add' }
     );
   },
 
