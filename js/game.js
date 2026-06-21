@@ -24,6 +24,7 @@ const Game = {
     if (!this.state.seenStory) this.state.seenStory = [];
     if (!this.state.inventory) this.state.inventory = [];
     if (!this.state._gearSeq) this.state._gearSeq = 1;
+    if (!this.state.worldFlags) this.state.worldFlags = {};
     this.state.roster.forEach(o => {
       if (!o.equip) o.equip = { weapon: null, armor: null, accessory: null, ex: null };
       if (o.plus == null) o.plus = 0;
@@ -75,6 +76,8 @@ const Game = {
       seenStory: [],
       // 装备背包（gear 实例：{ iid, tpl }）
       inventory: [],
+      // 探索地图的一次性标记（宝箱等）
+      worldFlags: {},
       // 抽卡保底计数（距上次 5★）
       pity: 0,
       _uidSeq: 1,

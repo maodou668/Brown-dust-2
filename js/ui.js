@@ -201,7 +201,19 @@ const UI = {
           </div>
         </div>`;
     }).join('');
-    this.screenEl.innerHTML = `<div class="section-title">冒险关卡</div>${cards}`;
+    const explore = `
+      <div class="section-title">探索模式 <span class="muted" style="font-weight:400;font-size:11px;">· 在场景中走动、触发剧情与战斗</span></div>
+      <div class="explore-card" data-world="forest">
+        <div class="explore-art">🌲</div>
+        <div class="explore-info">
+          <h3>艾尔玛森林 · 可探索地图</h3>
+          <p class="muted">用方向键走动，找到哥布林群、暗影狼、老猎人与宝箱。</p>
+        </div>
+        <div class="explore-go">进入 ›</div>
+      </div>`;
+    this.screenEl.innerHTML = `${explore}<div class="section-title">关卡选择</div>${cards}`;
+    const we = this.screenEl.querySelector('[data-world]');
+    if (we) we.addEventListener('click', () => World.open(we.dataset.world));
     this.screenEl.querySelectorAll('.stage-card[data-stage]').forEach(card => {
       const id = card.dataset.stage;
       if (!id) return;

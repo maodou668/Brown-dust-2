@@ -6,7 +6,7 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 let html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'css/style.css'), 'utf8');
-const jsFiles = ['data.js', 'lore.js', 'gear.js', 'game.js', 'battle.js', 'ui.js', 'story.js', 'main.js'];
+const jsFiles = ['data.js', 'lore.js', 'gear.js', 'game.js', 'battle.js', 'ui.js', 'story.js', 'world.js', 'main.js'];
 const js = jsFiles.map(f => fs.readFileSync(path.join(root, 'js', f), 'utf8')).join('\n\n');
 
 // 兼容资源引用上的 ?v= 版本号查询串

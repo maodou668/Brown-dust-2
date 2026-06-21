@@ -685,3 +685,62 @@ body {
   25% { transform: translateX(10px) scale(1.1); opacity: 1; }
   100% { transform: translateX(28px) scale(1); opacity: 0; }
 }
+
+/* ============================================================
+   俯视角探索地图
+   ============================================================ */
+#world-screen {
+  position: fixed; inset: 0; max-width: 480px; margin: 0 auto; z-index: 45;
+  background: #0e0a14; display: flex; flex-direction: column; overflow: hidden;
+}
+.world-top {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 14px; font-size: 14px; font-weight: 700;
+  background: rgba(0,0,0,.4); z-index: 2;
+}
+#world-canvas { flex: 1; width: 100%; display: block; touch-action: none; background: #1d3322; }
+.world-hint {
+  position: absolute; left: 0; right: 0; bottom: 132px; text-align: center;
+  font-size: 13px; color: #ffe07a; text-shadow: 0 2px 6px #000; pointer-events: none;
+  min-height: 18px; font-weight: 700;
+}
+.world-ctrl {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  padding: 12px 22px 22px; background: linear-gradient(180deg, transparent, rgba(0,0,0,.5));
+}
+.dpad { position: relative; width: 132px; height: 132px; }
+.dbtn {
+  position: absolute; width: 44px; height: 44px; border-radius: 12px;
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; font-size: 16px; cursor: pointer; user-select: none; touch-action: none;
+  display: grid; place-items: center;
+}
+.dbtn:active { background: rgba(176,107,255,.5); }
+.dbtn.up { top: 0; left: 44px; } .dbtn.down { bottom: 0; left: 44px; }
+.dbtn.left { left: 0; top: 44px; } .dbtn.right { right: 0; top: 44px; }
+.act-btn {
+  width: 76px; height: 76px; border-radius: 50%; align-self: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff; font-size: 15px; font-weight: 800; border: none; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(176,107,255,.5);
+}
+.act-btn:active { transform: scale(.94); }
+.act-btn:disabled { opacity: .35; box-shadow: none; }
+
+/* 探索入口卡 */
+.explore-card {
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  background: linear-gradient(135deg, rgba(74,139,58,.25), var(--panel));
+  border: 1px solid rgba(120,200,120,.3); border-radius: 14px;
+  padding: 14px; margin-bottom: 14px; transition: transform .1s;
+}
+.explore-card:active { transform: scale(.98); }
+.explore-art {
+  width: 52px; height: 52px; border-radius: 12px; flex-shrink: 0;
+  display: grid; place-items: center; font-size: 28px;
+  background: radial-gradient(circle at 50% 35%, #3a7a44, #1d3322);
+}
+.explore-info { flex: 1; min-width: 0; }
+.explore-info h3 { font-size: 14px; margin-bottom: 2px; }
+.explore-info p { font-size: 11px; line-height: 1.4; }
+.explore-go { color: var(--accent); font-size: 13px; font-weight: 700; }

@@ -8,8 +8,9 @@ const BattleUI = {
   selectedSkill: null,   // 当前选中的技能 id
   busy: false,           // 动画/AI 执行中，锁定输入
 
-  start(stage) {
+  start(stage, onExit) {
     this.stage = stage;
+    this.onExitCb = onExit || null;
     this.selectedSkill = null;
     this.busy = false;
     Battle.setup(Game.state.team, stage);
@@ -98,7 +99,10 @@ const BattleUI = {
   exit() {
     if (this.root) this.root.remove();
     this.root = null;
-    Main.refreshCurrent();
+    const cb = this.onExitCb;
+    this.onExitCb = null;
+    if (cb) cb();
+    else Main.refreshCurrent();
   },
 
   // ---------- 渲染单位 ----------
