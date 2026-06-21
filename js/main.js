@@ -217,7 +217,12 @@ const BattleUI = {
 
     // 需要选目标
     const isAllyTarget = sk.target.startsWith('ally');
-    this.setHint(`选择「${sk.name}」的目标 ${sk.target === 'enemyRow' ? '(命中整排)' : ''}`);
+    const tags = [];
+    if (sk.target === 'enemyRow') tags.push('命中整排');
+    if (sk.pierce) tags.push('穿透·可选后排');
+    else if (sk.target === 'enemySingle') tags.push('前排保护');
+    if (sk.knockback) tags.push('击退');
+    this.setHint(`选择「${sk.name}」的目标 ${tags.length ? '(' + tags.join('·') + ')' : ''}`);
     this.clearTargets();
     targets.forEach(t => {
       const elx = this.root.querySelector(`.unit[data-uid="${t.uid}"]`);
@@ -273,6 +278,8 @@ const BattleUI = {
       this.impactFlash(e.target, true);
       this.floatText(e.target, e.amount, 'heal', false);
       this.refresh();
+    } else if (e.type === 'knockback') {
+      this.knockFloat(e.target, e.kind === 'collide' ? '💥 撞击!' : '↩ 击退!');
     } else if (e.type === 'end') {
       setTimeout(() => this.showResult(e.result), 700);
     }
@@ -289,6 +296,18 @@ const BattleUI = {
     );
     el.classList.add('lunging');
     setTimeout(() => el.classList.remove('lunging'), 360);
+  },
+
+  /** 击退/撞击提示飘字 */
+  knockFloat(target, text) {
+    const el = this.root.querySelector(`.unit[data-uid="${target.uid}"]`);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const ft = UI.el(`<div class="knock-text">${text}</div>`);
+    ft.style.left = (rect.left + rect.width / 2 - 24) + 'px';
+    ft.style.top = (rect.top - 6) + 'px';
+    document.body.appendChild(ft);
+    setTimeout(() => ft.remove(), 800);
   },
 
   /** 命中闪光 */

@@ -166,13 +166,19 @@ const Battle = {
     return combatant.sp >= (sk.sp || 0);
   },
 
+  /** 前排保护：有存活前排时只能选前排，否则可选后排 */
+  frontline(units) {
+    const front = units.filter(u => u.alive && u.pos === 'front');
+    return front.length ? front : units.filter(u => u.alive);
+  },
+
   /** 解析技能合法目标列表 */
   validTargets(combatant, skillId) {
     const sk = window.GameData.SKILLS[skillId];
     const enemySide = combatant.side === 'ally' ? this.aliveEnemies() : this.aliveAllies();
     const allySide = combatant.side === 'ally' ? this.aliveAllies() : this.aliveEnemies();
     switch (sk.target) {
-      case 'enemySingle': return this.applyTaunt(combatant, enemySide);
+      case 'enemySingle': return sk.pierce ? enemySide : this.frontline(enemySide);
       case 'enemyRow':    return enemySide; // 选一个代表，命中其整排
       case 'enemyAll':    return enemySide;
       case 'allySingle':  return allySide;
@@ -264,6 +270,8 @@ const Battle = {
         if (!t.alive) return;
         const r = this.dealDamage(combatant, t, sk.power);
         summary.push(`${t.name} -${r.dmg}${r.tag}`);
+        // 击退位移
+        if (sk.knockback && t.alive) this.applyKnockback(combatant, t, r.dmg);
       });
       this.pushLog(`${combatant.name} 使用「${sk.name}」：${summary.join('，')}`);
       // 附带减益（如水矛降防）
@@ -302,6 +310,30 @@ const Battle = {
     this.checkEnd();
   },
 
+  /** 击退：前排→后排；已在后排则撞墙受额外伤害 */
+  applyKnockback(attacker, target, baseDmg) {
+    if (target.pos === 'front') {
+      target.pos = 'back';
+      this.pushLog(`↩ ${target.name} 被击退到后排！`);
+      if (this.onEvent) this.onEvent({ type: 'knockback', target, kind: 'push' });
+    } else {
+      // 撞墙：额外碰撞伤害
+      let dmg = Math.max(1, Math.round(baseDmg * 0.35));
+      if (target.shield > 0) {
+        const a = Math.min(target.shield, dmg);
+        target.shield -= a; dmg -= a;
+      }
+      target.hp -= dmg;
+      this.pushLog(`💥 ${target.name} 撞击受到 ${dmg} 额外伤害！`);
+      if (this.onEvent) this.onEvent({ type: 'knockback', target, kind: 'collide' });
+      if (dmg > 0 && this.onEvent) this.onEvent({ type: 'damage', target, attacker, amount: dmg, crit: false, elem: false });
+      if (target.hp <= 0) {
+        target.hp = 0; target.alive = false;
+        this.pushLog(`💀 ${target.name} 被击倒！`);
+      }
+    }
+  },
+
   checkEnd() {
     if (this.aliveEnemies().length === 0) {
       this.finished = true;
@@ -332,11 +364,12 @@ const Battle = {
 
     // 选目标：攻击类 → 优先打血量最低的我方；治疗 → 自己
     let picked;
-    const targets = this.aliveAllies();
     if (choice.sk.effect === 'damage') {
-      // 考虑嘲讽
+      // 嘲讽优先；否则受前排保护约束（穿透技能可越过前排）
       const taunters = this.aliveAllies().filter(a => a.taunting > 0);
-      const pool = taunters.length ? taunters : targets;
+      const pool = taunters.length
+        ? taunters
+        : (choice.sk.pierce ? this.aliveAllies() : this.frontline(this.aliveAllies()));
       picked = pool.reduce((lo, t) => (t.hp < lo.hp ? t : lo), pool[0]);
     } else {
       picked = c;

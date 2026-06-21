@@ -199,18 +199,18 @@ const SKILLS = {
   },
   power_strike: {
     name: '强力一击', target: 'enemySingle', effect: 'damage',
-    power: 2.0, sp: 2, icon: '💥',
-    desc: '蓄力后对单个敌人造成 200% 攻击力的伤害。',
+    power: 2.0, sp: 2, icon: '💥', knockback: true,
+    desc: '蓄力后对单个敌人造成 200% 攻击力的伤害，并将其击退到后排。',
   },
   gale_strike: {
     name: '疾风斩', target: 'enemyRow', effect: 'damage',
-    power: 1.4, sp: 3, icon: '🌪️',
-    desc: '对敌方一整排造成 140% 攻击力的风属性伤害。',
+    power: 1.4, sp: 3, icon: '🌪️', knockback: true,
+    desc: '对敌方一整排造成 140% 攻击力的风属性伤害，并将其击退。',
   },
   fireball: {
     name: '火球术', target: 'enemySingle', effect: 'damage',
-    power: 1.8, sp: 0, icon: '☄️',
-    desc: '投掷火球对单个敌人造成 180% 攻击力的火焰伤害。',
+    power: 1.8, sp: 0, icon: '☄️', pierce: true,
+    desc: '投掷火球对单个敌人造成 180% 攻击力的火焰伤害（无视前排，可直击后排）。',
   },
   inferno: {
     name: '炼狱业火', target: 'enemyAll', effect: 'damage',
@@ -219,8 +219,8 @@ const SKILLS = {
   },
   water_lance: {
     name: '水矛', target: 'enemySingle', effect: 'damage',
-    power: 1.5, sp: 0, icon: '🔱',
-    desc: '凝聚水矛刺穿敌人，造成 150% 伤害并降低其 20% 防御。',
+    power: 1.5, sp: 0, icon: '🔱', pierce: true,
+    desc: '凝聚水矛刺穿敌人，造成 150% 伤害并降低其 20% 防御（无视前排）。',
     extra: { type: 'debuffDef', power: 0.20, duration: 2 },
   },
   frost_nova: {
@@ -230,13 +230,13 @@ const SKILLS = {
   },
   piercing_shot: {
     name: '穿透射击', target: 'enemySingle', effect: 'damage',
-    power: 1.6, sp: 0, icon: '🎯',
-    desc: '精准射击单个敌人，造成 160% 攻击力的伤害。',
+    power: 1.6, sp: 0, icon: '🎯', pierce: true,
+    desc: '精准射击单个敌人，造成 160% 攻击力的伤害（无视前排，直击后排）。',
   },
   shadow_volley: {
     name: '暗影连射', target: 'enemySingle', effect: 'damage',
-    power: 3.2, sp: 4, icon: '🌌',
-    desc: '倾泻暗影箭雨，对单个敌人造成 320% 攻击力的恐怖伤害。',
+    power: 3.2, sp: 4, icon: '🌌', pierce: true,
+    desc: '倾泻暗影箭雨，对单个敌人造成 320% 攻击力的恐怖伤害（无视前排）。',
   },
   holy_smite: {
     name: '圣光裁决', target: 'enemyRow', effect: 'damage',
@@ -245,8 +245,8 @@ const SKILLS = {
   },
   earth_slam: {
     name: '大地践踏', target: 'enemyAll', effect: 'damage',
-    power: 1.1, sp: 3, icon: '⛰️',
-    desc: '震动大地，对敌方全体造成 110% 攻击力的伤害。',
+    power: 1.1, sp: 3, icon: '⛰️', knockback: true,
+    desc: '震动大地，对敌方全体造成 110% 攻击力的伤害，并击退前排。',
   },
   rock_guard: {
     name: '磐石守护', target: 'self', effect: 'buffDef',
@@ -283,13 +283,13 @@ const SKILLS = {
   },
   tempest_blade: {
     name: '苍穹一闪', target: 'enemySingle', effect: 'damage',
-    power: 2.8, sp: 4, icon: '🌀',
-    desc: '以极致剑速对单个敌人造成 280% 攻击力的风属性爆发伤害。',
+    power: 2.8, sp: 4, icon: '🌀', knockback: true,
+    desc: '以极致剑速对单个敌人造成 280% 攻击力的风属性爆发伤害，并将其击退。',
   },
   blazing_arrow: {
     name: '红莲烈箭', target: 'enemySingle', effect: 'damage',
-    power: 2.3, sp: 3, icon: '🔥',
-    desc: '点燃箭矢射穿目标，造成 230% 攻击力的火焰伤害。',
+    power: 2.3, sp: 3, icon: '🔥', pierce: true,
+    desc: '点燃箭矢射穿目标，造成 230% 攻击力的火焰伤害（无视前排，直击后排）。',
   },
 };
 
