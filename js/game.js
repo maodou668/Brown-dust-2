@@ -25,6 +25,7 @@ const Game = {
     if (!this.state.inventory) this.state.inventory = [];
     if (!this.state._gearSeq) this.state._gearSeq = 1;
     if (!this.state.worldFlags) this.state.worldFlags = {};
+    if (!this.state.chapterProgress) this.state.chapterProgress = {};
     this.state.roster.forEach(o => {
       if (!o.equip) o.equip = { weapon: null, armor: null, accessory: null, ex: null };
       if (o.plus == null) o.plus = 0;
@@ -78,6 +79,8 @@ const Game = {
       inventory: [],
       // 探索地图的一次性标记（宝箱等）
       worldFlags: {},
+      // 章节推进进度：{ chapterId: 已完成步数 }
+      chapterProgress: {},
       // 抽卡保底计数（距上次 5★）
       pity: 0,
       _uidSeq: 1,

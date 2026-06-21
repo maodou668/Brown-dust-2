@@ -744,3 +744,55 @@ body {
 .explore-info h3 { font-size: 14px; margin-bottom: 2px; }
 .explore-info p { font-size: 11px; line-height: 1.4; }
 .explore-go { color: var(--accent); font-size: 13px; font-weight: 700; }
+
+/* 章节卡（引导式冒险） */
+.chapter-card {
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  background: var(--panel); border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px; padding: 14px; margin-bottom: 12px; transition: transform .1s, border-color .2s;
+}
+.chapter-card:not(.locked):active { transform: scale(.98); }
+.chapter-card:not(.locked):hover { border-color: var(--accent); }
+.chapter-card.locked { opacity: .5; }
+.chapter-card.done { border-color: rgba(74,214,109,.3); }
+.chapter-art {
+  width: 54px; height: 54px; border-radius: 13px; flex-shrink: 0;
+  display: grid; place-items: center; font-size: 28px;
+  background: radial-gradient(circle at 50% 35%, rgba(176,107,255,.3), var(--panel-2));
+}
+.chapter-info { flex: 1; min-width: 0; }
+.chapter-info h3 { font-size: 14px; margin-bottom: 3px; }
+.chapter-info p { font-size: 11px; color: var(--text-dim); line-height: 1.4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chapter-prog { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.cp-bar { flex: 1; height: 5px; border-radius: 3px; background: rgba(0,0,0,.4); overflow: hidden; }
+.cp-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .3s; }
+.chapter-prog span { font-size: 10px; color: var(--text-dim); }
+.chapter-go { color: var(--accent); font-size: 13px; font-weight: 700; white-space: nowrap; }
+
+/* 探索：当前目标条 */
+.world-obj {
+  position: absolute; top: 44px; left: 0; right: 0; text-align: center; z-index: 2;
+  font-size: 13px; color: #fff; pointer-events: none; min-height: 20px;
+  text-shadow: 0 2px 6px #000;
+}
+.world-obj .obj-tag {
+  background: var(--accent); color: #fff; font-size: 10px; font-weight: 800;
+  padding: 1px 7px; border-radius: 6px; margin-right: 6px;
+}
+.world-obj.flash { animation: objFlash .8s ease-out; }
+@keyframes objFlash { 0% { transform: scale(.7); opacity: 0; } 40% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+
+/* 战斗场景 45° 斜视地面 */
+.battle-floor {
+  position: absolute; left: -20%; right: -20%; bottom: 4%; height: 62%;
+  z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(180deg, transparent, rgba(0,0,0,.35)),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 2px, transparent 2px 46px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.06) 0 2px, transparent 2px 40px);
+  transform: perspective(420px) rotateX(58deg);
+  transform-origin: center bottom;
+  border-radius: 40% 40% 0 0 / 18% 18% 0 0;
+  opacity: .5;
+}

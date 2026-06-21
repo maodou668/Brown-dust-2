@@ -182,42 +182,31 @@ const UI = {
   //  关卡 / 冒险
   // ============================================================
   renderStages() {
-    const s = Game.state;
-    const cards = window.GameData.STAGES.map(stage => {
-      // 解锁条件：第一关恒解锁，后续需通关前一关
-      const unlocked = stage.id === 1 || s.cleared.includes(stage.id - 1);
-      const cleared = s.cleared.includes(stage.id);
+    const chapters = World.CHAPTERS.map((ch, idx) => {
+      const unlocked = World.isChapterUnlocked(idx);
+      const prog = World.progress(ch.id);
+      const done = World.isChapterDone(ch);
+      const total = ch.steps.length;
+      const themeIcon = { forest: '🌲', cave: '⛏️', castle: '🏰' }[ch.theme] || '🗺️';
       return `
-        <div class="stage-card ${stage.isBoss ? 'boss' : ''} ${unlocked ? '' : 'locked'}" data-stage="${unlocked ? stage.id : ''}">
-          <div class="stage-num">${unlocked ? (stage.isBoss ? '👑' : stage.id) : '🔒'}</div>
-          <div class="stage-info">
-            <h3>${stage.name} ${cleared ? '<span class="clear-mark">✓</span>' : ''}</h3>
-            <p>${unlocked ? stage.desc : '通关前一关后解锁'}</p>
-            <div class="stage-meta">
-              <span>推荐 Lv.${stage.recommend}</span>
-              <span>🪙${stage.reward.gold}</span>
-              <span>💎${stage.reward.gem}</span>
-            </div>
+        <div class="chapter-card ${unlocked ? '' : 'locked'} ${done ? 'done' : ''}" data-ch="${unlocked ? ch.id : ''}">
+          <div class="chapter-art">${unlocked ? themeIcon : '🔒'}</div>
+          <div class="chapter-info">
+            <h3>${ch.name} ${done ? '<span class="clear-mark">✓</span>' : ''}</h3>
+            <p>${unlocked ? ch.desc : '通关上一章后解锁'}</p>
+            ${unlocked ? `<div class="chapter-prog"><div class="cp-bar"><div class="cp-fill" style="width:${Math.round(prog / total * 100)}%"></div></div><span>${prog}/${total} 目标</span></div>` : ''}
           </div>
+          <div class="chapter-go">${unlocked ? (done ? '重玩 ›' : prog > 0 ? '继续 ›' : '进入 ›') : ''}</div>
         </div>`;
     }).join('');
-    const explore = `
-      <div class="section-title">探索模式 <span class="muted" style="font-weight:400;font-size:11px;">· 在场景中走动、触发剧情与战斗</span></div>
-      <div class="explore-card" data-world="forest">
-        <div class="explore-art">🌲</div>
-        <div class="explore-info">
-          <h3>艾尔玛森林 · 可探索地图</h3>
-          <p class="muted">用方向键走动，找到哥布林群、暗影狼、老猎人与宝箱。</p>
-        </div>
-        <div class="explore-go">进入 ›</div>
-      </div>`;
-    this.screenEl.innerHTML = `${explore}<div class="section-title">关卡选择</div>${cards}`;
-    const we = this.screenEl.querySelector('[data-world]');
-    if (we) we.addEventListener('click', () => World.open(we.dataset.world));
-    this.screenEl.querySelectorAll('.stage-card[data-stage]').forEach(card => {
-      const id = card.dataset.stage;
+    this.screenEl.innerHTML = `
+      <div class="section-title">章节冒险 <span class="muted" style="font-weight:400;font-size:11px;">· 在场景中走动，到达目标触发剧情与战斗</span></div>
+      ${chapters}
+      <p class="muted" style="text-align:center;margin-top:10px;">用方向键移动，跟随 ▼ 指引到达目标</p>`;
+    this.screenEl.querySelectorAll('.chapter-card[data-ch]').forEach(card => {
+      const id = card.dataset.ch;
       if (!id) return;
-      card.addEventListener('click', () => this.preBattle(Number(id)));
+      card.addEventListener('click', () => World.openChapter(id));
     });
   },
 

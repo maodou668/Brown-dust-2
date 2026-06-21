@@ -32,6 +32,7 @@ const BattleUI = {
           <button class="ghost-btn" id="battle-flee" title="撤退">🏳️</button>
         </div>
         <div class="battle-field bg-${scene}">
+          <div class="battle-floor"></div>
           <div class="bfx-particles" id="bfx"></div>
           <div class="enemy-zone">
             <div class="row-label">— 敌方后排 —</div>
