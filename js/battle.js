@@ -25,9 +25,10 @@ class Combatant {
     this.spd = opts.spd;
     this.crit = opts.crit;
 
-    this.skills = opts.skills.slice(); // 技能 id 列表
-    this.sp = 0;                       // 怒气 / 技能点
+    this.skills = opts.skills.slice(); // 技能 id 列表（含普攻）
+    this.sp = 3;                       // 起始 SP（可开局放低费技能）
     this.maxSp = 6;
+    this.cooldowns = {};               // skillId -> 剩余冷却回合
 
     this.shield = 0;                   // 当前护盾值
     this.buffs = [];                   // {stat:'atk'|'def', mult, turns}
@@ -55,6 +56,10 @@ class Combatant {
     this.buffs.forEach(b => b.turns--);
     this.buffs = this.buffs.filter(b => b.turns > 0);
     if (this.taunting > 0) this.taunting--;
+    // 冷却递减
+    Object.keys(this.cooldowns).forEach(k => {
+      if (this.cooldowns[k] > 0) this.cooldowns[k]--;
+    });
   }
 }
 
@@ -84,14 +89,14 @@ const Battle = {
       const owned = Game.getOwned(uid);
       if (!owned) return;
       const def = D.CHARACTERS[owned.charId];
-      const cos = Game.activeCostumeDef(owned); // 当前装扮：技能/元素/配色
+      const cos = Game.activeCostumeDef(owned); // 当前装扮：属性/元素/配色
       const st = Game.computeStats(owned);
       const pos = (def.cls === 'warrior' || def.cls === 'defender') ? 'front' : 'back';
       this.combatants.push(new Combatant({
         uid: 'A' + i, name: def.name, side: 'ally', charId: owned.charId,
         cls: def.cls, element: cos.element, color: cos.color, level: owned.level,
         pos, maxHp: st.maxHp, atk: st.atk, def: st.def, spd: st.spd, crit: st.crit,
-        skills: cos.skills,
+        skills: Game.battleSkills(owned), // 普攻 + 各服装招式
       }));
     });
 
@@ -161,9 +166,18 @@ const Battle = {
     return c && c.alive && c.side === 'ally' && !this.finished;
   },
 
-  /** 获取某技能当前是否可用（SP 足够） */
+  /** 技能冷却回合数（未显式定义则按 SP 估算） */
+  skillCD(sk) {
+    if (sk.cd != null) return sk.cd;
+    const sp = sk.sp || 0;
+    return sp >= 4 ? 3 : sp >= 2 ? 2 : 1;
+  },
+
+  /** 技能当前是否可用（SP 足够 且 不在冷却）；普攻恒可用 */
   canUseSkill(combatant, skillId) {
     const sk = window.GameData.SKILLS[skillId];
+    if (sk.basic) return true;
+    if ((combatant.cooldowns[skillId] || 0) > 0) return false;
     return combatant.sp >= (sk.sp || 0);
   },
 
@@ -305,8 +319,12 @@ const Battle = {
       if (sk.extra && sk.extra.type === 'taunt') combatant.taunting = 2;
     }
 
-    // 行动后回复 SP（普攻类 sp=0 的技能也算行动）
-    combatant.sp = Math.min(combatant.maxSp, combatant.sp + 2);
+    // SP 与冷却：普攻回复 SP；招式进入冷却
+    if (sk.basic) {
+      combatant.sp = Math.min(combatant.maxSp, combatant.sp + 3);
+    } else {
+      combatant.cooldowns[skillId] = this.skillCD(sk);
+    }
 
     this.checkEnd();
   },
@@ -355,13 +373,13 @@ const Battle = {
     const c = this.current();
     if (!c || c.side !== 'enemy' || !c.alive) return;
 
-    // 优先使用 SP 充足的高威力技能
+    // 可用技能：SP 足够 且 不在冷却；否则用普通攻击
     const usable = c.skills
       .map(id => ({ id, sk: window.GameData.SKILLS[id] }))
-      .filter(s => c.sp >= (s.sk.sp || 0));
-    // 按威力排序，偏好消耗 SP 的强技能
+      .filter(s => this.canUseSkill(c, s.id));
     usable.sort((a, b) => (b.sk.power * (1 + (b.sk.sp || 0))) - (a.sk.power * (1 + (a.sk.sp || 0))));
-    const choice = usable[0] || { id: c.skills[0], sk: window.GameData.SKILLS[c.skills[0]] };
+    const basic = { id: 'basic_attack', sk: window.GameData.SKILLS.basic_attack };
+    const choice = usable[0] || basic;
 
     // 选目标：攻击类 → 优先打血量最低的我方；治疗 → 自己
     let picked;

@@ -191,12 +191,14 @@ const BattleUI = {
     bar.innerHTML = c.skills.map(sid => {
       const sk = window.GameData.SKILLS[sid];
       const usable = Battle.canUseSkill(c, sid);
-      const spLabel = sk.sp > 0
-        ? `<div class="sb-sp ${usable ? 'ready' : ''}">${usable ? 'SP ' + sk.sp + ' ✓' : 'SP ' + sk.sp + ' (' + c.sp + ')'}</div>`
-        : `<div class="sb-sp ready">普通</div>`;
-      return `<button class="skill-btn" data-skill="${sid}" ${usable ? '' : 'disabled'}>
+      const cd = c.cooldowns[sid] || 0;
+      let label;
+      if (sk.basic) label = `<div class="sb-sp ready">回 SP +3</div>`;
+      else if (cd > 0) label = `<div class="sb-sp cooldown">冷却 ${cd}</div>`;
+      else label = `<div class="sb-sp ${usable ? 'ready' : ''}">SP ${sk.sp}${usable ? ' ✓' : ' (' + c.sp + ')'}</div>`;
+      return `<button class="skill-btn ${sk.basic ? 'basic' : ''}" data-skill="${sid}" ${usable ? '' : 'disabled'}>
         <div class="sb-name">${sk.icon} ${sk.name}</div>
-        ${spLabel}
+        ${label}
       </button>`;
     }).join('');
     bar.querySelectorAll('.skill-btn').forEach(b =>

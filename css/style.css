@@ -809,3 +809,7 @@ body {
 .costume-chip.active { border-color: var(--gold); background: rgba(240,198,116,.12); }
 .costume-chip .cos-icon { font-size: 18px; }
 .costume-chip .cos-name { font-size: 10px; font-weight: 700; }
+
+/* 普攻按钮 / 冷却标签 */
+.skill-btn.basic { border-color: rgba(255,255,255,.18); background: var(--panel); }
+.sb-sp.cooldown { color: #ff8a6a; }

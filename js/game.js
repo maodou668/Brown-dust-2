@@ -29,8 +29,10 @@ const Game = {
     this.state.roster.forEach(o => {
       if (!o.equip) o.equip = { weapon: null, armor: null, accessory: null, ex: null };
       if (o.plus == null) o.plus = 0;
-      if (!o.costumes) o.costumes = ['base'];
-      if (!o.activeCostume) o.activeCostume = 'base';
+      // 服装：补齐 + 把老的 'base' 规范化为 'base_<charId>'
+      if (!o.costumes || !o.costumes.length) o.costumes = ['base_' + o.charId];
+      o.costumes = o.costumes.map(c => (c === 'base' ? 'base_' + o.charId : c));
+      if (!o.activeCostume || o.activeCostume === 'base') o.activeCostume = 'base_' + o.charId;
     });
     // 升星迁移：把同名角色的重复实例合并为突破等级
     this._mergeDuplicates();
@@ -97,8 +99,8 @@ const Game = {
       uid, charId, level, exp: 0,
       star: window.GameData.CHARACTERS[charId].rarity,
       plus: 0, // 突破等级 0~5
-      costumes: ['base'],      // 拥有的服装（base = 角色本体服装）
-      activeCostume: 'base',   // 当前装扮
+      costumes: ['base_' + charId],      // 拥有的服装 id 列表
+      activeCostume: 'base_' + charId,   // 当前装扮（决定属性/外观）
       equip: { weapon: null, armor: null, accessory: null, ex: null },
     };
   },
@@ -117,71 +119,56 @@ const Game = {
 
   // ---------- 角色数值计算 ----------
 
-  // ---------- 服装 ----------
+  // ---------- 服装（BD2 模型：服装=收集单位，自带属性+招式）----------
 
-  /** 角色本体（base）服装 */
-  baseCostume(charId) {
-    const ch = window.GameData.CHARACTERS[charId];
-    return { id: 'base', charId, name: `${ch.name} · ${ch.title}`, rarity: ch.rarity, element: ch.element, color: ch.color, skills: ch.skills, base: true };
+  /** 规范化服装 id（兼容老存档 'base'） */
+  normCostumeId(charId, id) {
+    if (!id || id === 'base') return 'base_' + charId;
+    return id;
   },
 
-  /** 取某服装定义（base 或额外服装） */
+  /** 取某服装定义 */
   costumeDef(charId, costumeId) {
-    if (!costumeId || costumeId === 'base') return this.baseCostume(charId);
-    const c = window.GameData.COSTUMES[costumeId];
-    return c || this.baseCostume(charId);
+    const id = this.normCostumeId(charId, costumeId);
+    return window.GameData.COSTUMES[id] || window.GameData.COSTUMES['base_' + charId];
   },
 
-  /** 当前装扮定义 */
+  /** 当前装扮定义（决定属性/外观） */
   activeCostumeDef(owned) {
     return this.costumeDef(owned.charId, owned.activeCostume);
   },
-
-  /** 当前装扮的技能/外观 */
-  activeSkills(owned) { return this.activeCostumeDef(owned).skills; },
   activeElement(owned) { return this.activeCostumeDef(owned).element; },
   activeColor(owned) { return this.activeCostumeDef(owned).color; },
 
-  /** 该角色所有可选服装 id（base + 已拥有额外服装） */
+  /** 拥有的服装 id 列表（规范化、去重） */
   ownedCostumeIds(owned) {
-    const list = ['base'];
-    (owned.costumes || []).forEach(cid => { if (cid !== 'base' && !list.includes(cid)) list.push(cid); });
-    return list;
+    const out = [];
+    (owned.costumes || []).forEach(cid => {
+      const id = this.normCostumeId(owned.charId, cid);
+      if (!out.includes(id)) out.push(id);
+    });
+    if (!out.length) out.push('base_' + owned.charId);
+    return out;
+  },
+
+  /** 战斗技能池：普通攻击 + 各拥有服装的专属招式（去重） */
+  battleSkills(owned) {
+    const skills = ['basic_attack'];
+    this.ownedCostumeIds(owned).forEach(cid => {
+      const c = window.GameData.COSTUMES[cid];
+      if (c && c.signature && !skills.includes(c.signature)) skills.push(c.signature);
+    });
+    return skills;
   },
 
   switchCostume(uid, costumeId) {
     const o = this.getOwned(uid);
     if (!o) return { ok: false };
-    const ids = this.ownedCostumeIds(o);
-    if (!ids.includes(costumeId)) return { ok: false, msg: '尚未拥有该服装' };
-    o.activeCostume = costumeId;
+    const id = this.normCostumeId(o.charId, costumeId);
+    if (!this.ownedCostumeIds(o).includes(id)) return { ok: false, msg: '尚未拥有该服装' };
+    o.activeCostume = id;
     this.save();
     return { ok: true };
-  },
-
-  /** 服装招募 */
-  gachaCostume() {
-    const G = window.GameData.COSTUME_GACHA;
-    if (this.state.gem < G.cost) return { ok: false, msg: '宝石不足' };
-    this.state.gem -= G.cost;
-    const costumeId = G.pool[Math.floor(Math.random() * G.pool.length)];
-    const cdef = window.GameData.COSTUMES[costumeId];
-    const result = { ok: true, costumeId, charId: cdef.charId, rarity: cdef.rarity, newChar: false, dup: false };
-    // 确保拥有角色
-    let owned = this.state.roster.find(o => o.charId === cdef.charId);
-    if (!owned) {
-      owned = this.makeOwned(cdef.charId, 1);
-      this.state.roster.push(owned);
-      result.newChar = true;
-    }
-    if ((owned.costumes || []).includes(costumeId)) {
-      result.dup = true;
-      this.state.gem += 30; // 重复返还
-    } else {
-      owned.costumes.push(costumeId);
-    }
-    this.save();
-    return result;
   },
 
   /** 突破属性倍率：每级 +8% */
@@ -189,18 +176,18 @@ const Game = {
     return 1 + (owned.plus || 0) * 0.08;
   },
 
-  /** 根据等级 + 突破 + 装备计算角色最终属性 */
+  /** 根据「当前服装属性」+ 等级 + 突破 + 装备计算最终属性 */
   computeStats(owned) {
-    const def = window.GameData.CHARACTERS[owned.charId];
+    const cos = this.activeCostumeDef(owned);
     const lv = owned.level - 1;
     const pm = this.plusMult(owned);
     const g = this.gearBonus(owned);
     return {
-      maxHp: Math.round((def.base.hp + def.grow.hp * lv) * pm) + g.hp,
-      atk:   Math.round((def.base.atk + def.grow.atk * lv) * pm) + g.atk,
-      def:   Math.round((def.base.def + def.grow.def * lv) * pm) + g.def,
-      spd:   def.base.spd + g.spd,
-      crit:  def.base.crit + g.crit,
+      maxHp: Math.round((cos.stats.hp + cos.grow.hp * lv) * pm) + g.hp,
+      atk:   Math.round((cos.stats.atk + cos.grow.atk * lv) * pm) + g.atk,
+      def:   Math.round((cos.stats.def + cos.grow.def * lv) * pm) + g.def,
+      spd:   cos.stats.spd + g.spd,
+      crit:  cos.stats.crit + g.crit,
     };
   },
 
@@ -374,7 +361,7 @@ const Game = {
     return 3;
   },
 
-  /** 抽一次卡，返回获得的角色信息 */
+  /** 抽一次「服装」（BD2 模型：服装即收集单位，抽到即拥有角色） */
   gachaPull() {
     if (this.state.gem < window.GameData.GACHA.cost) {
       return { ok: false, msg: '宝石不足' };
@@ -384,28 +371,34 @@ const Game = {
     if (rarity === 5) this.state.pity = 0;
     else this.state.pity++;
 
-    const pool = window.GameData.GACHA.pool[rarity];
-    const charId = pool[Math.floor(Math.random() * pool.length)];
+    const pool = window.GameData.COSTUME_POOL[rarity];
+    const costumeId = pool[Math.floor(Math.random() * pool.length)];
+    const cdef = window.GameData.COSTUMES[costumeId];
+    const charId = cdef.charId;
 
-    // 已拥有 → 提升突破等级；满突破 → 返还宝石；未拥有 → 加入队伍
-    const existing = this.state.roster.find(o => o.charId === charId);
-    const result = { ok: true, charId, rarity, isNew: false, plusUp: false, plus: 0, refund: 0 };
-    if (existing) {
-      if ((existing.plus || 0) < 5) {
-        existing.plus = (existing.plus || 0) + 1;
-        result.plusUp = true;
-        result.plus = existing.plus;
-      } else {
-        const refund = rarity === 5 ? 50 : (rarity === 4 ? 25 : 10);
-        this.state.gem += refund;
-        result.refund = refund;
-        result.plus = 5;
-      }
-    } else {
-      const owned = this.makeOwned(charId, 1);
+    const result = { ok: true, costumeId, charId, rarity, isNew: false, newCostume: false, plusUp: false, plus: 0, refund: 0 };
+    let owned = this.state.roster.find(o => o.charId === charId);
+    if (!owned) {
+      // 新角色：以这套服装加入
+      owned = this.makeOwned(charId, 1);
+      owned.costumes = [costumeId];
+      owned.activeCostume = costumeId;
       this.state.roster.push(owned);
       result.isNew = true;
-      result.owned = owned;
+      result.newCostume = true;
+    } else if (!this.ownedCostumeIds(owned).includes(costumeId)) {
+      // 新服装
+      owned.costumes.push(costumeId);
+      result.newCostume = true;
+    } else {
+      // 重复服装 → 提升突破；满突破返还
+      if ((owned.plus || 0) < 5) {
+        owned.plus = (owned.plus || 0) + 1;
+        result.plusUp = true; result.plus = owned.plus;
+      } else {
+        const refund = rarity === 5 ? 50 : (rarity === 4 ? 25 : 10);
+        this.state.gem += refund; result.refund = refund; result.plus = 5;
+      }
     }
     this.save();
     return result;
