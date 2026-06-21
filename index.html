@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>棕色尘埃 2 · Brown Dust 2</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 顶部资源栏 -->
+    <header id="topbar">
+      <div class="logo">
+        <span class="logo-mark">BD</span>
+        <span class="logo-text">棕色尘埃<small>2</small></span>
+      </div>
+      <div class="resources">
+        <div class="res" title="金币"><span class="res-icon">🪙</span><span id="res-gold">0</span></div>
+        <div class="res" title="宝石"><span class="res-icon">💎</span><span id="res-gem">0</span></div>
+        <button id="btn-reset" class="ghost-btn" title="重置存档">↺</button>
+      </div>
+    </header>
+
+    <!-- 主内容区（各页面切换） -->
+    <main id="screen"></main>
+
+    <!-- 底部导航 -->
+    <nav id="navbar">
+      <button class="nav-btn active" data-screen="home"><span>🏰</span>主页</button>
+      <button class="nav-btn" data-screen="stages"><span>🗺️</span>冒险</button>
+      <button class="nav-btn" data-screen="roster"><span>👥</span>佣兵</button>
+      <button class="nav-btn" data-screen="gacha"><span>🎴</span>招募</button>
+    </nav>
+  </div>
+
+  <!-- 弹窗容器 -->
+  <div id="modal-root"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/battle.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
