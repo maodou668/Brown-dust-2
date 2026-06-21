@@ -542,3 +542,17 @@ body {
 }
 .story-replay-item.locked { opacity: .45; cursor: default; }
 .story-replay-item:not(.locked):active { transform: scale(.98); }
+
+/* 角色背景故事 / 台词 */
+.char-lore {
+  font-size: 13px; line-height: 1.8; color: #cfc6df;
+  background: rgba(0,0,0,.2); border-left: 3px solid var(--accent);
+  padding: 10px 12px; border-radius: 0 8px 8px 0; margin-bottom: 4px;
+}
+.quote-list { display: flex; flex-direction: column; gap: 6px; }
+.quote-item {
+  font-size: 13px; color: var(--accent-2); font-style: italic;
+  background: var(--panel); padding: 8px 12px; border-radius: 8px;
+}
+/* 剧情回顾分组标题 */
+.replay-group-title { font-size: 12px; color: var(--text-dim); margin: 12px 0 6px; font-weight: 700; }

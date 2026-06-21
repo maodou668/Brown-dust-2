@@ -550,6 +550,20 @@ body {
 .story-replay-item.locked { opacity: .45; cursor: default; }
 .story-replay-item:not(.locked):active { transform: scale(.98); }
 
+/* 角色背景故事 / 台词 */
+.char-lore {
+  font-size: 13px; line-height: 1.8; color: #cfc6df;
+  background: rgba(0,0,0,.2); border-left: 3px solid var(--accent);
+  padding: 10px 12px; border-radius: 0 8px 8px 0; margin-bottom: 4px;
+}
+.quote-list { display: flex; flex-direction: column; gap: 6px; }
+.quote-item {
+  font-size: 13px; color: var(--accent-2); font-style: italic;
+  background: var(--panel); padding: 8px 12px; border-radius: 8px;
+}
+/* 剧情回顾分组标题 */
+.replay-group-title { font-size: 12px; color: var(--text-dim); margin: 12px 0 6px; font-weight: 700; }
+
 </style>
 </head>
 <body>
@@ -924,6 +938,71 @@ const GACHA = {
 
 // 暴露到全局
 window.GameData = { CLASSES, ELEMENTS, CHARACTERS, SKILLS, ENEMIES, STAGES, GACHA };
+
+
+// ============================================================
+//  角色背景故事 / 台词（扩充「人物」深度）
+//  在 data.js 之后加载，将 lore / quotes 挂到角色图鉴上
+//  side 字段指向该角色的支线剧情 id（见 story.js 的 STORY）
+// ============================================================
+
+const CHAR_LORE = {
+  lecliss: {
+    lore: '出身于被烈焰吞噬的边境小镇，是那场大火唯一的幸存者。她把吞噬一切的火焰握在掌心，立誓不再让任何人经历她那样的失去。表面高傲毒舌，内心却极度护短。',
+    quotes: ['烈焰，是我唯一信得过的东西。', '别站太近——除非你想变成灰烬。', '我护着的人，谁也别想碰。'],
+    side: 'side_lecliss',
+  },
+  justia: {
+    lore: '圣殿骑士团的最后传人，立下「以身为盾」的誓约。她坚信只要还有一个人需要守护，盾就不能放下。沉默寡言，却总在最危险的瞬间挡在所有人身前。',
+    quotes: ['躲到我身后，这里安全。', '盾，是为了让你们能继续前行。', '我的誓约，至死不渝。'],
+    side: 'side_justia',
+  },
+  seir: {
+    lore: '在暗巷中长大的孤儿，靠一手出神入化的暗影箭术活了下来。她讨厌欠人情，却在不知不觉间被这个佣兵团的温度融化。话不多，箭很准。',
+    quotes: ['闭嘴，看我的箭。', '……别误会，我只是顺手。', '黑夜里，我从不失手。'],
+    side: 'side_seir',
+  },
+  rou: {
+    lore: '自幼在神殿长大的祭司，能听见「光」的低语。她温柔得近乎天真，却拥有让重伤者起死回生的奇迹之力。',
+    quotes: ['光会指引我们的。', '别怕，我在这里。', '受伤了？交给我吧。'],
+  },
+  helena: {
+    lore: '四处流浪的剑客，追求「快」到极致的剑技。性格爽朗，行侠仗义，最看不惯欺凌弱小之人。',
+    quotes: ['跟得上我的剑吗？', '风，会站在正义这一边。', '痛快！再来一场！'],
+    side: 'side_helena',
+  },
+  diana: {
+    lore: '出身书香门第的天才法师，冷静理性到近乎冷漠。她钻研魔法只为求知，却在旅途中第一次尝到「为他人施法」的温度。',
+    quotes: ['数据不会骗人。', '情绪会干扰判断……不过，偶尔也无妨。', '水能穿石，亦能护人。'],
+  },
+  garcia: {
+    lore: '矿山出身的壮汉，沉默如山。他相信「站着不倒」，就是对同伴最好的承诺。',
+    quotes: ['有我在，塌不了。', '……（沉默地挡在最前方）', '放心打，后面有我顶着。'],
+  },
+  teried: {
+    lore: '怀抱英雄梦的乡村少年，立志组建自己的佣兵团、亲手终结这场魔王之乱。虽然还稚嫩，但那股不肯认输的劲头，能感染身边每一个人。',
+    quotes: ['梦想？我可从没打算放弃。', '交给我，「前辈」这称呼不是白叫的。', '总有一天，我会站到魔王面前。'],
+    side: 'side_teried',
+  },
+  lia: {
+    lore: '草原部族的女猎手，与自然为伴长大。开朗直率，把每个同伴都当作族人一般守护。',
+    quotes: ['我的箭，从不空手而归。', '草原教会我，独行者走不远。', '一起去狩猎吧！'],
+  },
+  mina: {
+    lore: '跟着祖母学制药的少女，背着比自己还大的药箱四处奔走。胆子小，却总在关键时刻鼓起勇气，为同伴递上救命的药剂。',
+    quotes: ['药……药我配好了！', '前辈，别逞强呀！', '我、我也能帮上忙的！'],
+    side: 'side_mina',
+  },
+};
+
+// 挂载到角色图鉴
+if (window.GameData && window.GameData.CHARACTERS) {
+  Object.keys(CHAR_LORE).forEach(id => {
+    if (window.GameData.CHARACTERS[id]) {
+      Object.assign(window.GameData.CHARACTERS[id], CHAR_LORE[id]);
+    }
+  });
+}
 
 
 // ============================================================
@@ -1578,25 +1657,41 @@ const UI = {
 
   /** 剧情回顾弹窗 */
   showStoryReplay() {
-    const chapters = [
+    const main = [
       { id: 'prologue', name: '序章 · 启程' },
       { id: 'stage1', name: '第一章 · 艾尔玛森林入口' },
       { id: 'stage2', name: '第二章 · 森林深处' },
       { id: 'stage3', name: '第三章 · 废弃矿洞' },
       { id: 'stage4', name: '第四章 · 诅咒山脊' },
-      { id: 'stage5', name: '终章 · 魔王城' },
+      { id: 'stage5', name: '第五章 · 魔王城' },
+      { id: 'epilogue', name: '终章 · 未完待续' },
     ];
-    const items = chapters.map(ch => {
+    // 角色支线：从拥有的角色中筛出有支线的
+    const sideSeen = new Set();
+    const sides = [];
+    Game.state.roster.forEach(o => {
+      const ch = window.GameData.CHARACTERS[o.charId];
+      if (ch.side && window.STORY[ch.side] && !sideSeen.has(ch.side)) {
+        sideSeen.add(ch.side);
+        sides.push({ id: ch.side, name: `${ch.name} · ${ch.title}` });
+      }
+    });
+    const row = (ch) => {
       const unlocked = Story.seen(ch.id);
       return `<div class="story-replay-item ${unlocked ? '' : 'locked'}" ${unlocked ? `data-replay="${ch.id}"` : ''}>
         <span>${unlocked ? '📖' : '🔒'} ${ch.name}</span>
         <span class="muted">${unlocked ? '重看 ›' : '未解锁'}</span>
       </div>`;
-    }).join('');
+    };
+    const sidesHtml = sides.length ? `
+      <div class="replay-group-title">角色支线</div>
+      <div class="story-replay-list">${sides.map(row).join('')}</div>` : '';
     const m = this.openModal(`
       <h2>剧情回顾</h2>
-      <p class="muted" style="margin:6px 0 12px;">重温你已经历的故事篇章。</p>
-      <div class="story-replay-list">${items}</div>
+      <p class="muted" style="margin:6px 0 12px;">重温你已经历的故事篇章。角色支线可在佣兵详情里随时观看。</p>
+      <div class="replay-group-title">主线剧情</div>
+      <div class="story-replay-list">${main.map(row).join('')}</div>
+      ${sidesHtml}
       <div class="close-row"><button class="btn secondary" id="sr-close">关闭</button></div>
     `);
     m.querySelector('#sr-close').onclick = () => this.closeModal(m);
@@ -1756,6 +1851,18 @@ const UI = {
       </div>`;
     }).join('');
 
+    // 背景故事 + 台词
+    const loreHtml = c.lore ? `
+      <div class="section-title" style="font-size:14px;">背景故事</div>
+      <p class="char-lore">${c.lore}</p>` : '';
+    const quotesHtml = (c.quotes && c.quotes.length) ? `
+      <div class="section-title" style="font-size:14px;">角色台词</div>
+      <div class="quote-list">${c.quotes.map(q => `<div class="quote-item">「${q}」</div>`).join('')}</div>` : '';
+    // 角色支线（剧情存在且已不强制解锁，随时可看）
+    const hasSide = c.side && window.STORY && window.STORY[c.side];
+    const sideHtml = hasSide ? `
+      <button class="btn secondary" id="cd-side" style="width:100%;margin-top:6px;">📖 观看角色支线剧情</button>` : '';
+
     const m = this.openModal(`
       <div class="detail-head">
         <div class="detail-art border-${this.rarityClass(c.rarity)}" style="background:radial-gradient(circle at 50% 35%, ${c.color}55, var(--panel));">
@@ -1778,6 +1885,9 @@ const UI = {
       </div>
       <div class="section-title" style="font-size:14px;">技能</div>
       ${skillsHtml}
+      ${loreHtml}
+      ${quotesHtml}
+      ${sideHtml}
       <div class="close-row">
         <button class="btn secondary" id="cd-close">关闭</button>
         <button class="btn gold" id="cd-levelup" ${Game.state.gold < lvCost || o.level >= 60 ? 'disabled' : ''}>
@@ -1787,6 +1897,8 @@ const UI = {
       </div>
     `);
     m.querySelector('#cd-close').onclick = () => this.closeModal(m);
+    const sideBtn = m.querySelector('#cd-side');
+    if (sideBtn) sideBtn.onclick = () => { this.closeModal(m); Story.play(c.side); };
     m.querySelector('#cd-levelup').onclick = () => {
       const r = Game.levelUpWithGold(uid);
       if (!r.ok) { this.toast(r.msg); return; }
@@ -2158,6 +2270,67 @@ const STORY = {
     { who: 'mina', side: 'right', speaker: '米娜', text: '前辈，大家都在！我们……一定能赢！' },
     { who: 'teried', side: 'left', speaker: '泰瑞德', text: '巴尔！今天，就是你的终焉！' },
   ],
+
+  // ---------- 终章（击败魔王后） ----------
+  epilogue: [
+    { bg: 'castle', text: '魔王巴尔的身影，在炽白的圣光中缓缓消散。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '结束了……真的结束了。' },
+    { who: 'mina', side: 'right', speaker: '米娜', text: '我们……我们做到了，前辈！' },
+    { clear: true, bg: 'town', text: '数日之后，边境的村庄重新升起了袅袅炊烟。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '但这不是终点。只要还有人需要佣兵团，我们就继续走下去。' },
+    { who: 'lecliss', side: 'right', speaker: '莉可莉丝', text: '啰嗦。要走就走，别又煮那锅黑暗炖菜。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '喂——！那叫秘制好吗！' },
+    { clear: true, bg: 'forest', text: '佣兵团的故事，未完待续……' },
+  ],
+
+  // ---------- 角色支线 ----------
+  side_teried: [
+    { bg: 'town', text: '黄昏，佣兵团临时驻地。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '我从小就听着勇者的故事长大……可现实里，勇者也得先学会怎么不让队友饿肚子。' },
+    { who: 'mina', side: 'right', speaker: '米娜', text: '噗——前辈你昨天那锅炖菜，真的……很有「勇气」。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '咳。总之，我答应过村里的大家，一定会把魔王的事了结。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '这条路也许很长，但只要还有人愿意跟着我……我就绝不会停下。' },
+    { clear: true, text: '少年的梦想，正一步步长出筋骨。' },
+  ],
+  side_mina: [
+    { bg: 'forest_deep', text: '战斗后的夜里，米娜独自整理着她的药箱。' },
+    { who: 'mina', side: 'right', speaker: '米娜', text: '今天……又差点没接上前辈的伤。我还是太慢了。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '米娜。今天要不是你那瓶药，我早就倒下了。' },
+    { who: 'mina', side: 'right', speaker: '米娜', text: '前辈……！' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '别小看自己。你递出的每一瓶药，都是我们能继续走下去的理由。' },
+    { who: 'mina', side: 'right', speaker: '米娜', text: '嗯……！我会更努力的，绝对！' },
+    { clear: true, text: '胆小的少女，正悄悄变得可靠。' },
+  ],
+  side_lecliss: [
+    { bg: 'cave', text: '营火旁，莉可莉丝盯着跳动的火苗，久久出神。' },
+    { who: 'lecliss', side: 'left', speaker: '莉可莉丝', text: '火……带走了我的一切。可也是火，让我活了下来。' },
+    { who: 'teried', side: 'right', speaker: '泰瑞德', text: '莉可莉丝？' },
+    { who: 'lecliss', side: 'left', speaker: '莉可莉丝', text: '别误会。我只是在想——这一次，我要用这团火，护住点什么。' },
+    { who: 'lecliss', side: 'left', speaker: '莉可莉丝', text: '所以，别死在我面前。否则我饶不了你。' },
+    { clear: true, text: '毒舌的魔女，藏着最滚烫的温柔。' },
+  ],
+  side_justia: [
+    { bg: 'castle', text: '圣殿的残垣前，贾丝蒂亚单膝跪地，默然良久。' },
+    { who: 'justia', side: 'left', speaker: '贾丝蒂亚', text: '骑士团已经不在了……只剩我一人，守着这份誓约。' },
+    { who: 'teried', side: 'right', speaker: '泰瑞德', text: '你不是一个人。我们都在。' },
+    { who: 'justia', side: 'left', speaker: '贾丝蒂亚', text: '……是啊。这一次，我守护的不再是冰冷的教条，而是……活生生的同伴。' },
+    { who: 'justia', side: 'left', speaker: '贾丝蒂亚', text: '那么，我的盾，便有了新的意义。' },
+    { clear: true, text: '最后的圣骑士，找到了新的誓约。' },
+  ],
+  side_seir: [
+    { bg: 'town', text: '深夜的屋顶，希尔独自擦拭着她的弓。' },
+    { who: 'seir', side: 'left', speaker: '希尔', text: '欠人情，是会要命的……我早就学会了一个人活。' },
+    { who: 'mina', side: 'right', speaker: '米娜', text: '希尔姐姐！我带了宵夜~要一起吃吗？' },
+    { who: 'seir', side: 'left', speaker: '希尔', text: '……（沉默了半晌）随你。' },
+    { clear: true, text: '独行的射手，第一次没有拒绝那份递来的温度。' },
+  ],
+  side_helena: [
+    { bg: 'forest', text: '清晨，海莲娜在林间挥剑练习，剑风带起满地落叶。' },
+    { who: 'helena', side: 'left', speaker: '海莲娜', text: '剑这东西，慢一分就会害死同伴。所以我只追求「快」。' },
+    { who: 'teried', side: 'right', speaker: '泰瑞德', text: '能……教教我吗？' },
+    { who: 'helena', side: 'left', speaker: '海莲娜', text: '哈！有志气。记住——剑要快，心要稳。护着想护的人，剑才有意义。' },
+    { clear: true, text: '疾风剑士的剑，始终指向正义。' },
+  ],
 };
 
 window.Story = Story;
@@ -2445,7 +2618,14 @@ const BattleUI = {
       m.querySelector('#res-ok').onclick = () => {
         UI.closeModal(m);
         UI.updateResources();
-        this.exit();
+        // 击败最终 BOSS（终关）后播放终章
+        const isFinal = this.stage.id === window.GameData.STAGES[window.GameData.STAGES.length - 1].id;
+        if (isFinal && !Story.seen('epilogue')) {
+          this.exit();
+          Story.play('epilogue');
+        } else {
+          this.exit();
+        }
       };
     } else {
       const m = UI.openModal(`

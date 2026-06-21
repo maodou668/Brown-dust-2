@@ -280,7 +280,14 @@ const BattleUI = {
       m.querySelector('#res-ok').onclick = () => {
         UI.closeModal(m);
         UI.updateResources();
-        this.exit();
+        // 击败最终 BOSS（终关）后播放终章
+        const isFinal = this.stage.id === window.GameData.STAGES[window.GameData.STAGES.length - 1].id;
+        if (isFinal && !Story.seen('epilogue')) {
+          this.exit();
+          Story.play('epilogue');
+        } else {
+          this.exit();
+        }
       };
     } else {
       const m = UI.openModal(`

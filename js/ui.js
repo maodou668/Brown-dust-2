@@ -101,25 +101,41 @@ const UI = {
 
   /** 剧情回顾弹窗 */
   showStoryReplay() {
-    const chapters = [
+    const main = [
       { id: 'prologue', name: '序章 · 启程' },
       { id: 'stage1', name: '第一章 · 艾尔玛森林入口' },
       { id: 'stage2', name: '第二章 · 森林深处' },
       { id: 'stage3', name: '第三章 · 废弃矿洞' },
       { id: 'stage4', name: '第四章 · 诅咒山脊' },
-      { id: 'stage5', name: '终章 · 魔王城' },
+      { id: 'stage5', name: '第五章 · 魔王城' },
+      { id: 'epilogue', name: '终章 · 未完待续' },
     ];
-    const items = chapters.map(ch => {
+    // 角色支线：从拥有的角色中筛出有支线的
+    const sideSeen = new Set();
+    const sides = [];
+    Game.state.roster.forEach(o => {
+      const ch = window.GameData.CHARACTERS[o.charId];
+      if (ch.side && window.STORY[ch.side] && !sideSeen.has(ch.side)) {
+        sideSeen.add(ch.side);
+        sides.push({ id: ch.side, name: `${ch.name} · ${ch.title}` });
+      }
+    });
+    const row = (ch) => {
       const unlocked = Story.seen(ch.id);
       return `<div class="story-replay-item ${unlocked ? '' : 'locked'}" ${unlocked ? `data-replay="${ch.id}"` : ''}>
         <span>${unlocked ? '📖' : '🔒'} ${ch.name}</span>
         <span class="muted">${unlocked ? '重看 ›' : '未解锁'}</span>
       </div>`;
-    }).join('');
+    };
+    const sidesHtml = sides.length ? `
+      <div class="replay-group-title">角色支线</div>
+      <div class="story-replay-list">${sides.map(row).join('')}</div>` : '';
     const m = this.openModal(`
       <h2>剧情回顾</h2>
-      <p class="muted" style="margin:6px 0 12px;">重温你已经历的故事篇章。</p>
-      <div class="story-replay-list">${items}</div>
+      <p class="muted" style="margin:6px 0 12px;">重温你已经历的故事篇章。角色支线可在佣兵详情里随时观看。</p>
+      <div class="replay-group-title">主线剧情</div>
+      <div class="story-replay-list">${main.map(row).join('')}</div>
+      ${sidesHtml}
       <div class="close-row"><button class="btn secondary" id="sr-close">关闭</button></div>
     `);
     m.querySelector('#sr-close').onclick = () => this.closeModal(m);
@@ -279,6 +295,18 @@ const UI = {
       </div>`;
     }).join('');
 
+    // 背景故事 + 台词
+    const loreHtml = c.lore ? `
+      <div class="section-title" style="font-size:14px;">背景故事</div>
+      <p class="char-lore">${c.lore}</p>` : '';
+    const quotesHtml = (c.quotes && c.quotes.length) ? `
+      <div class="section-title" style="font-size:14px;">角色台词</div>
+      <div class="quote-list">${c.quotes.map(q => `<div class="quote-item">「${q}」</div>`).join('')}</div>` : '';
+    // 角色支线（剧情存在且已不强制解锁，随时可看）
+    const hasSide = c.side && window.STORY && window.STORY[c.side];
+    const sideHtml = hasSide ? `
+      <button class="btn secondary" id="cd-side" style="width:100%;margin-top:6px;">📖 观看角色支线剧情</button>` : '';
+
     const m = this.openModal(`
       <div class="detail-head">
         <div class="detail-art border-${this.rarityClass(c.rarity)}" style="background:radial-gradient(circle at 50% 35%, ${c.color}55, var(--panel));">
@@ -301,6 +329,9 @@ const UI = {
       </div>
       <div class="section-title" style="font-size:14px;">技能</div>
       ${skillsHtml}
+      ${loreHtml}
+      ${quotesHtml}
+      ${sideHtml}
       <div class="close-row">
         <button class="btn secondary" id="cd-close">关闭</button>
         <button class="btn gold" id="cd-levelup" ${Game.state.gold < lvCost || o.level >= 60 ? 'disabled' : ''}>
@@ -310,6 +341,8 @@ const UI = {
       </div>
     `);
     m.querySelector('#cd-close').onclick = () => this.closeModal(m);
+    const sideBtn = m.querySelector('#cd-side');
+    if (sideBtn) sideBtn.onclick = () => { this.closeModal(m); Story.play(c.side); };
     m.querySelector('#cd-levelup').onclick = () => {
       const r = Game.levelUpWithGold(uid);
       if (!r.ok) { this.toast(r.msg); return; }
