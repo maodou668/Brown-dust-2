@@ -47,6 +47,7 @@ const Story = {
     this.root = UI.el(`
       <div id="story-screen">
         <div class="story-bg" id="story-bg"></div>
+        <div class="bfx-particles" id="story-fx"></div>
         <div class="story-portrait left"  id="port-left"></div>
         <div class="story-portrait right" id="port-right"></div>
         <button class="story-skip" id="story-skip">跳过 ▶▶</button>
@@ -67,6 +68,22 @@ const Story = {
       e.stopPropagation();
       this.finish();
     };
+  },
+
+  /** 场景氛围粒子（与战斗复用同一套样式） */
+  spawnParticles(scene) {
+    const box = this.root && this.root.querySelector('#story-fx');
+    if (!box) return;
+    const type = ({ forest: 'leaf', forest_deep: 'leaf', cave: 'ember', castle: 'ember', town: 'ember', ridge: 'snow' })[scene] || 'mote';
+    let html = '';
+    for (let i = 0; i < 14; i++) {
+      const left = Math.random() * 100;
+      const dur = 7 + Math.random() * 7;
+      const delay = -Math.random() * dur;
+      const size = 6 + Math.random() * 8;
+      html += `<span class="bfx ${type}" style="left:${left}%;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:${delay}s;"></span>`;
+    }
+    box.innerHTML = html;
   },
 
   /** 立绘 HTML：图片优先，风格化占位兜底 */
@@ -105,6 +122,9 @@ const Story = {
       const bg = this.root.querySelector('#story-bg');
       bg.className = 'story-bg bg-' + beat.bg;
       bg.animate([{ opacity: 0.3 }, { opacity: 1 }], { duration: 400 });
+      this.spawnParticles(beat.bg);
+    } else if (this.idx === 0) {
+      this.spawnParticles(this.curBg);
     }
 
     // 立绘进出场

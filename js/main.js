@@ -22,6 +22,7 @@ const BattleUI = {
   buildScreen() {
     const old = document.getElementById('battle-screen');
     if (old) old.remove();
+    const scene = this.sceneForStage(this.stage.id);
     this.root = UI.el(`
       <div id="battle-screen">
         <div class="battle-top">
@@ -29,7 +30,8 @@ const BattleUI = {
           <span id="battle-round">第 1 回合</span>
           <button class="ghost-btn" id="battle-flee" title="撤退">🏳️</button>
         </div>
-        <div class="battle-field">
+        <div class="battle-field bg-${scene}">
+          <div class="bfx-particles" id="bfx"></div>
           <div class="enemy-zone">
             <div class="row-label">— 敌方后排 —</div>
             <div class="unit-row" id="enemy-back"></div>
@@ -42,6 +44,7 @@ const BattleUI = {
             <div class="unit-row" id="ally-back"></div>
             <div class="row-label">— 我方后排 —</div>
           </div>
+          <div class="skill-banner" id="skill-banner"></div>
         </div>
         <div class="battle-ctrl">
           <div class="turn-hint" id="turn-hint"></div>
@@ -52,6 +55,29 @@ const BattleUI = {
     `);
     document.body.appendChild(this.root);
     this.root.querySelector('#battle-flee').onclick = () => this.flee();
+    this.spawnParticles(scene);
+  },
+
+  /** 关卡 -> 场景类型 */
+  sceneForStage(id) {
+    return ({ 1: 'forest', 2: 'forest_deep', 3: 'cave', 4: 'ridge', 5: 'castle', 6: 'forest_deep', 7: 'castle' })[id] || 'void';
+  },
+
+  /** 场景氛围粒子 */
+  spawnParticles(scene) {
+    const type = ({ forest: 'leaf', forest_deep: 'leaf', cave: 'ember', castle: 'ember', ridge: 'snow' })[scene] || 'mote';
+    const box = this.root && this.root.querySelector('#bfx');
+    if (!box) return;
+    const n = 14;
+    let html = '';
+    for (let i = 0; i < n; i++) {
+      const left = Math.random() * 100;
+      const dur = 6 + Math.random() * 7;
+      const delay = -Math.random() * dur;
+      const size = 6 + Math.random() * 8;
+      html += `<span class="bfx ${type}" style="left:${left}%;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:${delay}s;"></span>`;
+    }
+    box.innerHTML = html;
   },
 
   flee() {
@@ -130,11 +156,12 @@ const BattleUI = {
       this.clearSkillBar();
       this.setHint(`<b>${cur.name}</b> 正在行动...`);
       this.busy = true;
+      this._lunged = false;
       setTimeout(() => {
         Battle.enemyAct();
         this.busy = false;
         if (!Battle.finished) this.nextTurn();
-      }, 800);
+      }, 850);
     }
   },
 
@@ -216,6 +243,7 @@ const BattleUI = {
     this.clearSkillBar();
     this.selectedSkill = null;
 
+    this._lunged = false;
     Battle.executeSkill(c, skillId, target);
 
     // 等动画后刷新并进入下一回合
@@ -223,21 +251,73 @@ const BattleUI = {
       this.refresh();
       this.busy = false;
       if (!Battle.finished) this.nextTurn();
-    }, 650);
+    }, 700);
   },
 
-  // ---------- 事件（伤害飘字、结算） ----------
+  // ---------- 事件（演出、伤害飘字、结算） ----------
   handleEvent(e) {
     if (!this.root) return;
     if (e.type === 'log') {
       const logEl = this.root.querySelector('#battle-log');
       if (logEl) logEl.textContent = e.msg;
-    } else if (e.type === 'damage' || e.type === 'heal') {
-      this.floatText(e.target, e.amount, e.type, e.crit);
+      // 技能横幅：从日志中提取「技能名」
+      const mt = e.msg.match(/使用「(.+?)」/);
+      if (mt) this.showSkillBanner(mt[1]);
+    } else if (e.type === 'damage') {
+      if (e.attacker && !this._lunged) { this.lunge(e.attacker); this._lunged = true; }
+      this.impactFlash(e.target, false);
+      if (e.crit) this.screenShake();
+      this.floatText(e.target, e.amount, 'damage', e.crit);
+      this.refresh();
+    } else if (e.type === 'heal') {
+      this.impactFlash(e.target, true);
+      this.floatText(e.target, e.amount, 'heal', false);
       this.refresh();
     } else if (e.type === 'end') {
       setTimeout(() => this.showResult(e.result), 700);
     }
+  },
+
+  /** 攻击者向目标方向突进 */
+  lunge(attacker) {
+    const el = this.root.querySelector(`.unit[data-uid="${attacker.uid}"]`);
+    if (!el) return;
+    const dy = attacker.side === 'ally' ? -18 : 18;
+    el.animate(
+      [{ transform: 'translateY(0)' }, { transform: `translateY(${dy}px) scale(1.08)`, offset: 0.4 }, { transform: 'translateY(0)' }],
+      { duration: 360, easing: 'ease-out' }
+    );
+    el.classList.add('lunging');
+    setTimeout(() => el.classList.remove('lunging'), 360);
+  },
+
+  /** 命中闪光 */
+  impactFlash(target, isHeal) {
+    const el = this.root.querySelector(`.unit[data-uid="${target.uid}"]`);
+    if (!el) return;
+    const fx = UI.el(`<span class="impact-ring ${isHeal ? 'heal' : ''}"></span>`);
+    el.appendChild(fx);
+    setTimeout(() => fx.remove(), 500);
+  },
+
+  /** 暴击/重击震屏 */
+  screenShake() {
+    const field = this.root.querySelector('.battle-field');
+    if (!field) return;
+    field.animate(
+      [{ transform: 'translate(0,0)' }, { transform: 'translate(-5px,3px)' }, { transform: 'translate(5px,-2px)' }, { transform: 'translate(-3px,2px)' }, { transform: 'translate(0,0)' }],
+      { duration: 260 }
+    );
+  },
+
+  /** 技能名横幅 */
+  showSkillBanner(name) {
+    const b = this.root && this.root.querySelector('#skill-banner');
+    if (!b) return;
+    b.textContent = name;
+    b.classList.remove('show');
+    void b.offsetWidth; // 强制重绘以重启动画
+    b.classList.add('show');
   },
 
   floatText(target, amount, kind, crit) {

@@ -246,7 +246,7 @@ const Battle = {
       defender.alive = false;
       this.pushLog(`💀 ${defender.name} 被击倒！`);
     }
-    if (this.onEvent) this.onEvent({ type: 'damage', target: defender, amount: dmg, crit: isCrit, elem: elem > 1 });
+    if (this.onEvent) this.onEvent({ type: 'damage', target: defender, attacker, amount: dmg, crit: isCrit, elem: elem > 1 });
     return { dmg, isCrit, elem: elem > 1, tag };
   },
 
@@ -280,7 +280,7 @@ const Battle = {
         const before = t.hp;
         t.hp = Math.min(t.maxHp, t.hp + amt);
         summary.push(`${t.name} +${t.hp - before}`);
-        if (this.onEvent) this.onEvent({ type: 'heal', target: t, amount: t.hp - before });
+        if (this.onEvent) this.onEvent({ type: 'heal', target: t, attacker: combatant, amount: t.hp - before });
       });
       this.pushLog(`${combatant.name} 使用「${sk.name}」：${summary.join('，')}`);
     } else if (sk.effect === 'buffAtk' || sk.effect === 'buffDef') {
