@@ -28,6 +28,7 @@ const Game = {
     if (!this.state.chapterProgress) this.state.chapterProgress = {};
     if (this.state.spark == null) this.state.spark = 0;
     if (this.state.powder == null) this.state.powder = 0;
+    if (this.state.firstTen == null) this.state.firstTen = false;
     if (!this.state.daily) this.state.daily = { lastClaim: null, streak: 0 };
     if (!this.state.quests) this.state.quests = { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} };
     if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
@@ -94,6 +95,7 @@ const Game = {
       chapterProgress: {},
       // 抽卡保底计数（距上次 5★）
       pity: 0,
+      firstTen: false, // 首次十连保底（必出 5★）是否已用
       // 保底货币
       spark: 0,    // 闪耀之星：每抽 +1，200 兑换自选服装
       powder: 0,   // 希望之粉：每抽 +10，商店兑换必出 5★
@@ -265,6 +267,47 @@ const Game = {
     if (o && o.equip) { o.equip[slot] = null; this.save(); }
   },
 
+  /** 装备评分（用于一键装备挑最优） */
+  gearScore(tpl) {
+    const s = tpl.stats || {};
+    return (s.atk || 0) + (s.def || 0) * 1.2 + (s.hp || 0) / 8 + (s.crit || 0) * 800;
+  },
+
+  /** 该角色是否拥有「背包里未装备的」专属武器 */
+  hasUnequippedEx(charId) {
+    const exId = 'ex_' + charId;
+    return this.state.inventory.some(g => g.tpl === exId && !this.gearEquippedBy(g.iid));
+  },
+
+  /** 某槽位背包中评分最高的未装备件，返回 iid */
+  bestUnequippedGear(type, charId) {
+    let best = null, bestScore = -1;
+    this.state.inventory.forEach(g => {
+      const tpl = this.getGearTpl(g.tpl);
+      if (!tpl) return;
+      if (type === 'ex') { if (tpl.type !== 'ex' || tpl.owner !== charId) return; }
+      else if (tpl.type !== type) return;
+      if (this.gearEquippedBy(g.iid)) return;
+      const sc = this.gearScore(tpl);
+      if (sc > bestScore) { bestScore = sc; best = g.iid; }
+    });
+    return best;
+  },
+
+  /** 一键装备：为空槽位填入最优件，并自动识别专属武器 */
+  autoEquip(uid) {
+    const o = this.getOwned(uid);
+    if (!o) return { ok: false };
+    let count = 0;
+    ['weapon', 'armor', 'accessory', 'ex'].forEach(slot => {
+      if (o.equip[slot]) return; // 已装备的不覆盖
+      const iid = this.bestUnequippedGear(slot, o.charId);
+      if (iid) { const r = this.equipGear(uid, iid); if (r.ok) count++; }
+    });
+    this.save();
+    return { ok: true, count };
+  },
+
   /** 找出该 iid 当前被哪名角色装备（返回 owned 或 null） */
   gearEquippedBy(iid) {
     return this.state.roster.find(o => o.equip &&
@@ -408,13 +451,13 @@ const Game = {
     return result;
   },
 
-  /** 抽一次「服装」（BD2 模型：服装即收集单位，抽到即拥有角色） */
-  gachaPull() {
+  /** 抽一次「服装」（force 可强制稀有度，用于首抽十连保底） */
+  gachaPull(force) {
     if (this.state.gem < window.GameData.GACHA.cost) {
       return { ok: false, msg: '宝石不足' };
     }
     this.state.gem -= window.GameData.GACHA.cost;
-    const rarity = this.rollRarity();
+    const rarity = force || this.rollRarity();
     if (rarity === 5) this.state.pity = 0;
     else this.state.pity++;
     // 保底货币 + 任务

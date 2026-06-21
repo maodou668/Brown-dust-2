@@ -93,9 +93,9 @@ const UI = {
         </div>
       </div>
       <div class="team-preview">
-        <div class="section-title">出战队伍</div>
-        <div class="team-slots">${teamHtml}</div>
-        <p class="muted" style="margin-top:8px;">在「佣兵」页点击角色可编入/移出队伍（最多 5 人）</p>
+        <div class="section-title">出战队伍 <span class="muted" style="font-weight:400;font-size:11px;">· 点击槽位编辑（${s.team.length}/5）</span></div>
+        <div class="team-slots" id="team-slots">${teamHtml}</div>
+        <p class="muted" style="margin-top:8px;">点击下方任意槽位即可添加 / 更换 / 移出出战角色。</p>
       </div>
     `;
     this.screenEl.querySelectorAll('[data-go]').forEach(c =>
@@ -104,6 +104,48 @@ const UI = {
     if (replay) replay.addEventListener('click', () => this.showStoryReplay());
     const forge = this.screenEl.querySelector('[data-forge]');
     if (forge) forge.addEventListener('click', () => this.showForge());
+    const ts = this.screenEl.querySelector('#team-slots');
+    if (ts) ts.querySelectorAll('.team-slot').forEach((slot, i) =>
+      slot.addEventListener('click', () => this.showTeamEditor(i)));
+  },
+
+  /** 队伍编辑器：从出战框直接编辑 */
+  showTeamEditor(slotIdx) {
+    const owned = Game.state.roster.slice().sort((a, b) => {
+      const ca = window.GameData.CHARACTERS[a.charId], cb = window.GameData.CHARACTERS[b.charId];
+      return cb.rarity - ca.rarity || b.level - a.level;
+    });
+    const render = (m) => {
+      const grid = owned.map(o => {
+        const c = window.GameData.CHARACTERS[o.charId];
+        const idx = Game.state.team.indexOf(o.uid);
+        const inTeam = idx >= 0;
+        return `<div class="roster-card border-${this.rarityClass(c.rarity)} ${inTeam ? 'in-team' : ''}" data-uid="${o.uid}">
+          ${inTeam ? `<span class="in-team-tag">出战 ${idx + 1}</span>` : ''}
+          <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${Game.activeColor(o)}44, transparent);">
+            <span class="rarity-badge ${this.rarityClass(c.rarity)}">${c.rarity}★</span>
+            ${o.plus ? `<span class="plus-badge corner">+${o.plus}</span>` : ''}
+            ${this.charAvatar(o.charId)}
+          </div>
+          <div class="rc-info"><div class="rc-name">${c.name}</div><div class="rc-lv">Lv.${o.level}</div></div>
+        </div>`;
+      }).join('');
+      m.querySelector('.te-body').innerHTML = grid;
+      m.querySelector('.te-count').textContent = `${Game.state.team.length}/5`;
+      m.querySelectorAll('[data-uid]').forEach(el => el.onclick = () => {
+        const r = Game.toggleTeam(el.dataset.uid);
+        if (!r.ok) { this.toast(r.msg); return; }
+        render(m);
+      });
+    };
+    const m = this.openModal(`
+      <h2>编辑出战队伍 <span class="te-count" style="font-size:13px;color:var(--accent);"></span></h2>
+      <p class="muted" style="margin:6px 0 12px;">点击角色加入 / 移出队伍（最多 5 人）。</p>
+      <div class="te-body roster-grid"></div>
+      <div class="close-row"><button class="btn" id="te-done">完成</button></div>
+    `);
+    render(m);
+    m.querySelector('#te-done').onclick = () => { this.closeModal(m); this.renderHome(); };
   },
 
   /** 剧情回顾弹窗 */
@@ -362,7 +404,7 @@ const UI = {
         <div class="detail-title">
           <h2>${c.name} <span class="${this.rarityClass(cosDef.rarity)}" style="font-size:11px;padding:1px 6px;border-radius:5px;">${cosDef.rarity}★</span>${o.plus ? ` <span class="plus-badge">+${o.plus}</span>` : ''}</h2>
           <div class="subt">${cosDef.base ? c.title : cosDef.costumeName + ' · ' + c.title}</div>
-          <div class="meta">${window.GameData.ELEMENTS[cosDef.element].icon}${window.GameData.ELEMENTS[cosDef.element].name} · ${window.GameData.CLASSES[c.cls].icon}${window.GameData.CLASSES[c.cls].name} · Lv.${o.level}</div>
+          <div class="meta">${window.GameData.ELEMENTS[cosDef.element].icon}${window.GameData.ELEMENTS[cosDef.element].name} · ${window.GameData.CLASSES[c.cls].icon}${window.GameData.CLASSES[c.cls].name} · Lv.${o.level}${inTeam ? ' · <span style="color:var(--accent);">出战中</span>' : ''}</div>
         </div>
       </div>
       <p class="muted" style="line-height:1.6;">${c.desc}</p>
@@ -384,10 +426,10 @@ const UI = {
       ${sideHtml}
       <div class="close-row">
         <button class="btn secondary" id="cd-close">关闭</button>
+        <button class="btn secondary" id="cd-autoequip">一键装备</button>
         <button class="btn gold" id="cd-levelup" ${Game.state.gold < lvCost || o.level >= 60 ? 'disabled' : ''}>
           ${o.level >= 60 ? '满级' : `升级 🪙${lvCost}`}
         </button>
-        <button class="btn" id="cd-team">${inTeam ? '移出队伍' : '编入队伍'}</button>
       </div>
     `);
     m.querySelector('#cd-close').onclick = () => this.closeModal(m);
@@ -401,11 +443,11 @@ const UI = {
       this.closeModal(m);
       this.showCharDetail(uid);
     };
-    m.querySelector('#cd-team').onclick = () => {
-      const r = Game.toggleTeam(uid);
-      if (!r.ok) { this.toast(r.msg); return; }
+    m.querySelector('#cd-autoequip').onclick = () => {
+      const r = Game.autoEquip(uid);
+      this.toast(r.count ? `已自动装备 ${r.count} 件（含专属武器自动识别）` : '没有可装备的新装备');
       this.closeModal(m);
-      this.renderRoster();
+      this.showCharDetail(uid);
     };
     m.querySelectorAll('[data-slot]').forEach(el =>
       el.addEventListener('click', () => { this.closeModal(m); this.showGearPicker(uid, el.dataset.slot); }));
@@ -424,14 +466,23 @@ const UI = {
     const iid = owned.equip && owned.equip[slot];
     const inst = iid ? Game.getGearInst(iid) : null;
     const tpl = inst ? Game.getGearTpl(inst.tpl) : null;
+    // 专属武器红点：背包有该角色未装备的专属武器，且当前未装备它
+    let redDot = '';
+    if (slot === 'ex') {
+      const exId = 'ex_' + owned.charId;
+      const equippedThis = tpl && tpl.id === exId;
+      if (!equippedThis && Game.hasUnequippedEx(owned.charId)) redDot = '<span class="red-dot"></span>';
+    }
     if (tpl) {
       return `<div class="gear-slot filled border-${this.rarityClass(tpl.rarity)}" data-slot="${slot}">
+        ${redDot}
         <span class="rarity-badge ${this.rarityClass(tpl.rarity)}">${window.GameData.GEAR.RLABEL[tpl.rarity]}</span>
         <div class="gs-icon">${tpl.icon}</div>
         <div class="gs-name">${tpl.name}</div>
       </div>`;
     }
     return `<div class="gear-slot empty" data-slot="${slot}">
+      ${redDot}
       <div class="gs-icon">＋</div>
       <div class="gs-name muted">${label}</div>
     </div>`;
@@ -521,40 +572,86 @@ const UI = {
   renderGacha() {
     const s = Game.state;
     const g = window.GameData.GACHA;
+    const eg = window.GameData.GEAR.exGacha;
     const pool = window.GameData.COSTUME_POOL;
-    this.screenEl.innerHTML = `
+    const exPool = window.GameData.GEAR.exPool;
+    const tab = this.gachaTab || 'costume';
+    const firstTip = !s.firstTen ? `<div class="pity-bar" style="color:var(--gold);">首次十连必出 1 个五星 ★</div>` : '';
+
+    const tabsHtml = `
+      <div class="gacha-tabs">
+        <button class="gacha-tab ${tab==='costume'?'active':''}" data-tab="costume">🎴 服装招募</button>
+        <button class="gacha-tab ${tab==='ex'?'active':''}" data-tab="ex">🗡️ 专属武器</button>
+      </div>`;
+
+    let body;
+    if (tab === 'costume') {
+      body = `
       <div class="gacha-banner">
         <h2>服装招募</h2>
         <div class="sub">抽取服装即获得对应角色 · 同角色可多套服装</div>
         <div class="gacha-rates">
           <b>5★ ${(g.rates[5]*100).toFixed(0)}%</b> · 4★ ${(g.rates[4]*100).toFixed(0)}% · 3★ ${(g.rates[3]*100).toFixed(0)}%
           <div class="pity-bar">距离保底 5★ 还有 ${90 - s.pity} 抽</div>
+          ${firstTip}
         </div>
         <div class="gacha-actions">
           <button class="btn gold" id="pull1">单次招募 💎${g.cost}</button>
           <button class="btn" id="pull10">十连招募 💎${g.cost*10}</button>
         </div>
       </div>
-      <div class="gacha-banner" style="background:radial-gradient(circle at 50% 30%, rgba(255,155,61,.22), transparent 60%), linear-gradient(160deg,#3a2a1a,#241a10);border-color:rgba(255,155,61,.35);margin-top:14px;">
-        <h2 style="background:linear-gradient(90deg,#ffd35a,#ff9b3d);-webkit-background-clip:text;background-clip:text;color:transparent;">专属武器招募</h2>
-        <div class="sub">专属武器仅从此处产出 · 装备对应角色大幅强化</div>
-        <div class="gacha-rates">
-          <b>UR ${(window.GameData.GEAR.exGacha.rates[5]*100).toFixed(0)}%</b> · SR ${(window.GameData.GEAR.exGacha.rates[4]*100).toFixed(0)}% · R ${(window.GameData.GEAR.exGacha.rates[3]*100).toFixed(0)}%
-        </div>
-        <div class="gacha-actions">
-          <button class="btn" id="ex-pull1" style="background:linear-gradient(135deg,#ffb84a,#ff7a3a);color:#241a08;">武器招募 💎${window.GameData.GEAR.exGacha.cost}</button>
-          <button class="btn secondary" id="ex-pull10">十连 💎${window.GameData.GEAR.exGacha.cost*10}</button>
-        </div>
-      </div>
       <div class="section-title" style="font-size:14px;">传说服装（5★）</div>
       <div class="roster-grid">${pool[5].map(cid => this.costumePoolCard(cid)).join('')}</div>
       <div class="section-title" style="font-size:14px;margin-top:16px;">稀有服装（4★）</div>
-      <div class="roster-grid">${pool[4].map(cid => this.costumePoolCard(cid)).join('')}</div>
-    `;
-    document.getElementById('pull1').onclick = () => this.doPull(1);
-    document.getElementById('pull10').onclick = () => this.doPull(10);
-    document.getElementById('ex-pull1').onclick = () => this.doExPull(1);
-    document.getElementById('ex-pull10').onclick = () => this.doExPull(10);
+      <div class="roster-grid">${pool[4].map(cid => this.costumePoolCard(cid)).join('')}</div>`;
+    } else {
+      body = `
+      <div class="gacha-banner" style="background:radial-gradient(circle at 50% 30%, rgba(255,155,61,.22), transparent 60%), linear-gradient(160deg,#3a2a1a,#241a10);border-color:rgba(255,155,61,.35);">
+        <h2 style="background:linear-gradient(90deg,#ffd35a,#ff9b3d);-webkit-background-clip:text;background-clip:text;color:transparent;">专属武器招募</h2>
+        <div class="sub">专属武器仅从此处产出 · 装备对应角色大幅强化</div>
+        <div class="gacha-rates">
+          <b>UR ${(eg.rates[5]*100).toFixed(0)}%</b> · SR ${(eg.rates[4]*100).toFixed(0)}% · R ${(eg.rates[3]*100).toFixed(0)}%
+        </div>
+        <div class="gacha-actions">
+          <button class="btn" id="ex-pull1" style="background:linear-gradient(135deg,#ffb84a,#ff7a3a);color:#241a08;">武器招募 💎${eg.cost}</button>
+          <button class="btn secondary" id="ex-pull10">十连 💎${eg.cost*10}</button>
+        </div>
+      </div>
+      <div class="section-title" style="font-size:14px;">传说武器（UR）</div>
+      <div class="roster-grid">${(exPool[5]||[]).map(id => this.exPoolCard(id)).join('') || '<div class="muted" style="padding:8px;">暂无</div>'}</div>
+      <div class="section-title" style="font-size:14px;margin-top:16px;">稀有武器（SR）</div>
+      <div class="roster-grid">${(exPool[4]||[]).map(id => this.exPoolCard(id)).join('') || '<div class="muted" style="padding:8px;">暂无</div>'}</div>
+      <div class="section-title" style="font-size:14px;margin-top:16px;">普通武器（R）</div>
+      <div class="roster-grid">${(exPool[3]||[]).map(id => this.exPoolCard(id)).join('') || '<div class="muted" style="padding:8px;">暂无</div>'}</div>`;
+    }
+
+    this.screenEl.innerHTML = tabsHtml + body;
+
+    this.screenEl.querySelectorAll('.gacha-tab').forEach(b => {
+      b.onclick = () => { this.gachaTab = b.dataset.tab; this.renderGacha(); };
+    });
+    if (tab === 'costume') {
+      document.getElementById('pull1').onclick = () => this.doPull(1);
+      document.getElementById('pull10').onclick = () => this.doPull(10);
+    } else {
+      document.getElementById('ex-pull1').onclick = () => this.doExPull(1);
+      document.getElementById('ex-pull10').onclick = () => this.doExPull(10);
+    }
+  },
+
+  exPoolCard(id) {
+    const tpl = window.GameData.GEAR.ex[id];
+    if (!tpl) return '';
+    const rl = window.GameData.GEAR.RLABEL[tpl.rarity];
+    const owned = Game.state.inventory.some(g => g.tpl === id);
+    return `<div class="roster-card border-${this.rarityClass(tpl.rarity)}" style="${owned?'':'opacity:.6;'}">
+      <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, #ff9b3d44, transparent);">
+        <span class="rarity-badge ${this.rarityClass(tpl.rarity)}">${rl}</span>
+        🗡️
+        ${owned ? '<span class="in-team-tag" style="background:var(--gold);color:#241a08;">已有</span>' : ''}
+      </div>
+      <div class="rc-info"><div class="rc-name" style="font-size:10px;">${tpl.name}</div></div>
+    </div>`;
   },
 
   doExPull(count) {
@@ -598,11 +695,21 @@ const UI = {
   doPull(count) {
     const cost = window.GameData.GACHA.cost * count;
     if (Game.state.gem < cost) { this.toast('宝石不足，去冒险赚取吧！'); return; }
+    // 首抽十连保底：必出至少 1 个五星
+    const firstTenGuarantee = count === 10 && !Game.state.firstTen;
     const results = [];
+    let got5 = false;
     for (let i = 0; i < count; i++) {
-      const r = Game.gachaPull();
+      // 最后一抽若仍未出五星，则强制五星
+      const force = (firstTenGuarantee && i === count - 1 && !got5) ? 5 : undefined;
+      const r = Game.gachaPull(force);
       if (!r.ok) break;
+      if (r.rarity >= 5) got5 = true;
       results.push(r);
+    }
+    if (firstTenGuarantee && results.length === count) {
+      Game.state.firstTen = true;
+      Game.save();
     }
     this.updateResources();
     this.showPullResults(results);
