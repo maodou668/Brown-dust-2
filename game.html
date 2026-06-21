@@ -1,0 +1,2106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>棕色尘埃 2 · Brown Dust 2</title>
+  <style>
+/* ============================================================
+   棕色尘埃 2 风格 UI — 暗色奇幻风格
+   ============================================================ */
+
+:root {
+  --bg: #14101a;
+  --bg2: #1d1726;
+  --panel: #261d33;
+  --panel-2: #2f2440;
+  --gold: #f0c674;
+  --gem: #6cc6ff;
+  --accent: #b06bff;
+  --accent-2: #ff6b9d;
+  --text: #ece6f5;
+  --text-dim: #9d92ad;
+  --danger: #ff5a6a;
+  --hp: #4ad66d;
+  --sp: #6cc6ff;
+  --r5: #ff9b3d;
+  --r4: #b06bff;
+  --r3: #6c9fff;
+  --shadow: 0 6px 24px rgba(0,0,0,.45);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  background: radial-gradient(circle at 50% -10%, #2a2038 0%, var(--bg) 60%);
+  color: var(--text);
+  overflow: hidden;
+  -webkit-user-select: none; user-select: none;
+}
+
+#app {
+  max-width: 480px;
+  height: 100vh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  position: relative;
+  box-shadow: 0 0 60px rgba(0,0,0,.6);
+}
+
+/* ---------- 顶部栏 ---------- */
+#topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, var(--bg2), transparent);
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  z-index: 5;
+}
+.logo { display: flex; align-items: center; gap: 8px; }
+.logo-mark {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: grid; place-items: center;
+  font-weight: 800; font-size: 14px; color: #fff;
+  box-shadow: 0 2px 10px rgba(176,107,255,.5);
+}
+.logo-text { font-weight: 700; font-size: 17px; letter-spacing: .5px; }
+.logo-text small { color: var(--accent); font-size: 13px; margin-left: 2px; }
+
+.resources { display: flex; align-items: center; gap: 10px; }
+.res {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--panel); padding: 5px 10px; border-radius: 20px;
+  font-size: 13px; font-weight: 600;
+  border: 1px solid rgba(255,255,255,.06);
+}
+.res-icon { font-size: 14px; }
+#res-gold { color: var(--gold); }
+#res-gem { color: var(--gem); }
+.ghost-btn {
+  background: var(--panel); border: 1px solid rgba(255,255,255,.06);
+  color: var(--text-dim); width: 30px; height: 30px; border-radius: 8px;
+  font-size: 15px; cursor: pointer;
+}
+.ghost-btn:active { transform: scale(.92); }
+
+/* ---------- 主区域 ---------- */
+#screen {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 14px;
+  -webkit-overflow-scrolling: touch;
+}
+#screen::-webkit-scrollbar { width: 0; }
+
+/* ---------- 底部导航 ---------- */
+#navbar {
+  display: flex; background: var(--bg2);
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+.nav-btn {
+  flex: 1; background: none; border: none; color: var(--text-dim);
+  padding: 9px 0 11px; font-size: 11px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  transition: color .2s;
+}
+.nav-btn span { font-size: 20px; }
+.nav-btn.active { color: var(--accent); }
+.nav-btn.active span { filter: drop-shadow(0 0 6px var(--accent)); }
+.nav-btn:active { transform: scale(.94); }
+
+/* ---------- 通用组件 ---------- */
+.section-title {
+  font-size: 15px; font-weight: 700; margin: 4px 0 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title::before {
+  content: ''; width: 4px; height: 16px; border-radius: 2px;
+  background: linear-gradient(var(--accent), var(--accent-2));
+}
+.muted { color: var(--text-dim); font-size: 12px; }
+
+.btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff; border: none; border-radius: 10px;
+  padding: 11px 18px; font-size: 14px; font-weight: 700;
+  cursor: pointer; box-shadow: 0 4px 14px rgba(176,107,255,.35);
+  transition: transform .1s;
+}
+.btn:active { transform: scale(.96); }
+.btn:disabled { opacity: .4; box-shadow: none; cursor: not-allowed; }
+.btn.secondary {
+  background: var(--panel-2); box-shadow: none;
+  border: 1px solid rgba(255,255,255,.1);
+}
+.btn.gold { background: linear-gradient(135deg, #f0c674, #e0964a); box-shadow: 0 4px 14px rgba(240,198,116,.3); color:#241a08;}
+
+/* ---------- 主页 ---------- */
+.hero-banner {
+  border-radius: 16px; padding: 22px 18px;
+  background:
+    linear-gradient(135deg, rgba(176,107,255,.25), rgba(255,107,157,.15)),
+    var(--panel);
+  border: 1px solid rgba(255,255,255,.08);
+  margin-bottom: 16px; position: relative; overflow: hidden;
+}
+.hero-banner::after {
+  content: '⚔️'; position: absolute; right: -10px; bottom: -16px;
+  font-size: 92px; opacity: .12; transform: rotate(-12deg);
+}
+.hero-banner h1 { font-size: 21px; margin-bottom: 6px; }
+.hero-banner p { color: var(--text-dim); font-size: 13px; line-height: 1.6; max-width: 80%; }
+
+.quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.quick-card {
+  background: var(--panel); border-radius: 14px; padding: 16px;
+  border: 1px solid rgba(255,255,255,.06); cursor: pointer;
+  transition: transform .12s, border-color .2s;
+}
+.quick-card:active { transform: scale(.97); }
+.quick-card:hover { border-color: var(--accent); }
+.quick-card .qc-icon { font-size: 30px; margin-bottom: 8px; }
+.quick-card .qc-title { font-weight: 700; font-size: 15px; }
+.quick-card .qc-sub { color: var(--text-dim); font-size: 11px; margin-top: 3px; }
+
+.team-preview { margin-top: 16px; }
+.team-slots { display: flex; gap: 8px; margin-top: 10px; }
+.team-slot {
+  flex: 1; aspect-ratio: 3/4; border-radius: 12px;
+  background: var(--panel); border: 1px dashed rgba(255,255,255,.15);
+  display: grid; place-items: center; overflow: hidden; position: relative;
+}
+.team-slot.filled { border-style: solid; }
+
+/* ---------- 角色卡 ---------- */
+.char-portrait {
+  width: 100%; height: 100%; position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  padding-bottom: 6px;
+}
+.char-portrait .avatar {
+  position: absolute; inset: 0;
+  display: grid; place-items: center; font-size: 34px;
+}
+.char-portrait .pname {
+  position: relative; font-size: 10px; font-weight: 700;
+  background: rgba(0,0,0,.5); padding: 1px 6px; border-radius: 6px;
+}
+.rarity-badge {
+  position: absolute; top: 4px; left: 4px; font-size: 9px;
+  padding: 1px 5px; border-radius: 5px; font-weight: 800; z-index: 2;
+}
+.r5 { background: linear-gradient(135deg,#ff9b3d,#ffd35a); color:#3a2400; }
+.r4 { background: linear-gradient(135deg,#b06bff,#d89bff); color:#fff; }
+.r3 { background: linear-gradient(135deg,#6c9fff,#9bc6ff); color:#fff; }
+.border-r5 { border-color: var(--r5) !important; }
+.border-r4 { border-color: var(--r4) !important; }
+.border-r3 { border-color: var(--r3) !important; }
+
+/* ---------- 佣兵列表 ---------- */
+.roster-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+}
+.roster-card {
+  background: var(--panel); border-radius: 12px; overflow: hidden;
+  border: 2px solid rgba(255,255,255,.06); cursor: pointer;
+  position: relative; transition: transform .1s;
+}
+.roster-card:active { transform: scale(.96); }
+.roster-card .rc-art {
+  aspect-ratio: 1/1; display: grid; place-items: center; font-size: 38px;
+  position: relative;
+}
+.roster-card .rc-info { padding: 6px 8px; }
+.roster-card .rc-name { font-size: 12px; font-weight: 700; }
+.roster-card .rc-lv { font-size: 10px; color: var(--text-dim); }
+.roster-card .in-team-tag {
+  position: absolute; top: 4px; right: 4px; z-index: 2;
+  background: var(--accent); color: #fff; font-size: 9px;
+  padding: 1px 5px; border-radius: 5px; font-weight: 700;
+}
+.cls-chip {
+  position: absolute; bottom: 4px; right: 4px; font-size: 14px;
+  background: rgba(0,0,0,.45); border-radius: 6px; padding: 1px 4px;
+}
+
+/* ---------- 关卡 ---------- */
+.stage-card {
+  background: var(--panel); border-radius: 14px; padding: 14px;
+  border: 1px solid rgba(255,255,255,.06); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 12px;
+}
+.stage-card.locked { opacity: .5; }
+.stage-card.boss { border-color: rgba(255,90,106,.4); background: linear-gradient(135deg, rgba(255,90,106,.12), var(--panel)); }
+.stage-num {
+  width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+  background: var(--panel-2); display: grid; place-items: center;
+  font-size: 18px; font-weight: 800;
+}
+.stage-card.boss .stage-num { background: linear-gradient(135deg,#ff5a6a,#b02a3a); }
+.stage-info { flex: 1; min-width: 0; }
+.stage-info h3 { font-size: 14px; margin-bottom: 2px; }
+.stage-info p { font-size: 11px; color: var(--text-dim); line-height: 1.4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stage-meta { display: flex; gap: 8px; margin-top: 5px; font-size: 10px; }
+.stage-meta span { color: var(--gold); }
+.clear-mark { color: var(--hp); font-size: 16px; }
+
+/* ---------- 抽卡 ---------- */
+.gacha-banner {
+  border-radius: 18px; padding: 26px 18px; text-align: center;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255,155,61,.3), transparent 60%),
+    linear-gradient(160deg, #3a2454, #241730);
+  border: 1px solid rgba(255,155,61,.3); margin-bottom: 18px; position: relative;
+  overflow: hidden;
+}
+.gacha-banner h2 { font-size: 22px; margin-bottom: 6px;
+  background: linear-gradient(90deg,#ffd35a,#ff9b3d); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.gacha-banner .sub { color: var(--text-dim); font-size: 12px; margin-bottom: 4px; }
+.gacha-rates { font-size: 11px; color: var(--text-dim); margin: 14px 0; }
+.gacha-rates b { color: var(--r5); }
+.pity-bar { font-size: 11px; color: var(--text-dim); margin-top: 8px; }
+.gacha-actions { display: flex; gap: 10px; justify-content: center; margin-top: 6px; }
+
+/* ---------- 弹窗 ---------- */
+#modal-root { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+.modal-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,.7);
+  display: grid; place-items: center; pointer-events: auto;
+  animation: fadeIn .2s;
+}
+@keyframes fadeIn { from { opacity: 0; } }
+.modal {
+  width: 88%; max-width: 400px; max-height: 84vh; overflow-y: auto;
+  background: var(--bg2); border-radius: 18px; padding: 20px;
+  border: 1px solid rgba(255,255,255,.1); box-shadow: var(--shadow);
+  animation: popIn .25s cubic-bezier(.2,1.4,.5,1);
+}
+@keyframes popIn { from { transform: scale(.85); opacity: 0; } }
+.modal h2 { font-size: 18px; margin-bottom: 6px; }
+.modal .close-row { display: flex; justify-content: flex-end; margin-top: 16px; gap: 8px; }
+
+/* 角色详情 */
+.detail-head { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; }
+.detail-art {
+  width: 84px; height: 84px; border-radius: 14px; flex-shrink: 0;
+  display: grid; place-items: center; font-size: 44px;
+  border: 2px solid;
+}
+.detail-title h2 { font-size: 19px; }
+.detail-title .subt { color: var(--accent-2); font-size: 12px; font-weight: 600; }
+.detail-title .meta { color: var(--text-dim); font-size: 12px; margin-top: 4px; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+.stat-item { background: var(--panel); border-radius: 8px; padding: 8px 10px; font-size: 12px;
+  display: flex; justify-content: space-between; }
+.stat-item .sv { font-weight: 700; }
+.skill-item { background: var(--panel); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.skill-item .sk-head { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; }
+.skill-item .sk-sp { margin-left: auto; font-size: 10px; color: var(--sp); background: rgba(108,198,255,.15); padding: 1px 6px; border-radius: 5px; }
+.skill-item .sk-desc { font-size: 11px; color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
+
+/* ---------- 战斗界面 ---------- */
+#battle-screen {
+  position: fixed; inset: 0; max-width: 480px; margin: 0 auto;
+  background: linear-gradient(180deg, #1a1326 0%, #0e0a14 100%);
+  z-index: 40; display: flex; flex-direction: column;
+}
+.battle-top {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; font-size: 13px; font-weight: 700;
+  background: rgba(0,0,0,.3);
+}
+.battle-field {
+  flex: 1; display: flex; flex-direction: column; justify-content: space-between;
+  padding: 10px; gap: 8px; overflow: hidden;
+}
+.enemy-zone, .ally-zone { display: flex; flex-direction: column; gap: 8px; }
+.row-label { font-size: 10px; color: var(--text-dim); text-align: center; }
+.unit-row { display: flex; gap: 8px; justify-content: center; min-height: 86px; }
+
+.unit {
+  width: 76px; border-radius: 10px; padding: 5px;
+  background: var(--panel); border: 2px solid rgba(255,255,255,.08);
+  position: relative; cursor: pointer; transition: transform .12s, box-shadow .2s;
+}
+.unit.dead { opacity: .3; filter: grayscale(1); pointer-events: none; }
+.unit.active-turn { border-color: var(--gold); box-shadow: 0 0 16px rgba(240,198,116,.5); transform: translateY(-4px); }
+.unit.targetable { border-color: var(--danger); box-shadow: 0 0 14px rgba(255,90,106,.5); cursor: crosshair; }
+.unit.targetable.ally-target { border-color: var(--hp); box-shadow: 0 0 14px rgba(74,214,109,.5); }
+.unit .u-art { height: 38px; display: grid; place-items: center; font-size: 26px; }
+.unit .u-name { font-size: 9px; text-align: center; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.unit .u-elem { position: absolute; top: 2px; right: 3px; font-size: 11px; }
+.unit .u-boss { position: absolute; top: 2px; left: 3px; font-size: 9px; color: var(--danger); font-weight: 800; }
+.bar { height: 5px; border-radius: 3px; background: rgba(0,0,0,.4); margin-top: 3px; overflow: hidden; }
+.bar .fill { height: 100%; transition: width .3s; }
+.bar .fill.hp { background: linear-gradient(90deg,#4ad66d,#7aff9b); }
+.bar .fill.sp { background: linear-gradient(90deg,#6cc6ff,#9bdcff); }
+.u-hp-text { font-size: 8px; color: var(--text-dim); text-align: center; margin-top: 1px; }
+.shield-tag { position: absolute; bottom: 22px; left: 3px; font-size: 9px; color: #9bdcff; }
+
+/* 战斗底部操作 */
+.battle-ctrl {
+  background: rgba(0,0,0,.4); padding: 10px 12px 14px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  min-height: 120px;
+}
+.turn-hint { font-size: 12px; color: var(--text-dim); text-align: center; margin-bottom: 8px; min-height: 16px; }
+.turn-hint b { color: var(--gold); }
+.skill-bar { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.skill-btn {
+  background: var(--panel-2); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px; padding: 8px 10px; min-width: 84px; cursor: pointer;
+  text-align: center; transition: transform .1s;
+}
+.skill-btn:active { transform: scale(.95); }
+.skill-btn.selected { border-color: var(--gold); background: rgba(240,198,116,.15); }
+.skill-btn:disabled { opacity: .4; cursor: not-allowed; }
+.skill-btn .sb-name { font-size: 12px; font-weight: 700; }
+.skill-btn .sb-sp { font-size: 9px; color: var(--sp); margin-top: 2px; }
+.skill-btn .sb-sp.ready { color: var(--gold); }
+
+.battle-log {
+  position: absolute; top: 48px; left: 10px; right: 10px;
+  font-size: 11px; color: var(--text-dim); text-align: center;
+  pointer-events: none; min-height: 16px; text-shadow: 0 1px 3px #000;
+}
+
+/* 伤害飘字 */
+.float-text {
+  position: absolute; font-weight: 800; font-size: 16px;
+  pointer-events: none; z-index: 60; text-shadow: 0 2px 4px #000;
+  animation: floatUp 1s ease-out forwards;
+}
+.float-text.dmg { color: #ff6b6b; }
+.float-text.crit { color: #ffd35a; font-size: 21px; }
+.float-text.heal { color: #7aff9b; }
+@keyframes floatUp {
+  0% { transform: translateY(0) scale(.6); opacity: 0; }
+  20% { transform: translateY(-8px) scale(1.1); opacity: 1; }
+  100% { transform: translateY(-46px) scale(1); opacity: 0; }
+}
+
+/* 抽卡结果动画 */
+.pull-result { text-align: center; }
+.pull-art {
+  width: 120px; height: 120px; margin: 0 auto 14px; border-radius: 20px;
+  display: grid; place-items: center; font-size: 64px; border: 3px solid;
+  animation: revealCard .5s cubic-bezier(.2,1.4,.4,1);
+}
+@keyframes revealCard {
+  from { transform: rotateY(90deg) scale(.5); opacity: 0; }
+}
+.pull-stars { font-size: 20px; margin: 6px 0; }
+.pull-name { font-size: 20px; font-weight: 800; }
+.pull-title { color: var(--accent-2); font-size: 13px; }
+.pull-dup { color: var(--gold); font-size: 12px; margin-top: 6px; }
+
+/* 结算 */
+.result-modal { text-align: center; }
+.result-title { font-size: 30px; font-weight: 900; margin-bottom: 8px; }
+.result-title.win { color: var(--hp); text-shadow: 0 0 20px rgba(74,214,109,.5); }
+.result-title.lose { color: var(--danger); }
+.reward-row { display: flex; justify-content: center; gap: 16px; margin: 14px 0; }
+.reward-row .rw { background: var(--panel); padding: 8px 14px; border-radius: 10px; font-weight: 700; }
+
+.empty-hint {
+  text-align: center; color: var(--text-dim); padding: 40px 20px; font-size: 13px;
+}
+
+.toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,.85); color: #fff; padding: 10px 18px;
+  border-radius: 20px; font-size: 13px; z-index: 100;
+  animation: toastIn .3s, toastOut .3s 1.7s forwards;
+  pointer-events: none; max-width: 80%; text-align: center;
+}
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 10px); } }
+@keyframes toastOut { to { opacity: 0; } }
+
+@media (max-width: 380px) {
+  .unit { width: 66px; }
+  .roster-grid { gap: 8px; }
+}
+
+</style>
+</head>
+<body>
+  <div id="app">
+    <!-- 顶部资源栏 -->
+    <header id="topbar">
+      <div class="logo">
+        <span class="logo-mark">BD</span>
+        <span class="logo-text">棕色尘埃<small>2</small></span>
+      </div>
+      <div class="resources">
+        <div class="res" title="金币"><span class="res-icon">🪙</span><span id="res-gold">0</span></div>
+        <div class="res" title="宝石"><span class="res-icon">💎</span><span id="res-gem">0</span></div>
+        <button id="btn-reset" class="ghost-btn" title="重置存档">↺</button>
+      </div>
+    </header>
+
+    <!-- 主内容区（各页面切换） -->
+    <main id="screen"></main>
+
+    <!-- 底部导航 -->
+    <nav id="navbar">
+      <button class="nav-btn active" data-screen="home"><span>🏰</span>主页</button>
+      <button class="nav-btn" data-screen="stages"><span>🗺️</span>冒险</button>
+      <button class="nav-btn" data-screen="roster"><span>👥</span>佣兵</button>
+      <button class="nav-btn" data-screen="gacha"><span>🎴</span>招募</button>
+    </nav>
+  </div>
+
+  <!-- 弹窗容器 -->
+  <div id="modal-root"></div>
+<script>
+// ============================================================
+//  Brown Dust 2 风格游戏 — 静态数据层
+//  角色、技能、敌人、关卡、抽卡池定义
+// ============================================================
+
+/**
+ * 职业定义
+ * 每个职业有不同的定位与站位偏好
+ */
+const CLASSES = {
+  warrior:  { name: '战士',   icon: '⚔️', role: '前排物理输出' },
+  defender: { name: '守护者', icon: '🛡️', role: '前排坦克' },
+  mage:     { name: '法师',   icon: '🔮', role: '后排范围法术' },
+  archer:   { name: '游侠',   icon: '🏹', role: '后排单体爆发' },
+  healer:   { name: '治愈者', icon: '✨', role: '后排辅助治疗' },
+};
+
+/**
+ * 技能目标类型
+ *  - enemySingle : 单个敌人
+ *  - enemyRow    : 敌方一排（前/后）
+ *  - enemyAll    : 全体敌人
+ *  - allySingle  : 单个友方
+ *  - allyAll     : 全体友方
+ *  - self        : 自身
+ */
+
+/**
+ * 技能效果类型
+ *  - damage : 造成伤害（power 为攻击力倍率）
+ *  - heal   : 治疗（power 为攻击力倍率）
+ *  - buffAtk / buffDef : 给目标加攻/加防（power 为百分比，duration 回合）
+ *  - debuffDef : 降低敌方防御
+ *  - shield : 护盾（power 为攻击力倍率，吸收伤害）
+ */
+
+// 元素克制：火 > 风 > 地 > 水 > 火（克制造成 1.3 倍伤害）
+const ELEMENTS = {
+  fire:  { name: '火', icon: '🔥', strong: 'wind'  },
+  wind:  { name: '风', icon: '🌪️', strong: 'earth' },
+  earth: { name: '地', icon: '⛰️', strong: 'water' },
+  water: { name: '水', icon: '💧', strong: 'fire'  },
+  light: { name: '光', icon: '☀️', strong: 'dark'  },
+  dark:  { name: '暗', icon: '🌑', strong: 'light' },
+};
+
+/**
+ * 角色图鉴
+ * baseStats 为 1 级基础值，成长随等级线性提升
+ */
+const CHARACTERS = {
+  // ---------- 5★ ----------
+  lecliss: {
+    id: 'lecliss', name: '莉可莉丝', title: '炽焰魔女',
+    rarity: 5, cls: 'mage', element: 'fire', color: '#ff5a5a',
+    base: { hp: 820, atk: 165, def: 60, spd: 95, crit: 0.20 },
+    grow: { hp: 78, atk: 16, def: 5 },
+    skills: ['fireball', 'inferno'],
+    desc: '操纵烈焰的强大魔女，擅长对敌方全体造成毁灭性火焰伤害。',
+  },
+  justia: {
+    id: 'justia', name: '贾丝蒂亚', title: '圣盾骑士',
+    rarity: 5, cls: 'defender', element: 'light', color: '#ffd35a',
+    base: { hp: 1500, atk: 100, def: 130, spd: 70, crit: 0.10 },
+    grow: { hp: 140, atk: 9, def: 12 },
+    skills: ['taunt_shield', 'holy_smite'],
+    desc: '誓死守护同伴的圣骑士，能为全队提供护盾并吸引敌方火力。',
+  },
+  seir: {
+    id: 'seir', name: '希尔', title: '暗夜游侠',
+    rarity: 5, cls: 'archer', element: 'dark', color: '#a06bff',
+    base: { hp: 900, atk: 180, def: 65, spd: 120, crit: 0.30 },
+    grow: { hp: 82, atk: 18, def: 5 },
+    skills: ['piercing_shot', 'shadow_volley'],
+    desc: '行动迅捷的神射手，对单体目标拥有恐怖的暴击爆发力。',
+  },
+  // ---------- 4★ ----------
+  rou: {
+    id: 'rou', name: '萝', title: '光明祭司',
+    rarity: 4, cls: 'healer', element: 'light', color: '#7affc4',
+    base: { hp: 950, atk: 110, def: 70, spd: 100, crit: 0.10 },
+    grow: { hp: 88, atk: 10, def: 6 },
+    skills: ['heal_wave', 'blessing'],
+    desc: '温柔的治愈者，能恢复全队生命并提升攻击力。',
+  },
+  helena: {
+    id: 'helena', name: '海莲娜', title: '疾风剑士',
+    rarity: 4, cls: 'warrior', element: 'wind', color: '#5ad1ff',
+    base: { hp: 1100, atk: 150, def: 85, spd: 110, crit: 0.18 },
+    grow: { hp: 105, atk: 14, def: 8 },
+    skills: ['slash', 'gale_strike'],
+    desc: '身法如风的剑士，能对敌方一排造成连续斩击。',
+  },
+  diana: {
+    id: 'diana', name: '黛安娜', title: '碧水法师',
+    rarity: 4, cls: 'mage', element: 'water', color: '#5a9fff',
+    base: { hp: 800, atk: 145, def: 58, spd: 92, crit: 0.15 },
+    grow: { hp: 76, atk: 14, def: 5 },
+    skills: ['water_lance', 'frost_nova'],
+    desc: '冷静的水系法师，水矛可降低敌人防御。',
+  },
+  garcia: {
+    id: 'garcia', name: '加西亚', title: '岩石壁垒',
+    rarity: 4, cls: 'defender', element: 'earth', color: '#c9a05a',
+    base: { hp: 1400, atk: 95, def: 120, spd: 65, crit: 0.08 },
+    grow: { hp: 132, atk: 9, def: 11 },
+    skills: ['rock_guard', 'earth_slam'],
+    desc: '坚如磐石的守护者，自身防御越高反击越强。',
+  },
+  // ---------- 3★ ----------
+  teried: {
+    id: 'teried', name: '泰瑞德', title: '见习剑士',
+    rarity: 3, cls: 'warrior', element: 'fire', color: '#ff8b5a',
+    base: { hp: 1000, atk: 130, def: 75, spd: 95, crit: 0.12 },
+    grow: { hp: 95, atk: 12, def: 7 },
+    skills: ['slash', 'power_strike'],
+    desc: '怀抱梦想的见习剑士，攻守均衡。',
+  },
+  lia: {
+    id: 'lia', name: '莉亚', title: '草原游侠',
+    rarity: 3, cls: 'archer', element: 'earth', color: '#a0d15a',
+    base: { hp: 820, atk: 140, def: 60, spd: 108, crit: 0.22 },
+    grow: { hp: 78, atk: 13, def: 5 },
+    skills: ['piercing_shot', 'power_strike'],
+    desc: '草原出身的猎手，箭无虚发。',
+  },
+  mina: {
+    id: 'mina', name: '米娜', title: '小小药剂师',
+    rarity: 3, cls: 'healer', element: 'wind', color: '#7affe0',
+    base: { hp: 880, atk: 100, def: 65, spd: 98, crit: 0.10 },
+    grow: { hp: 82, atk: 9, def: 6 },
+    skills: ['heal_wave', 'slash'],
+    desc: '随身携带药剂的少女，治疗虽弱但可靠。',
+  },
+};
+
+/**
+ * 技能定义
+ */
+const SKILLS = {
+  // ----- 攻击 -----
+  slash: {
+    name: '斩击', target: 'enemySingle', effect: 'damage',
+    power: 1.2, sp: 0, icon: '🗡️',
+    desc: '对单个敌人造成 120% 攻击力的伤害。',
+  },
+  power_strike: {
+    name: '强力一击', target: 'enemySingle', effect: 'damage',
+    power: 2.0, sp: 2, icon: '💥',
+    desc: '蓄力后对单个敌人造成 200% 攻击力的伤害。',
+  },
+  gale_strike: {
+    name: '疾风斩', target: 'enemyRow', effect: 'damage',
+    power: 1.4, sp: 3, icon: '🌪️',
+    desc: '对敌方一整排造成 140% 攻击力的风属性伤害。',
+  },
+  fireball: {
+    name: '火球术', target: 'enemySingle', effect: 'damage',
+    power: 1.8, sp: 0, icon: '☄️',
+    desc: '投掷火球对单个敌人造成 180% 攻击力的火焰伤害。',
+  },
+  inferno: {
+    name: '炼狱业火', target: 'enemyAll', effect: 'damage',
+    power: 1.6, sp: 4, icon: '🔥',
+    desc: '召唤业火对敌方全体造成 160% 攻击力的火焰伤害。',
+  },
+  water_lance: {
+    name: '水矛', target: 'enemySingle', effect: 'damage',
+    power: 1.5, sp: 0, icon: '🔱',
+    desc: '凝聚水矛刺穿敌人，造成 150% 伤害并降低其 20% 防御。',
+    extra: { type: 'debuffDef', power: 0.20, duration: 2 },
+  },
+  frost_nova: {
+    name: '霜冻新星', target: 'enemyAll', effect: 'damage',
+    power: 1.3, sp: 4, icon: '❄️',
+    desc: '冰霜爆发对敌方全体造成 130% 攻击力的水属性伤害。',
+  },
+  piercing_shot: {
+    name: '穿透射击', target: 'enemySingle', effect: 'damage',
+    power: 1.6, sp: 0, icon: '🎯',
+    desc: '精准射击单个敌人，造成 160% 攻击力的伤害。',
+  },
+  shadow_volley: {
+    name: '暗影连射', target: 'enemySingle', effect: 'damage',
+    power: 3.2, sp: 4, icon: '🌌',
+    desc: '倾泻暗影箭雨，对单个敌人造成 320% 攻击力的恐怖伤害。',
+  },
+  holy_smite: {
+    name: '圣光裁决', target: 'enemyRow', effect: 'damage',
+    power: 1.5, sp: 3, icon: '⚡',
+    desc: '降下圣光，对敌方一排造成 150% 攻击力的光属性伤害。',
+  },
+  earth_slam: {
+    name: '大地践踏', target: 'enemyAll', effect: 'damage',
+    power: 1.1, sp: 3, icon: '⛰️',
+    desc: '震动大地，对敌方全体造成 110% 攻击力的伤害。',
+  },
+  rock_guard: {
+    name: '磐石守护', target: 'self', effect: 'buffDef',
+    power: 0.50, duration: 3, sp: 2, icon: '🪨',
+    desc: '提升自身 50% 防御，持续 3 回合。',
+  },
+  // ----- 治疗 / 辅助 -----
+  heal_wave: {
+    name: '治愈波动', target: 'allyAll', effect: 'heal',
+    power: 1.2, sp: 0, icon: '💚',
+    desc: '为全体友方恢复 120% 攻击力的生命值。',
+  },
+  blessing: {
+    name: '祝福', target: 'allyAll', effect: 'buffAtk',
+    power: 0.30, duration: 3, sp: 3, icon: '🌟',
+    desc: '为全体友方提升 30% 攻击力，持续 3 回合。',
+  },
+  taunt_shield: {
+    name: '守护壁垒', target: 'allyAll', effect: 'shield',
+    power: 0.80, sp: 2, icon: '🛡️',
+    desc: '为全体友方提供等同于自身 80% 攻击力的护盾，并嘲讽敌人。',
+    extra: { type: 'taunt' },
+  },
+};
+
+/**
+ * 敌人定义（怪物可复用角色技能）
+ */
+const ENEMIES = {
+  goblin: {
+    id: 'goblin', name: '哥布林', element: 'earth', color: '#7a9b4a',
+    base: { hp: 600, atk: 80, def: 40, spd: 90, crit: 0.05 },
+    skills: ['slash'],
+  },
+  goblin_archer: {
+    id: 'goblin_archer', name: '哥布林弓手', element: 'earth', color: '#9bab5a',
+    base: { hp: 480, atk: 95, def: 30, spd: 105, crit: 0.10 },
+    skills: ['piercing_shot'],
+  },
+  wolf: {
+    id: 'wolf', name: '暗影狼', element: 'dark', color: '#5a5a7a',
+    base: { hp: 700, atk: 110, def: 45, spd: 130, crit: 0.15 },
+    skills: ['slash', 'power_strike'],
+  },
+  ogre: {
+    id: 'ogre', name: '食人魔', element: 'fire', color: '#b85a3a',
+    base: { hp: 1800, atk: 130, def: 80, spd: 60, crit: 0.08 },
+    skills: ['power_strike', 'earth_slam'],
+  },
+  dark_mage: {
+    id: 'dark_mage', name: '黑暗法师', element: 'dark', color: '#6a3a8a',
+    base: { hp: 900, atk: 150, def: 50, spd: 95, crit: 0.12 },
+    skills: ['fireball', 'frost_nova'],
+  },
+  // Boss
+  demon_lord: {
+    id: 'demon_lord', name: '魔王 · 巴尔', element: 'dark', color: '#8a1a3a',
+    base: { hp: 6000, atk: 200, def: 110, spd: 100, crit: 0.20 },
+    skills: ['shadow_volley', 'inferno', 'power_strike'],
+    isBoss: true,
+  },
+  troll_king: {
+    id: 'troll_king', name: '巨魔王', element: 'earth', color: '#4a7a3a',
+    base: { hp: 4200, atk: 160, def: 130, spd: 70, crit: 0.10 },
+    skills: ['earth_slam', 'power_strike'],
+    isBoss: true,
+  },
+};
+
+/**
+ * 关卡定义
+ * waves: 敌人波次，每个敌人含 {id, level, pos}（pos: front/back）
+ */
+const STAGES = [
+  {
+    id: 1, name: '艾尔玛森林 · 入口', recommend: 1,
+    desc: '初出茅庐的冒险，森林边缘的哥布林正在游荡。',
+    enemies: [
+      { id: 'goblin', level: 2, pos: 'front' },
+      { id: 'goblin', level: 2, pos: 'front' },
+      { id: 'goblin_archer', level: 2, pos: 'back' },
+    ],
+    reward: { gold: 200, exp: 80, gem: 30 },
+  },
+  {
+    id: 2, name: '艾尔玛森林 · 深处', recommend: 4,
+    desc: '森林深处潜伏着饥饿的暗影狼群。',
+    enemies: [
+      { id: 'wolf', level: 4, pos: 'front' },
+      { id: 'goblin', level: 4, pos: 'front' },
+      { id: 'goblin_archer', level: 5, pos: 'back' },
+      { id: 'goblin_archer', level: 5, pos: 'back' },
+    ],
+    reward: { gold: 350, exp: 140, gem: 30 },
+  },
+  {
+    id: 3, name: '废弃矿洞', recommend: 7,
+    desc: '矿洞中传来沉重的脚步声，似乎有强敌出没。',
+    enemies: [
+      { id: 'ogre', level: 7, pos: 'front' },
+      { id: 'wolf', level: 7, pos: 'front' },
+      { id: 'dark_mage', level: 7, pos: 'back' },
+    ],
+    reward: { gold: 500, exp: 220, gem: 40 },
+  },
+  {
+    id: 4, name: '诅咒山脊 · BOSS', recommend: 10,
+    desc: '盘踞山脊的巨魔王，是冒险者难以逾越的高墙。',
+    enemies: [
+      { id: 'troll_king', level: 10, pos: 'front' },
+      { id: 'wolf', level: 9, pos: 'front' },
+      { id: 'dark_mage', level: 9, pos: 'back' },
+      { id: 'dark_mage', level: 9, pos: 'back' },
+    ],
+    reward: { gold: 800, exp: 400, gem: 60 },
+    isBoss: true,
+  },
+  {
+    id: 5, name: '魔王城 · 王座', recommend: 14,
+    desc: '一切罪恶的源头。魔王巴尔在王座上等待着挑战者。',
+    enemies: [
+      { id: 'demon_lord', level: 14, pos: 'back' },
+      { id: 'ogre', level: 13, pos: 'front' },
+      { id: 'ogre', level: 13, pos: 'front' },
+      { id: 'dark_mage', level: 13, pos: 'back' },
+    ],
+    reward: { gold: 1500, exp: 800, gem: 100 },
+    isBoss: true,
+  },
+];
+
+/**
+ * 抽卡池：概率与对应角色
+ */
+const GACHA = {
+  cost: 100,          // 每次抽卡消耗宝石
+  rates: { 5: 0.03, 4: 0.12, 3: 0.85 },
+  pool: {
+    5: ['lecliss', 'justia', 'seir'],
+    4: ['rou', 'helena', 'diana', 'garcia'],
+    3: ['teried', 'lia', 'mina'],
+  },
+};
+
+// 暴露到全局
+window.GameData = { CLASSES, ELEMENTS, CHARACTERS, SKILLS, ENEMIES, STAGES, GACHA };
+
+
+// ============================================================
+//  游戏状态管理 / 存档 / 角色养成
+// ============================================================
+
+const SAVE_KEY = 'bd2_save_v1';
+
+const Game = {
+  state: null,
+
+  /** 初始化：读取存档或创建新存档 */
+  init() {
+    const saved = localStorage.getItem(SAVE_KEY);
+    if (saved) {
+      try {
+        this.state = JSON.parse(saved);
+      } catch (e) {
+        console.warn('存档损坏，重置', e);
+        this.state = this.newGame();
+      }
+    } else {
+      this.state = this.newGame();
+    }
+    return this.state;
+  },
+
+  /** 新游戏的初始状态 */
+  newGame() {
+    return {
+      gold: 500,
+      gem: 300,
+      // 已拥有角色：{ uid, charId, level, exp, star }
+      roster: [
+        this.makeOwned('teried', 1),
+        this.makeOwned('mina', 1),
+      ],
+      // 出战队伍（uid 列表，最多 4 人）
+      team: [],
+      // 已通关关卡 id
+      cleared: [],
+      // 抽卡保底计数（距上次 5★）
+      pity: 0,
+      _uidSeq: 1,
+    };
+  },
+
+  /** 生成一个已拥有角色实例 */
+  makeOwned(charId, level = 1) {
+    const uid = 'u' + (this.state ? this.state._uidSeq++ : Date.now() + Math.random());
+    return { uid, charId, level, exp: 0, star: window.GameData.CHARACTERS[charId].rarity };
+  },
+
+  save() {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(this.state));
+  },
+
+  reset() {
+    localStorage.removeItem(SAVE_KEY);
+    this.state = this.newGame();
+    // 默认把初始两名角色编入队伍
+    this.state.team = this.state.roster.map(o => o.uid);
+    this.save();
+  },
+
+  // ---------- 角色数值计算 ----------
+
+  /** 根据等级计算角色最终属性 */
+  computeStats(owned) {
+    const def = window.GameData.CHARACTERS[owned.charId];
+    const lv = owned.level - 1;
+    return {
+      maxHp: Math.round(def.base.hp + def.grow.hp * lv),
+      atk:   Math.round(def.base.atk + def.grow.atk * lv),
+      def:   Math.round(def.base.def + def.grow.def * lv),
+      spd:   def.base.spd,
+      crit:  def.base.crit,
+    };
+  },
+
+  /** 升级所需经验 */
+  expToNext(level) {
+    return Math.round(50 + level * level * 12);
+  },
+
+  /** 给某角色加经验，自动升级。返回升了几级 */
+  addExp(owned, amount) {
+    let levelsGained = 0;
+    owned.exp += amount;
+    while (owned.level < 60 && owned.exp >= this.expToNext(owned.level)) {
+      owned.exp -= this.expToNext(owned.level);
+      owned.level++;
+      levelsGained++;
+    }
+    return levelsGained;
+  },
+
+  /** 花金币升级一次 */
+  levelUpWithGold(uid) {
+    const owned = this.getOwned(uid);
+    if (!owned || owned.level >= 60) return { ok: false, msg: '已达最大等级' };
+    const cost = 50 + owned.level * 30;
+    if (this.state.gold < cost) return { ok: false, msg: '金币不足' };
+    this.state.gold -= cost;
+    owned.level++;
+    owned.exp = 0;
+    this.save();
+    return { ok: true, cost, level: owned.level };
+  },
+
+  levelUpCost(level) {
+    return 50 + level * 30;
+  },
+
+  // ---------- 队伍管理 ----------
+
+  getOwned(uid) {
+    return this.state.roster.find(o => o.uid === uid);
+  },
+
+  inTeam(uid) {
+    return this.state.team.includes(uid);
+  },
+
+  toggleTeam(uid) {
+    const idx = this.state.team.indexOf(uid);
+    if (idx >= 0) {
+      this.state.team.splice(idx, 1);
+    } else {
+      if (this.state.team.length >= 4) return { ok: false, msg: '队伍已满（最多 4 人）' };
+      this.state.team.push(uid);
+    }
+    this.save();
+    return { ok: true };
+  },
+
+  // ---------- 抽卡 ----------
+
+  rollRarity() {
+    const r = Math.random();
+    // 软保底：90 抽必出 5★
+    if (this.state.pity >= 89) return 5;
+    const { rates } = window.GameData.GACHA;
+    if (r < rates[5]) return 5;
+    if (r < rates[5] + rates[4]) return 4;
+    return 3;
+  },
+
+  /** 抽一次卡，返回获得的角色信息 */
+  gachaPull() {
+    if (this.state.gem < window.GameData.GACHA.cost) {
+      return { ok: false, msg: '宝石不足' };
+    }
+    this.state.gem -= window.GameData.GACHA.cost;
+    const rarity = this.rollRarity();
+    if (rarity === 5) this.state.pity = 0;
+    else this.state.pity++;
+
+    const pool = window.GameData.GACHA.pool[rarity];
+    const charId = pool[Math.floor(Math.random() * pool.length)];
+
+    // 已拥有则转化为升星碎片（这里简单给宝石返还）
+    const already = this.state.roster.some(o => o.charId === charId);
+    let dup = false;
+    if (already && rarity < 5) {
+      dup = true;
+      this.state.gem += 20; // 重复返还
+    }
+    const owned = this.makeOwned(charId, 1);
+    this.state.roster.push(owned);
+    this.save();
+    return { ok: true, charId, rarity, dup, owned };
+  },
+
+  // ---------- 关卡结算 ----------
+
+  /** 战斗胜利结算奖励 */
+  rewardStage(stage, firstClear) {
+    const r = stage.reward;
+    this.state.gold += r.gold;
+    this.state.gem += firstClear ? r.gem : Math.round(r.gem * 0.3);
+    // 经验分配给出战队伍
+    this.state.team.forEach(uid => {
+      const o = this.getOwned(uid);
+      if (o) this.addExp(o, r.exp);
+    });
+    if (firstClear && !this.state.cleared.includes(stage.id)) {
+      this.state.cleared.push(stage.id);
+    }
+    this.save();
+  },
+};
+
+window.Game = Game;
+
+
+// ============================================================
+//  回合制战斗引擎
+//  - 基于速度的行动顺序
+//  - 技能 SP 充能、元素克制、暴击、护盾、增益/减益
+//  - 玩家手动操作 + 敌方 AI
+// ============================================================
+
+class Combatant {
+  constructor(opts) {
+    this.uid = opts.uid;            // 唯一标识
+    this.name = opts.name;
+    this.side = opts.side;          // 'ally' | 'enemy'
+    this.charId = opts.charId;      // 引用图鉴 id（角色或敌人）
+    this.cls = opts.cls;
+    this.element = opts.element;
+    this.color = opts.color;
+    this.level = opts.level;
+    this.pos = opts.pos;            // 'front' | 'back'
+    this.isBoss = !!opts.isBoss;
+
+    this.maxHp = opts.maxHp;
+    this.hp = opts.maxHp;
+    this.atk = opts.atk;
+    this.def = opts.def;
+    this.spd = opts.spd;
+    this.crit = opts.crit;
+
+    this.skills = opts.skills.slice(); // 技能 id 列表
+    this.sp = 0;                       // 怒气 / 技能点
+    this.maxSp = 6;
+
+    this.shield = 0;                   // 当前护盾值
+    this.buffs = [];                   // {stat:'atk'|'def', mult, turns}
+    this.taunting = 0;                 // 嘲讽剩余回合
+    this.alive = true;
+  }
+
+  // 含增益后的有效攻击
+  effAtk() {
+    let m = 1;
+    this.buffs.forEach(b => { if (b.stat === 'atk') m += b.mult; });
+    return Math.round(this.atk * m);
+  }
+
+  // 含增益/减益后的有效防御
+  effDef() {
+    let m = 1;
+    this.buffs.forEach(b => {
+      if (b.stat === 'def') m += b.mult;       // 正为加防
+    });
+    return Math.max(0, Math.round(this.def * m));
+  }
+
+  tickBuffs() {
+    this.buffs.forEach(b => b.turns--);
+    this.buffs = this.buffs.filter(b => b.turns > 0);
+    if (this.taunting > 0) this.taunting--;
+  }
+}
+
+const Battle = {
+  combatants: [],
+  log: [],
+  turnOrder: [],
+  turnIdx: 0,
+  round: 1,
+  onEvent: null,   // UI 回调
+  finished: false,
+  result: null,    // 'win' | 'lose'
+
+  /** 从存档队伍 + 关卡数据构建战斗 */
+  setup(teamUids, stage) {
+    this.combatants = [];
+    this.log = [];
+    this.round = 1;
+    this.turnIdx = 0;
+    this.finished = false;
+    this.result = null;
+
+    const D = window.GameData;
+
+    // 我方
+    teamUids.forEach((uid, i) => {
+      const owned = Game.getOwned(uid);
+      if (!owned) return;
+      const def = D.CHARACTERS[owned.charId];
+      const st = Game.computeStats(owned);
+      const pos = (def.cls === 'warrior' || def.cls === 'defender') ? 'front' : 'back';
+      this.combatants.push(new Combatant({
+        uid: 'A' + i, name: def.name, side: 'ally', charId: owned.charId,
+        cls: def.cls, element: def.element, color: def.color, level: owned.level,
+        pos, maxHp: st.maxHp, atk: st.atk, def: st.def, spd: st.spd, crit: st.crit,
+        skills: def.skills,
+      }));
+    });
+
+    // 敌方
+    stage.enemies.forEach((e, i) => {
+      const def = D.ENEMIES[e.id];
+      const lv = e.level - 1;
+      const grow = { hp: def.base.hp * 0.10, atk: def.base.atk * 0.08, def: def.base.def * 0.08 };
+      this.combatants.push(new Combatant({
+        uid: 'E' + i, name: def.name, side: 'enemy', charId: e.id,
+        cls: 'enemy', element: def.element, color: def.color, level: e.level,
+        pos: e.pos,
+        maxHp: Math.round(def.base.hp + grow.hp * lv),
+        atk: Math.round(def.base.atk + grow.atk * lv),
+        def: Math.round(def.base.def + grow.def * lv),
+        spd: def.base.spd, crit: def.base.crit,
+        skills: def.skills, isBoss: def.isBoss,
+      }));
+    });
+
+    this.buildTurnOrder();
+    this.pushLog(`⚔️ 战斗开始！ ${stage.name}`);
+  },
+
+  buildTurnOrder() {
+    // 按速度从高到低排序（同速随机）
+    this.turnOrder = this.combatants
+      .filter(c => c.alive)
+      .sort((a, b) => (b.spd - a.spd) || (Math.random() - 0.5));
+    this.turnIdx = 0;
+  },
+
+  allies() { return this.combatants.filter(c => c.side === 'ally'); },
+  enemies() { return this.combatants.filter(c => c.side === 'enemy'); },
+  aliveAllies() { return this.allies().filter(c => c.alive); },
+  aliveEnemies() { return this.enemies().filter(c => c.alive); },
+
+  current() {
+    return this.turnOrder[this.turnIdx];
+  },
+
+  pushLog(msg) {
+    this.log.push(msg);
+    if (this.onEvent) this.onEvent({ type: 'log', msg });
+  },
+
+  // ---------- 战斗主流程 ----------
+
+  /** 推进到下一个存活单位的回合；若一轮结束则进入新回合 */
+  advance() {
+    do {
+      this.turnIdx++;
+      if (this.turnIdx >= this.turnOrder.length) {
+        // 新回合
+        this.round++;
+        this.combatants.forEach(c => { if (c.alive) c.tickBuffs(); });
+        this.buildTurnOrder();
+        this.pushLog(`—— 第 ${this.round} 回合 ——`);
+      }
+    } while (this.current() && !this.current().alive);
+    return this.current();
+  },
+
+  /** 当前是否轮到我方操作 */
+  isPlayerTurn() {
+    const c = this.current();
+    return c && c.alive && c.side === 'ally' && !this.finished;
+  },
+
+  /** 获取某技能当前是否可用（SP 足够） */
+  canUseSkill(combatant, skillId) {
+    const sk = window.GameData.SKILLS[skillId];
+    return combatant.sp >= (sk.sp || 0);
+  },
+
+  /** 解析技能合法目标列表 */
+  validTargets(combatant, skillId) {
+    const sk = window.GameData.SKILLS[skillId];
+    const enemySide = combatant.side === 'ally' ? this.aliveEnemies() : this.aliveAllies();
+    const allySide = combatant.side === 'ally' ? this.aliveAllies() : this.aliveEnemies();
+    switch (sk.target) {
+      case 'enemySingle': return this.applyTaunt(combatant, enemySide);
+      case 'enemyRow':    return enemySide; // 选一个代表，命中其整排
+      case 'enemyAll':    return enemySide;
+      case 'allySingle':  return allySide;
+      case 'allyAll':     return allySide;
+      case 'self':        return [combatant];
+    }
+    return [];
+  },
+
+  /** 嘲讽：若敌方有嘲讽单位，单体攻击只能选它 */
+  applyTaunt(attacker, targets) {
+    if (attacker.side !== 'enemy') {
+      // 我方攻击敌人，敌人无嘲讽机制（简化）
+      return targets;
+    }
+    return targets;
+  },
+
+  /** 实际收集技能命中的目标 */
+  resolveHitTargets(combatant, skillId, picked) {
+    const sk = window.GameData.SKILLS[skillId];
+    switch (sk.target) {
+      case 'enemySingle':
+      case 'allySingle':
+        return [picked];
+      case 'self':
+        return [combatant];
+      case 'enemyAll':
+        return combatant.side === 'ally' ? this.aliveEnemies() : this.aliveAllies();
+      case 'allyAll':
+        return combatant.side === 'ally' ? this.aliveAllies() : this.aliveEnemies();
+      case 'enemyRow': {
+        const side = combatant.side === 'ally' ? this.aliveEnemies() : this.aliveAllies();
+        return side.filter(c => c.pos === picked.pos);
+      }
+    }
+    return [];
+  },
+
+  /** 元素克制倍率 */
+  elementMult(attacker, defender) {
+    const E = window.GameData.ELEMENTS[attacker.element];
+    if (E && E.strong === defender.element) return 1.3;
+    return 1.0;
+  },
+
+  /** 计算并施加一次伤害 */
+  dealDamage(attacker, defender, power) {
+    const elem = this.elementMult(attacker, defender);
+    const isCrit = Math.random() < attacker.crit;
+    const critMult = isCrit ? 1.6 : 1.0;
+    const raw = attacker.effAtk() * power * elem * critMult;
+    // 防御减伤公式
+    const reduced = raw * (100 / (100 + defender.effDef()));
+    let dmg = Math.max(1, Math.round(reduced));
+
+    // 护盾吸收
+    if (defender.shield > 0) {
+      const absorb = Math.min(defender.shield, dmg);
+      defender.shield -= absorb;
+      dmg -= absorb;
+    }
+    defender.hp -= dmg;
+
+    let tag = '';
+    if (elem > 1) tag += ' 🔥克制';
+    if (isCrit) tag += ' ✨暴击';
+
+    if (defender.hp <= 0) {
+      defender.hp = 0;
+      defender.alive = false;
+      this.pushLog(`💀 ${defender.name} 被击倒！`);
+    }
+    if (this.onEvent) this.onEvent({ type: 'damage', target: defender, amount: dmg, crit: isCrit, elem: elem > 1 });
+    return { dmg, isCrit, elem: elem > 1, tag };
+  },
+
+  /** 执行一个技能 */
+  executeSkill(combatant, skillId, picked) {
+    const sk = window.GameData.SKILLS[skillId];
+    // 扣 SP
+    combatant.sp -= (sk.sp || 0);
+
+    const targets = this.resolveHitTargets(combatant, skillId, picked);
+
+    if (sk.effect === 'damage') {
+      let summary = [];
+      targets.forEach(t => {
+        if (!t.alive) return;
+        const r = this.dealDamage(combatant, t, sk.power);
+        summary.push(`${t.name} -${r.dmg}${r.tag}`);
+      });
+      this.pushLog(`${combatant.name} 使用「${sk.name}」：${summary.join('，')}`);
+      // 附带减益（如水矛降防）
+      if (sk.extra && sk.extra.type === 'debuffDef') {
+        targets.forEach(t => {
+          if (t.alive) t.buffs.push({ stat: 'def', mult: -sk.extra.power, turns: sk.extra.duration });
+        });
+      }
+    } else if (sk.effect === 'heal') {
+      const amt = Math.round(combatant.effAtk() * sk.power);
+      let summary = [];
+      targets.forEach(t => {
+        if (!t.alive) return;
+        const before = t.hp;
+        t.hp = Math.min(t.maxHp, t.hp + amt);
+        summary.push(`${t.name} +${t.hp - before}`);
+        if (this.onEvent) this.onEvent({ type: 'heal', target: t, amount: t.hp - before });
+      });
+      this.pushLog(`${combatant.name} 使用「${sk.name}」：${summary.join('，')}`);
+    } else if (sk.effect === 'buffAtk' || sk.effect === 'buffDef') {
+      const stat = sk.effect === 'buffAtk' ? 'atk' : 'def';
+      targets.forEach(t => {
+        if (t.alive) t.buffs.push({ stat, mult: sk.power, turns: sk.duration });
+      });
+      this.pushLog(`${combatant.name} 使用「${sk.name}」，提升${stat === 'atk' ? '攻击' : '防御'}！`);
+    } else if (sk.effect === 'shield') {
+      const amt = Math.round(combatant.effAtk() * sk.power);
+      targets.forEach(t => { if (t.alive) t.shield += amt; });
+      this.pushLog(`${combatant.name} 使用「${sk.name}」，为全队附加 ${amt} 点护盾！`);
+      if (sk.extra && sk.extra.type === 'taunt') combatant.taunting = 2;
+    }
+
+    // 行动后回复 SP（普攻类 sp=0 的技能也算行动）
+    combatant.sp = Math.min(combatant.maxSp, combatant.sp + 2);
+
+    this.checkEnd();
+  },
+
+  checkEnd() {
+    if (this.aliveEnemies().length === 0) {
+      this.finished = true;
+      this.result = 'win';
+      this.pushLog('🎉 战斗胜利！');
+      if (this.onEvent) this.onEvent({ type: 'end', result: 'win' });
+    } else if (this.aliveAllies().length === 0) {
+      this.finished = true;
+      this.result = 'lose';
+      this.pushLog('☠️ 全队覆灭……');
+      if (this.onEvent) this.onEvent({ type: 'end', result: 'lose' });
+    }
+  },
+
+  // ---------- 敌方 AI ----------
+
+  enemyAct() {
+    const c = this.current();
+    if (!c || c.side !== 'enemy' || !c.alive) return;
+
+    // 优先使用 SP 充足的高威力技能
+    const usable = c.skills
+      .map(id => ({ id, sk: window.GameData.SKILLS[id] }))
+      .filter(s => c.sp >= (s.sk.sp || 0));
+    // 按威力排序，偏好消耗 SP 的强技能
+    usable.sort((a, b) => (b.sk.power * (1 + (b.sk.sp || 0))) - (a.sk.power * (1 + (a.sk.sp || 0))));
+    const choice = usable[0] || { id: c.skills[0], sk: window.GameData.SKILLS[c.skills[0]] };
+
+    // 选目标：攻击类 → 优先打血量最低的我方；治疗 → 自己
+    let picked;
+    const targets = this.aliveAllies();
+    if (choice.sk.effect === 'damage') {
+      // 考虑嘲讽
+      const taunters = this.aliveAllies().filter(a => a.taunting > 0);
+      const pool = taunters.length ? taunters : targets;
+      picked = pool.reduce((lo, t) => (t.hp < lo.hp ? t : lo), pool[0]);
+    } else {
+      picked = c;
+    }
+    this.executeSkill(c, choice.id, picked);
+  },
+};
+
+window.Battle = Battle;
+window.Combatant = Combatant;
+
+
+// ============================================================
+//  UI 渲染层 — 各界面渲染、弹窗、战斗界面
+// ============================================================
+
+const UI = {
+  screenEl: null,
+  modalRoot: null,
+
+  init() {
+    this.screenEl = document.getElementById('screen');
+    this.modalRoot = document.getElementById('modal-root');
+  },
+
+  // ---------- 工具 ----------
+  el(html) {
+    const t = document.createElement('template');
+    t.innerHTML = html.trim();
+    return t.content.firstElementChild;
+  },
+
+  rarityClass(r) { return 'r' + r; },
+
+  charAvatar(charId) {
+    const c = window.GameData.CHARACTERS[charId];
+    const clsIcon = window.GameData.CLASSES[c.cls].icon;
+    return clsIcon;
+  },
+
+  toast(msg) {
+    const t = this.el(`<div class="toast">${msg}</div>`);
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2100);
+  },
+
+  updateResources() {
+    document.getElementById('res-gold').textContent = Game.state.gold;
+    document.getElementById('res-gem').textContent = Game.state.gem;
+  },
+
+  // ---------- 弹窗 ----------
+  openModal(innerHtml, opts = {}) {
+    const overlay = this.el(`<div class="modal-overlay"><div class="modal">${innerHtml}</div></div>`);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay && !opts.noBackdropClose) this.closeModal(overlay);
+    });
+    this.modalRoot.appendChild(overlay);
+    return overlay;
+  },
+  closeModal(overlay) {
+    if (overlay && overlay.remove) overlay.remove();
+    else this.modalRoot.innerHTML = '';
+  },
+  closeAllModals() { this.modalRoot.innerHTML = ''; },
+
+  // ============================================================
+  //  主页
+  // ============================================================
+  renderHome() {
+    const s = Game.state;
+    const teamHtml = this.renderTeamSlots();
+    const totalChars = s.roster.length;
+    const cleared = s.cleared.length;
+    this.screenEl.innerHTML = `
+      <div class="hero-banner">
+        <h1>欢迎回来，指挥官</h1>
+        <p>组建你的佣兵团，踏上拯救大陆的冒险。挑战关卡、招募强力佣兵，击败魔王巴尔！</p>
+      </div>
+      <div class="quick-grid">
+        <div class="quick-card" data-go="stages">
+          <div class="qc-icon">🗺️</div>
+          <div class="qc-title">继续冒险</div>
+          <div class="qc-sub">已通关 ${cleared}/${window.GameData.STAGES.length} 关</div>
+        </div>
+        <div class="quick-card" data-go="gacha">
+          <div class="qc-icon">🎴</div>
+          <div class="qc-title">佣兵招募</div>
+          <div class="qc-sub">💎 ${s.gem} 可用</div>
+        </div>
+        <div class="quick-card" data-go="roster">
+          <div class="qc-icon">👥</div>
+          <div class="qc-title">佣兵团</div>
+          <div class="qc-sub">共 ${totalChars} 名佣兵</div>
+        </div>
+        <div class="quick-card" data-go="stages">
+          <div class="qc-icon">⚔️</div>
+          <div class="qc-title">快速战斗</div>
+          <div class="qc-sub">挑战最新关卡</div>
+        </div>
+      </div>
+      <div class="team-preview">
+        <div class="section-title">出战队伍</div>
+        <div class="team-slots">${teamHtml}</div>
+        <p class="muted" style="margin-top:8px;">在「佣兵」页点击角色可编入/移出队伍（最多 4 人）</p>
+      </div>
+    `;
+    this.screenEl.querySelectorAll('[data-go]').forEach(c =>
+      c.addEventListener('click', () => Main.switchScreen(c.dataset.go)));
+  },
+
+  renderTeamSlots() {
+    const slots = [];
+    for (let i = 0; i < 4; i++) {
+      const uid = Game.state.team[i];
+      if (uid) {
+        const o = Game.getOwned(uid);
+        const c = window.GameData.CHARACTERS[o.charId];
+        slots.push(`
+          <div class="team-slot filled border-${this.rarityClass(c.rarity)}">
+            <div class="char-portrait" style="background:radial-gradient(circle at 50% 30%, ${c.color}44, transparent);">
+              <span class="rarity-badge ${this.rarityClass(c.rarity)}">${c.rarity}★</span>
+              <div class="avatar">${this.charAvatar(o.charId)}</div>
+              <span class="pname">${c.name} Lv.${o.level}</span>
+            </div>
+          </div>`);
+      } else {
+        slots.push(`<div class="team-slot"><span class="muted" style="font-size:24px;">＋</span></div>`);
+      }
+    }
+    return slots.join('');
+  },
+
+  // ============================================================
+  //  关卡 / 冒险
+  // ============================================================
+  renderStages() {
+    const s = Game.state;
+    const cards = window.GameData.STAGES.map(stage => {
+      // 解锁条件：第一关恒解锁，后续需通关前一关
+      const unlocked = stage.id === 1 || s.cleared.includes(stage.id - 1);
+      const cleared = s.cleared.includes(stage.id);
+      return `
+        <div class="stage-card ${stage.isBoss ? 'boss' : ''} ${unlocked ? '' : 'locked'}" data-stage="${unlocked ? stage.id : ''}">
+          <div class="stage-num">${unlocked ? (stage.isBoss ? '👑' : stage.id) : '🔒'}</div>
+          <div class="stage-info">
+            <h3>${stage.name} ${cleared ? '<span class="clear-mark">✓</span>' : ''}</h3>
+            <p>${unlocked ? stage.desc : '通关前一关后解锁'}</p>
+            <div class="stage-meta">
+              <span>推荐 Lv.${stage.recommend}</span>
+              <span>🪙${stage.reward.gold}</span>
+              <span>💎${stage.reward.gem}</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+    this.screenEl.innerHTML = `<div class="section-title">冒险关卡</div>${cards}`;
+    this.screenEl.querySelectorAll('.stage-card[data-stage]').forEach(card => {
+      const id = card.dataset.stage;
+      if (!id) return;
+      card.addEventListener('click', () => this.preBattle(Number(id)));
+    });
+  },
+
+  /** 出战确认 */
+  preBattle(stageId) {
+    const stage = window.GameData.STAGES.find(s => s.id === stageId);
+    if (Game.state.team.length === 0) {
+      this.toast('请先在「佣兵」页编入出战队伍');
+      Main.switchScreen('roster');
+      return;
+    }
+    const teamHtml = Game.state.team.map(uid => {
+      const o = Game.getOwned(uid);
+      const c = window.GameData.CHARACTERS[o.charId];
+      return `<div class="team-slot filled border-${this.rarityClass(c.rarity)}" style="max-width:64px;">
+        <div class="char-portrait"><div class="avatar" style="font-size:26px;">${this.charAvatar(o.charId)}</div>
+        <span class="pname">Lv.${o.level}</span></div></div>`;
+    }).join('');
+    const enemyHtml = stage.enemies.map(e => {
+      const def = window.GameData.ENEMIES[e.id];
+      return `<span style="font-size:11px;background:var(--panel);padding:3px 7px;border-radius:6px;">${def.name} Lv.${e.level}</span>`;
+    }).join(' ');
+
+    const m = this.openModal(`
+      <h2>${stage.name}</h2>
+      <p class="muted" style="margin:6px 0 12px;">${stage.desc}</p>
+      <div class="muted" style="margin-bottom:6px;">敌方阵容</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${enemyHtml}</div>
+      <div class="muted" style="margin-bottom:6px;">我方出战（${Game.state.team.length}/4）</div>
+      <div class="team-slots">${teamHtml}</div>
+      <div class="close-row">
+        <button class="btn secondary" id="pb-cancel">取消</button>
+        <button class="btn" id="pb-fight">出战 ⚔️</button>
+      </div>
+    `);
+    m.querySelector('#pb-cancel').onclick = () => this.closeModal(m);
+    m.querySelector('#pb-fight').onclick = () => { this.closeModal(m); BattleUI.start(stage); };
+  },
+
+  // ============================================================
+  //  佣兵列表
+  // ============================================================
+  renderRoster() {
+    const s = Game.state;
+    // 按稀有度、等级排序
+    const sorted = s.roster.slice().sort((a, b) => {
+      const ca = window.GameData.CHARACTERS[a.charId], cb = window.GameData.CHARACTERS[b.charId];
+      return cb.rarity - ca.rarity || b.level - a.level;
+    });
+    const cards = sorted.map(o => {
+      const c = window.GameData.CHARACTERS[o.charId];
+      const inTeam = Game.inTeam(o.uid);
+      return `
+        <div class="roster-card border-${this.rarityClass(c.rarity)}" data-uid="${o.uid}">
+          ${inTeam ? '<span class="in-team-tag">出战</span>' : ''}
+          <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${c.color}44, transparent);">
+            <span class="rarity-badge ${this.rarityClass(c.rarity)}">${c.rarity}★</span>
+            ${this.charAvatar(o.charId)}
+            <span class="cls-chip">${window.GameData.ELEMENTS[c.element].icon}</span>
+          </div>
+          <div class="rc-info">
+            <div class="rc-name">${c.name}</div>
+            <div class="rc-lv">Lv.${o.level} · ${window.GameData.CLASSES[c.cls].name}</div>
+          </div>
+        </div>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="section-title">佣兵团（${s.roster.length}）</div>
+      <p class="muted" style="margin:-6px 0 12px;">点击佣兵查看详情、升级与编队 · 出战 ${s.team.length}/4</p>
+      <div class="roster-grid">${cards}</div>`;
+    this.screenEl.querySelectorAll('.roster-card').forEach(card =>
+      card.addEventListener('click', () => this.showCharDetail(card.dataset.uid)));
+  },
+
+  /** 角色详情弹窗 */
+  showCharDetail(uid) {
+    const o = Game.getOwned(uid);
+    const c = window.GameData.CHARACTERS[o.charId];
+    const st = Game.computeStats(o);
+    const inTeam = Game.inTeam(uid);
+    const lvCost = Game.levelUpCost(o.level);
+    const skillsHtml = c.skills.map(sid => {
+      const sk = window.GameData.SKILLS[sid];
+      return `<div class="skill-item">
+        <div class="sk-head"><span>${sk.icon}</span>${sk.name}
+          <span class="sk-sp">${sk.sp > 0 ? 'SP ' + sk.sp : '普通'}</span></div>
+        <div class="sk-desc">${sk.desc}</div>
+      </div>`;
+    }).join('');
+
+    const m = this.openModal(`
+      <div class="detail-head">
+        <div class="detail-art border-${this.rarityClass(c.rarity)}" style="background:radial-gradient(circle at 50% 35%, ${c.color}55, var(--panel));">
+          ${this.charAvatar(o.charId)}
+        </div>
+        <div class="detail-title">
+          <h2>${c.name} <span class="${this.rarityClass(c.rarity)}" style="font-size:11px;padding:1px 6px;border-radius:5px;">${c.rarity}★</span></h2>
+          <div class="subt">${c.title}</div>
+          <div class="meta">${window.GameData.ELEMENTS[c.element].icon}${window.GameData.ELEMENTS[c.element].name} · ${window.GameData.CLASSES[c.cls].icon}${window.GameData.CLASSES[c.cls].name} · Lv.${o.level}</div>
+        </div>
+      </div>
+      <p class="muted" style="line-height:1.6;">${c.desc}</p>
+      <div class="stat-grid">
+        <div class="stat-item"><span>❤️ 生命</span><span class="sv">${st.maxHp}</span></div>
+        <div class="stat-item"><span>⚔️ 攻击</span><span class="sv">${st.atk}</span></div>
+        <div class="stat-item"><span>🛡️ 防御</span><span class="sv">${st.def}</span></div>
+        <div class="stat-item"><span>⚡ 速度</span><span class="sv">${st.spd}</span></div>
+        <div class="stat-item"><span>💥 暴击</span><span class="sv">${Math.round(st.crit*100)}%</span></div>
+        <div class="stat-item"><span>⭐ 稀有</span><span class="sv">${c.rarity}★</span></div>
+      </div>
+      <div class="section-title" style="font-size:14px;">技能</div>
+      ${skillsHtml}
+      <div class="close-row">
+        <button class="btn secondary" id="cd-close">关闭</button>
+        <button class="btn gold" id="cd-levelup" ${Game.state.gold < lvCost || o.level >= 60 ? 'disabled' : ''}>
+          ${o.level >= 60 ? '满级' : `升级 🪙${lvCost}`}
+        </button>
+        <button class="btn" id="cd-team">${inTeam ? '移出队伍' : '编入队伍'}</button>
+      </div>
+    `);
+    m.querySelector('#cd-close').onclick = () => this.closeModal(m);
+    m.querySelector('#cd-levelup').onclick = () => {
+      const r = Game.levelUpWithGold(uid);
+      if (!r.ok) { this.toast(r.msg); return; }
+      this.toast(`${c.name} 升至 Lv.${r.level}！`);
+      this.updateResources();
+      this.closeModal(m);
+      this.showCharDetail(uid);
+    };
+    m.querySelector('#cd-team').onclick = () => {
+      const r = Game.toggleTeam(uid);
+      if (!r.ok) { this.toast(r.msg); return; }
+      this.closeModal(m);
+      this.renderRoster();
+    };
+  },
+
+  // ============================================================
+  //  抽卡
+  // ============================================================
+  renderGacha() {
+    const s = Game.state;
+    const g = window.GameData.GACHA;
+    this.screenEl.innerHTML = `
+      <div class="gacha-banner">
+        <h2>命运的召唤</h2>
+        <div class="sub">传说级佣兵正在等待你的召唤</div>
+        <div class="gacha-rates">
+          <b>5★ ${(g.rates[5]*100).toFixed(0)}%</b> · 4★ ${(g.rates[4]*100).toFixed(0)}% · 3★ ${(g.rates[3]*100).toFixed(0)}%
+          <div class="pity-bar">距离保底 5★ 还有 ${90 - s.pity} 抽</div>
+        </div>
+        <div class="gacha-actions">
+          <button class="btn gold" id="pull1">单次招募 💎${g.cost}</button>
+          <button class="btn" id="pull10">十连招募 💎${g.cost*10}</button>
+        </div>
+      </div>
+      <div class="section-title" style="font-size:14px;">可获得的传说佣兵（5★）</div>
+      <div class="roster-grid">${g.pool[5].map(id => this.poolCard(id)).join('')}</div>
+      <div class="section-title" style="font-size:14px;margin-top:16px;">稀有佣兵（4★）</div>
+      <div class="roster-grid">${g.pool[4].map(id => this.poolCard(id)).join('')}</div>
+    `;
+    document.getElementById('pull1').onclick = () => this.doPull(1);
+    document.getElementById('pull10').onclick = () => this.doPull(10);
+  },
+
+  poolCard(id) {
+    const c = window.GameData.CHARACTERS[id];
+    return `<div class="roster-card border-${this.rarityClass(c.rarity)}">
+      <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${c.color}44, transparent);">
+        <span class="rarity-badge ${this.rarityClass(c.rarity)}">${c.rarity}★</span>
+        ${this.charAvatar(id)}
+        <span class="cls-chip">${window.GameData.ELEMENTS[c.element].icon}</span>
+      </div>
+      <div class="rc-info"><div class="rc-name">${c.name}</div>
+      <div class="rc-lv">${window.GameData.CLASSES[c.cls].name}</div></div>
+    </div>`;
+  },
+
+  doPull(count) {
+    const cost = window.GameData.GACHA.cost * count;
+    if (Game.state.gem < cost) { this.toast('宝石不足，去冒险赚取吧！'); return; }
+    const results = [];
+    for (let i = 0; i < count; i++) {
+      const r = Game.gachaPull();
+      if (!r.ok) break;
+      results.push(r);
+    }
+    this.updateResources();
+    this.showPullResults(results);
+  },
+
+  showPullResults(results) {
+    if (results.length === 1) {
+      const r = results[0];
+      const c = window.GameData.CHARACTERS[r.charId];
+      const stars = '★'.repeat(r.rarity);
+      const m = this.openModal(`
+        <div class="pull-result">
+          <div class="pull-art border-${this.rarityClass(r.rarity)}" style="background:radial-gradient(circle at 50% 35%, ${c.color}66, var(--panel));">
+            ${this.charAvatar(r.charId)}
+          </div>
+          <div class="pull-stars ${this.rarityClass(r.rarity)}" style="-webkit-text-fill-color:initial;color:var(--${'r'+r.rarity});">${stars}</div>
+          <div class="pull-name">${c.name}</div>
+          <div class="pull-title">${c.title}</div>
+          ${r.dup ? '<div class="pull-dup">重复获得 · 返还 💎20</div>' : '<div class="pull-dup">✦ 新佣兵加入！</div>'}
+        </div>
+        <div class="close-row"><button class="btn" id="pr-ok">确定</button></div>
+      `, { noBackdropClose: true });
+      m.querySelector('#pr-ok').onclick = () => { this.closeModal(m); this.renderGacha(); };
+    } else {
+      // 十连结果网格
+      const grid = results.map(r => {
+        const c = window.GameData.CHARACTERS[r.charId];
+        return `<div class="roster-card border-${this.rarityClass(r.rarity)}">
+          <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${c.color}44, transparent);">
+            <span class="rarity-badge ${this.rarityClass(r.rarity)}">${r.rarity}★</span>
+            ${this.charAvatar(r.charId)}
+            ${r.dup ? '' : '<span class="in-team-tag" style="background:var(--gold);color:#241a08;">NEW</span>'}
+          </div>
+          <div class="rc-info"><div class="rc-name">${c.name}</div></div>
+        </div>`;
+      }).join('');
+      const best = Math.max(...results.map(r => r.rarity));
+      const m = this.openModal(`
+        <h2 style="text-align:center;">十连招募结果</h2>
+        <p class="muted" style="text-align:center;margin-bottom:12px;">最高稀有度 <b class="${this.rarityClass(best)}" style="padding:1px 6px;border-radius:5px;">${best}★</b></p>
+        <div class="roster-grid">${grid}</div>
+        <div class="close-row"><button class="btn" id="pr-ok">确定</button></div>
+      `, { noBackdropClose: true });
+      m.querySelector('#pr-ok').onclick = () => { this.closeModal(m); this.renderGacha(); };
+    }
+  },
+};
+
+window.UI = UI;
+
+
+// ============================================================
+//  战斗界面渲染 + 交互  &  应用主入口
+// ============================================================
+
+const BattleUI = {
+  stage: null,
+  root: null,
+  selectedSkill: null,   // 当前选中的技能 id
+  busy: false,           // 动画/AI 执行中，锁定输入
+
+  start(stage) {
+    this.stage = stage;
+    this.selectedSkill = null;
+    this.busy = false;
+    Battle.setup(Game.state.team, stage);
+    Battle.onEvent = (e) => this.handleEvent(e);
+    this.buildScreen();
+    this.refresh();
+    this.beginTurn();
+  },
+
+  buildScreen() {
+    const old = document.getElementById('battle-screen');
+    if (old) old.remove();
+    this.root = UI.el(`
+      <div id="battle-screen">
+        <div class="battle-top">
+          <span>${this.stage.name}</span>
+          <span id="battle-round">第 1 回合</span>
+          <button class="ghost-btn" id="battle-flee" title="撤退">🏳️</button>
+        </div>
+        <div class="battle-field">
+          <div class="enemy-zone">
+            <div class="row-label">— 敌方后排 —</div>
+            <div class="unit-row" id="enemy-back"></div>
+            <div class="row-label">— 敌方前排 —</div>
+            <div class="unit-row" id="enemy-front"></div>
+          </div>
+          <div class="ally-zone">
+            <div class="unit-row" id="ally-front"></div>
+            <div class="row-label">— 我方前排 —</div>
+            <div class="unit-row" id="ally-back"></div>
+            <div class="row-label">— 我方后排 —</div>
+          </div>
+        </div>
+        <div class="battle-ctrl">
+          <div class="turn-hint" id="turn-hint"></div>
+          <div class="skill-bar" id="skill-bar"></div>
+        </div>
+        <div class="battle-log" id="battle-log"></div>
+      </div>
+    `);
+    document.body.appendChild(this.root);
+    this.root.querySelector('#battle-flee').onclick = () => this.flee();
+  },
+
+  flee() {
+    const m = UI.openModal(`
+      <h2>撤退？</h2>
+      <p class="muted" style="margin:8px 0;">撤退将不会获得任何奖励，确定要离开战斗吗？</p>
+      <div class="close-row">
+        <button class="btn secondary" id="flee-no">继续战斗</button>
+        <button class="btn" id="flee-yes" style="background:linear-gradient(135deg,#ff5a6a,#b02a3a);">撤退</button>
+      </div>`);
+    m.querySelector('#flee-no').onclick = () => UI.closeModal(m);
+    m.querySelector('#flee-yes').onclick = () => {
+      UI.closeModal(m);
+      this.exit();
+    };
+  },
+
+  exit() {
+    if (this.root) this.root.remove();
+    this.root = null;
+    Main.refreshCurrent();
+  },
+
+  // ---------- 渲染单位 ----------
+  unitHtml(c) {
+    const isAlly = c.side === 'ally';
+    const charDef = isAlly ? window.GameData.CHARACTERS[c.charId] : window.GameData.ENEMIES[c.charId];
+    const icon = isAlly ? window.GameData.CLASSES[charDef.cls].icon : '👹';
+    const hpPct = Math.max(0, (c.hp / c.maxHp) * 100);
+    const spPct = (c.sp / c.maxSp) * 100;
+    return `
+      <div class="unit ${c.alive ? '' : 'dead'}" data-uid="${c.uid}"
+           style="background:linear-gradient(180deg, ${c.color}33, var(--panel));">
+        ${c.isBoss ? '<span class="u-boss">BOSS</span>' : ''}
+        <span class="u-elem">${window.GameData.ELEMENTS[c.element].icon}</span>
+        <div class="u-art">${icon}</div>
+        <div class="u-name">${c.name}</div>
+        ${c.shield > 0 ? `<span class="shield-tag">🛡${c.shield}</span>` : ''}
+        <div class="bar"><div class="fill hp" style="width:${hpPct}%"></div></div>
+        <div class="u-hp-text">${c.hp}/${c.maxHp}</div>
+        ${isAlly ? `<div class="bar"><div class="fill sp" style="width:${spPct}%"></div></div>` : ''}
+      </div>`;
+  },
+
+  refresh() {
+    if (!this.root) return;
+    const fill = (id, list) => {
+      const elx = this.root.querySelector('#' + id);
+      elx.innerHTML = list.map(c => this.unitHtml(c)).join('') || '<span class="muted" style="font-size:10px;"> </span>';
+    };
+    fill('enemy-front', Battle.enemies().filter(c => c.pos === 'front'));
+    fill('enemy-back', Battle.enemies().filter(c => c.pos === 'back'));
+    fill('ally-front', Battle.allies().filter(c => c.pos === 'front'));
+    fill('ally-back', Battle.allies().filter(c => c.pos === 'back'));
+    this.root.querySelector('#battle-round').textContent = `第 ${Battle.round} 回合`;
+
+    // 标记当前行动者
+    const cur = Battle.current();
+    if (cur) {
+      const ce = this.root.querySelector(`.unit[data-uid="${cur.uid}"]`);
+      if (ce) ce.classList.add('active-turn');
+    }
+  },
+
+  // ---------- 回合流程 ----------
+  beginTurn() {
+    if (Battle.finished) return;
+    const cur = Battle.current();
+    if (!cur || !cur.alive) { this.nextTurn(); return; }
+    this.refresh();
+
+    if (cur.side === 'ally') {
+      this.renderSkillBar(cur);
+      this.setHint(`轮到 <b>${cur.name}</b> 行动，请选择技能`);
+    } else {
+      this.clearSkillBar();
+      this.setHint(`<b>${cur.name}</b> 正在行动...`);
+      this.busy = true;
+      setTimeout(() => {
+        Battle.enemyAct();
+        this.busy = false;
+        if (!Battle.finished) this.nextTurn();
+      }, 800);
+    }
+  },
+
+  nextTurn() {
+    if (Battle.finished) return;
+    Battle.advance();
+    this.beginTurn();
+  },
+
+  setHint(html) {
+    const h = this.root && this.root.querySelector('#turn-hint');
+    if (h) h.innerHTML = html;
+  },
+
+  clearSkillBar() {
+    const bar = this.root && this.root.querySelector('#skill-bar');
+    if (bar) bar.innerHTML = '';
+  },
+
+  renderSkillBar(c) {
+    const bar = this.root.querySelector('#skill-bar');
+    bar.innerHTML = c.skills.map(sid => {
+      const sk = window.GameData.SKILLS[sid];
+      const usable = Battle.canUseSkill(c, sid);
+      const spLabel = sk.sp > 0
+        ? `<div class="sb-sp ${usable ? 'ready' : ''}">${usable ? 'SP ' + sk.sp + ' ✓' : 'SP ' + sk.sp + ' (' + c.sp + ')'}</div>`
+        : `<div class="sb-sp ready">普通</div>`;
+      return `<button class="skill-btn" data-skill="${sid}" ${usable ? '' : 'disabled'}>
+        <div class="sb-name">${sk.icon} ${sk.name}</div>
+        ${spLabel}
+      </button>`;
+    }).join('');
+    bar.querySelectorAll('.skill-btn').forEach(b =>
+      b.addEventListener('click', () => this.selectSkill(c, b.dataset.skill)));
+  },
+
+  selectSkill(c, skillId) {
+    if (this.busy) return;
+    this.selectedSkill = skillId;
+    // 高亮选中技能
+    this.root.querySelectorAll('.skill-btn').forEach(b =>
+      b.classList.toggle('selected', b.dataset.skill === skillId));
+
+    const sk = window.GameData.SKILLS[skillId];
+    const targets = Battle.validTargets(c, skillId);
+
+    // 自身/全体技能无需选目标，直接执行
+    if (sk.target === 'self' || sk.target === 'enemyAll' || sk.target === 'allyAll') {
+      this.setHint(`确认对${sk.target === 'self' ? '自身' : (sk.target === 'allyAll' ? '全体友方' : '全体敌人')}使用「${sk.name}」`);
+      this.execute(c, skillId, c);
+      return;
+    }
+
+    // 需要选目标
+    const isAllyTarget = sk.target.startsWith('ally');
+    this.setHint(`选择「${sk.name}」的目标 ${sk.target === 'enemyRow' ? '(命中整排)' : ''}`);
+    this.clearTargets();
+    targets.forEach(t => {
+      const elx = this.root.querySelector(`.unit[data-uid="${t.uid}"]`);
+      if (elx) {
+        elx.classList.add('targetable');
+        if (isAllyTarget) elx.classList.add('ally-target');
+        elx.onclick = () => this.execute(c, skillId, t);
+      }
+    });
+  },
+
+  clearTargets() {
+    this.root.querySelectorAll('.unit').forEach(u => {
+      u.classList.remove('targetable', 'ally-target');
+      u.onclick = null;
+    });
+  },
+
+  execute(c, skillId, target) {
+    if (this.busy) return;
+    this.busy = true;
+    this.clearTargets();
+    this.clearSkillBar();
+    this.selectedSkill = null;
+
+    Battle.executeSkill(c, skillId, target);
+
+    // 等动画后刷新并进入下一回合
+    setTimeout(() => {
+      this.refresh();
+      this.busy = false;
+      if (!Battle.finished) this.nextTurn();
+    }, 650);
+  },
+
+  // ---------- 事件（伤害飘字、结算） ----------
+  handleEvent(e) {
+    if (!this.root) return;
+    if (e.type === 'log') {
+      const logEl = this.root.querySelector('#battle-log');
+      if (logEl) logEl.textContent = e.msg;
+    } else if (e.type === 'damage' || e.type === 'heal') {
+      this.floatText(e.target, e.amount, e.type, e.crit);
+      this.refresh();
+    } else if (e.type === 'end') {
+      setTimeout(() => this.showResult(e.result), 700);
+    }
+  },
+
+  floatText(target, amount, kind, crit) {
+    const unitEl = this.root.querySelector(`.unit[data-uid="${target.uid}"]`);
+    if (!unitEl) return;
+    const rect = unitEl.getBoundingClientRect();
+    const ft = UI.el(`<div class="float-text ${kind === 'heal' ? 'heal' : (crit ? 'crit' : 'dmg')}">${kind === 'heal' ? '+' : '-'}${amount}${crit ? '!' : ''}</div>`);
+    ft.style.left = (rect.left + rect.width / 2 - 14) + 'px';
+    ft.style.top = (rect.top + 10) + 'px';
+    document.body.appendChild(ft);
+    setTimeout(() => ft.remove(), 1000);
+    // 受击抖动
+    unitEl.animate(
+      [{ transform: 'translateX(0)' }, { transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(0)' }],
+      { duration: 200 }
+    );
+  },
+
+  showResult(result) {
+    if (result === 'win') {
+      const firstClear = !Game.state.cleared.includes(this.stage.id);
+      const before = { gold: Game.state.gold, gem: Game.state.gem };
+      Game.rewardStage(this.stage, firstClear);
+      const goldGain = Game.state.gold - before.gold;
+      const gemGain = Game.state.gem - before.gem;
+      const m = UI.openModal(`
+        <div class="result-modal">
+          <div class="result-title win">胜利！</div>
+          <p class="muted">${this.stage.name} ${firstClear ? '· 首次通关' : ''}</p>
+          <div class="reward-row">
+            <div class="rw" style="color:var(--gold);">🪙 +${goldGain}</div>
+            <div class="rw" style="color:var(--gem);">💎 +${gemGain}</div>
+          </div>
+          <p class="muted">队伍获得 ${this.stage.reward.exp} 经验</p>
+        </div>
+        <div class="close-row" style="justify-content:center;">
+          <button class="btn" id="res-ok">领取奖励</button>
+        </div>
+      `, { noBackdropClose: true });
+      m.querySelector('#res-ok').onclick = () => {
+        UI.closeModal(m);
+        UI.updateResources();
+        this.exit();
+      };
+    } else {
+      const m = UI.openModal(`
+        <div class="result-modal">
+          <div class="result-title lose">败北…</div>
+          <p class="muted">队伍全员倒下了。提升佣兵等级或调整阵容后再来挑战吧！</p>
+        </div>
+        <div class="close-row" style="justify-content:center;">
+          <button class="btn secondary" id="res-ok">返回</button>
+        </div>
+      `, { noBackdropClose: true });
+      m.querySelector('#res-ok').onclick = () => { UI.closeModal(m); this.exit(); };
+    }
+  },
+};
+
+// ============================================================
+//  Main — 应用入口与页面路由
+// ============================================================
+const Main = {
+  current: 'home',
+
+  init() {
+    Game.init();
+    UI.init();
+    UI.updateResources();
+
+    // 首次游戏自动编队
+    if (Game.state.team.length === 0 && Game.state.roster.length > 0) {
+      Game.state.roster.forEach(o => {
+        if (Game.state.team.length < 4) Game.state.team.push(o.uid);
+      });
+      Game.save();
+    }
+
+    // 导航
+    document.querySelectorAll('.nav-btn').forEach(btn =>
+      btn.addEventListener('click', () => this.switchScreen(btn.dataset.screen)));
+
+    // 重置存档
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      const m = UI.openModal(`
+        <h2>重置存档</h2>
+        <p class="muted" style="margin:8px 0;">将清空所有进度、佣兵与资源，恢复到新游戏状态。确定吗？</p>
+        <div class="close-row">
+          <button class="btn secondary" id="rs-no">取消</button>
+          <button class="btn" id="rs-yes" style="background:linear-gradient(135deg,#ff5a6a,#b02a3a);">确认重置</button>
+        </div>`);
+      m.querySelector('#rs-no').onclick = () => UI.closeModal(m);
+      m.querySelector('#rs-yes').onclick = () => {
+        Game.reset();
+        UI.closeModal(m);
+        UI.updateResources();
+        this.switchScreen('home');
+        UI.toast('存档已重置');
+      };
+    });
+
+    this.switchScreen('home');
+  },
+
+  switchScreen(name) {
+    this.current = name;
+    document.querySelectorAll('.nav-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.screen === name));
+    this.refreshCurrent();
+  },
+
+  refreshCurrent() {
+    UI.updateResources();
+    switch (this.current) {
+      case 'home': UI.renderHome(); break;
+      case 'stages': UI.renderStages(); break;
+      case 'roster': UI.renderRoster(); break;
+      case 'gacha': UI.renderGacha(); break;
+    }
+  },
+};
+
+window.BattleUI = BattleUI;
+window.Main = Main;
+
+document.addEventListener('DOMContentLoaded', () => Main.init());
+
+</script>
+</body>
+</html>
