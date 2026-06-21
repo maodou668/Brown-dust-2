@@ -81,10 +81,10 @@ const UI = {
           <div class="qc-title">佣兵团</div>
           <div class="qc-sub">共 ${totalChars} 名佣兵</div>
         </div>
-        <div class="quick-card" data-go="stages">
-          <div class="qc-icon">⚔️</div>
-          <div class="qc-title">快速战斗</div>
-          <div class="qc-sub">挑战最新关卡</div>
+        <div class="quick-card" data-story-replay>
+          <div class="qc-icon">📖</div>
+          <div class="qc-title">剧情回顾</div>
+          <div class="qc-sub">重温已解锁的故事</div>
         </div>
       </div>
       <div class="team-preview">
@@ -95,6 +95,39 @@ const UI = {
     `;
     this.screenEl.querySelectorAll('[data-go]').forEach(c =>
       c.addEventListener('click', () => Main.switchScreen(c.dataset.go)));
+    const replay = this.screenEl.querySelector('[data-story-replay]');
+    if (replay) replay.addEventListener('click', () => this.showStoryReplay());
+  },
+
+  /** 剧情回顾弹窗 */
+  showStoryReplay() {
+    const chapters = [
+      { id: 'prologue', name: '序章 · 启程' },
+      { id: 'stage1', name: '第一章 · 艾尔玛森林入口' },
+      { id: 'stage2', name: '第二章 · 森林深处' },
+      { id: 'stage3', name: '第三章 · 废弃矿洞' },
+      { id: 'stage4', name: '第四章 · 诅咒山脊' },
+      { id: 'stage5', name: '终章 · 魔王城' },
+    ];
+    const items = chapters.map(ch => {
+      const unlocked = Story.seen(ch.id);
+      return `<div class="story-replay-item ${unlocked ? '' : 'locked'}" ${unlocked ? `data-replay="${ch.id}"` : ''}>
+        <span>${unlocked ? '📖' : '🔒'} ${ch.name}</span>
+        <span class="muted">${unlocked ? '重看 ›' : '未解锁'}</span>
+      </div>`;
+    }).join('');
+    const m = this.openModal(`
+      <h2>剧情回顾</h2>
+      <p class="muted" style="margin:6px 0 12px;">重温你已经历的故事篇章。</p>
+      <div class="story-replay-list">${items}</div>
+      <div class="close-row"><button class="btn secondary" id="sr-close">关闭</button></div>
+    `);
+    m.querySelector('#sr-close').onclick = () => this.closeModal(m);
+    m.querySelectorAll('[data-replay]').forEach(it =>
+      it.addEventListener('click', () => {
+        this.closeModal(m);
+        Story.play(it.dataset.replay);
+      }));
   },
 
   renderTeamSlots() {
@@ -183,7 +216,16 @@ const UI = {
       </div>
     `);
     m.querySelector('#pb-cancel').onclick = () => this.closeModal(m);
-    m.querySelector('#pb-fight').onclick = () => { this.closeModal(m); BattleUI.start(stage); };
+    m.querySelector('#pb-fight').onclick = () => {
+      this.closeModal(m);
+      // 进战斗前播放该关卡剧情（首次），看过则直接开战
+      const storyId = 'stage' + stage.id;
+      if (window.STORY && window.STORY[storyId] && !Story.seen(storyId)) {
+        Story.play(storyId, () => BattleUI.start(stage));
+      } else {
+        BattleUI.start(stage);
+      }
+    };
   },
 
   // ============================================================

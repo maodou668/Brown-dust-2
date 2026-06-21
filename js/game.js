@@ -20,6 +20,8 @@ const Game = {
     } else {
       this.state = this.newGame();
     }
+    // 存档版本迁移：补齐新增字段，保证老存档不报错
+    if (!this.state.seenStory) this.state.seenStory = [];
     return this.state;
   },
 
@@ -37,6 +39,8 @@ const Game = {
       team: [],
       // 已通关关卡 id
       cleared: [],
+      // 已观看的剧情 id
+      seenStory: [],
       // 抽卡保底计数（距上次 5★）
       pity: 0,
       _uidSeq: 1,

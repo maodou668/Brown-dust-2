@@ -340,6 +340,11 @@ const Main = {
     });
 
     this.switchScreen('home');
+
+    // 首次进入播放序章
+    if (!Story.seen('prologue')) {
+      Story.play('prologue');
+    }
   },
 
   switchScreen(name) {
