@@ -215,7 +215,8 @@ const SKILLS = {
   inferno: {
     name: '炼狱业火', target: 'enemyAll', effect: 'damage',
     power: 1.6, sp: 4, icon: '🔥',
-    desc: '召唤业火对敌方全体造成 160% 攻击力的火焰伤害。',
+    inflict: { type: 'burn', turns: 2, power: 0.5 },
+    desc: '召唤业火对敌方全体造成 160% 火焰伤害，并使其灼烧 2 回合。',
   },
   water_lance: {
     name: '水矛', target: 'enemySingle', effect: 'damage',
@@ -326,7 +327,7 @@ const ENEMIES = {
   demon_lord: {
     id: 'demon_lord', name: '魔王 · 巴尔', element: 'dark', color: '#8a1a3a',
     base: { hp: 6000, atk: 200, def: 110, spd: 100, crit: 0.20 },
-    skills: ['shadow_volley', 'inferno', 'power_strike'],
+    skills: ['shadow_volley', 'inferno', 'arcane_seal'],
     isBoss: true,
   },
   troll_king: {
@@ -349,7 +350,7 @@ const ENEMIES = {
   shadow_empress: {
     id: 'shadow_empress', name: '暗影女皇 · 涅夫提斯', element: 'dark', color: '#7a2a6a',
     base: { hp: 6800, atk: 235, def: 115, spd: 110, crit: 0.22 },
-    skills: ['shadow_volley', 'frost_nova', 'inferno'],
+    skills: ['shadow_volley', 'inferno', 'shield_bash'],
     isBoss: true,
   },
 };

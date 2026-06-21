@@ -44,12 +44,25 @@ const EXTRA_SKILLS = {
   venom_shot: {
     name: '淬毒之箭', target: 'enemySingle', effect: 'damage',
     power: 1.7, sp: 2, cd: 2, icon: '🏹', pierce: true,
-    desc: '射出淬毒之箭贯穿目标，造成 170% 攻击力的伤害（无视前排）。',
+    inflict: { type: 'poison', turns: 3, power: 0.45 },
+    desc: '射出淬毒之箭贯穿目标，造成 170% 伤害（无视前排），并使其中毒 3 回合。',
   },
   tidal_burst: {
     name: '怒涛', target: 'enemyAll', effect: 'damage',
     power: 1.6, sp: 4, cd: 3, icon: '🌊',
     desc: '掀起滔天巨浪冲击敌方全体，造成 160% 攻击力的水属性伤害。',
+  },
+  shield_bash: {
+    name: '盾击', target: 'enemySingle', effect: 'damage',
+    power: 1.3, sp: 2, cd: 2, icon: '🛡️',
+    inflict: { type: 'stun', turns: 1 },
+    desc: '以巨盾猛击单体，造成 130% 伤害并使其眩晕 1 回合（无法行动）。',
+  },
+  arcane_seal: {
+    name: '奥术封印', target: 'enemySingle', effect: 'damage',
+    power: 1.4, sp: 3, cd: 3, icon: '🔇', pierce: true,
+    inflict: { type: 'silence', turns: 2 },
+    desc: '封印目标，造成 140% 伤害并沉默 2 回合（只能普攻，无视前排）。',
   },
 };
 Object.assign(SK, EXTRA_SKILLS);
@@ -87,8 +100,8 @@ const ALTS = {
     mul: { hp: 1.05, atk: 1.12, def: 1.0 }, signature: 'tidal_burst',
     desc: '掌控潮汐的深海法师，怒涛之下无人幸免。' },
   garcia_iron: { charId: 'garcia', costumeName: '钢铁', rarity: 4, element: 'earth', color: '#a8a8b0',
-    mul: { hp: 1.12, atk: 1.0, def: 1.15 }, signature: 'taunt_shield',
-    desc: '披挂钢铁全装的壁垒，以身躯铸成防线。' },
+    mul: { hp: 1.12, atk: 1.05, def: 1.15 }, signature: 'shield_bash',
+    desc: '披挂钢铁全装的壁垒，以盾击震慑并眩晕来犯之敌。' },
   mina_combat: { charId: 'mina', costumeName: '战斗药剂', rarity: 4, element: 'wind', color: '#7affc4',
     mul: { hp: 0.9, atk: 1.32, def: 0.95 }, signature: 'venom_shot',
     desc: '改良配方的米娜，把药剂调成了攻击武器。' },

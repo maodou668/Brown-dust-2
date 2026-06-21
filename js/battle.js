@@ -32,6 +32,8 @@ class Combatant {
 
     this.shield = 0;                   // 当前护盾值
     this.buffs = [];                   // {stat:'atk'|'def', mult, turns}
+    this.statuses = [];                // {type:'poison'|'burn'|'stun'|'silence', turns, dmg}
+    this.enraged = false;              // BOSS 狂暴标记
     this.taunting = 0;                 // 嘲讽剩余回合
     this.alive = true;
   }
@@ -152,7 +154,7 @@ const Battle = {
       if (this.turnIdx >= this.turnOrder.length) {
         // 新回合
         this.round++;
-        this.combatants.forEach(c => { if (c.alive) c.tickBuffs(); });
+        this.tickRound();
         this.buildTurnOrder();
         this.pushLog(`—— 第 ${this.round} 回合 ——`);
       }
@@ -173,12 +175,60 @@ const Battle = {
     return sp >= 4 ? 3 : sp >= 2 ? 2 : 1;
   },
 
-  /** 技能当前是否可用（SP 足够 且 不在冷却）；普攻恒可用 */
+  /** 技能当前是否可用（SP 足够、不在冷却、未被沉默）；普攻恒可用 */
   canUseSkill(combatant, skillId) {
     const sk = window.GameData.SKILLS[skillId];
     if (sk.basic) return true;
+    if (this.isSilenced(combatant)) return false;
     if ((combatant.cooldowns[skillId] || 0) > 0) return false;
     return combatant.sp >= (sk.sp || 0);
+  },
+
+  // ---------- 状态效果 ----------
+  hasStatus(c, type) { return c.statuses.some(s => s.type === type && s.turns > 0); },
+  isStunned(c) { return this.hasStatus(c, 'stun'); },
+  isSilenced(c) { return this.hasStatus(c, 'silence'); },
+  consumeStun(c) {
+    const s = c.statuses.find(x => x.type === 'stun' && x.turns > 0);
+    if (s) { s.turns--; c.statuses = c.statuses.filter(x => x.turns > 0); }
+  },
+
+  /** 施加状态（同类刷新为较长持续） */
+  applyStatus(target, inflict, attacker) {
+    const st = { type: inflict.type, turns: inflict.turns };
+    if (inflict.type === 'poison' || inflict.type === 'burn') {
+      st.dmg = Math.max(1, Math.round(attacker.effAtk() * (inflict.power || 0.4)));
+    }
+    const ex = target.statuses.find(s => s.type === inflict.type);
+    if (ex) { ex.turns = Math.max(ex.turns, st.turns); if (st.dmg) ex.dmg = st.dmg; }
+    else target.statuses.push(st);
+    const nm = { poison: '中毒', burn: '灼烧', stun: '眩晕', silence: '沉默' }[inflict.type] || inflict.type;
+    this.pushLog(`☣ ${target.name} 陷入${nm}！`);
+    if (this.onEvent) this.onEvent({ type: 'status', target, status: inflict.type });
+  },
+
+  /** 每回合：持续伤害结算 + 各类持续时间递减 */
+  tickRound() {
+    this.combatants.forEach(c => {
+      if (!c.alive) return;
+      // 持续伤害（中毒/灼烧）
+      c.statuses.filter(s => (s.type === 'poison' || s.type === 'burn') && s.turns > 0).forEach(s => {
+        if (!c.alive) return;
+        let dmg = s.dmg || 1;
+        if (c.shield > 0) { const a = Math.min(c.shield, dmg); c.shield -= a; dmg -= a; }
+        c.hp -= dmg;
+        const icon = s.type === 'poison' ? '☠' : '🔥';
+        this.pushLog(`${icon} ${c.name} 受到 ${dmg} 点${s.type === 'poison' ? '中毒' : '灼烧'}伤害`);
+        if (this.onEvent) this.onEvent({ type: 'damage', target: c, amount: dmg, crit: false, elem: false, dot: true });
+        if (c.hp <= 0) { c.hp = 0; c.alive = false; this.pushLog(`💀 ${c.name} 被击倒！`); }
+      });
+      // 持续时间递减（眩晕在行动时单独消耗）
+      c.buffs.forEach(b => b.turns--); c.buffs = c.buffs.filter(b => b.turns > 0);
+      c.statuses.forEach(s => { if (s.type !== 'stun') s.turns--; });
+      c.statuses = c.statuses.filter(s => s.turns > 0);
+      if (c.taunting > 0) c.taunting--;
+      Object.keys(c.cooldowns).forEach(k => { if (c.cooldowns[k] > 0) c.cooldowns[k]--; });
+    });
   },
 
   /** 前排保护：有存活前排时只能选前排，否则可选后排 */
@@ -266,6 +316,12 @@ const Battle = {
       defender.hp = 0;
       defender.alive = false;
       this.pushLog(`💀 ${defender.name} 被击倒！`);
+    } else if (defender.isBoss && !defender.enraged && defender.hp <= defender.maxHp * 0.5) {
+      // BOSS 狂暴：血量过半，攻击大幅提升
+      defender.enraged = true;
+      defender.buffs.push({ stat: 'atk', mult: 0.5, turns: 999 });
+      this.pushLog(`🔥 ${defender.name} 进入【狂暴】，攻击大幅提升！`);
+      if (this.onEvent) this.onEvent({ type: 'enrage', target: defender });
     }
     if (this.onEvent) this.onEvent({ type: 'damage', target: defender, attacker, amount: dmg, crit: isCrit, elem: elem > 1 });
     return { dmg, isCrit, elem: elem > 1, tag };
@@ -294,6 +350,10 @@ const Battle = {
         targets.forEach(t => {
           if (t.alive) t.buffs.push({ stat: 'def', mult: -sk.extra.power, turns: sk.extra.duration });
         });
+      }
+      // 附带状态（中毒/灼烧/眩晕/沉默）
+      if (sk.inflict) {
+        targets.forEach(t => { if (t.alive) this.applyStatus(t, sk.inflict, combatant); });
       }
     } else if (sk.effect === 'heal') {
       const amt = Math.round(combatant.effAtk() * sk.power);

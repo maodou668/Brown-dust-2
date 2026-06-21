@@ -853,3 +853,10 @@ body {
 .shop-icon { font-size: 26px; margin: 4px 0; }
 .shop-name { font-size: 11px; font-weight: 700; margin-bottom: 8px; }
 .shop-buy { width: 100%; padding: 7px 0; font-size: 12px; }
+
+/* 状态效果 / 狂暴 / 持续伤害飘字 */
+.u-status { position: absolute; top: 2px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 1px; z-index: 3; }
+.st-badge { font-size: 10px; filter: drop-shadow(0 1px 2px #000); }
+.unit.enraged { box-shadow: 0 0 14px rgba(255,90,60,.6); border-color: #ff5a3c; }
+.float-text.dot { color: #c08bff; font-size: 14px; }

@@ -113,11 +113,15 @@ const BattleUI = {
     const icon = isAlly ? window.GameData.CLASSES[charDef.cls].icon : '👹';
     const hpPct = Math.max(0, (c.hp / c.maxHp) * 100);
     const spPct = (c.sp / c.maxSp) * 100;
+    const stIcon = { poison: '☠️', burn: '🔥', stun: '💫', silence: '🔇' };
+    const statusHtml = (c.statuses || []).filter(s => s.turns > 0)
+      .map(s => `<span class="st-badge" title="${s.type}">${stIcon[s.type] || ''}</span>`).join('');
     return `
-      <div class="unit ${c.alive ? '' : 'dead'}" data-uid="${c.uid}"
+      <div class="unit ${c.alive ? '' : 'dead'} ${c.enraged ? 'enraged' : ''}" data-uid="${c.uid}"
            style="background:linear-gradient(180deg, ${c.color}33, var(--panel));">
         ${c.isBoss ? '<span class="u-boss">BOSS</span>' : ''}
         <span class="u-elem">${window.GameData.ELEMENTS[c.element].icon}</span>
+        ${statusHtml ? `<div class="u-status">${statusHtml}</div>` : ''}
         <div class="u-art">${icon}</div>
         <div class="u-name">${c.name}</div>
         ${c.shield > 0 ? `<span class="shield-tag">🛡${c.shield}</span>` : ''}
@@ -153,6 +157,17 @@ const BattleUI = {
     const cur = Battle.current();
     if (!cur || !cur.alive) { this.nextTurn(); return; }
     this.refresh();
+
+    // 眩晕：跳过本回合
+    if (Battle.isStunned(cur)) {
+      Battle.consumeStun(cur);
+      this.clearSkillBar();
+      this.setHint(`💫 <b>${cur.name}</b> 被眩晕，跳过回合`);
+      this.knockFloat(cur, '💫 眩晕');
+      this.busy = true;
+      setTimeout(() => { this.busy = false; if (!Battle.finished) this.nextTurn(); }, 750);
+      return;
+    }
 
     if (cur.side === 'ally') {
       this.renderSkillBar(cur);
@@ -276,10 +291,14 @@ const BattleUI = {
       const mt = e.msg.match(/使用「(.+?)」/);
       if (mt) this.showSkillBanner(mt[1]);
     } else if (e.type === 'damage') {
-      if (e.attacker && !this._lunged) { this.lunge(e.attacker); this._lunged = true; }
-      this.impactFlash(e.target, false);
-      if (e.crit) this.screenShake();
-      this.floatText(e.target, e.amount, 'damage', e.crit);
+      if (e.dot) {
+        this.floatText(e.target, e.amount, 'dot', false);
+      } else {
+        if (e.attacker && !this._lunged) { this.lunge(e.attacker); this._lunged = true; }
+        this.impactFlash(e.target, false);
+        if (e.crit) this.screenShake();
+        this.floatText(e.target, e.amount, 'damage', e.crit);
+      }
       this.refresh();
     } else if (e.type === 'heal') {
       this.impactFlash(e.target, true);
@@ -287,6 +306,14 @@ const BattleUI = {
       this.refresh();
     } else if (e.type === 'knockback') {
       this.knockFloat(e.target, e.kind === 'collide' ? '💥 撞击!' : '↩ 击退!');
+    } else if (e.type === 'status') {
+      const nm = { poison: '☠️中毒', burn: '🔥灼烧', stun: '💫眩晕', silence: '🔇沉默' }[e.status] || '';
+      this.knockFloat(e.target, nm);
+      this.refresh();
+    } else if (e.type === 'enrage') {
+      this.showSkillBanner('狂暴!');
+      this.screenShake();
+      this.refresh();
     } else if (e.type === 'end') {
       setTimeout(() => this.showResult(e.result), 700);
     }
@@ -350,7 +377,8 @@ const BattleUI = {
     const unitEl = this.root.querySelector(`.unit[data-uid="${target.uid}"]`);
     if (!unitEl) return;
     const rect = unitEl.getBoundingClientRect();
-    const ft = UI.el(`<div class="float-text ${kind === 'heal' ? 'heal' : (crit ? 'crit' : 'dmg')}">${kind === 'heal' ? '+' : '-'}${amount}${crit ? '!' : ''}</div>`);
+    const cls = kind === 'heal' ? 'heal' : kind === 'dot' ? 'dot' : (crit ? 'crit' : 'dmg');
+    const ft = UI.el(`<div class="float-text ${cls}">${kind === 'heal' ? '+' : '-'}${amount}${crit ? '!' : ''}</div>`);
     ft.style.left = (rect.left + rect.width / 2 - 14) + 'px';
     ft.style.top = (rect.top + 10) + 'px';
     document.body.appendChild(ft);
