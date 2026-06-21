@@ -661,3 +661,15 @@ body {
 
 /* 剧情场景粒子层（复用 .bfx-particles / .bfx） */
 #story-screen .bfx-particles { z-index: 1; }
+
+/* 突破等级徽章 */
+.plus-badge {
+  display: inline-block; font-size: 11px; font-weight: 800;
+  background: linear-gradient(135deg, #ff9b3d, #ff6b9d); color: #fff;
+  padding: 1px 7px; border-radius: 6px; vertical-align: middle;
+  box-shadow: 0 1px 6px rgba(255,107,157,.4);
+}
+.plus-badge.corner {
+  position: absolute; top: 4px; right: 4px; z-index: 2;
+  font-size: 9px; padding: 1px 5px;
+}

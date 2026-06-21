@@ -272,6 +272,7 @@ const UI = {
           ${inTeam ? '<span class="in-team-tag">出战</span>' : ''}
           <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${c.color}44, transparent);">
             <span class="rarity-badge ${this.rarityClass(c.rarity)}">${c.rarity}★</span>
+            ${o.plus ? `<span class="plus-badge corner">+${o.plus}</span>` : ''}
             ${this.charAvatar(o.charId)}
             <span class="cls-chip">${window.GameData.ELEMENTS[c.element].icon}</span>
           </div>
@@ -339,7 +340,7 @@ const UI = {
           ${this.charAvatar(o.charId)}
         </div>
         <div class="detail-title">
-          <h2>${c.name} <span class="${this.rarityClass(c.rarity)}" style="font-size:11px;padding:1px 6px;border-radius:5px;">${c.rarity}★</span></h2>
+          <h2>${c.name} <span class="${this.rarityClass(c.rarity)}" style="font-size:11px;padding:1px 6px;border-radius:5px;">${c.rarity}★</span>${o.plus ? ` <span class="plus-badge">+${o.plus}</span>` : ''}</h2>
           <div class="subt">${c.title}</div>
           <div class="meta">${window.GameData.ELEMENTS[c.element].icon}${window.GameData.ELEMENTS[c.element].name} · ${window.GameData.CLASSES[c.cls].icon}${window.GameData.CLASSES[c.cls].name} · Lv.${o.level}</div>
         </div>
@@ -351,8 +352,9 @@ const UI = {
         <div class="stat-item"><span>🛡️ 防御</span><span class="sv">${st.def}</span></div>
         <div class="stat-item"><span>⚡ 速度</span><span class="sv">${st.spd}</span></div>
         <div class="stat-item"><span>💥 暴击</span><span class="sv">${Math.round(st.crit*100)}%</span></div>
-        <div class="stat-item"><span>⭐ 稀有</span><span class="sv">${c.rarity}★</span></div>
+        <div class="stat-item"><span>✦ 突破</span><span class="sv">+${o.plus || 0}${o.plus ? ` (属性+${o.plus * 8}%)` : ''}</span></div>
       </div>
+      <p class="muted" style="margin:-4px 0 8px;font-size:11px;">突破说明：在「招募」中再次获得该佣兵可提升突破等级（最高 +5），每级 +8% 基础属性。</p>
       ${gearHtml}
       <div class="section-title" style="font-size:14px;">技能</div>
       ${skillsHtml}
@@ -594,9 +596,11 @@ const UI = {
             ${this.charAvatar(r.charId)}
           </div>
           <div class="pull-stars ${this.rarityClass(r.rarity)}" style="-webkit-text-fill-color:initial;color:var(--${'r'+r.rarity});">${stars}</div>
-          <div class="pull-name">${c.name}</div>
+          <div class="pull-name">${c.name}${r.plus ? ` <span class="plus-badge">+${r.plus}</span>` : ''}</div>
           <div class="pull-title">${c.title}</div>
-          ${r.dup ? '<div class="pull-dup">重复获得 · 返还 💎20</div>' : '<div class="pull-dup">✦ 新佣兵加入！</div>'}
+          ${r.isNew ? '<div class="pull-dup">✦ 新佣兵加入！</div>'
+            : r.plusUp ? `<div class="pull-dup" style="color:var(--accent-2);">突破提升！ → +${r.plus}（基础属性 +${r.plus * 8}%）</div>`
+            : `<div class="pull-dup">已满突破 +5 · 返还 💎${r.refund}</div>`}
         </div>
         <div class="close-row"><button class="btn" id="pr-ok">确定</button></div>
       `, { noBackdropClose: true });
@@ -609,7 +613,9 @@ const UI = {
           <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${c.color}44, transparent);">
             <span class="rarity-badge ${this.rarityClass(r.rarity)}">${r.rarity}★</span>
             ${this.charAvatar(r.charId)}
-            ${r.dup ? '' : '<span class="in-team-tag" style="background:var(--gold);color:#241a08;">NEW</span>'}
+            ${r.isNew ? '<span class="in-team-tag" style="background:var(--gold);color:#241a08;">NEW</span>'
+              : r.plusUp ? `<span class="in-team-tag" style="background:var(--accent-2);">突破+${r.plus}</span>`
+              : `<span class="in-team-tag" style="background:var(--panel-2);color:var(--text-dim);">💎${r.refund}</span>`}
           </div>
           <div class="rc-info"><div class="rc-name">${c.name}</div></div>
         </div>`;

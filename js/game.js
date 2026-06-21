@@ -26,8 +26,35 @@ const Game = {
     if (!this.state._gearSeq) this.state._gearSeq = 1;
     this.state.roster.forEach(o => {
       if (!o.equip) o.equip = { weapon: null, armor: null, accessory: null, ex: null };
+      if (o.plus == null) o.plus = 0;
     });
+    // 升星迁移：把同名角色的重复实例合并为突破等级
+    this._mergeDuplicates();
     return this.state;
+  },
+
+  /** 合并 roster 中同 charId 的重复实例：保留最高等级，每个多余实例 +1 突破 */
+  _mergeDuplicates() {
+    const orig = this.state.roster;
+    const cidByUid = {};
+    orig.forEach(o => { cidByUid[o.uid] = o.charId; });
+    const merged = {};
+    orig.forEach(o => {
+      const ex = merged[o.charId];
+      if (!ex) {
+        merged[o.charId] = o;
+      } else {
+        ex.level = Math.max(ex.level, o.level);
+        ex.plus = Math.min(5, (ex.plus || 0) + 1);
+      }
+    });
+    this.state.roster = Object.values(merged);
+    // 重映射队伍 uid（被合并掉的实例 → 幸存实例）
+    this.state.team = [...new Set((this.state.team || []).map(uid => {
+      const cid = cidByUid[uid];
+      const s = this.state.roster.find(o => o.charId === cid);
+      return s ? s.uid : null;
+    }).filter(Boolean))];
   },
 
   /** 新游戏的初始状态 */
@@ -61,6 +88,7 @@ const Game = {
     return {
       uid, charId, level, exp: 0,
       star: window.GameData.CHARACTERS[charId].rarity,
+      plus: 0, // 突破等级 0~5
       equip: { weapon: null, armor: null, accessory: null, ex: null },
     };
   },
@@ -79,15 +107,21 @@ const Game = {
 
   // ---------- 角色数值计算 ----------
 
-  /** 根据等级 + 装备计算角色最终属性 */
+  /** 突破属性倍率：每级 +8% */
+  plusMult(owned) {
+    return 1 + (owned.plus || 0) * 0.08;
+  },
+
+  /** 根据等级 + 突破 + 装备计算角色最终属性 */
   computeStats(owned) {
     const def = window.GameData.CHARACTERS[owned.charId];
     const lv = owned.level - 1;
+    const pm = this.plusMult(owned);
     const g = this.gearBonus(owned);
     return {
-      maxHp: Math.round(def.base.hp + def.grow.hp * lv) + g.hp,
-      atk:   Math.round(def.base.atk + def.grow.atk * lv) + g.atk,
-      def:   Math.round(def.base.def + def.grow.def * lv) + g.def,
+      maxHp: Math.round((def.base.hp + def.grow.hp * lv) * pm) + g.hp,
+      atk:   Math.round((def.base.atk + def.grow.atk * lv) * pm) + g.atk,
+      def:   Math.round((def.base.def + def.grow.def * lv) * pm) + g.def,
       spd:   def.base.spd + g.spd,
       crit:  def.base.crit + g.crit,
     };
@@ -276,17 +310,28 @@ const Game = {
     const pool = window.GameData.GACHA.pool[rarity];
     const charId = pool[Math.floor(Math.random() * pool.length)];
 
-    // 已拥有则转化为升星碎片（这里简单给宝石返还）
-    const already = this.state.roster.some(o => o.charId === charId);
-    let dup = false;
-    if (already && rarity < 5) {
-      dup = true;
-      this.state.gem += 20; // 重复返还
+    // 已拥有 → 提升突破等级；满突破 → 返还宝石；未拥有 → 加入队伍
+    const existing = this.state.roster.find(o => o.charId === charId);
+    const result = { ok: true, charId, rarity, isNew: false, plusUp: false, plus: 0, refund: 0 };
+    if (existing) {
+      if ((existing.plus || 0) < 5) {
+        existing.plus = (existing.plus || 0) + 1;
+        result.plusUp = true;
+        result.plus = existing.plus;
+      } else {
+        const refund = rarity === 5 ? 50 : (rarity === 4 ? 25 : 10);
+        this.state.gem += refund;
+        result.refund = refund;
+        result.plus = 5;
+      }
+    } else {
+      const owned = this.makeOwned(charId, 1);
+      this.state.roster.push(owned);
+      result.isNew = true;
+      result.owned = owned;
     }
-    const owned = this.makeOwned(charId, 1);
-    this.state.roster.push(owned);
     this.save();
-    return { ok: true, charId, rarity, dup, owned };
+    return result;
   },
 
   // ---------- 关卡结算 ----------
