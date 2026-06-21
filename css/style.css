@@ -604,6 +604,22 @@ body {
 .gear-slot .gs-name { font-size: 9px; margin-top: 2px; text-align: center;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 
+/* 专属武器标识：与通用 UR 装备区分 */
+.ex-tag {
+  position: absolute; top: 3px; right: 3px; z-index: 3;
+  font-size: 8px; font-weight: 800; padding: 1px 4px; border-radius: 4px;
+  color: #241a08; background: linear-gradient(135deg, #ffd35a, #ff9b3d);
+  box-shadow: 0 1px 3px rgba(255,155,61,.5);
+}
+.ex-tag.inline {
+  position: static; display: inline-block; margin-left: 6px;
+  vertical-align: middle; font-size: 9px;
+}
+.gear-slot.is-ex, .gear-pick-item.is-ex {
+  border-color: #ff9b3d;
+  box-shadow: 0 0 8px rgba(255,155,61,.35) inset;
+}
+
 .gear-pick-list { display: flex; flex-direction: column; gap: 8px; max-height: 52vh; overflow-y: auto; }
 .gear-pick-item {
   display: flex; align-items: center; gap: 10px;

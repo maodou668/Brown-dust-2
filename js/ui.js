@@ -503,8 +503,9 @@ const UI = {
       if (!equippedThis && Game.hasUnequippedEx(owned.charId)) redDot = '<span class="red-dot"></span>';
     }
     if (tpl) {
-      return `<div class="gear-slot filled border-${this.rarityClass(tpl.rarity)}" data-slot="${slot}">
-        ${redDot}
+      const exTag = tpl.type === 'ex' ? '<span class="ex-tag">专属</span>' : '';
+      return `<div class="gear-slot filled border-${this.rarityClass(tpl.rarity)} ${tpl.type === 'ex' ? 'is-ex' : ''}" data-slot="${slot}">
+        ${redDot}${exTag}
         <span class="rarity-badge ${this.rarityClass(tpl.rarity)}">${window.GameData.GEAR.RLABEL[tpl.rarity]}</span>
         <div class="gs-icon">${tpl.icon}</div>
         <div class="gs-name">${tpl.name}</div>
@@ -538,10 +539,11 @@ const UI = {
         const lbl = { atk: '攻', def: '防', hp: '血', crit: '暴击', spd: '速' }[k];
         return k === 'crit' ? `${lbl}+${Math.round(tpl.stats[k] * 100)}%` : `${lbl}+${tpl.stats[k]}`;
       }).join(' ');
-      return `<div class="gear-pick-item border-${this.rarityClass(tpl.rarity)}" data-iid="${g.iid}">
+      const exTag = tpl.type === 'ex' ? '<span class="ex-tag inline">专属</span>' : '';
+      return `<div class="gear-pick-item border-${this.rarityClass(tpl.rarity)} ${tpl.type === 'ex' ? 'is-ex' : ''}" data-iid="${g.iid}">
         <span class="rarity-badge ${this.rarityClass(tpl.rarity)}" style="position:static;">${window.GameData.GEAR.RLABEL[tpl.rarity]}</span>
         <span class="gp-icon">${tpl.icon}</span>
-        <div class="gp-info"><div class="gp-name">${tpl.name}</div><div class="gp-stats muted">${statStr}</div></div>
+        <div class="gp-info"><div class="gp-name">${tpl.name}${exTag}</div><div class="gp-stats muted">${statStr}</div></div>
         ${equippedHere ? '<span class="gp-tag">已装备</span>' : (byName ? `<span class="gp-tag" style="background:var(--panel-2);color:var(--text-dim);">${byName}佩戴</span>` : '')}
       </div>`;
     }).join('') : `<p class="empty-hint">背包里没有可装备的${slotName}。<br>去「锻造坊」打造，或通关关卡掉落获取。</p>`;
