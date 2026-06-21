@@ -317,3 +317,4 @@ const STORY = {
 };
 
 window.Story = Story;
+window.STORY = STORY;

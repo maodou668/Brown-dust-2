@@ -9,8 +9,9 @@ const css = fs.readFileSync(path.join(root, 'css/style.css'), 'utf8');
 const jsFiles = ['data.js', 'lore.js', 'game.js', 'battle.js', 'ui.js', 'story.js', 'main.js'];
 const js = jsFiles.map(f => fs.readFileSync(path.join(root, 'js', f), 'utf8')).join('\n\n');
 
-html = html.replace(/<link rel="stylesheet" href="css\/style.css">/, '<style>\n' + css + '\n</style>');
-html = html.replace(/\s*<script src="js\/[a-z]+\.js"><\/script>/g, '');
+// 兼容资源引用上的 ?v= 版本号查询串
+html = html.replace(/<link rel="stylesheet" href="css\/style\.css[^"]*">/, '<style>\n' + css + '\n</style>');
+html = html.replace(/\s*<script src="js\/[^"]+"><\/script>/g, '');
 html = html.replace(/<\/body>/, '<script>\n' + js + '\n</script>\n</body>');
 
 fs.writeFileSync(path.join(root, 'game.html'), html);
