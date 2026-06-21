@@ -26,6 +26,11 @@ const Game = {
     if (!this.state._gearSeq) this.state._gearSeq = 1;
     if (!this.state.worldFlags) this.state.worldFlags = {};
     if (!this.state.chapterProgress) this.state.chapterProgress = {};
+    if (this.state.spark == null) this.state.spark = 0;
+    if (this.state.powder == null) this.state.powder = 0;
+    if (!this.state.daily) this.state.daily = { lastClaim: null, streak: 0 };
+    if (!this.state.quests) this.state.quests = { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} };
+    if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
     this.state.roster.forEach(o => {
       if (!o.equip) o.equip = { weapon: null, armor: null, accessory: null, ex: null };
       if (o.plus == null) o.plus = 0;
@@ -36,6 +41,8 @@ const Game = {
     });
     // 升星迁移：把同名角色的重复实例合并为突破等级
     this._mergeDuplicates();
+    // 初始化当日任务/商店
+    this.ensureDaily();
     return this.state;
   },
 
@@ -87,6 +94,13 @@ const Game = {
       chapterProgress: {},
       // 抽卡保底计数（距上次 5★）
       pity: 0,
+      // 保底货币
+      spark: 0,    // 闪耀之星：每抽 +1，200 兑换自选服装
+      powder: 0,   // 希望之粉：每抽 +10，商店兑换必出 5★
+      // 运营系统
+      daily: { lastClaim: null, streak: 0 },
+      quests: { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} },
+      shop: { date: null, slots: [], bought: {} },
       _uidSeq: 1,
       _gearSeq: 1,
     };
@@ -319,6 +333,7 @@ const Game = {
     this.state.gold -= cost;
     owned.level++;
     owned.exp = 0;
+    this.incQuest('levelup', 1);
     this.save();
     return { ok: true, cost, level: owned.level };
   },
@@ -361,6 +376,33 @@ const Game = {
     return 3;
   },
 
+  /** 把一套服装发给玩家（处理新角色/新服装/重复突破） */
+  grantCostume(costumeId) {
+    const cdef = window.GameData.COSTUMES[costumeId];
+    const charId = cdef.charId;
+    const result = { ok: true, costumeId, charId, rarity: cdef.rarity, isNew: false, newCostume: false, plusUp: false, plus: 0, refund: 0 };
+    let owned = this.state.roster.find(o => o.charId === charId);
+    if (!owned) {
+      owned = this.makeOwned(charId, 1);
+      owned.costumes = [costumeId];
+      owned.activeCostume = costumeId;
+      this.state.roster.push(owned);
+      result.isNew = true; result.newCostume = true;
+    } else if (!this.ownedCostumeIds(owned).includes(costumeId)) {
+      owned.costumes.push(costumeId);
+      result.newCostume = true;
+    } else {
+      if ((owned.plus || 0) < 5) {
+        owned.plus = (owned.plus || 0) + 1;
+        result.plusUp = true; result.plus = owned.plus;
+      } else {
+        const refund = cdef.rarity === 5 ? 50 : (cdef.rarity === 4 ? 25 : 10);
+        this.state.gem += refund; result.refund = refund; result.plus = 5;
+      }
+    }
+    return result;
+  },
+
   /** 抽一次「服装」（BD2 模型：服装即收集单位，抽到即拥有角色） */
   gachaPull() {
     if (this.state.gem < window.GameData.GACHA.cost) {
@@ -370,38 +412,131 @@ const Game = {
     const rarity = this.rollRarity();
     if (rarity === 5) this.state.pity = 0;
     else this.state.pity++;
+    // 保底货币 + 任务
+    this.state.spark += 1;
+    this.state.powder += 10;
+    this.incQuest('pull', 1);
 
     const pool = window.GameData.COSTUME_POOL[rarity];
     const costumeId = pool[Math.floor(Math.random() * pool.length)];
-    const cdef = window.GameData.COSTUMES[costumeId];
-    const charId = cdef.charId;
-
-    const result = { ok: true, costumeId, charId, rarity, isNew: false, newCostume: false, plusUp: false, plus: 0, refund: 0 };
-    let owned = this.state.roster.find(o => o.charId === charId);
-    if (!owned) {
-      // 新角色：以这套服装加入
-      owned = this.makeOwned(charId, 1);
-      owned.costumes = [costumeId];
-      owned.activeCostume = costumeId;
-      this.state.roster.push(owned);
-      result.isNew = true;
-      result.newCostume = true;
-    } else if (!this.ownedCostumeIds(owned).includes(costumeId)) {
-      // 新服装
-      owned.costumes.push(costumeId);
-      result.newCostume = true;
-    } else {
-      // 重复服装 → 提升突破；满突破返还
-      if ((owned.plus || 0) < 5) {
-        owned.plus = (owned.plus || 0) + 1;
-        result.plusUp = true; result.plus = owned.plus;
-      } else {
-        const refund = rarity === 5 ? 50 : (rarity === 4 ? 25 : 10);
-        this.state.gem += refund; result.refund = refund; result.plus = 5;
-      }
-    }
+    const result = this.grantCostume(costumeId);
+    result.rarity = rarity;
     this.save();
     return result;
+  },
+
+  // ---------- 运营系统：签到 / 任务 / 商店 / 保底兑换 ----------
+
+  CHECKIN: [
+    { gold: 300 }, { gem: 60 }, { powder: 60 }, { gold: 600 },
+    { gem: 120 }, { gear: 'arm_sr' }, { gem: 240, powder: 120 },
+  ],
+  QUESTS: [
+    { id: 'q_win', name: '进行 3 场战斗', key: 'win', target: 3, reward: { gem: 100 } },
+    { id: 'q_pull', name: '进行 1 次招募', key: 'pull', target: 1, reward: { gold: 300 } },
+    { id: 'q_lvl', name: '升级佣兵 2 次', key: 'levelup', target: 2, reward: { gem: 60 } },
+  ],
+  SPARK_COST: 200,
+  POWDER_COST: 200,
+
+  today() {
+    const d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  },
+
+  /** 跨日重置任务与商店 */
+  ensureDaily() {
+    const t = this.today();
+    if (this.state.quests.date !== t) {
+      this.state.quests = { date: t, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} };
+    }
+    if (this.state.shop.date !== t || !this.state.shop.slots || !this.state.shop.slots.length) {
+      this.state.shop = { date: t, slots: this.rollShop(), bought: {} };
+    }
+  },
+
+  incQuest(key, n) {
+    this.ensureDaily();
+    this.state.quests.progress[key] = (this.state.quests.progress[key] || 0) + n;
+    this.save();
+  },
+
+  applyReward(r) {
+    if (r.gold) this.state.gold += r.gold;
+    if (r.gem) this.state.gem += r.gem;
+    if (r.powder) this.state.powder += r.powder;
+    if (r.spark) this.state.spark += r.spark;
+    if (r.gear) this.addGear(r.gear);
+  },
+
+  canCheckIn() { return this.state.daily.lastClaim !== this.today(); },
+
+  checkIn() {
+    if (!this.canCheckIn()) return { ok: false, msg: '今日已签到' };
+    const idx = (this.state.daily.streak || 0) % 7;
+    const reward = this.CHECKIN[idx];
+    this.applyReward(reward);
+    this.state.daily.lastClaim = this.today();
+    this.state.daily.streak = (this.state.daily.streak || 0) + 1;
+    this.save();
+    return { ok: true, reward, day: idx + 1 };
+  },
+
+  claimQuest(id) {
+    this.ensureDaily();
+    const q = this.QUESTS.find(x => x.id === id);
+    if (!q) return { ok: false };
+    if (this.state.quests.claimed[id]) return { ok: false, msg: '已领取' };
+    if ((this.state.quests.progress[q.key] || 0) < q.target) return { ok: false, msg: '未完成' };
+    this.applyReward(q.reward);
+    this.state.quests.claimed[id] = true;
+    this.save();
+    return { ok: true, reward: q.reward };
+  },
+
+  /** 闪耀之星兑换自选服装 */
+  sparkExchange(costumeId) {
+    if ((this.state.spark || 0) < this.SPARK_COST) return { ok: false, msg: '闪耀之星不足' };
+    if (!window.GameData.COSTUMES[costumeId]) return { ok: false, msg: '无效服装' };
+    this.state.spark -= this.SPARK_COST;
+    const result = this.grantCostume(costumeId);
+    this.save();
+    return { ok: true, result };
+  },
+
+  /** 希望之粉兑换必出 5★ 服装 */
+  powderBox() {
+    if ((this.state.powder || 0) < this.POWDER_COST) return { ok: false, msg: '希望之粉不足' };
+    this.state.powder -= this.POWDER_COST;
+    const pool = window.GameData.COSTUME_POOL[5];
+    const id = pool[Math.floor(Math.random() * pool.length)];
+    const result = this.grantCostume(id);
+    this.save();
+    return { ok: true, result };
+  },
+
+  rollShop() {
+    const tpls = ['wpn_sr', 'arm_sr', 'acc_sr', 'wpn_ur', 'arm_ur', 'acc_ur'];
+    const slots = [];
+    for (let i = 0; i < 3; i++) {
+      const t = tpls[Math.floor(Math.random() * tpls.length)];
+      const tpl = this.getGearTpl(t);
+      slots.push({ tpl: t, price: tpl.rarity === 5 ? 1500 : 600 });
+    }
+    return slots;
+  },
+
+  buyShopItem(idx) {
+    this.ensureDaily();
+    if (this.state.shop.bought[idx]) return { ok: false, msg: '已售出' };
+    const slot = this.state.shop.slots[idx];
+    if (!slot) return { ok: false };
+    if (this.state.gold < slot.price) return { ok: false, msg: '金币不足' };
+    this.state.gold -= slot.price;
+    this.addGear(slot.tpl);
+    this.state.shop.bought[idx] = true;
+    this.save();
+    return { ok: true, tpl: slot.tpl };
   },
 
   // ---------- 关卡结算 ----------
@@ -411,6 +546,7 @@ const Game = {
     const r = stage.reward;
     this.state.gold += r.gold;
     this.state.gem += firstClear ? r.gem : Math.round(r.gem * 0.3);
+    this.incQuest('win', 1);
     // 经验分配给出战队伍
     this.state.team.forEach(uid => {
       const o = this.getOwned(uid);

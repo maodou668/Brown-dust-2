@@ -481,6 +481,7 @@ const Main = {
       case 'stages': UI.renderStages(); break;
       case 'roster': UI.renderRoster(); break;
       case 'gacha': UI.renderGacha(); break;
+      case 'welfare': UI.renderWelfare(); break;
     }
   },
 };

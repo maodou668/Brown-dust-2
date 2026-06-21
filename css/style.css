@@ -813,3 +813,43 @@ body {
 /* 普攻按钮 / 冷却标签 */
 .skill-btn.basic { border-color: rgba(255,255,255,.18); background: var(--panel); }
 .sb-sp.cooldown { color: #ff8a6a; }
+
+/* ============================================================
+   福利：签到 / 任务 / 保底 / 商店
+   ============================================================ */
+.welfare-cur { display: flex; gap: 10px; margin-bottom: 14px; }
+.wc-item { flex: 1; background: var(--panel); border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px; padding: 10px 12px; font-size: 12px; text-align: center; }
+.wc-item b { color: var(--gold); font-size: 15px; }
+
+.checkin-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+.checkin-cell { background: var(--panel); border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px; padding: 8px 4px; text-align: center; position: relative; }
+.checkin-cell.today { border-color: var(--gold); box-shadow: 0 0 10px rgba(240,198,116,.3); }
+.checkin-cell.claimed { opacity: .5; }
+.ci-day { font-size: 10px; color: var(--text-dim); }
+.ci-reward { font-size: 12px; font-weight: 700; margin-top: 3px; }
+.ci-tick { position: absolute; top: 2px; right: 4px; color: var(--hp); font-size: 12px; }
+
+.quest-item { display: flex; align-items: center; gap: 10px; background: var(--panel);
+  border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.quest-info { flex: 1; min-width: 0; }
+.quest-name { font-size: 12px; font-weight: 700; }
+.quest-bar { height: 5px; border-radius: 3px; background: rgba(0,0,0,.4); margin-top: 5px; overflow: hidden; }
+.quest-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.quest-reward { font-size: 12px; color: var(--gold); font-weight: 700; }
+.quest-claim { padding: 7px 12px; font-size: 12px; }
+
+.pity-card { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: linear-gradient(135deg, rgba(176,107,255,.18), var(--panel));
+  border: 1px solid rgba(176,107,255,.25); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+.pity-name { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
+.pity-card .btn { padding: 9px 16px; font-size: 13px; flex-shrink: 0; }
+
+.shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.shop-item { background: var(--panel); border: 2px solid rgba(255,255,255,.06); border-radius: 12px;
+  padding: 10px 8px; text-align: center; position: relative; }
+.shop-item.sold { opacity: .5; }
+.shop-icon { font-size: 26px; margin: 4px 0; }
+.shop-name { font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+.shop-buy { width: 100%; padding: 7px 0; font-size: 12px; }

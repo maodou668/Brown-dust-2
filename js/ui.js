@@ -663,6 +663,141 @@ const UI = {
       m.querySelector('#pr-ok').onclick = () => { this.closeModal(m); this.renderGacha(); };
     }
   },
+
+  // ============================================================
+  //  福利：签到 / 任务 / 保底兑换 / 商店
+  // ============================================================
+  renderWelfare() {
+    Game.ensureDaily();
+    const s = Game.state;
+    // 签到
+    const cyc = s.daily.streak % 7;
+    const claimedCount = Game.canCheckIn() ? cyc : (cyc === 0 ? 7 : cyc);
+    const checkRow = Game.CHECKIN.map((r, i) => {
+      const claimed = i < claimedCount;
+      const isToday = Game.canCheckIn() && i === cyc;
+      const label = r.gold ? `🪙${r.gold}` : r.gem ? `💎${r.gem}` : r.powder ? `✨${r.powder}` : r.gear ? '🎁装备' : '';
+      const extra = r.powder && r.gem ? `+✨${r.powder}` : '';
+      return `<div class="checkin-cell ${claimed ? 'claimed' : ''} ${isToday ? 'today' : ''}">
+        <div class="ci-day">第${i + 1}天</div>
+        <div class="ci-reward">${label}${extra}</div>
+        ${claimed ? '<div class="ci-tick">✓</div>' : ''}
+      </div>`;
+    }).join('');
+    // 任务
+    const questRow = Game.QUESTS.map(q => {
+      const prog = Math.min(q.target, s.quests.progress[q.key] || 0);
+      const claimed = s.quests.claimed[q.id];
+      const done = prog >= q.target;
+      const rw = q.reward.gem ? `💎${q.reward.gem}` : q.reward.gold ? `🪙${q.reward.gold}` : '';
+      return `<div class="quest-item">
+        <div class="quest-info">
+          <div class="quest-name">${q.name} <span class="muted">(${prog}/${q.target})</span></div>
+          <div class="quest-bar"><div class="quest-fill" style="width:${prog / q.target * 100}%"></div></div>
+        </div>
+        <div class="quest-reward">${rw}</div>
+        <button class="btn ${done && !claimed ? 'gold' : 'secondary'} quest-claim" data-quest="${q.id}" ${done && !claimed ? '' : 'disabled'}>${claimed ? '已领' : '领取'}</button>
+      </div>`;
+    }).join('');
+    // 商店
+    const shopRow = s.shop.slots.map((slot, i) => {
+      const tpl = Game.getGearTpl(slot.tpl);
+      const bought = s.shop.bought[i];
+      return `<div class="shop-item border-${this.rarityClass(tpl.rarity)} ${bought ? 'sold' : ''}">
+        <span class="rarity-badge ${this.rarityClass(tpl.rarity)}" style="position:static;">${window.GameData.GEAR.RLABEL[tpl.rarity]}</span>
+        <div class="shop-icon">${tpl.icon}</div>
+        <div class="shop-name">${tpl.name}</div>
+        <button class="btn ${bought ? 'secondary' : 'gold'} shop-buy" data-shop="${i}" ${bought ? 'disabled' : ''}>${bought ? '已售' : '🪙' + slot.price}</button>
+      </div>`;
+    }).join('');
+
+    this.screenEl.innerHTML = `
+      <div class="welfare-cur">
+        <div class="wc-item">✨ 闪耀之星 <b>${s.spark}</b><span class="muted"> /${Game.SPARK_COST}</span></div>
+        <div class="wc-item">🌸 希望之粉 <b>${s.powder}</b><span class="muted"> /${Game.POWDER_COST}</span></div>
+      </div>
+
+      <div class="section-title">每日签到 ${Game.canCheckIn() ? '' : '<span class="muted" style="font-weight:400;font-size:11px;">· 今日已签</span>'}</div>
+      <div class="checkin-grid">${checkRow}</div>
+      <button class="btn ${Game.canCheckIn() ? 'gold' : 'secondary'}" id="do-checkin" ${Game.canCheckIn() ? '' : 'disabled'} style="width:100%;margin-bottom:16px;">${Game.canCheckIn() ? '签到领取' : '明日再来'}</button>
+
+      <div class="section-title">每日任务</div>
+      ${questRow}
+
+      <div class="section-title" style="margin-top:16px;">保底兑换</div>
+      <div class="pity-card">
+        <div><div class="pity-name">🌸 祈愿之箱</div><div class="muted">消耗 ${Game.POWDER_COST} 希望之粉，必出一套 5★ 服装</div></div>
+        <button class="btn ${s.powder >= Game.POWDER_COST ? 'gold' : 'secondary'}" id="do-powder" ${s.powder >= Game.POWDER_COST ? '' : 'disabled'}>兑换</button>
+      </div>
+      <div class="pity-card">
+        <div><div class="pity-name">✨ 自选服装</div><div class="muted">消耗 ${Game.SPARK_COST} 闪耀之星，任选一套服装</div></div>
+        <button class="btn ${s.spark >= Game.SPARK_COST ? '' : 'secondary'}" id="do-spark" ${s.spark >= Game.SPARK_COST ? '' : 'disabled'}>自选</button>
+      </div>
+
+      <div class="section-title" style="margin-top:16px;">每日商店 <span class="muted" style="font-weight:400;font-size:11px;">· 每日刷新</span></div>
+      <div class="shop-grid">${shopRow}</div>
+    `;
+
+    const ci = this.screenEl.querySelector('#do-checkin');
+    if (ci) ci.onclick = () => {
+      const r = Game.checkIn();
+      if (!r.ok) { this.toast(r.msg); return; }
+      const rw = r.reward;
+      const txt = [rw.gold && `🪙${rw.gold}`, rw.gem && `💎${rw.gem}`, rw.powder && `✨${rw.powder}`, rw.gear && '🎁装备'].filter(Boolean).join('，');
+      this.toast(`签到成功（第${r.day}天）：${txt}`);
+      this.updateResources(); this.renderWelfare();
+    };
+    this.screenEl.querySelectorAll('.quest-claim').forEach(b => b.onclick = () => {
+      const r = Game.claimQuest(b.dataset.quest);
+      if (!r.ok) { this.toast(r.msg || '不可领取'); return; }
+      this.toast('任务奖励已领取'); this.updateResources(); this.renderWelfare();
+    });
+    this.screenEl.querySelectorAll('.shop-buy').forEach(b => b.onclick = () => {
+      const r = Game.buyShopItem(Number(b.dataset.shop));
+      if (!r.ok) { this.toast(r.msg); return; }
+      const tpl = Game.getGearTpl(r.tpl);
+      this.toast(`购买成功：${tpl.name}`); this.updateResources(); this.renderWelfare();
+    });
+    const dp = this.screenEl.querySelector('#do-powder');
+    if (dp) dp.onclick = () => {
+      const r = Game.powderBox();
+      if (!r.ok) { this.toast(r.msg); return; }
+      this.updateResources();
+      this.showPullResults([{ ...r.result }]);
+    };
+    const ds = this.screenEl.querySelector('#do-spark');
+    if (ds) ds.onclick = () => this.showSparkPicker();
+  },
+
+  showSparkPicker() {
+    const pool = window.GameData.COSTUME_POOL;
+    const section = (rar) => `
+      <div class="replay-group-title">${rar}★ 服装</div>
+      <div class="roster-grid">${pool[rar].map(cid => {
+        const cd = window.GameData.COSTUMES[cid];
+        return `<div class="roster-card border-${this.rarityClass(cd.rarity)}" data-pick="${cid}">
+          <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">
+            <span class="rarity-badge ${this.rarityClass(cd.rarity)}">${cd.rarity}★</span>
+            ${window.GameData.CLASSES[cd.cls].icon}
+          </div>
+          <div class="rc-info"><div class="rc-name" style="font-size:10px;">${cd.charName}·${cd.costumeName}</div></div>
+        </div>`;
+      }).join('')}</div>`;
+    const m = this.openModal(`
+      <h2>自选服装 ✨${Game.SPARK_COST}</h2>
+      <p class="muted" style="margin:6px 0 12px;">选择一套服装兑换（消耗 ${Game.SPARK_COST} 闪耀之星）。</p>
+      ${section(5)}${section(4)}${section(3)}
+      <div class="close-row"><button class="btn secondary" id="sp-close">取消</button></div>
+    `);
+    m.querySelector('#sp-close').onclick = () => this.closeModal(m);
+    m.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => {
+      const r = Game.sparkExchange(el.dataset.pick);
+      if (!r.ok) { this.toast(r.msg); return; }
+      this.closeModal(m);
+      this.updateResources();
+      this.showPullResults([{ ...r.result }]);
+    });
+  },
 };
 
 window.UI = UI;
