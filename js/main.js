@@ -260,9 +260,15 @@ const BattleUI = {
     if (result === 'win') {
       const firstClear = !Game.state.cleared.includes(this.stage.id);
       const before = { gold: Game.state.gold, gem: Game.state.gem };
-      Game.rewardStage(this.stage, firstClear);
+      const res = Game.rewardStage(this.stage, firstClear) || {};
       const goldGain = Game.state.gold - before.gold;
       const gemGain = Game.state.gem - before.gem;
+      let dropHtml = '';
+      if (res.drop) {
+        const tpl = Game.getGearTpl(res.drop);
+        const rl = window.GameData.GEAR.RLABEL[tpl.rarity];
+        dropHtml = `<p style="margin-top:8px;"><span class="rw ${UI.rarityClass(tpl.rarity)}" style="display:inline-block;">🎁 装备掉落：[${rl}] ${tpl.icon}${tpl.name}</span></p>`;
+      }
       const m = UI.openModal(`
         <div class="result-modal">
           <div class="result-title win">胜利！</div>
@@ -272,6 +278,7 @@ const BattleUI = {
             <div class="rw" style="color:var(--gem);">💎 +${gemGain}</div>
           </div>
           <p class="muted">队伍获得 ${this.stage.reward.exp} 经验</p>
+          ${dropHtml}
         </div>
         <div class="close-row" style="justify-content:center;">
           <button class="btn" id="res-ok">领取奖励</button>

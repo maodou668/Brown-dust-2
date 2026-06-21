@@ -86,6 +86,11 @@ const UI = {
           <div class="qc-title">剧情回顾</div>
           <div class="qc-sub">重温已解锁的故事</div>
         </div>
+        <div class="quick-card" data-forge>
+          <div class="qc-icon">🔨</div>
+          <div class="qc-title">锻造坊</div>
+          <div class="qc-sub">背包 ${s.inventory.length} 件装备</div>
+        </div>
       </div>
       <div class="team-preview">
         <div class="section-title">出战队伍</div>
@@ -97,6 +102,8 @@ const UI = {
       c.addEventListener('click', () => Main.switchScreen(c.dataset.go)));
     const replay = this.screenEl.querySelector('[data-story-replay]');
     if (replay) replay.addEventListener('click', () => this.showStoryReplay());
+    const forge = this.screenEl.querySelector('[data-forge]');
+    if (forge) forge.addEventListener('click', () => this.showForge());
   },
 
   /** 剧情回顾弹窗 */
@@ -310,6 +317,22 @@ const UI = {
     const sideHtml = hasSide ? `
       <button class="btn secondary" id="cd-side" style="width:100%;margin-top:6px;">📖 观看角色支线剧情</button>` : '';
 
+    // 装备栏
+    const gb = Game.gearBonus(o);
+    const gbParts = [];
+    if (gb.atk) gbParts.push(`攻+${gb.atk}`);
+    if (gb.def) gbParts.push(`防+${gb.def}`);
+    if (gb.hp) gbParts.push(`血+${gb.hp}`);
+    if (gb.crit) gbParts.push(`暴击+${Math.round(gb.crit * 100)}%`);
+    const gearHtml = `
+      <div class="section-title" style="font-size:14px;">装备 ${gbParts.length ? `<span class="muted" style="font-weight:400;font-size:11px;">（${gbParts.join('，')}）</span>` : ''}</div>
+      <div class="gear-slots">
+        ${this.gearSlotHtml(o, 'weapon', '武器')}
+        ${this.gearSlotHtml(o, 'armor', '防具')}
+        ${this.gearSlotHtml(o, 'accessory', '饰品')}
+        ${this.gearSlotHtml(o, 'ex', '专属')}
+      </div>`;
+
     const m = this.openModal(`
       <div class="detail-head">
         <div class="detail-art border-${this.rarityClass(c.rarity)}" style="background:radial-gradient(circle at 50% 35%, ${c.color}55, var(--panel));">
@@ -330,6 +353,7 @@ const UI = {
         <div class="stat-item"><span>💥 暴击</span><span class="sv">${Math.round(st.crit*100)}%</span></div>
         <div class="stat-item"><span>⭐ 稀有</span><span class="sv">${c.rarity}★</span></div>
       </div>
+      ${gearHtml}
       <div class="section-title" style="font-size:14px;">技能</div>
       ${skillsHtml}
       ${loreHtml}
@@ -360,6 +384,149 @@ const UI = {
       this.closeModal(m);
       this.renderRoster();
     };
+    m.querySelectorAll('[data-slot]').forEach(el =>
+      el.addEventListener('click', () => { this.closeModal(m); this.showGearPicker(uid, el.dataset.slot); }));
+  },
+
+  /** 单个装备槽 HTML */
+  gearSlotHtml(owned, slot, label) {
+    const iid = owned.equip && owned.equip[slot];
+    const inst = iid ? Game.getGearInst(iid) : null;
+    const tpl = inst ? Game.getGearTpl(inst.tpl) : null;
+    if (tpl) {
+      return `<div class="gear-slot filled border-${this.rarityClass(tpl.rarity)}" data-slot="${slot}">
+        <span class="rarity-badge ${this.rarityClass(tpl.rarity)}">${window.GameData.GEAR.RLABEL[tpl.rarity]}</span>
+        <div class="gs-icon">${tpl.icon}</div>
+        <div class="gs-name">${tpl.name}</div>
+      </div>`;
+    }
+    return `<div class="gear-slot empty" data-slot="${slot}">
+      <div class="gs-icon">＋</div>
+      <div class="gs-name muted">${label}</div>
+    </div>`;
+  },
+
+  /** 选择装备弹窗 */
+  showGearPicker(uid, slot) {
+    const o = Game.getOwned(uid);
+    const c = window.GameData.CHARACTERS[o.charId];
+    // 该槽位可装备的背包物品
+    const list = Game.state.inventory.filter(g => {
+      const tpl = Game.getGearTpl(g.tpl);
+      if (!tpl) return false;
+      if (slot === 'ex') return tpl.type === 'ex' && tpl.owner === o.charId;
+      return tpl.type === slot;
+    });
+    const slotName = { weapon: '武器', armor: '防具', accessory: '饰品', ex: '专属武器' }[slot];
+    const itemsHtml = list.length ? list.map(g => {
+      const tpl = Game.getGearTpl(g.tpl);
+      const by = Game.gearEquippedBy(g.iid);
+      const equippedHere = o.equip[slot] === g.iid;
+      const byName = by && by.uid !== uid ? window.GameData.CHARACTERS[by.charId].name : null;
+      const statStr = Object.keys(tpl.stats).map(k => {
+        const lbl = { atk: '攻', def: '防', hp: '血', crit: '暴击', spd: '速' }[k];
+        return k === 'crit' ? `${lbl}+${Math.round(tpl.stats[k] * 100)}%` : `${lbl}+${tpl.stats[k]}`;
+      }).join(' ');
+      return `<div class="gear-pick-item border-${this.rarityClass(tpl.rarity)}" data-iid="${g.iid}">
+        <span class="rarity-badge ${this.rarityClass(tpl.rarity)}" style="position:static;">${window.GameData.GEAR.RLABEL[tpl.rarity]}</span>
+        <span class="gp-icon">${tpl.icon}</span>
+        <div class="gp-info"><div class="gp-name">${tpl.name}</div><div class="gp-stats muted">${statStr}</div></div>
+        ${equippedHere ? '<span class="gp-tag">已装备</span>' : (byName ? `<span class="gp-tag" style="background:var(--panel-2);color:var(--text-dim);">${byName}佩戴</span>` : '')}
+      </div>`;
+    }).join('') : `<p class="empty-hint">背包里没有可装备的${slotName}。<br>去「锻造坊」打造，或通关关卡掉落获取。</p>`;
+
+    const curIid = o.equip[slot];
+    const m = this.openModal(`
+      <h2>${c.name} · ${slotName}</h2>
+      <p class="muted" style="margin:6px 0 12px;">选择要装备的${slotName}。</p>
+      <div class="gear-pick-list">${itemsHtml}</div>
+      <div class="close-row">
+        ${curIid ? '<button class="btn secondary" id="gp-unequip">卸下</button>' : ''}
+        <button class="btn secondary" id="gp-close">返回</button>
+      </div>
+    `);
+    m.querySelector('#gp-close').onclick = () => { this.closeModal(m); this.showCharDetail(uid); };
+    const un = m.querySelector('#gp-unequip');
+    if (un) un.onclick = () => { Game.unequipGear(uid, slot); this.closeModal(m); this.showCharDetail(uid); };
+    m.querySelectorAll('[data-iid]').forEach(el =>
+      el.addEventListener('click', () => {
+        const r = Game.equipGear(uid, el.dataset.iid);
+        if (!r.ok) { this.toast(r.msg); return; }
+        this.closeModal(m);
+        this.showCharDetail(uid);
+      }));
+  },
+
+  /** 锻造坊 */
+  showForge() {
+    const C = window.GameData.GEAR.CRAFT;
+    const invCount = Game.state.inventory.length;
+    const m = this.openModal(`
+      <h2>🔨 锻造坊</h2>
+      <p class="muted" style="margin:6px 0 12px;">打造装备强化你的佣兵。背包现有 ${invCount} 件装备。</p>
+      <div class="forge-card">
+        <div class="forge-title">锻造通用装备</div>
+        <p class="muted">随机产出武器/防具/饰品（R/SR/UR）。</p>
+        <button class="btn gold" id="fg-craft" ${Game.state.gold < C.goldCost ? 'disabled' : ''}>锻造 🪙${C.goldCost}</button>
+      </div>
+      <div class="forge-card">
+        <div class="forge-title">打造专属武器</div>
+        <p class="muted">为指定佣兵打造其专属武器（UR），提供强力专属属性。</p>
+        <button class="btn" id="fg-ex">选择佣兵打造 💎</button>
+      </div>
+      <div class="close-row"><button class="btn secondary" id="fg-close">关闭</button></div>
+    `);
+    m.querySelector('#fg-close').onclick = () => this.closeModal(m);
+    m.querySelector('#fg-craft').onclick = () => {
+      const r = Game.craftGear();
+      if (!r.ok) { this.toast(r.msg); return; }
+      const tpl = Game.getGearTpl(r.tplId);
+      this.updateResources();
+      this.toast(`锻造出 [${window.GameData.GEAR.RLABEL[tpl.rarity]}] ${tpl.name}！`);
+      this.closeModal(m);
+      this.showForge();
+    };
+    m.querySelector('#fg-ex').onclick = () => { this.closeModal(m); this.showForgeExPicker(); };
+  },
+
+  /** 选择佣兵打造专属武器 */
+  showForgeExPicker() {
+    // 去重：同一角色只列一次
+    const seen = new Set();
+    const owners = [];
+    Game.state.roster.forEach(o => {
+      if (seen.has(o.charId)) return;
+      seen.add(o.charId);
+      owners.push(o);
+    });
+    const items = owners.map(o => {
+      const c = window.GameData.CHARACTERS[o.charId];
+      const tplId = 'ex_' + o.charId;
+      const owned = Game.state.inventory.some(g => g.tpl === tplId);
+      const tpl = Game.getGearTpl(tplId);
+      return `<div class="gear-pick-item border-${this.rarityClass(c.rarity)} ${owned ? 'locked' : ''}" ${owned ? '' : `data-forge="${o.uid}"`}>
+        <span class="gp-icon">${this.charAvatar(o.charId)}</span>
+        <div class="gp-info"><div class="gp-name">${c.name}·专属武器</div>
+          <div class="gp-stats muted">${owned ? '已拥有' : `💎${tpl.gemCost}`}</div></div>
+      </div>`;
+    }).join('');
+    const m = this.openModal(`
+      <h2>打造专属武器</h2>
+      <p class="muted" style="margin:6px 0 12px;">选择佣兵打造其专属武器（每人一件）。</p>
+      <div class="gear-pick-list">${items}</div>
+      <div class="close-row"><button class="btn secondary" id="fe-close">返回</button></div>
+    `);
+    m.querySelector('#fe-close').onclick = () => { this.closeModal(m); this.showForge(); };
+    m.querySelectorAll('[data-forge]').forEach(el =>
+      el.addEventListener('click', () => {
+        const r = Game.forgeEx(el.dataset.forge);
+        if (!r.ok) { this.toast(r.msg); return; }
+        const tpl = Game.getGearTpl(r.tplId);
+        this.updateResources();
+        this.toast(`打造出 ${tpl.name}！`);
+        this.closeModal(m);
+        this.showForgeExPicker();
+      }));
   },
 
   // ============================================================
