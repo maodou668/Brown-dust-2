@@ -48,20 +48,27 @@ const EX_NAME = {
 };
 
 const GEAR_EX = {};
+const EX_POOL = { 5: [], 4: [], 3: [] };
 if (window.GameData && window.GameData.CHARACTERS) {
   Object.values(window.GameData.CHARACTERS).forEach(c => {
+    // 专属武器稀有度跟随角色稀有度（5★→UR / 4★→SR / 3★→R）
+    const rarity = c.rarity;
     GEAR_EX['ex_' + c.id] = {
       id: 'ex_' + c.id,
       type: 'ex',
-      rarity: 5,
+      rarity,
       owner: c.id,
       name: `${c.name}·${EX_NAME[c.cls] || '专属武器'}`,
       icon: '🗡️',
       stats: exStatsByClass(c.cls),
-      gemCost: 150,
       desc: `${c.name} 的专属武器，仅 ${c.name} 可装备，提供强力专属属性。`,
     };
+    (EX_POOL[rarity] || (EX_POOL[rarity] = [])).push('ex_' + c.id);
   });
 }
 
-window.GameData.GEAR = { common: GEAR_COMMON, ex: GEAR_EX, RLABEL: GEAR_RLABEL, CRAFT: GEAR_CRAFT };
+// 专属武器招募概率
+const EX_GACHA = { cost: 150, rates: { 5: 0.06, 4: 0.24, 3: 0.70 } };
+
+window.GameData.GEAR = { common: GEAR_COMMON, ex: GEAR_EX, exPool: EX_POOL, exGacha: EX_GACHA, RLABEL: GEAR_RLABEL, CRAFT: GEAR_CRAFT };
+

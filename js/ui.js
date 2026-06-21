@@ -95,7 +95,7 @@ const UI = {
       <div class="team-preview">
         <div class="section-title">出战队伍</div>
         <div class="team-slots">${teamHtml}</div>
-        <p class="muted" style="margin-top:8px;">在「佣兵」页点击角色可编入/移出队伍（最多 4 人）</p>
+        <p class="muted" style="margin-top:8px;">在「佣兵」页点击角色可编入/移出队伍（最多 5 人）</p>
       </div>
     `;
     this.screenEl.querySelectorAll('[data-go]').forEach(c =>
@@ -158,7 +158,7 @@ const UI = {
 
   renderTeamSlots() {
     const slots = [];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       const uid = Game.state.team[i];
       if (uid) {
         const o = Game.getOwned(uid);
@@ -235,7 +235,7 @@ const UI = {
       <p class="muted" style="margin:6px 0 12px;">${stage.desc}</p>
       <div class="muted" style="margin-bottom:6px;">敌方阵容</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${enemyHtml}</div>
-      <div class="muted" style="margin-bottom:6px;">我方出战（${Game.state.team.length}/4）</div>
+      <div class="muted" style="margin-bottom:6px;">我方出战（${Game.state.team.length}/5）</div>
       <div class="team-slots">${teamHtml}</div>
       <div class="close-row">
         <button class="btn secondary" id="pb-cancel">取消</button>
@@ -285,7 +285,7 @@ const UI = {
     }).join('');
     this.screenEl.innerHTML = `
       <div class="section-title">佣兵团（${s.roster.length}）</div>
-      <p class="muted" style="margin:-6px 0 12px;">点击佣兵查看详情、升级与编队 · 出战 ${s.team.length}/4</p>
+      <p class="muted" style="margin:-6px 0 12px;">点击佣兵查看详情、升级与编队 · 出战 ${s.team.length}/5</p>
       <div class="roster-grid">${cards}</div>`;
     this.screenEl.querySelectorAll('.roster-card').forEach(card =>
       card.addEventListener('click', () => this.showCharDetail(card.dataset.uid)));
@@ -500,11 +500,7 @@ const UI = {
         <p class="muted">随机产出武器/防具/饰品（R/SR/UR）。</p>
         <button class="btn gold" id="fg-craft" ${Game.state.gold < C.goldCost ? 'disabled' : ''}>锻造 🪙${C.goldCost}</button>
       </div>
-      <div class="forge-card">
-        <div class="forge-title">打造专属武器</div>
-        <p class="muted">为指定佣兵打造其专属武器（UR），提供强力专属属性。</p>
-        <button class="btn" id="fg-ex">选择佣兵打造 💎</button>
-      </div>
+      <p class="muted" style="font-size:11px;">※ 专属武器改为「招募」页的专属武器抽奖获取。</p>
       <div class="close-row"><button class="btn secondary" id="fg-close">关闭</button></div>
     `);
     m.querySelector('#fg-close').onclick = () => this.closeModal(m);
@@ -517,47 +513,6 @@ const UI = {
       this.closeModal(m);
       this.showForge();
     };
-    m.querySelector('#fg-ex').onclick = () => { this.closeModal(m); this.showForgeExPicker(); };
-  },
-
-  /** 选择佣兵打造专属武器 */
-  showForgeExPicker() {
-    // 去重：同一角色只列一次
-    const seen = new Set();
-    const owners = [];
-    Game.state.roster.forEach(o => {
-      if (seen.has(o.charId)) return;
-      seen.add(o.charId);
-      owners.push(o);
-    });
-    const items = owners.map(o => {
-      const c = window.GameData.CHARACTERS[o.charId];
-      const tplId = 'ex_' + o.charId;
-      const owned = Game.state.inventory.some(g => g.tpl === tplId);
-      const tpl = Game.getGearTpl(tplId);
-      return `<div class="gear-pick-item border-${this.rarityClass(c.rarity)} ${owned ? 'locked' : ''}" ${owned ? '' : `data-forge="${o.uid}"`}>
-        <span class="gp-icon">${this.charAvatar(o.charId)}</span>
-        <div class="gp-info"><div class="gp-name">${c.name}·专属武器</div>
-          <div class="gp-stats muted">${owned ? '已拥有' : `💎${tpl.gemCost}`}</div></div>
-      </div>`;
-    }).join('');
-    const m = this.openModal(`
-      <h2>打造专属武器</h2>
-      <p class="muted" style="margin:6px 0 12px;">选择佣兵打造其专属武器（每人一件）。</p>
-      <div class="gear-pick-list">${items}</div>
-      <div class="close-row"><button class="btn secondary" id="fe-close">返回</button></div>
-    `);
-    m.querySelector('#fe-close').onclick = () => { this.closeModal(m); this.showForge(); };
-    m.querySelectorAll('[data-forge]').forEach(el =>
-      el.addEventListener('click', () => {
-        const r = Game.forgeEx(el.dataset.forge);
-        if (!r.ok) { this.toast(r.msg); return; }
-        const tpl = Game.getGearTpl(r.tplId);
-        this.updateResources();
-        this.toast(`打造出 ${tpl.name}！`);
-        this.closeModal(m);
-        this.showForgeExPicker();
-      }));
   },
 
   // ============================================================
@@ -580,6 +535,17 @@ const UI = {
           <button class="btn" id="pull10">十连招募 💎${g.cost*10}</button>
         </div>
       </div>
+      <div class="gacha-banner" style="background:radial-gradient(circle at 50% 30%, rgba(255,155,61,.22), transparent 60%), linear-gradient(160deg,#3a2a1a,#241a10);border-color:rgba(255,155,61,.35);margin-top:14px;">
+        <h2 style="background:linear-gradient(90deg,#ffd35a,#ff9b3d);-webkit-background-clip:text;background-clip:text;color:transparent;">专属武器招募</h2>
+        <div class="sub">专属武器仅从此处产出 · 装备对应角色大幅强化</div>
+        <div class="gacha-rates">
+          <b>UR ${(window.GameData.GEAR.exGacha.rates[5]*100).toFixed(0)}%</b> · SR ${(window.GameData.GEAR.exGacha.rates[4]*100).toFixed(0)}% · R ${(window.GameData.GEAR.exGacha.rates[3]*100).toFixed(0)}%
+        </div>
+        <div class="gacha-actions">
+          <button class="btn" id="ex-pull1" style="background:linear-gradient(135deg,#ffb84a,#ff7a3a);color:#241a08;">武器招募 💎${window.GameData.GEAR.exGacha.cost}</button>
+          <button class="btn secondary" id="ex-pull10">十连 💎${window.GameData.GEAR.exGacha.cost*10}</button>
+        </div>
+      </div>
       <div class="section-title" style="font-size:14px;">传说服装（5★）</div>
       <div class="roster-grid">${pool[5].map(cid => this.costumePoolCard(cid)).join('')}</div>
       <div class="section-title" style="font-size:14px;margin-top:16px;">稀有服装（4★）</div>
@@ -587,6 +553,33 @@ const UI = {
     `;
     document.getElementById('pull1').onclick = () => this.doPull(1);
     document.getElementById('pull10').onclick = () => this.doPull(10);
+    document.getElementById('ex-pull1').onclick = () => this.doExPull(1);
+    document.getElementById('ex-pull10').onclick = () => this.doExPull(10);
+  },
+
+  doExPull(count) {
+    const cost = window.GameData.GEAR.exGacha.cost * count;
+    if (Game.state.gem < cost) { this.toast('宝石不足'); return; }
+    const results = [];
+    for (let i = 0; i < count; i++) { const r = Game.gachaEx(); if (!r.ok) break; results.push(r); }
+    this.updateResources();
+    const grid = results.map(r => {
+      const tpl = Game.getGearTpl(r.tplId);
+      const rl = window.GameData.GEAR.RLABEL[tpl.rarity];
+      return `<div class="roster-card border-${this.rarityClass(tpl.rarity)}">
+        <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, #ff9b3d44, transparent);">
+          <span class="rarity-badge ${this.rarityClass(tpl.rarity)}">${rl}</span>
+          🗡️${r.dup ? `<span class="in-team-tag" style="background:var(--panel-2);color:var(--text-dim);">💎${r.refund}</span>` : '<span class="in-team-tag" style="background:var(--gold);color:#241a08;">NEW</span>'}
+        </div>
+        <div class="rc-info"><div class="rc-name" style="font-size:10px;">${tpl.name}</div></div>
+      </div>`;
+    }).join('');
+    const m = this.openModal(`
+      <h2 style="text-align:center;">专属武器招募</h2>
+      <div class="roster-grid">${grid}</div>
+      <div class="close-row"><button class="btn" id="ex-ok">确定</button></div>
+    `, { noBackdropClose: true });
+    m.querySelector('#ex-ok').onclick = () => { this.closeModal(m); this.renderGacha(); };
   },
 
   costumePoolCard(cid) {

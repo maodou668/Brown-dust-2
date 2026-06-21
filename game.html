@@ -868,6 +868,14 @@ body {
 .unit.enraged { box-shadow: 0 0 14px rgba(255,90,60,.6); border-color: #ff5a3c; }
 .float-text.dot { color: #c08bff; font-size: 14px; }
 
+/* 自动战斗按钮 */
+.auto-btn {
+  background: var(--panel); border: 1px solid rgba(255,255,255,.15); color: var(--text-dim);
+  border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.auto-btn.on { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border-color: transparent; }
+.auto-btn:active { transform: scale(.94); }
+
 </style>
 </head>
 <body>
@@ -1511,23 +1519,30 @@ const EX_NAME = {
 };
 
 const GEAR_EX = {};
+const EX_POOL = { 5: [], 4: [], 3: [] };
 if (window.GameData && window.GameData.CHARACTERS) {
   Object.values(window.GameData.CHARACTERS).forEach(c => {
+    // 专属武器稀有度跟随角色稀有度（5★→UR / 4★→SR / 3★→R）
+    const rarity = c.rarity;
     GEAR_EX['ex_' + c.id] = {
       id: 'ex_' + c.id,
       type: 'ex',
-      rarity: 5,
+      rarity,
       owner: c.id,
       name: `${c.name}·${EX_NAME[c.cls] || '专属武器'}`,
       icon: '🗡️',
       stats: exStatsByClass(c.cls),
-      gemCost: 150,
       desc: `${c.name} 的专属武器，仅 ${c.name} 可装备，提供强力专属属性。`,
     };
+    (EX_POOL[rarity] || (EX_POOL[rarity] = [])).push('ex_' + c.id);
   });
 }
 
-window.GameData.GEAR = { common: GEAR_COMMON, ex: GEAR_EX, RLABEL: GEAR_RLABEL, CRAFT: GEAR_CRAFT };
+// 专属武器招募概率
+const EX_GACHA = { cost: 150, rates: { 5: 0.06, 4: 0.24, 3: 0.70 } };
+
+window.GameData.GEAR = { common: GEAR_COMMON, ex: GEAR_EX, exPool: EX_POOL, exGacha: EX_GACHA, RLABEL: GEAR_RLABEL, CRAFT: GEAR_CRAFT };
+
 
 
 // ============================================================
@@ -1762,8 +1777,8 @@ const Game = {
   /** 新游戏的初始状态 */
   newGame() {
     return {
-      gold: 500,
-      gem: 300,
+      gold: 1000,
+      gem: 2000,
       // 已拥有角色：{ uid, charId, level, exp, star }
       roster: [
         this.makeOwned('teried', 1),
@@ -1978,22 +1993,27 @@ const Game = {
     return { ok: true, tplId, iid };
   },
 
-  /** 打造某角色的专属武器（花宝石，每角色一件） */
-  forgeEx(uid) {
-    const o = this.getOwned(uid);
-    if (!o) return { ok: false, msg: '角色不存在' };
-    const tplId = 'ex_' + o.charId;
-    const tpl = this.getGearTpl(tplId);
-    if (!tpl) return { ok: false, msg: '该角色暂无专属武器' };
-    // 已拥有则不可重复打造
+  /** 专属武器招募（只从抽奖产出，按稀有度概率） */
+  gachaEx() {
+    const G = window.GameData.GEAR.exGacha;
+    if (this.state.gem < G.cost) return { ok: false, msg: '宝石不足' };
+    this.state.gem -= G.cost;
+    const r = Math.random();
+    let rarity = 3;
+    if (r < G.rates[5]) rarity = 5;
+    else if (r < G.rates[5] + G.rates[4]) rarity = 4;
+    const pool = window.GameData.GEAR.exPool[rarity];
+    const tplId = pool[Math.floor(Math.random() * pool.length)];
+    const result = { ok: true, tplId, rarity, dup: false };
     if (this.state.inventory.some(g => g.tpl === tplId)) {
-      return { ok: false, msg: '已拥有该专属武器' };
+      // 重复专属武器 → 返还宝石
+      const refund = rarity === 5 ? 60 : rarity === 4 ? 30 : 15;
+      this.state.gem += refund; result.dup = true; result.refund = refund;
+    } else {
+      this.addGear(tplId);
     }
-    if (this.state.gem < tpl.gemCost) return { ok: false, msg: '宝石不足' };
-    this.state.gem -= tpl.gemCost;
-    const iid = this.addGear(tplId);
     this.save();
-    return { ok: true, tplId, iid };
+    return result;
   },
 
   /** 升级所需经验 */
@@ -2046,7 +2066,7 @@ const Game = {
     if (idx >= 0) {
       this.state.team.splice(idx, 1);
     } else {
-      if (this.state.team.length >= 4) return { ok: false, msg: '队伍已满（最多 4 人）' };
+      if (this.state.team.length >= 5) return { ok: false, msg: "队伍已满（最多 5 人）" };
       this.state.team.push(uid);
     }
     this.save();
@@ -2828,7 +2848,7 @@ const UI = {
       <div class="team-preview">
         <div class="section-title">出战队伍</div>
         <div class="team-slots">${teamHtml}</div>
-        <p class="muted" style="margin-top:8px;">在「佣兵」页点击角色可编入/移出队伍（最多 4 人）</p>
+        <p class="muted" style="margin-top:8px;">在「佣兵」页点击角色可编入/移出队伍（最多 5 人）</p>
       </div>
     `;
     this.screenEl.querySelectorAll('[data-go]').forEach(c =>
@@ -2891,7 +2911,7 @@ const UI = {
 
   renderTeamSlots() {
     const slots = [];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       const uid = Game.state.team[i];
       if (uid) {
         const o = Game.getOwned(uid);
@@ -2968,7 +2988,7 @@ const UI = {
       <p class="muted" style="margin:6px 0 12px;">${stage.desc}</p>
       <div class="muted" style="margin-bottom:6px;">敌方阵容</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${enemyHtml}</div>
-      <div class="muted" style="margin-bottom:6px;">我方出战（${Game.state.team.length}/4）</div>
+      <div class="muted" style="margin-bottom:6px;">我方出战（${Game.state.team.length}/5）</div>
       <div class="team-slots">${teamHtml}</div>
       <div class="close-row">
         <button class="btn secondary" id="pb-cancel">取消</button>
@@ -3018,7 +3038,7 @@ const UI = {
     }).join('');
     this.screenEl.innerHTML = `
       <div class="section-title">佣兵团（${s.roster.length}）</div>
-      <p class="muted" style="margin:-6px 0 12px;">点击佣兵查看详情、升级与编队 · 出战 ${s.team.length}/4</p>
+      <p class="muted" style="margin:-6px 0 12px;">点击佣兵查看详情、升级与编队 · 出战 ${s.team.length}/5</p>
       <div class="roster-grid">${cards}</div>`;
     this.screenEl.querySelectorAll('.roster-card').forEach(card =>
       card.addEventListener('click', () => this.showCharDetail(card.dataset.uid)));
@@ -3233,11 +3253,7 @@ const UI = {
         <p class="muted">随机产出武器/防具/饰品（R/SR/UR）。</p>
         <button class="btn gold" id="fg-craft" ${Game.state.gold < C.goldCost ? 'disabled' : ''}>锻造 🪙${C.goldCost}</button>
       </div>
-      <div class="forge-card">
-        <div class="forge-title">打造专属武器</div>
-        <p class="muted">为指定佣兵打造其专属武器（UR），提供强力专属属性。</p>
-        <button class="btn" id="fg-ex">选择佣兵打造 💎</button>
-      </div>
+      <p class="muted" style="font-size:11px;">※ 专属武器改为「招募」页的专属武器抽奖获取。</p>
       <div class="close-row"><button class="btn secondary" id="fg-close">关闭</button></div>
     `);
     m.querySelector('#fg-close').onclick = () => this.closeModal(m);
@@ -3250,47 +3266,6 @@ const UI = {
       this.closeModal(m);
       this.showForge();
     };
-    m.querySelector('#fg-ex').onclick = () => { this.closeModal(m); this.showForgeExPicker(); };
-  },
-
-  /** 选择佣兵打造专属武器 */
-  showForgeExPicker() {
-    // 去重：同一角色只列一次
-    const seen = new Set();
-    const owners = [];
-    Game.state.roster.forEach(o => {
-      if (seen.has(o.charId)) return;
-      seen.add(o.charId);
-      owners.push(o);
-    });
-    const items = owners.map(o => {
-      const c = window.GameData.CHARACTERS[o.charId];
-      const tplId = 'ex_' + o.charId;
-      const owned = Game.state.inventory.some(g => g.tpl === tplId);
-      const tpl = Game.getGearTpl(tplId);
-      return `<div class="gear-pick-item border-${this.rarityClass(c.rarity)} ${owned ? 'locked' : ''}" ${owned ? '' : `data-forge="${o.uid}"`}>
-        <span class="gp-icon">${this.charAvatar(o.charId)}</span>
-        <div class="gp-info"><div class="gp-name">${c.name}·专属武器</div>
-          <div class="gp-stats muted">${owned ? '已拥有' : `💎${tpl.gemCost}`}</div></div>
-      </div>`;
-    }).join('');
-    const m = this.openModal(`
-      <h2>打造专属武器</h2>
-      <p class="muted" style="margin:6px 0 12px;">选择佣兵打造其专属武器（每人一件）。</p>
-      <div class="gear-pick-list">${items}</div>
-      <div class="close-row"><button class="btn secondary" id="fe-close">返回</button></div>
-    `);
-    m.querySelector('#fe-close').onclick = () => { this.closeModal(m); this.showForge(); };
-    m.querySelectorAll('[data-forge]').forEach(el =>
-      el.addEventListener('click', () => {
-        const r = Game.forgeEx(el.dataset.forge);
-        if (!r.ok) { this.toast(r.msg); return; }
-        const tpl = Game.getGearTpl(r.tplId);
-        this.updateResources();
-        this.toast(`打造出 ${tpl.name}！`);
-        this.closeModal(m);
-        this.showForgeExPicker();
-      }));
   },
 
   // ============================================================
@@ -3313,6 +3288,17 @@ const UI = {
           <button class="btn" id="pull10">十连招募 💎${g.cost*10}</button>
         </div>
       </div>
+      <div class="gacha-banner" style="background:radial-gradient(circle at 50% 30%, rgba(255,155,61,.22), transparent 60%), linear-gradient(160deg,#3a2a1a,#241a10);border-color:rgba(255,155,61,.35);margin-top:14px;">
+        <h2 style="background:linear-gradient(90deg,#ffd35a,#ff9b3d);-webkit-background-clip:text;background-clip:text;color:transparent;">专属武器招募</h2>
+        <div class="sub">专属武器仅从此处产出 · 装备对应角色大幅强化</div>
+        <div class="gacha-rates">
+          <b>UR ${(window.GameData.GEAR.exGacha.rates[5]*100).toFixed(0)}%</b> · SR ${(window.GameData.GEAR.exGacha.rates[4]*100).toFixed(0)}% · R ${(window.GameData.GEAR.exGacha.rates[3]*100).toFixed(0)}%
+        </div>
+        <div class="gacha-actions">
+          <button class="btn" id="ex-pull1" style="background:linear-gradient(135deg,#ffb84a,#ff7a3a);color:#241a08;">武器招募 💎${window.GameData.GEAR.exGacha.cost}</button>
+          <button class="btn secondary" id="ex-pull10">十连 💎${window.GameData.GEAR.exGacha.cost*10}</button>
+        </div>
+      </div>
       <div class="section-title" style="font-size:14px;">传说服装（5★）</div>
       <div class="roster-grid">${pool[5].map(cid => this.costumePoolCard(cid)).join('')}</div>
       <div class="section-title" style="font-size:14px;margin-top:16px;">稀有服装（4★）</div>
@@ -3320,6 +3306,33 @@ const UI = {
     `;
     document.getElementById('pull1').onclick = () => this.doPull(1);
     document.getElementById('pull10').onclick = () => this.doPull(10);
+    document.getElementById('ex-pull1').onclick = () => this.doExPull(1);
+    document.getElementById('ex-pull10').onclick = () => this.doExPull(10);
+  },
+
+  doExPull(count) {
+    const cost = window.GameData.GEAR.exGacha.cost * count;
+    if (Game.state.gem < cost) { this.toast('宝石不足'); return; }
+    const results = [];
+    for (let i = 0; i < count; i++) { const r = Game.gachaEx(); if (!r.ok) break; results.push(r); }
+    this.updateResources();
+    const grid = results.map(r => {
+      const tpl = Game.getGearTpl(r.tplId);
+      const rl = window.GameData.GEAR.RLABEL[tpl.rarity];
+      return `<div class="roster-card border-${this.rarityClass(tpl.rarity)}">
+        <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, #ff9b3d44, transparent);">
+          <span class="rarity-badge ${this.rarityClass(tpl.rarity)}">${rl}</span>
+          🗡️${r.dup ? `<span class="in-team-tag" style="background:var(--panel-2);color:var(--text-dim);">💎${r.refund}</span>` : '<span class="in-team-tag" style="background:var(--gold);color:#241a08;">NEW</span>'}
+        </div>
+        <div class="rc-info"><div class="rc-name" style="font-size:10px;">${tpl.name}</div></div>
+      </div>`;
+    }).join('');
+    const m = this.openModal(`
+      <h2 style="text-align:center;">专属武器招募</h2>
+      <div class="roster-grid">${grid}</div>
+      <div class="close-row"><button class="btn" id="ex-ok">确定</button></div>
+    `, { noBackdropClose: true });
+    m.querySelector('#ex-ok').onclick = () => { this.closeModal(m); this.renderGacha(); };
   },
 
   costumePoolCard(cid) {
@@ -4243,13 +4256,25 @@ const World = {
     const prog = this.progress(id);
     if (this.cur && this.cur.idx === prog) {
       Game.state.chapterProgress[id] = prog + 1;
+      // 里程碑奖励（首次完成该步骤）：作为「累计 100 抽」的主线发放部分
+      const gem = this.cur.type === 'battle' ? 600 : this.cur.type === 'story' ? 300 : 200;
+      Game.state.gem += gem;
       Game.save();
       this.cur.done = true;
+      UI.updateResources();
+      UI.toast(`🎯 里程碑奖励：💎${gem}`);
     }
     const next = this.nodes[this.progress(id)];
     this.cur = next || null;
     if (next) { this.resume(); this.announceObjective(true); }
-    else { this.chapterComplete(); }
+    else { this.chapterCompleteReward(); this.chapterComplete(); }
+  },
+
+  /** 章节通关额外奖励 */
+  chapterCompleteReward() {
+    Game.state.gem += 600;
+    Game.save();
+    UI.updateResources();
   },
 
   announceObjective(isNew) {
@@ -4423,6 +4448,7 @@ const BattleUI = {
   root: null,
   selectedSkill: null,   // 当前选中的技能 id
   busy: false,           // 动画/AI 执行中，锁定输入
+  auto: false,           // 自动战斗
 
   start(stage, onExit) {
     this.stage = stage;
@@ -4445,7 +4471,10 @@ const BattleUI = {
         <div class="battle-top">
           <span>${this.stage.name}</span>
           <span id="battle-round">第 1 回合</span>
-          <button class="ghost-btn" id="battle-flee" title="撤退">🏳️</button>
+          <div style="display:flex;gap:6px;">
+            <button class="auto-btn ${this.auto ? 'on' : ''}" id="battle-auto" title="自动战斗">自动</button>
+            <button class="ghost-btn" id="battle-flee" title="撤退">🏳️</button>
+          </div>
         </div>
         <div class="battle-field bg-${scene}">
           <div class="battle-floor"></div>
@@ -4473,7 +4502,18 @@ const BattleUI = {
     `);
     document.body.appendChild(this.root);
     this.root.querySelector('#battle-flee').onclick = () => this.flee();
+    this.root.querySelector('#battle-auto').onclick = () => this.toggleAuto();
     this.spawnParticles(scene);
+  },
+
+  toggleAuto() {
+    this.auto = !this.auto;
+    const b = this.root && this.root.querySelector('#battle-auto');
+    if (b) b.classList.toggle('on', this.auto);
+    // 若当前正等待我方操作，立即接管
+    if (this.auto && !this.busy && Battle.isPlayerTurn && Battle.isPlayerTurn()) {
+      this.autoAct();
+    }
   },
 
   /** 关卡 -> 场景类型 */
@@ -4588,6 +4628,7 @@ const BattleUI = {
     if (cur.side === 'ally') {
       this.renderSkillBar(cur);
       this.setHint(`轮到 <b>${cur.name}</b> 行动，请选择技能`);
+      if (this.auto) { this.busy = true; setTimeout(() => { this.busy = false; this.autoAct(); }, 450); }
     } else {
       this.clearSkillBar();
       this.setHint(`<b>${cur.name}</b> 正在行动...`);
@@ -4677,6 +4718,66 @@ const BattleUI = {
       u.classList.remove('targetable', 'ally-target');
       u.onclick = null;
     });
+  },
+
+  /** 自动战斗：智能选招 + 选目标，按最大收益 */
+  autoAct() {
+    if (!this.root || this.busy || Battle.finished) return;
+    const c = Battle.current();
+    if (!c || c.side !== 'ally' || !c.alive) return;
+    const pick = this.autoPickAction(c);
+    if (pick) this.execute(c, pick.skillId, pick.target);
+  },
+
+  autoPickAction(c) {
+    const SK = window.GameData.SKILLS;
+    const enemies = Battle.aliveEnemies();
+    const allies = Battle.aliveAllies();
+    const usable = c.skills.filter(id => Battle.canUseSkill(c, id));
+    let best = null, bestVal = -1;
+    usable.forEach(id => {
+      const sk = SK[id];
+      let val = 0, target = c;
+      if (sk.effect === 'damage') {
+        const atk = c.effAtk() * sk.power;
+        if (sk.target === 'enemyAll') { val = atk * enemies.length * 0.9; target = enemies[0]; }
+        else if (sk.target === 'enemyRow') {
+          // 选人数最多的一排
+          const front = enemies.filter(e => e.pos === 'front'), back = enemies.filter(e => e.pos === 'back');
+          const row = front.length >= back.length ? front : back;
+          val = atk * Math.max(1, row.length) * 0.95; target = row[0] || enemies[0];
+        } else {
+          const pool = sk.pierce ? enemies : Battle.frontline(enemies);
+          // 优先能击杀 / 血量最低
+          target = pool.reduce((lo, t) => (t.hp < lo.hp ? t : lo), pool[0]);
+          val = atk;
+          if (target && atk * 0.5 >= target.hp) val += 500; // 可击杀加权
+        }
+        if (sk.inflict) val += 120; // 附带控制/中毒加权
+        if (sk.basic) val *= 0.4;   // 普攻收益打折（留着回 SP）
+      } else if (sk.effect === 'heal') {
+        const pool = sk.target === 'allyAll' ? allies : allies;
+        const missing = pool.reduce((a, t) => a + (t.maxHp - t.hp), 0);
+        const heal = c.effAtk() * sk.power * (sk.target === 'allyAll' ? pool.filter(t => t.hp < t.maxHp).length || 1 : 1);
+        val = Math.min(missing, heal) * 1.1;
+        if (sk.target !== 'allyAll') { target = allies.reduce((lo, t) => ((t.maxHp - t.hp) > (lo.maxHp - lo.hp) ? t : lo), allies[0]); }
+        else target = c;
+        if (missing <= 0) val = 0; // 满血不治疗
+      } else if (sk.effect === 'shield') {
+        val = c.effAtk() * sk.power * allies.length * 0.5; target = c;
+      } else if (sk.effect === 'buffAtk') {
+        val = c.effAtk() * 1.2; target = c;
+      } else if (sk.effect === 'buffDef') {
+        val = 60; target = c;
+      }
+      if (val > bestVal) { bestVal = val; best = { skillId: id, target }; }
+    });
+    // 兜底：普攻最低血敌人
+    if (!best) {
+      const pool = Battle.frontline(enemies);
+      best = { skillId: 'basic_attack', target: pool.reduce((lo, t) => (t.hp < lo.hp ? t : lo), pool[0]) };
+    }
+    return best;
   },
 
   execute(c, skillId, target) {
@@ -4875,7 +4976,7 @@ const Main = {
     // 首次游戏自动编队
     if (Game.state.team.length === 0 && Game.state.roster.length > 0) {
       Game.state.roster.forEach(o => {
-        if (Game.state.team.length < 4) Game.state.team.push(o.uid);
+        if (Game.state.team.length < 5) Game.state.team.push(o.uid);
       });
       Game.save();
     }

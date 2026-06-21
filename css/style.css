@@ -860,3 +860,11 @@ body {
 .st-badge { font-size: 10px; filter: drop-shadow(0 1px 2px #000); }
 .unit.enraged { box-shadow: 0 0 14px rgba(255,90,60,.6); border-color: #ff5a3c; }
 .float-text.dot { color: #c08bff; font-size: 14px; }
+
+/* 自动战斗按钮 */
+.auto-btn {
+  background: var(--panel); border: 1px solid rgba(255,255,255,.15); color: var(--text-dim);
+  border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.auto-btn.on { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border-color: transparent; }
+.auto-btn:active { transform: scale(.94); }

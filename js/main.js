@@ -7,6 +7,7 @@ const BattleUI = {
   root: null,
   selectedSkill: null,   // 当前选中的技能 id
   busy: false,           // 动画/AI 执行中，锁定输入
+  auto: false,           // 自动战斗
 
   start(stage, onExit) {
     this.stage = stage;
@@ -29,7 +30,10 @@ const BattleUI = {
         <div class="battle-top">
           <span>${this.stage.name}</span>
           <span id="battle-round">第 1 回合</span>
-          <button class="ghost-btn" id="battle-flee" title="撤退">🏳️</button>
+          <div style="display:flex;gap:6px;">
+            <button class="auto-btn ${this.auto ? 'on' : ''}" id="battle-auto" title="自动战斗">自动</button>
+            <button class="ghost-btn" id="battle-flee" title="撤退">🏳️</button>
+          </div>
         </div>
         <div class="battle-field bg-${scene}">
           <div class="battle-floor"></div>
@@ -57,7 +61,18 @@ const BattleUI = {
     `);
     document.body.appendChild(this.root);
     this.root.querySelector('#battle-flee').onclick = () => this.flee();
+    this.root.querySelector('#battle-auto').onclick = () => this.toggleAuto();
     this.spawnParticles(scene);
+  },
+
+  toggleAuto() {
+    this.auto = !this.auto;
+    const b = this.root && this.root.querySelector('#battle-auto');
+    if (b) b.classList.toggle('on', this.auto);
+    // 若当前正等待我方操作，立即接管
+    if (this.auto && !this.busy && Battle.isPlayerTurn && Battle.isPlayerTurn()) {
+      this.autoAct();
+    }
   },
 
   /** 关卡 -> 场景类型 */
@@ -172,6 +187,7 @@ const BattleUI = {
     if (cur.side === 'ally') {
       this.renderSkillBar(cur);
       this.setHint(`轮到 <b>${cur.name}</b> 行动，请选择技能`);
+      if (this.auto) { this.busy = true; setTimeout(() => { this.busy = false; this.autoAct(); }, 450); }
     } else {
       this.clearSkillBar();
       this.setHint(`<b>${cur.name}</b> 正在行动...`);
@@ -261,6 +277,66 @@ const BattleUI = {
       u.classList.remove('targetable', 'ally-target');
       u.onclick = null;
     });
+  },
+
+  /** 自动战斗：智能选招 + 选目标，按最大收益 */
+  autoAct() {
+    if (!this.root || this.busy || Battle.finished) return;
+    const c = Battle.current();
+    if (!c || c.side !== 'ally' || !c.alive) return;
+    const pick = this.autoPickAction(c);
+    if (pick) this.execute(c, pick.skillId, pick.target);
+  },
+
+  autoPickAction(c) {
+    const SK = window.GameData.SKILLS;
+    const enemies = Battle.aliveEnemies();
+    const allies = Battle.aliveAllies();
+    const usable = c.skills.filter(id => Battle.canUseSkill(c, id));
+    let best = null, bestVal = -1;
+    usable.forEach(id => {
+      const sk = SK[id];
+      let val = 0, target = c;
+      if (sk.effect === 'damage') {
+        const atk = c.effAtk() * sk.power;
+        if (sk.target === 'enemyAll') { val = atk * enemies.length * 0.9; target = enemies[0]; }
+        else if (sk.target === 'enemyRow') {
+          // 选人数最多的一排
+          const front = enemies.filter(e => e.pos === 'front'), back = enemies.filter(e => e.pos === 'back');
+          const row = front.length >= back.length ? front : back;
+          val = atk * Math.max(1, row.length) * 0.95; target = row[0] || enemies[0];
+        } else {
+          const pool = sk.pierce ? enemies : Battle.frontline(enemies);
+          // 优先能击杀 / 血量最低
+          target = pool.reduce((lo, t) => (t.hp < lo.hp ? t : lo), pool[0]);
+          val = atk;
+          if (target && atk * 0.5 >= target.hp) val += 500; // 可击杀加权
+        }
+        if (sk.inflict) val += 120; // 附带控制/中毒加权
+        if (sk.basic) val *= 0.4;   // 普攻收益打折（留着回 SP）
+      } else if (sk.effect === 'heal') {
+        const pool = sk.target === 'allyAll' ? allies : allies;
+        const missing = pool.reduce((a, t) => a + (t.maxHp - t.hp), 0);
+        const heal = c.effAtk() * sk.power * (sk.target === 'allyAll' ? pool.filter(t => t.hp < t.maxHp).length || 1 : 1);
+        val = Math.min(missing, heal) * 1.1;
+        if (sk.target !== 'allyAll') { target = allies.reduce((lo, t) => ((t.maxHp - t.hp) > (lo.maxHp - lo.hp) ? t : lo), allies[0]); }
+        else target = c;
+        if (missing <= 0) val = 0; // 满血不治疗
+      } else if (sk.effect === 'shield') {
+        val = c.effAtk() * sk.power * allies.length * 0.5; target = c;
+      } else if (sk.effect === 'buffAtk') {
+        val = c.effAtk() * 1.2; target = c;
+      } else if (sk.effect === 'buffDef') {
+        val = 60; target = c;
+      }
+      if (val > bestVal) { bestVal = val; best = { skillId: id, target }; }
+    });
+    // 兜底：普攻最低血敌人
+    if (!best) {
+      const pool = Battle.frontline(enemies);
+      best = { skillId: 'basic_attack', target: pool.reduce((lo, t) => (t.hp < lo.hp ? t : lo), pool[0]) };
+    }
+    return best;
   },
 
   execute(c, skillId, target) {
@@ -459,7 +535,7 @@ const Main = {
     // 首次游戏自动编队
     if (Game.state.team.length === 0 && Game.state.roster.length > 0) {
       Game.state.roster.forEach(o => {
-        if (Game.state.team.length < 4) Game.state.team.push(o.uid);
+        if (Game.state.team.length < 5) Game.state.team.push(o.uid);
       });
       Game.save();
     }

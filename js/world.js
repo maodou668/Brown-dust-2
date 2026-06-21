@@ -287,13 +287,25 @@ const World = {
     const prog = this.progress(id);
     if (this.cur && this.cur.idx === prog) {
       Game.state.chapterProgress[id] = prog + 1;
+      // 里程碑奖励（首次完成该步骤）：作为「累计 100 抽」的主线发放部分
+      const gem = this.cur.type === 'battle' ? 600 : this.cur.type === 'story' ? 300 : 200;
+      Game.state.gem += gem;
       Game.save();
       this.cur.done = true;
+      UI.updateResources();
+      UI.toast(`🎯 里程碑奖励：💎${gem}`);
     }
     const next = this.nodes[this.progress(id)];
     this.cur = next || null;
     if (next) { this.resume(); this.announceObjective(true); }
-    else { this.chapterComplete(); }
+    else { this.chapterCompleteReward(); this.chapterComplete(); }
+  },
+
+  /** 章节通关额外奖励 */
+  chapterCompleteReward() {
+    Game.state.gem += 600;
+    Game.save();
+    UI.updateResources();
   },
 
   announceObjective(isNew) {

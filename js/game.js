@@ -73,8 +73,8 @@ const Game = {
   /** 新游戏的初始状态 */
   newGame() {
     return {
-      gold: 500,
-      gem: 300,
+      gold: 1000,
+      gem: 2000,
       // 已拥有角色：{ uid, charId, level, exp, star }
       roster: [
         this.makeOwned('teried', 1),
@@ -289,22 +289,27 @@ const Game = {
     return { ok: true, tplId, iid };
   },
 
-  /** 打造某角色的专属武器（花宝石，每角色一件） */
-  forgeEx(uid) {
-    const o = this.getOwned(uid);
-    if (!o) return { ok: false, msg: '角色不存在' };
-    const tplId = 'ex_' + o.charId;
-    const tpl = this.getGearTpl(tplId);
-    if (!tpl) return { ok: false, msg: '该角色暂无专属武器' };
-    // 已拥有则不可重复打造
+  /** 专属武器招募（只从抽奖产出，按稀有度概率） */
+  gachaEx() {
+    const G = window.GameData.GEAR.exGacha;
+    if (this.state.gem < G.cost) return { ok: false, msg: '宝石不足' };
+    this.state.gem -= G.cost;
+    const r = Math.random();
+    let rarity = 3;
+    if (r < G.rates[5]) rarity = 5;
+    else if (r < G.rates[5] + G.rates[4]) rarity = 4;
+    const pool = window.GameData.GEAR.exPool[rarity];
+    const tplId = pool[Math.floor(Math.random() * pool.length)];
+    const result = { ok: true, tplId, rarity, dup: false };
     if (this.state.inventory.some(g => g.tpl === tplId)) {
-      return { ok: false, msg: '已拥有该专属武器' };
+      // 重复专属武器 → 返还宝石
+      const refund = rarity === 5 ? 60 : rarity === 4 ? 30 : 15;
+      this.state.gem += refund; result.dup = true; result.refund = refund;
+    } else {
+      this.addGear(tplId);
     }
-    if (this.state.gem < tpl.gemCost) return { ok: false, msg: '宝石不足' };
-    this.state.gem -= tpl.gemCost;
-    const iid = this.addGear(tplId);
     this.save();
-    return { ok: true, tplId, iid };
+    return result;
   },
 
   /** 升级所需经验 */
@@ -357,7 +362,7 @@ const Game = {
     if (idx >= 0) {
       this.state.team.splice(idx, 1);
     } else {
-      if (this.state.team.length >= 4) return { ok: false, msg: '队伍已满（最多 4 人）' };
+      if (this.state.team.length >= 5) return { ok: false, msg: "队伍已满（最多 5 人）" };
       this.state.team.push(uid);
     }
     this.save();
