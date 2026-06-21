@@ -43,7 +43,8 @@ body {
 
 #app {
   max-width: 480px;
-  height: 100vh;
+  height: 100vh;       /* 兜底：不支持 dvh 的旧浏览器 */
+  height: 100dvh;      /* 动态视口高度：扣除移动端 Chrome 的工具栏，保证底栏可见 */
   margin: 0 auto;
   display: flex;
   flex-direction: column;
