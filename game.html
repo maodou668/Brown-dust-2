@@ -1944,6 +1944,8 @@ const Game = {
     });
     // 升星迁移：把同名角色的重复实例合并为突破等级
     this._mergeDuplicates();
+    // 修复历史存档的 uid 冲突，并据此重建出战队伍（修复「佣兵有角色但出战不显示」）
+    this._repairIds();
     // 初始化当日任务/商店
     this.ensureDaily();
     return this.state;
@@ -1971,6 +1973,36 @@ const Game = {
       const s = this.state.roster.find(o => o.charId === cid);
       return s ? s.uid : null;
     }).filter(Boolean))];
+  },
+
+  /**
+   * 修复 uid 冲突：历史存档中（尤其重置存档后）可能出现两个角色共用同一 uid，
+   * 导致其中一个被当成「已出战」而在编队界面消失。这里：
+   *  1) 先按 charId 记录队伍意图；2) 给所有重复/缺失 uid 的实例重新分配唯一 uid；
+   *  3) 再按 charId 重建出战队伍（去重、限 5 人），保证 roster 与 team 始终一致。
+   */
+  _repairIds() {
+    const roster = this.state.roster || [];
+    // 1) 队伍意图：按当前 uid 解析出 charId（去重、保序）
+    const teamCids = [];
+    (this.state.team || []).forEach(uid => {
+      const o = roster.find(x => x.uid === uid);
+      if (o && !teamCids.includes(o.charId)) teamCids.push(o.charId);
+    });
+    // 2) 唯一化 uid
+    const used = new Set();
+    let seq = this.state._uidSeq || 1;
+    const nextUid = () => { let u; do { u = 'u' + (seq++); } while (used.has(u) || roster.some(o => o.uid === u)); return u; };
+    roster.forEach(o => {
+      if (!o.uid || used.has(o.uid)) o.uid = nextUid();
+      used.add(o.uid);
+    });
+    this.state._uidSeq = seq;
+    // 3) 按 charId 重建队伍（roster 已按 charId 去重，charId→uid 唯一）
+    this.state.team = teamCids
+      .map(cid => { const o = roster.find(x => x.charId === cid); return o ? o.uid : null; })
+      .filter(Boolean)
+      .slice(0, 5);
   },
 
   /** 新游戏的初始状态 */
@@ -2011,9 +2043,19 @@ const Game = {
     };
   },
 
+  /** 生成全局唯一的 uid（扫描现有 roster，杜绝冲突） */
+  freshUid() {
+    const roster = (this.state && this.state.roster) || [];
+    let seq = (this.state && this.state._uidSeq) || 1;
+    let uid;
+    do { uid = 'u' + (seq++); } while (roster.some(o => o.uid === uid));
+    if (this.state) this.state._uidSeq = seq;
+    return uid;
+  },
+
   /** 生成一个已拥有角色实例 */
   makeOwned(charId, level = 1) {
-    const uid = 'u' + (this.state ? this.state._uidSeq++ : Date.now() + Math.random());
+    const uid = this.freshUid();
     return {
       uid, charId, level, exp: 0,
       star: window.GameData.CHARACTERS[charId].rarity,
