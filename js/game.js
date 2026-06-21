@@ -412,6 +412,29 @@ const Game = {
     return { ok: true };
   },
 
+  // 将某角色放入指定出战位（用于主页队伍框按位置编辑 / 替换）
+  setTeamSlot(slotIdx, uid) {
+    if (this.state.team.includes(uid)) return { ok: false, msg: "该角色已在队伍中" };
+    if (slotIdx < this.state.team.length) {
+      this.state.team[slotIdx] = uid; // 替换该位置原有角色
+    } else if (this.state.team.length < 5) {
+      this.state.team.push(uid);      // 空位上阵
+    } else {
+      return { ok: false, msg: "队伍已满（最多 5 人）" };
+    }
+    this.save();
+    return { ok: true };
+  },
+
+  // 清空指定出战位
+  clearTeamSlot(slotIdx) {
+    if (slotIdx < this.state.team.length) {
+      this.state.team.splice(slotIdx, 1);
+      this.save();
+    }
+    return { ok: true };
+  },
+
   // ---------- 抽卡 ----------
 
   rollRarity() {

@@ -111,17 +111,40 @@ const UI = {
 
   /** 队伍编辑器：从出战框直接编辑 */
   showTeamEditor(slotIdx) {
-    const owned = Game.state.roster.slice().sort((a, b) => {
-      const ca = window.GameData.CHARACTERS[a.charId], cb = window.GameData.CHARACTERS[b.charId];
-      return cb.rarity - ca.rarity || b.level - a.level;
-    });
     const render = (m) => {
-      const grid = owned.map(o => {
+      const currentUid = Game.state.team[slotIdx];
+      const current = currentUid ? Game.getOwned(currentUid) : null;
+      // 候选只展示「未出战」的角色，避免与已上阵角色混淆
+      const avail = Game.state.roster.filter(o => Game.state.team.indexOf(o.uid) < 0)
+        .sort((a, b) => {
+          const ca = window.GameData.CHARACTERS[a.charId], cb = window.GameData.CHARACTERS[b.charId];
+          return cb.rarity - ca.rarity || b.level - a.level;
+        });
+
+      let curHtml;
+      if (current) {
+        const cc = window.GameData.CHARACTERS[current.charId];
+        curHtml = `<div class="te-current">
+          <div class="roster-card border-${this.rarityClass(cc.rarity)}" style="width:84px;">
+            <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${Game.activeColor(current)}44, transparent);">
+              <span class="rarity-badge ${this.rarityClass(cc.rarity)}">${cc.rarity}★</span>
+              ${current.plus ? `<span class="plus-badge corner">+${current.plus}</span>` : ''}
+              ${this.charAvatar(current.charId)}
+            </div>
+            <div class="rc-info"><div class="rc-name">${cc.name}</div><div class="rc-lv">Lv.${current.level}</div></div>
+          </div>
+          <div class="te-current-info">
+            <div>当前出战：<b>${cc.name}</b></div>
+            <button class="btn secondary sm" id="te-remove">移出该位置</button>
+          </div>
+        </div>`;
+      } else {
+        curHtml = `<div class="te-current empty muted">该位置为空，选择一名角色上阵 ›</div>`;
+      }
+
+      const grid = avail.length ? avail.map(o => {
         const c = window.GameData.CHARACTERS[o.charId];
-        const idx = Game.state.team.indexOf(o.uid);
-        const inTeam = idx >= 0;
-        return `<div class="roster-card border-${this.rarityClass(c.rarity)} ${inTeam ? 'in-team' : ''}" data-uid="${o.uid}">
-          ${inTeam ? `<span class="in-team-tag">出战 ${idx + 1}</span>` : ''}
+        return `<div class="roster-card border-${this.rarityClass(c.rarity)}" data-uid="${o.uid}">
           <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${Game.activeColor(o)}44, transparent);">
             <span class="rarity-badge ${this.rarityClass(c.rarity)}">${c.rarity}★</span>
             ${o.plus ? `<span class="plus-badge corner">+${o.plus}</span>` : ''}
@@ -129,18 +152,24 @@ const UI = {
           </div>
           <div class="rc-info"><div class="rc-name">${c.name}</div><div class="rc-lv">Lv.${o.level}</div></div>
         </div>`;
-      }).join('');
+      }).join('') : '<div class="muted" style="padding:12px;grid-column:1/-1;">没有可上阵的角色了</div>';
+
+      m.querySelector('.te-current-wrap').innerHTML = curHtml;
       m.querySelector('.te-body').innerHTML = grid;
       m.querySelector('.te-count').textContent = `${Game.state.team.length}/5`;
+
+      const rm = m.querySelector('#te-remove');
+      if (rm) rm.onclick = () => { Game.clearTeamSlot(slotIdx); render(m); };
       m.querySelectorAll('[data-uid]').forEach(el => el.onclick = () => {
-        const r = Game.toggleTeam(el.dataset.uid);
+        const r = Game.setTeamSlot(slotIdx, el.dataset.uid);
         if (!r.ok) { this.toast(r.msg); return; }
         render(m);
       });
     };
     const m = this.openModal(`
-      <h2>编辑出战队伍 <span class="te-count" style="font-size:13px;color:var(--accent);"></span></h2>
-      <p class="muted" style="margin:6px 0 12px;">点击角色加入 / 移出队伍（最多 5 人）。</p>
+      <h2>编辑第 ${slotIdx + 1} 位 <span class="te-count" style="font-size:13px;color:var(--accent);"></span></h2>
+      <div class="te-current-wrap"></div>
+      <p class="muted" style="margin:10px 0 8px;">点击下方角色即可上阵 / 替换该位置（最多 5 人）。</p>
       <div class="te-body roster-grid"></div>
       <div class="close-row"><button class="btn" id="te-done">完成</button></div>
     `);
