@@ -29,6 +29,8 @@ const Game = {
     this.state.roster.forEach(o => {
       if (!o.equip) o.equip = { weapon: null, armor: null, accessory: null, ex: null };
       if (o.plus == null) o.plus = 0;
+      if (!o.costumes) o.costumes = ['base'];
+      if (!o.activeCostume) o.activeCostume = 'base';
     });
     // 升星迁移：把同名角色的重复实例合并为突破等级
     this._mergeDuplicates();
@@ -95,6 +97,8 @@ const Game = {
       uid, charId, level, exp: 0,
       star: window.GameData.CHARACTERS[charId].rarity,
       plus: 0, // 突破等级 0~5
+      costumes: ['base'],      // 拥有的服装（base = 角色本体服装）
+      activeCostume: 'base',   // 当前装扮
       equip: { weapon: null, armor: null, accessory: null, ex: null },
     };
   },
@@ -112,6 +116,73 @@ const Game = {
   },
 
   // ---------- 角色数值计算 ----------
+
+  // ---------- 服装 ----------
+
+  /** 角色本体（base）服装 */
+  baseCostume(charId) {
+    const ch = window.GameData.CHARACTERS[charId];
+    return { id: 'base', charId, name: `${ch.name} · ${ch.title}`, rarity: ch.rarity, element: ch.element, color: ch.color, skills: ch.skills, base: true };
+  },
+
+  /** 取某服装定义（base 或额外服装） */
+  costumeDef(charId, costumeId) {
+    if (!costumeId || costumeId === 'base') return this.baseCostume(charId);
+    const c = window.GameData.COSTUMES[costumeId];
+    return c || this.baseCostume(charId);
+  },
+
+  /** 当前装扮定义 */
+  activeCostumeDef(owned) {
+    return this.costumeDef(owned.charId, owned.activeCostume);
+  },
+
+  /** 当前装扮的技能/外观 */
+  activeSkills(owned) { return this.activeCostumeDef(owned).skills; },
+  activeElement(owned) { return this.activeCostumeDef(owned).element; },
+  activeColor(owned) { return this.activeCostumeDef(owned).color; },
+
+  /** 该角色所有可选服装 id（base + 已拥有额外服装） */
+  ownedCostumeIds(owned) {
+    const list = ['base'];
+    (owned.costumes || []).forEach(cid => { if (cid !== 'base' && !list.includes(cid)) list.push(cid); });
+    return list;
+  },
+
+  switchCostume(uid, costumeId) {
+    const o = this.getOwned(uid);
+    if (!o) return { ok: false };
+    const ids = this.ownedCostumeIds(o);
+    if (!ids.includes(costumeId)) return { ok: false, msg: '尚未拥有该服装' };
+    o.activeCostume = costumeId;
+    this.save();
+    return { ok: true };
+  },
+
+  /** 服装招募 */
+  gachaCostume() {
+    const G = window.GameData.COSTUME_GACHA;
+    if (this.state.gem < G.cost) return { ok: false, msg: '宝石不足' };
+    this.state.gem -= G.cost;
+    const costumeId = G.pool[Math.floor(Math.random() * G.pool.length)];
+    const cdef = window.GameData.COSTUMES[costumeId];
+    const result = { ok: true, costumeId, charId: cdef.charId, rarity: cdef.rarity, newChar: false, dup: false };
+    // 确保拥有角色
+    let owned = this.state.roster.find(o => o.charId === cdef.charId);
+    if (!owned) {
+      owned = this.makeOwned(cdef.charId, 1);
+      this.state.roster.push(owned);
+      result.newChar = true;
+    }
+    if ((owned.costumes || []).includes(costumeId)) {
+      result.dup = true;
+      this.state.gem += 30; // 重复返还
+    } else {
+      owned.costumes.push(costumeId);
+    }
+    this.save();
+    return result;
+  },
 
   /** 突破属性倍率：每级 +8% */
   plusMult(owned) {

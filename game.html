@@ -804,6 +804,19 @@ body {
   opacity: .5;
 }
 
+/* 服装切换 */
+.costume-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.costume-chip {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: var(--panel); border: 2px solid rgba(255,255,255,.08);
+  border-radius: 10px; padding: 8px 10px; min-width: 62px; cursor: pointer;
+  transition: transform .1s;
+}
+.costume-chip:active { transform: scale(.95); }
+.costume-chip.active { border-color: var(--gold); background: rgba(240,198,116,.12); }
+.costume-chip .cos-icon { font-size: 18px; }
+.costume-chip .cos-name { font-size: 10px; font-weight: 700; }
+
 </style>
 </head>
 <body>
@@ -1465,6 +1478,89 @@ window.GameData.GEAR = { common: GEAR_COMMON, ex: GEAR_EX, RLABEL: GEAR_RLABEL, 
 
 
 // ============================================================
+//  服装系统（一角多服）— BD2 核心收集机制
+//  每套服装 = 不同的技能组 + 外观（元素/配色），可随时切换
+//  在 data.js 之后加载：补充服装专属技能、定义 COSTUMES、挂到 GameData
+// ============================================================
+
+// 服装专属新技能（追加到 SKILLS）
+const COSTUME_SKILLS = {
+  brave_charge: {
+    name: '勇者突击', target: 'enemyRow', effect: 'damage',
+    power: 1.5, sp: 3, icon: '🐎', knockback: true,
+    desc: '策马冲锋践踏敌方一排，造成 150% 攻击力的伤害并击退。',
+  },
+  frost_lance: {
+    name: '冰霜枪', target: 'enemySingle', effect: 'damage',
+    power: 1.9, sp: 2, icon: '🧊', pierce: true,
+    desc: '投掷冰枪贯穿目标，造成 190% 攻击力的水属性伤害（无视前排）。',
+  },
+  radiant_judgment: {
+    name: '圣裁', target: 'enemyAll', effect: 'damage',
+    power: 1.45, sp: 4, icon: '⚜️',
+    desc: '降下审判圣光，对敌方全体造成 145% 攻击力的光属性伤害。',
+  },
+  twin_fang: {
+    name: '双牙连射', target: 'enemySingle', effect: 'damage',
+    power: 2.1, sp: 2, icon: '🐺', pierce: true,
+    desc: '瞬发两箭，对单个敌人造成 210% 攻击力的伤害（无视前排）。',
+  },
+  mending_song: {
+    name: '治愈之歌', target: 'allyAll', effect: 'heal',
+    power: 1.5, sp: 3, icon: '🎵',
+    desc: '吟唱治愈旋律，为全体友方恢复 150% 攻击力的生命值。',
+  },
+};
+
+// 服装定义（基础服装由角色本体自动派生，这里是「额外」服装）
+const COSTUMES = {
+  teried_knight: {
+    id: 'teried_knight', charId: 'teried', name: '圣骑士 · 泰瑞德', rarity: 4,
+    element: 'light', color: '#ffd97a', skills: ['slash', 'radiant_judgment'],
+    desc: '泰瑞德受封圣骑士的礼装，挥剑间降下审判圣光。',
+  },
+  lecliss_frost: {
+    id: 'lecliss_frost', charId: 'lecliss', name: '霜华 · 莉可莉丝', rarity: 5,
+    element: 'water', color: '#5a9fff', skills: ['frost_lance', 'frost_nova'],
+    desc: '反转属性的霜之魔女，以极寒取代烈焰。',
+  },
+  justia_blade: {
+    id: 'justia_blade', charId: 'justia', name: '审判 · 贾丝蒂亚', rarity: 5,
+    element: 'light', color: '#fff0a0', skills: ['holy_smite', 'radiant_judgment'],
+    desc: '由守转攻的审判之姿，圣光化作裁决之刃。',
+  },
+  seir_twin: {
+    id: 'seir_twin', charId: 'seir', name: '双牙 · 希尔', rarity: 5,
+    element: 'dark', color: '#c08bff', skills: ['piercing_shot', 'twin_fang'],
+    desc: '双弓在握的暗夜猎手，一息之间连射两箭。',
+  },
+  helena_storm: {
+    id: 'helena_storm', charId: 'helena', name: '风暴 · 海莲娜', rarity: 4,
+    element: 'wind', color: '#5ad1ff', skills: ['brave_charge', 'gale_strike'],
+    desc: '披上战旗的疾风骑士，策马掀起风暴。',
+  },
+  refithea_song: {
+    id: 'refithea_song', charId: 'refithea', name: '歌咏 · 蕾菲西亚', rarity: 5,
+    element: 'light', color: '#ffe7a0', skills: ['mending_song', 'grand_heal'],
+    desc: '以歌声治愈众人的圣女，旋律即是奇迹。',
+  },
+};
+
+// 抽取池（服装招募）
+const COSTUME_GACHA = {
+  cost: 120,
+  pool: Object.keys(COSTUMES),
+};
+
+// 追加技能 + 挂载
+if (window.GameData) {
+  Object.assign(window.GameData.SKILLS, COSTUME_SKILLS);
+  window.GameData.COSTUMES = COSTUMES;
+  window.GameData.COSTUME_GACHA = COSTUME_GACHA;
+}
+
+
+// ============================================================
 //  游戏状态管理 / 存档 / 角色养成
 // ============================================================
 
@@ -1495,6 +1591,8 @@ const Game = {
     this.state.roster.forEach(o => {
       if (!o.equip) o.equip = { weapon: null, armor: null, accessory: null, ex: null };
       if (o.plus == null) o.plus = 0;
+      if (!o.costumes) o.costumes = ['base'];
+      if (!o.activeCostume) o.activeCostume = 'base';
     });
     // 升星迁移：把同名角色的重复实例合并为突破等级
     this._mergeDuplicates();
@@ -1561,6 +1659,8 @@ const Game = {
       uid, charId, level, exp: 0,
       star: window.GameData.CHARACTERS[charId].rarity,
       plus: 0, // 突破等级 0~5
+      costumes: ['base'],      // 拥有的服装（base = 角色本体服装）
+      activeCostume: 'base',   // 当前装扮
       equip: { weapon: null, armor: null, accessory: null, ex: null },
     };
   },
@@ -1578,6 +1678,73 @@ const Game = {
   },
 
   // ---------- 角色数值计算 ----------
+
+  // ---------- 服装 ----------
+
+  /** 角色本体（base）服装 */
+  baseCostume(charId) {
+    const ch = window.GameData.CHARACTERS[charId];
+    return { id: 'base', charId, name: `${ch.name} · ${ch.title}`, rarity: ch.rarity, element: ch.element, color: ch.color, skills: ch.skills, base: true };
+  },
+
+  /** 取某服装定义（base 或额外服装） */
+  costumeDef(charId, costumeId) {
+    if (!costumeId || costumeId === 'base') return this.baseCostume(charId);
+    const c = window.GameData.COSTUMES[costumeId];
+    return c || this.baseCostume(charId);
+  },
+
+  /** 当前装扮定义 */
+  activeCostumeDef(owned) {
+    return this.costumeDef(owned.charId, owned.activeCostume);
+  },
+
+  /** 当前装扮的技能/外观 */
+  activeSkills(owned) { return this.activeCostumeDef(owned).skills; },
+  activeElement(owned) { return this.activeCostumeDef(owned).element; },
+  activeColor(owned) { return this.activeCostumeDef(owned).color; },
+
+  /** 该角色所有可选服装 id（base + 已拥有额外服装） */
+  ownedCostumeIds(owned) {
+    const list = ['base'];
+    (owned.costumes || []).forEach(cid => { if (cid !== 'base' && !list.includes(cid)) list.push(cid); });
+    return list;
+  },
+
+  switchCostume(uid, costumeId) {
+    const o = this.getOwned(uid);
+    if (!o) return { ok: false };
+    const ids = this.ownedCostumeIds(o);
+    if (!ids.includes(costumeId)) return { ok: false, msg: '尚未拥有该服装' };
+    o.activeCostume = costumeId;
+    this.save();
+    return { ok: true };
+  },
+
+  /** 服装招募 */
+  gachaCostume() {
+    const G = window.GameData.COSTUME_GACHA;
+    if (this.state.gem < G.cost) return { ok: false, msg: '宝石不足' };
+    this.state.gem -= G.cost;
+    const costumeId = G.pool[Math.floor(Math.random() * G.pool.length)];
+    const cdef = window.GameData.COSTUMES[costumeId];
+    const result = { ok: true, costumeId, charId: cdef.charId, rarity: cdef.rarity, newChar: false, dup: false };
+    // 确保拥有角色
+    let owned = this.state.roster.find(o => o.charId === cdef.charId);
+    if (!owned) {
+      owned = this.makeOwned(cdef.charId, 1);
+      this.state.roster.push(owned);
+      result.newChar = true;
+    }
+    if ((owned.costumes || []).includes(costumeId)) {
+      result.dup = true;
+      this.state.gem += 30; // 重复返还
+    } else {
+      owned.costumes.push(costumeId);
+    }
+    this.save();
+    return result;
+  },
 
   /** 突破属性倍率：每级 +8% */
   plusMult(owned) {
@@ -1931,13 +2098,14 @@ const Battle = {
       const owned = Game.getOwned(uid);
       if (!owned) return;
       const def = D.CHARACTERS[owned.charId];
+      const cos = Game.activeCostumeDef(owned); // 当前装扮：技能/元素/配色
       const st = Game.computeStats(owned);
       const pos = (def.cls === 'warrior' || def.cls === 'defender') ? 'front' : 'back';
       this.combatants.push(new Combatant({
         uid: 'A' + i, name: def.name, side: 'ally', charId: owned.charId,
-        cls: def.cls, element: def.element, color: def.color, level: owned.level,
+        cls: def.cls, element: cos.element, color: cos.color, level: owned.level,
         pos, maxHp: st.maxHp, atk: st.atk, def: st.def, spd: st.spd, crit: st.crit,
-        skills: def.skills,
+        skills: cos.skills,
       }));
     });
 
@@ -2529,7 +2697,8 @@ const UI = {
     const st = Game.computeStats(o);
     const inTeam = Game.inTeam(uid);
     const lvCost = Game.levelUpCost(o.level);
-    const skillsHtml = c.skills.map(sid => {
+    const cosDef = Game.activeCostumeDef(o);
+    const skillsHtml = cosDef.skills.map(sid => {
       const sk = window.GameData.SKILLS[sid];
       return `<div class="skill-item">
         <div class="sk-head"><span>${sk.icon}</span>${sk.name}
@@ -2537,6 +2706,21 @@ const UI = {
         <div class="sk-desc">${sk.desc}</div>
       </div>`;
     }).join('');
+    // 服装切换
+    const cosIds = Game.ownedCostumeIds(o);
+    const costumeHtml = `
+      <div class="section-title" style="font-size:14px;">服装 <span class="muted" style="font-weight:400;font-size:11px;">· 切换改变技能与外观</span></div>
+      <div class="costume-row">
+        ${cosIds.map(cid => {
+          const cd = Game.costumeDef(o.charId, cid);
+          const active = (o.activeCostume || 'base') === cid;
+          return `<div class="costume-chip ${active ? 'active' : ''} border-${this.rarityClass(cd.rarity)}" data-cos="${cid}">
+            <span class="rarity-badge ${this.rarityClass(cd.rarity)}" style="position:static;">${cd.rarity}★</span>
+            <span class="cos-icon">${window.GameData.ELEMENTS[cd.element].icon}</span>
+            <span class="cos-name">${cd.base ? '初始' : cd.name.split('·')[0].trim()}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
 
     // 背景故事 + 台词
     const loreHtml = c.lore ? `
@@ -2587,8 +2771,9 @@ const UI = {
         <div class="stat-item"><span>✦ 突破</span><span class="sv">+${o.plus || 0}${o.plus ? ` (属性+${o.plus * 8}%)` : ''}</span></div>
       </div>
       <p class="muted" style="margin:-4px 0 8px;font-size:11px;">突破说明：在「招募」中再次获得该佣兵可提升突破等级（最高 +5），每级 +8% 基础属性。</p>
+      ${costumeHtml}
       ${gearHtml}
-      <div class="section-title" style="font-size:14px;">技能</div>
+      <div class="section-title" style="font-size:14px;">技能 <span class="muted" style="font-weight:400;font-size:11px;">· ${cosDef.base ? '初始服装' : cosDef.name}</span></div>
       ${skillsHtml}
       ${loreHtml}
       ${quotesHtml}
@@ -2620,6 +2805,14 @@ const UI = {
     };
     m.querySelectorAll('[data-slot]').forEach(el =>
       el.addEventListener('click', () => { this.closeModal(m); this.showGearPicker(uid, el.dataset.slot); }));
+    m.querySelectorAll('[data-cos]').forEach(el =>
+      el.addEventListener('click', () => {
+        const r = Game.switchCostume(uid, el.dataset.cos);
+        if (!r.ok) { this.toast(r.msg || '无法切换'); return; }
+        this.closeModal(m);
+        this.showCharDetail(uid);
+        if (this.current === 'roster') this.renderRoster();
+      }));
   },
 
   /** 单个装备槽 HTML */
@@ -2782,13 +2975,59 @@ const UI = {
           <button class="btn" id="pull10">十连招募 💎${g.cost*10}</button>
         </div>
       </div>
-      <div class="section-title" style="font-size:14px;">可获得的传说佣兵（5★）</div>
+      <div class="gacha-banner" style="background:radial-gradient(circle at 50% 30%, rgba(108,198,255,.25), transparent 60%), linear-gradient(160deg,#24344a,#1a2230);border-color:rgba(108,198,255,.35);">
+        <h2 style="background:linear-gradient(90deg,#9bdcff,#6cc6ff);-webkit-background-clip:text;background-clip:text;color:transparent;">服装招募</h2>
+        <div class="sub">解锁角色的全新服装，改变技能与外观</div>
+        <div class="gacha-actions" style="margin-top:14px;">
+          <button class="btn" id="cos-pull" style="background:linear-gradient(135deg,#6cc6ff,#9b8bff);">服装招募 💎${window.GameData.COSTUME_GACHA.cost}</button>
+        </div>
+      </div>
+      <div class="section-title" style="font-size:14px;">可获得的服装</div>
+      <div class="roster-grid">${window.GameData.COSTUME_GACHA.pool.map(cid => this.costumePoolCard(cid)).join('')}</div>
+      <div class="section-title" style="font-size:14px;margin-top:16px;">可获得的传说佣兵（5★）</div>
       <div class="roster-grid">${g.pool[5].map(id => this.poolCard(id)).join('')}</div>
       <div class="section-title" style="font-size:14px;margin-top:16px;">稀有佣兵（4★）</div>
       <div class="roster-grid">${g.pool[4].map(id => this.poolCard(id)).join('')}</div>
     `;
     document.getElementById('pull1').onclick = () => this.doPull(1);
     document.getElementById('pull10').onclick = () => this.doPull(10);
+    document.getElementById('cos-pull').onclick = () => this.doCostumePull();
+  },
+
+  costumePoolCard(cid) {
+    const cd = window.GameData.COSTUMES[cid];
+    const ch = window.GameData.CHARACTERS[cd.charId];
+    return `<div class="roster-card border-${this.rarityClass(cd.rarity)}">
+      <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">
+        <span class="rarity-badge ${this.rarityClass(cd.rarity)}">${cd.rarity}★</span>
+        ${window.GameData.CLASSES[ch.cls].icon}
+        <span class="cls-chip">${window.GameData.ELEMENTS[cd.element].icon}</span>
+      </div>
+      <div class="rc-info"><div class="rc-name" style="font-size:11px;">${cd.name}</div></div>
+    </div>`;
+  },
+
+  doCostumePull() {
+    const r = Game.gachaCostume();
+    if (!r.ok) { this.toast(r.msg); return; }
+    this.updateResources();
+    const cd = window.GameData.COSTUMES[r.costumeId];
+    const ch = window.GameData.CHARACTERS[cd.charId];
+    const m = this.openModal(`
+      <div class="pull-result">
+        <div class="pull-art border-${this.rarityClass(cd.rarity)}" style="background:radial-gradient(circle at 50% 35%, ${cd.color}66, var(--panel));">
+          ${window.GameData.CLASSES[ch.cls].icon}
+        </div>
+        <div class="pull-stars ${this.rarityClass(cd.rarity)}" style="color:var(--r${cd.rarity});">${'★'.repeat(cd.rarity)}</div>
+        <div class="pull-name" style="font-size:18px;">${cd.name}</div>
+        <div class="pull-title">${window.GameData.ELEMENTS[cd.element].icon}${window.GameData.ELEMENTS[cd.element].name} · ${cd.skills.map(s => window.GameData.SKILLS[s].name).join(' / ')}</div>
+        ${r.dup ? '<div class="pull-dup">已拥有该服装 · 返还 💎30</div>'
+          : r.newChar ? '<div class="pull-dup">✦ 新佣兵 + 新服装！</div>'
+          : '<div class="pull-dup">✦ 获得新服装！可在佣兵详情切换</div>'}
+      </div>
+      <div class="close-row"><button class="btn" id="pr-ok">确定</button></div>
+    `, { noBackdropClose: true });
+    m.querySelector('#pr-ok').onclick = () => { this.closeModal(m); this.renderGacha(); };
   },
 
   poolCard(id) {

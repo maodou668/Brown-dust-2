@@ -796,3 +796,16 @@ body {
   border-radius: 40% 40% 0 0 / 18% 18% 0 0;
   opacity: .5;
 }
+
+/* 服装切换 */
+.costume-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.costume-chip {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: var(--panel); border: 2px solid rgba(255,255,255,.08);
+  border-radius: 10px; padding: 8px 10px; min-width: 62px; cursor: pointer;
+  transition: transform .1s;
+}
+.costume-chip:active { transform: scale(.95); }
+.costume-chip.active { border-color: var(--gold); background: rgba(240,198,116,.12); }
+.costume-chip .cos-icon { font-size: 18px; }
+.costume-chip .cos-name { font-size: 10px; font-weight: 700; }

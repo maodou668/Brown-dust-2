@@ -84,13 +84,14 @@ const Battle = {
       const owned = Game.getOwned(uid);
       if (!owned) return;
       const def = D.CHARACTERS[owned.charId];
+      const cos = Game.activeCostumeDef(owned); // 当前装扮：技能/元素/配色
       const st = Game.computeStats(owned);
       const pos = (def.cls === 'warrior' || def.cls === 'defender') ? 'front' : 'back';
       this.combatants.push(new Combatant({
         uid: 'A' + i, name: def.name, side: 'ally', charId: owned.charId,
-        cls: def.cls, element: def.element, color: def.color, level: owned.level,
+        cls: def.cls, element: cos.element, color: cos.color, level: owned.level,
         pos, maxHp: st.maxHp, atk: st.atk, def: st.def, spd: st.spd, crit: st.crit,
-        skills: def.skills,
+        skills: cos.skills,
       }));
     });
 

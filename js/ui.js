@@ -298,7 +298,8 @@ const UI = {
     const st = Game.computeStats(o);
     const inTeam = Game.inTeam(uid);
     const lvCost = Game.levelUpCost(o.level);
-    const skillsHtml = c.skills.map(sid => {
+    const cosDef = Game.activeCostumeDef(o);
+    const skillsHtml = cosDef.skills.map(sid => {
       const sk = window.GameData.SKILLS[sid];
       return `<div class="skill-item">
         <div class="sk-head"><span>${sk.icon}</span>${sk.name}
@@ -306,6 +307,21 @@ const UI = {
         <div class="sk-desc">${sk.desc}</div>
       </div>`;
     }).join('');
+    // 服装切换
+    const cosIds = Game.ownedCostumeIds(o);
+    const costumeHtml = `
+      <div class="section-title" style="font-size:14px;">服装 <span class="muted" style="font-weight:400;font-size:11px;">· 切换改变技能与外观</span></div>
+      <div class="costume-row">
+        ${cosIds.map(cid => {
+          const cd = Game.costumeDef(o.charId, cid);
+          const active = (o.activeCostume || 'base') === cid;
+          return `<div class="costume-chip ${active ? 'active' : ''} border-${this.rarityClass(cd.rarity)}" data-cos="${cid}">
+            <span class="rarity-badge ${this.rarityClass(cd.rarity)}" style="position:static;">${cd.rarity}★</span>
+            <span class="cos-icon">${window.GameData.ELEMENTS[cd.element].icon}</span>
+            <span class="cos-name">${cd.base ? '初始' : cd.name.split('·')[0].trim()}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
 
     // 背景故事 + 台词
     const loreHtml = c.lore ? `
@@ -356,8 +372,9 @@ const UI = {
         <div class="stat-item"><span>✦ 突破</span><span class="sv">+${o.plus || 0}${o.plus ? ` (属性+${o.plus * 8}%)` : ''}</span></div>
       </div>
       <p class="muted" style="margin:-4px 0 8px;font-size:11px;">突破说明：在「招募」中再次获得该佣兵可提升突破等级（最高 +5），每级 +8% 基础属性。</p>
+      ${costumeHtml}
       ${gearHtml}
-      <div class="section-title" style="font-size:14px;">技能</div>
+      <div class="section-title" style="font-size:14px;">技能 <span class="muted" style="font-weight:400;font-size:11px;">· ${cosDef.base ? '初始服装' : cosDef.name}</span></div>
       ${skillsHtml}
       ${loreHtml}
       ${quotesHtml}
@@ -389,6 +406,14 @@ const UI = {
     };
     m.querySelectorAll('[data-slot]').forEach(el =>
       el.addEventListener('click', () => { this.closeModal(m); this.showGearPicker(uid, el.dataset.slot); }));
+    m.querySelectorAll('[data-cos]').forEach(el =>
+      el.addEventListener('click', () => {
+        const r = Game.switchCostume(uid, el.dataset.cos);
+        if (!r.ok) { this.toast(r.msg || '无法切换'); return; }
+        this.closeModal(m);
+        this.showCharDetail(uid);
+        if (this.current === 'roster') this.renderRoster();
+      }));
   },
 
   /** 单个装备槽 HTML */
@@ -551,13 +576,59 @@ const UI = {
           <button class="btn" id="pull10">十连招募 💎${g.cost*10}</button>
         </div>
       </div>
-      <div class="section-title" style="font-size:14px;">可获得的传说佣兵（5★）</div>
+      <div class="gacha-banner" style="background:radial-gradient(circle at 50% 30%, rgba(108,198,255,.25), transparent 60%), linear-gradient(160deg,#24344a,#1a2230);border-color:rgba(108,198,255,.35);">
+        <h2 style="background:linear-gradient(90deg,#9bdcff,#6cc6ff);-webkit-background-clip:text;background-clip:text;color:transparent;">服装招募</h2>
+        <div class="sub">解锁角色的全新服装，改变技能与外观</div>
+        <div class="gacha-actions" style="margin-top:14px;">
+          <button class="btn" id="cos-pull" style="background:linear-gradient(135deg,#6cc6ff,#9b8bff);">服装招募 💎${window.GameData.COSTUME_GACHA.cost}</button>
+        </div>
+      </div>
+      <div class="section-title" style="font-size:14px;">可获得的服装</div>
+      <div class="roster-grid">${window.GameData.COSTUME_GACHA.pool.map(cid => this.costumePoolCard(cid)).join('')}</div>
+      <div class="section-title" style="font-size:14px;margin-top:16px;">可获得的传说佣兵（5★）</div>
       <div class="roster-grid">${g.pool[5].map(id => this.poolCard(id)).join('')}</div>
       <div class="section-title" style="font-size:14px;margin-top:16px;">稀有佣兵（4★）</div>
       <div class="roster-grid">${g.pool[4].map(id => this.poolCard(id)).join('')}</div>
     `;
     document.getElementById('pull1').onclick = () => this.doPull(1);
     document.getElementById('pull10').onclick = () => this.doPull(10);
+    document.getElementById('cos-pull').onclick = () => this.doCostumePull();
+  },
+
+  costumePoolCard(cid) {
+    const cd = window.GameData.COSTUMES[cid];
+    const ch = window.GameData.CHARACTERS[cd.charId];
+    return `<div class="roster-card border-${this.rarityClass(cd.rarity)}">
+      <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">
+        <span class="rarity-badge ${this.rarityClass(cd.rarity)}">${cd.rarity}★</span>
+        ${window.GameData.CLASSES[ch.cls].icon}
+        <span class="cls-chip">${window.GameData.ELEMENTS[cd.element].icon}</span>
+      </div>
+      <div class="rc-info"><div class="rc-name" style="font-size:11px;">${cd.name}</div></div>
+    </div>`;
+  },
+
+  doCostumePull() {
+    const r = Game.gachaCostume();
+    if (!r.ok) { this.toast(r.msg); return; }
+    this.updateResources();
+    const cd = window.GameData.COSTUMES[r.costumeId];
+    const ch = window.GameData.CHARACTERS[cd.charId];
+    const m = this.openModal(`
+      <div class="pull-result">
+        <div class="pull-art border-${this.rarityClass(cd.rarity)}" style="background:radial-gradient(circle at 50% 35%, ${cd.color}66, var(--panel));">
+          ${window.GameData.CLASSES[ch.cls].icon}
+        </div>
+        <div class="pull-stars ${this.rarityClass(cd.rarity)}" style="color:var(--r${cd.rarity});">${'★'.repeat(cd.rarity)}</div>
+        <div class="pull-name" style="font-size:18px;">${cd.name}</div>
+        <div class="pull-title">${window.GameData.ELEMENTS[cd.element].icon}${window.GameData.ELEMENTS[cd.element].name} · ${cd.skills.map(s => window.GameData.SKILLS[s].name).join(' / ')}</div>
+        ${r.dup ? '<div class="pull-dup">已拥有该服装 · 返还 💎30</div>'
+          : r.newChar ? '<div class="pull-dup">✦ 新佣兵 + 新服装！</div>'
+          : '<div class="pull-dup">✦ 获得新服装！可在佣兵详情切换</div>'}
+      </div>
+      <div class="close-row"><button class="btn" id="pr-ok">确定</button></div>
+    `, { noBackdropClose: true });
+    m.querySelector('#pr-ok').onclick = () => { this.closeModal(m); this.renderGacha(); };
   },
 
   poolCard(id) {
