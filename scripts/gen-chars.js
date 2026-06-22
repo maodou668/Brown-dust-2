@@ -28,18 +28,21 @@ const PROPORTIONS = { type: 'custom', head_size: 1.45, legs_length: 0.85, arms_l
 function req(method, ep, body) {
   return new Promise((res, rej) => {
     const d = body ? JSON.stringify(body) : null;
-    const o = { method, headers: { 'Authorization': 'Bearer ' + KEY } };
+    const o = { method, headers: { 'Authorization': 'Bearer ' + KEY }, timeout: 90000 };
     if (d) { o.headers['Content-Type'] = 'application/json'; o.headers['Content-Length'] = Buffer.byteLength(d); }
     const r = https.request('https://api.pixellab.ai/v2/' + ep, o, x => { let b = ''; x.on('data', c => b += c); x.on('end', () => res({ s: x.statusCode, b })); });
+    r.on('timeout', () => { r.destroy(); rej(new Error('TIMEOUT ' + ep)); });
     r.on('error', rej); if (d) r.write(d); r.end();
   });
 }
 function dl(url, file) {
   return new Promise((res) => {
-    https.get(url, x => {
+    const r = https.get(url, { timeout: 60000 }, x => {
       if (x.statusCode !== 200) { x.resume(); return res(false); }
       const chunks = []; x.on('data', c => chunks.push(c)); x.on('end', () => { fs.writeFileSync(file, Buffer.concat(chunks)); res(true); });
-    }).on('error', () => res(false));
+    });
+    r.on('timeout', () => { r.destroy(); res(false); });
+    r.on('error', () => res(false));
   });
 }
 const sleep = ms => new Promise(s => setTimeout(s, ms));
@@ -98,8 +101,8 @@ async function genSprite(a) {
 async function main() {
   const list = manifest.assets.filter(a => a.type === 'character' && (!idFilter || a.id.includes(idFilter)));
   console.log(`角色双轨生成 ${list.length} 人（FORCE=${!!process.env.FORCE}）\n`);
-  if (trackFilter !== 'sprite') { console.log('=== 立绘（精致优先） ==='); for (const a of list) { await genPortrait(a); await sleep(400); } }
-  if (trackFilter !== 'portrait') { console.log('\n=== 小人（严格锁比例 + 4 方向） ==='); for (const a of list) { await genSprite(a); await sleep(400); } }
+  if (trackFilter !== 'sprite') { console.log('=== 立绘（精致优先） ==='); for (const a of list) { try { await genPortrait(a); } catch (e) { console.log(`✗ 立绘 ${a.id} ${e.message}`); } await sleep(400); } }
+  if (trackFilter !== 'portrait') { console.log('\n=== 小人（严格锁比例 + 4 方向） ==='); for (const a of list) { try { await genSprite(a); } catch (e) { console.log(`✗ 小人 ${a.id} ${e.message}`); } await sleep(400); } }
   console.log('\n全部完成。');
 }
 main();
