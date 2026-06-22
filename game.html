@@ -1212,6 +1212,8 @@ body {
 
   <!-- 弹窗容器 -->
   <div id="modal-root"></div>
+
+  <script>window.ASSET_VER = '37';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -5524,6 +5526,13 @@ const World = {
   input: { up: false, down: false, left: false, right: false },
   nodes: [], cur: null, busyTrigger: false, active: false,
 
+  // 地图小人精灵图（横向帧条，透明背景）。charId -> { walk, idle, frames }
+  MAP_SPRITES: {
+    lecliss: { walk: 'assets/map/lecliss_walk.png', idle: 'assets/map/lecliss_idle.png', frames: 8 },
+  },
+  spriteCache: {},   // path -> Image
+  curSprite: null,   // 当前主角的精灵集（已就绪才赋值）
+
   // 节点在地图中的预设槽位（从下往上推进，制造「前进」感）
   SLOTS: [
     { x: 7.5, y: 11.5 }, { x: 5.5, y: 9.5 }, { x: 9.5, y: 8.5 },
@@ -5690,6 +5699,27 @@ const World = {
     this.player.x = this.START.x; this.player.y = this.START.y; this.player.dir = 'up';
     const lead = Game.state.team[0] && Game.getOwned(Game.state.team[0]);
     this.player.color = lead ? window.GameData.CHARACTERS[lead.charId].color : '#b06bff';
+    this.loadSprite(lead && lead.charId);
+  },
+
+  // 加载主角地图精灵（异步，加载完成后才启用，期间用矢量占位）
+  loadSprite(charId) {
+    this.curSprite = null;
+    // 暂时：没有专属精灵的角色用现有的 lecliss 作占位，方便预览游戏内效果
+    let conf = charId && this.MAP_SPRITES[charId];
+    if (!conf) conf = this.MAP_SPRITES.lecliss;
+    if (!conf) return;
+    const ver = (window.ASSET_VER || '');
+    const get = (path) => {
+      if (this.spriteCache[path]) return this.spriteCache[path];
+      const img = new Image();
+      img.src = path + (ver ? '?v=' + ver : '');
+      this.spriteCache[path] = img;
+      return img;
+    };
+    const set = { walk: get(conf.walk), idle: get(conf.idle), frames: conf.frames || 8 };
+    const check = () => { if (set.walk.complete && set.idle.complete && set.walk.naturalWidth && set.idle.naturalWidth) this.curSprite = set; };
+    set.walk.onload = check; set.idle.onload = check; check();
   },
 
   isSolid(t) { return t === 'tree' || t === 'rock' || t === 'water'; },
@@ -5932,8 +5962,31 @@ const World = {
 
   drawPlayer(sx, sy) {
     const ctx = this.ctx, p = this.player;
+    // 地面阴影
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(sx, sy + 4, 13, 6, 0, 0, 7); ctx.fill();
+
+    if (this.curSprite) {
+      const s = this.curSprite, moving = p.step > 0;
+      const sheet = moving ? s.walk : s.idle;
+      const fw = sheet.naturalWidth / s.frames, fh = sheet.naturalHeight;
+      // 行走时按步幅推进帧；待机按时间缓慢循环
+      const fi = moving
+        ? Math.floor(p.step / 90) % s.frames
+        : Math.floor(performance.now() / 140) % s.frames;
+      const H = 64, W = H * (fw / fh);          // 屏上显示高度
+      const bob = moving ? Math.abs(Math.sin(p.step / 90)) * 2 : 0;
+      const flip = (p.dir === 'left');          // 仅有正面帧：向左时水平翻转
+      ctx.save();
+      ctx.imageSmoothingEnabled = true;
+      ctx.translate(sx, sy - bob);
+      if (flip) ctx.scale(-1, 1);
+      ctx.drawImage(sheet, fi * fw, 0, fw, fh, -W / 2, -H, W, H);
+      ctx.restore();
+      return;
+    }
+
+    // 占位（精灵未就绪时）
     const bob = Math.abs(Math.sin(p.step / 90)) * 3;
-    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(sx, sy + 4, 10, 5, 0, 0, 7); ctx.fill();
     ctx.fillStyle = p.color; this.rr(sx - 8, sy - 18 - bob, 16, 18, 5); ctx.fill();
     ctx.fillStyle = '#ffe0c0'; ctx.beginPath(); ctx.arc(sx, sy - 22 - bob, 7, 0, 7); ctx.fill();
     ctx.fillStyle = '#3a2a2a';
