@@ -989,6 +989,39 @@ body {
 }
 .ally-unit { cursor: grab; }
 
+/* ============ 成就殿堂 ============ */
+.ach-entry {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  background: linear-gradient(135deg, rgba(255,211,90,.16), var(--panel));
+  border: 1px solid rgba(255,211,90,.3); border-radius: 14px; padding: 13px 14px;
+  margin-bottom: 16px; cursor: pointer; transition: transform .1s; text-align: left;
+}
+.ach-entry:active { transform: scale(.98); }
+.ach-entry-icon { font-size: 26px; }
+.ach-entry-text { flex: 1; display: flex; flex-direction: column; font-size: 14px; }
+.ach-entry-text .muted { font-size: 11px; font-weight: 400; margin-top: 2px; }
+.ach-entry-badge { font-size: 11px; font-weight: 800; color: #241a08;
+  background: linear-gradient(135deg,#ffd35a,#ff9b3d); padding: 3px 9px; border-radius: 10px; }
+.ach-entry-go { color: var(--text-dim); font-size: 18px; }
+
+.ach-list { display: flex; flex-direction: column; gap: 8px; max-height: 60vh; overflow-y: auto; }
+.ach-item {
+  display: flex; align-items: center; gap: 11px;
+  background: var(--panel); border: 1px solid rgba(255,255,255,.07);
+  border-radius: 12px; padding: 10px 12px;
+}
+.ach-item.done { border-color: rgba(255,211,90,.45); background: linear-gradient(135deg, rgba(255,211,90,.1), var(--panel)); }
+.ach-item.claimed { opacity: .55; }
+.ach-icon { font-size: 24px; width: 30px; text-align: center; }
+.ach-mid { flex: 1; min-width: 0; }
+.ach-name { font-size: 13px; font-weight: 700; }
+.ach-name .muted { font-size: 10px; }
+.ach-bar { height: 5px; border-radius: 3px; background: rgba(0,0,0,.4); overflow: hidden; margin: 5px 0 2px; }
+.ach-fill { height: 100%; background: linear-gradient(90deg,#ffd35a,#ff9b3d); }
+.ach-prog { font-size: 10px; }
+.ach-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.ach-rw { font-size: 12px; font-weight: 700; color: var(--gold); }
+
 /* ============ 漫画演出（条漫式竖向滚动） ============ */
 #comic-screen {
   position: fixed; inset: 0; max-width: 480px; margin: 0 auto; z-index: 49;

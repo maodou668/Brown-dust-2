@@ -30,6 +30,8 @@ const Game = {
     if (this.state.powder == null) this.state.powder = 0;
     if (this.state.firstTen == null) this.state.firstTen = false;
     if (this.state.trialMax == null) this.state.trialMax = 0;
+    if (!this.state.stats) this.state.stats = { pulls: 0, wins: 0 };
+    if (!this.state.achClaimed) this.state.achClaimed = {};
     if (!this.state.daily) this.state.daily = { lastClaim: null, streak: 0 };
     if (!this.state.quests) this.state.quests = { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} };
     if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
@@ -130,6 +132,8 @@ const Game = {
       pity: 0,
       firstTen: false, // 首次十连保底（必出 5★）是否已用
       trialMax: 0,     // 试炼之塔已通关的最高层数（用于解锁下一层）
+      stats: { pulls: 0, wins: 0 }, // 终身统计（成就用）
+      achClaimed: {},  // 已领取的成就 id
       // 保底货币
       spark: 0,    // 闪耀之星：每抽 +1，200 兑换自选服装
       powder: 0,   // 希望之粉：每抽 +10，商店兑换必出 5★
@@ -381,6 +385,7 @@ const Game = {
     const G = window.GameData.GEAR.exGacha;
     if (this.state.gem < G.cost) return { ok: false, msg: '宝石不足' };
     this.state.gem -= G.cost;
+    this.state.stats.pulls++;
     const r = Math.random();
     let rarity = 3;
     if (r < G.rates[5]) rarity = 5;
@@ -530,6 +535,7 @@ const Game = {
     // 保底货币 + 任务
     this.state.spark += 1;
     this.state.powder += 10;
+    this.state.stats.pulls++;
     this.incQuest('pull', 1);
 
     const pool = window.GameData.COSTUME_POOL[rarity];
@@ -662,6 +668,7 @@ const Game = {
     this.state.gold += r.gold;
     this.state.gem += firstClear ? r.gem : Math.round(r.gem * 0.3);
     this.incQuest('win', 1);
+    this.state.stats.wins++;
     // 经验分配给出战队伍
     this.state.team.forEach(uid => {
       const o = this.getOwned(uid);
@@ -688,6 +695,56 @@ const Game = {
     }
     this.save();
     return { drop };
+  },
+
+  // ---------- 成就系统 ----------
+  // metric(s) 返回当前进度值；达到 target 即可领取 reward（一次性）
+  ACHIEVEMENTS: [
+    { id: 'collect3',  icon: '👥', name: '初入佣兵团',   desc: '收集 3 名角色',          target: 3,  reward: { gem: 100 }, metric: s => s.roster.length },
+    { id: 'collect6',  icon: '👥', name: '佣兵团扩编',   desc: '收集 6 名角色',          target: 6,  reward: { gem: 200 }, metric: s => s.roster.length },
+    { id: 'collect10', icon: '🎖️', name: '群英荟萃',     desc: '收集 10 名角色',         target: 10, reward: { gem: 300 }, metric: s => s.roster.length },
+    { id: 'collect16', icon: '👑', name: '全员集结',     desc: '收集全部 16 名角色',     target: 16, reward: { gem: 600 }, metric: s => s.roster.length },
+    { id: 'cos5',      icon: '👗', name: '时装收藏家',   desc: '累计拥有 5 套服装',      target: 5,  reward: { gem: 150 }, metric: s => s.roster.reduce((n, o) => n + (o.costumes ? o.costumes.length : 0), 0) },
+    { id: 'cos12',     icon: '🧥', name: '衣橱满载',     desc: '累计拥有 12 套服装',     target: 12, reward: { gem: 300 }, metric: s => s.roster.reduce((n, o) => n + (o.costumes ? o.costumes.length : 0), 0) },
+    { id: 'ex3',       icon: '🗡️', name: '神兵入库',     desc: '拥有 3 件专属武器',      target: 3,  reward: { gem: 200 }, metric: s => s.inventory.filter(g => { const t = Game.getGearTpl(g.tpl); return t && t.type === 'ex'; }).length },
+    { id: 'ex8',       icon: '⚔️', name: '军械库',       desc: '拥有 8 件专属武器',      target: 8,  reward: { gem: 400 }, metric: s => s.inventory.filter(g => { const t = Game.getGearTpl(g.tpl); return t && t.type === 'ex'; }).length },
+    { id: 'win10',     icon: '🔰', name: '初战告捷',     desc: '累计胜利 10 场',         target: 10, reward: { gold: 500 }, metric: s => s.stats.wins },
+    { id: 'win50',     icon: '🏅', name: '百战之师',     desc: '累计胜利 50 场',         target: 50, reward: { gem: 200 }, metric: s => s.stats.wins },
+    { id: 'win150',    icon: '🏆', name: '征服者',       desc: '累计胜利 150 场',        target: 150, reward: { gem: 400 }, metric: s => s.stats.wins },
+    { id: 'story5',    icon: '🗺️', name: '主线推进',     desc: '通关 5 个主线关卡',      target: 5,  reward: { gem: 150 }, metric: s => s.cleared.filter(id => typeof id === 'number' && id < 100).length },
+    { id: 'story7',    icon: '🌟', name: '魔王讨伐',     desc: '通关全部主线关卡',       target: 7,  reward: { gem: 300 }, metric: s => s.cleared.filter(id => typeof id === 'number' && id < 100).length },
+    { id: 'trial3',    icon: '🗼', name: '登塔者',       desc: '试炼之塔通关 3 层',      target: 3,  reward: { gem: 200 }, metric: s => s.trialMax || 0 },
+    { id: 'trial6',    icon: '🌌', name: '通天塔',       desc: '试炼之塔登顶',           target: 6,  reward: { gem: 500 }, metric: s => s.trialMax || 0 },
+    { id: 'pull10',    icon: '🎴', name: '招募新手',     desc: '累计招募 10 次',         target: 10, reward: { gem: 100 }, metric: s => s.stats.pulls },
+    { id: 'pull50',    icon: '🎰', name: '招募狂热',     desc: '累计招募 50 次',         target: 50, reward: { gem: 200 }, metric: s => s.stats.pulls },
+    { id: 'plus5',     icon: '⭐', name: '极限突破',     desc: '任一角色突破至 +5',      target: 5,  reward: { gem: 200 }, metric: s => s.roster.reduce((m, o) => Math.max(m, o.plus || 0), 0) },
+  ],
+
+  achValue(a) { return a.metric(this.state); },
+
+  /** 可领取（已达成且未领）的成就数量，用于红点 */
+  achClaimable() {
+    return this.ACHIEVEMENTS.filter(a => !this.state.achClaimed[a.id] && this.achValue(a) >= a.target).length;
+  },
+
+  grantReward(r) {
+    if (!r) return;
+    if (r.gold) this.state.gold += r.gold;
+    if (r.gem) this.state.gem += r.gem;
+    if (r.powder) this.state.powder += r.powder;
+    if (r.spark) this.state.spark += r.spark;
+    if (r.gear) this.addGear(r.gear);
+  },
+
+  claimAch(id) {
+    const a = this.ACHIEVEMENTS.find(x => x.id === id);
+    if (!a) return { ok: false };
+    if (this.state.achClaimed[id]) return { ok: false, msg: '已领取' };
+    if (this.achValue(a) < a.target) return { ok: false, msg: '未达成' };
+    this.grantReward(a.reward);
+    this.state.achClaimed[id] = true;
+    this.save();
+    return { ok: true, reward: a.reward };
   },
 };
 

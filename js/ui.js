@@ -941,6 +941,12 @@ const UI = {
         <div class="wc-item">🌸 希望之粉 <b>${s.powder}</b><span class="muted"> /${Game.POWDER_COST}</span></div>
       </div>
 
+      <button class="ach-entry" id="open-ach">
+        <span class="ach-entry-icon">🏆</span>
+        <span class="ach-entry-text"><b>成就殿堂</b><span class="muted">达成里程碑领取宝石奖励</span></span>
+        ${Game.achClaimable() ? `<span class="ach-entry-badge">${Game.achClaimable()} 可领</span>` : '<span class="ach-entry-go">›</span>'}
+      </button>
+
       <div class="section-title">每日签到 ${Game.canCheckIn() ? '' : '<span class="muted" style="font-weight:400;font-size:11px;">· 今日已签</span>'}</div>
       <div class="checkin-grid">${checkRow}</div>
       <button class="btn ${Game.canCheckIn() ? 'gold' : 'secondary'}" id="do-checkin" ${Game.canCheckIn() ? '' : 'disabled'} style="width:100%;margin-bottom:16px;">${Game.canCheckIn() ? '签到领取' : '明日再来'}</button>
@@ -991,6 +997,57 @@ const UI = {
     };
     const ds = this.screenEl.querySelector('#do-spark');
     if (ds) ds.onclick = () => this.showSparkPicker();
+    const oa = this.screenEl.querySelector('#open-ach');
+    if (oa) oa.onclick = () => this.showAchievements();
+  },
+
+  /** 成就殿堂 */
+  showAchievements() {
+    const render = (m) => {
+      const list = Game.ACHIEVEMENTS.slice().sort((a, b) => {
+        // 可领取的排最前，其次未达成，最后已领取
+        const rank = x => Game.state.achClaimed[x.id] ? 2 : (Game.achValue(x) >= x.target ? 0 : 1);
+        return rank(a) - rank(b);
+      });
+      const rows = list.map(a => {
+        const cur = Game.achValue(a);
+        const done = cur >= a.target;
+        const claimed = !!Game.state.achClaimed[a.id];
+        const pct = Math.min(100, cur / a.target * 100);
+        const rw = a.reward.gem ? `💎${a.reward.gem}` : a.reward.gold ? `🪙${a.reward.gold}` : a.reward.powder ? `🌸${a.reward.powder}` : '';
+        const btn = claimed
+          ? '<button class="btn secondary sm" disabled>已领</button>'
+          : `<button class="btn ${done ? 'gold' : 'secondary'} sm ach-claim" data-ach="${a.id}" ${done ? '' : 'disabled'}>领取</button>`;
+        return `<div class="ach-item ${claimed ? 'claimed' : done ? 'done' : ''}">
+          <div class="ach-icon">${a.icon}</div>
+          <div class="ach-mid">
+            <div class="ach-name">${a.name} <span class="muted" style="font-weight:400;">${a.desc}</span></div>
+            <div class="ach-bar"><div class="ach-fill" style="width:${pct}%"></div></div>
+            <div class="ach-prog muted">${Math.min(cur, a.target)} / ${a.target}</div>
+          </div>
+          <div class="ach-right"><div class="ach-rw">${rw}</div>${btn}</div>
+        </div>`;
+      }).join('');
+      m.querySelector('.ach-list').innerHTML = rows;
+      m.querySelectorAll('.ach-claim').forEach(b => b.onclick = () => {
+        const r = Game.claimAch(b.dataset.ach);
+        if (!r.ok) { this.toast(r.msg || '不可领取'); return; }
+        if (window.Sound) Sound.sfx('levelup');
+        const rw = r.reward.gem ? `💎${r.reward.gem}` : r.reward.gold ? `🪙${r.reward.gold}` : '奖励';
+        this.toast(`成就达成！获得 ${rw}`);
+        this.updateResources();
+        render(m);
+      });
+    };
+    const claimable = Game.achClaimable();
+    const m = this.openModal(`
+      <h2>🏆 成就殿堂</h2>
+      <p class="muted" style="margin:6px 0 12px;">达成里程碑领取宝石奖励。${claimable ? `当前有 <b style="color:var(--gold);">${claimable}</b> 个可领取。` : ''}</p>
+      <div class="ach-list"></div>
+      <div class="close-row"><button class="btn secondary" id="ach-close">关闭</button></div>
+    `);
+    render(m);
+    m.querySelector('#ach-close').onclick = () => { this.closeModal(m); this.renderWelfare(); };
   },
 
   showSparkPicker() {
