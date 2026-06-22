@@ -46,6 +46,7 @@ function seedOf(id) { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(
 async function genPixflux(a) {
   const body = {
     description: `${a.prompt}, ${style.suffix}`,
+    negative_description: style.negative || undefined,
     image_size: { width: a.size[0], height: a.size[1] },
     text_guidance_scale: style.text_guidance_scale,
     outline: style.outline,
@@ -64,7 +65,7 @@ async function main() {
   let done = 0, skip = 0, fail = 0, credits = 0;
   for (const a of list) {
     const out = path.join(ROOT, a.out);
-    if (fs.existsSync(out)) { console.log(`· 跳过 ${a.id}（已存在）`); skip++; continue; }
+    if (fs.existsSync(out) && !process.env.FORCE) { console.log(`· 跳过 ${a.id}（已存在，FORCE=1 可覆盖）`); skip++; continue; }
     fs.mkdirSync(path.dirname(out), { recursive: true });
     let ok = false;
     for (let attempt = 1; attempt <= 2 && !ok; attempt++) {
