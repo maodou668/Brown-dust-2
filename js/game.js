@@ -24,6 +24,11 @@ const Game = {
     if (!this.state.seenStory) this.state.seenStory = [];
     if (!this.state.inventory) this.state.inventory = [];
     if (!this.state._gearSeq) this.state._gearSeq = 1;
+    // 装备深化迁移：旧装备补强化等级与副词条
+    this.state.inventory.forEach(g => {
+      if (g.lvl == null) g.lvl = 0;
+      if (!g.subs) { const tpl = this.getGearTpl(g.tpl); g.subs = tpl ? this.rollSubs(tpl.rarity) : []; }
+    });
     if (!this.state.worldFlags) this.state.worldFlags = {};
     if (!this.state.chapterProgress) this.state.chapterProgress = {};
     if (this.state.spark == null) this.state.spark = 0;
@@ -267,6 +272,56 @@ const Game = {
   },
 
   /** 汇总某角色已装备的属性加成 */
+  // ---------- 装备深化：强化 / 副词条 / 套装 ----------
+  GEAR_MAX_LVL: 15,
+  enhanceMult(lvl) { return 1 + (lvl || 0) * 0.05; }, // 主属性每级 +5%（满 +15 = +75%）
+  enhanceCost(inst) {
+    const tpl = this.getGearTpl(inst.tpl);
+    const r = tpl ? tpl.rarity : 3;
+    return Math.round((80 + (inst.lvl || 0) * 70) * (r === 5 ? 2 : r === 4 ? 1.5 : 1));
+  },
+  SUB_POOL: ['atk', 'def', 'hp', 'crit', 'spd'],
+  SUB_BASE: { atk: 8, def: 5, hp: 60, crit: 0.02, spd: 3 },
+  /** 按稀有度掷副词条：R=1 / SR=2 / UR=3 条 */
+  rollSubs(rarity) {
+    const n = rarity === 5 ? 3 : rarity === 4 ? 2 : 1;
+    const w = rarity === 5 ? 2.4 : rarity === 4 ? 1.6 : 1;
+    const pool = this.SUB_POOL.slice();
+    const subs = [];
+    for (let i = 0; i < n && pool.length; i++) {
+      const k = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+      let v = this.SUB_BASE[k] * w * (0.7 + Math.random() * 0.6);
+      v = (k === 'crit') ? Math.round(v * 1000) / 1000 : Math.round(v);
+      subs.push({ k, v });
+    }
+    return subs;
+  },
+  /** 套装：三件通用装备同稀有度时的额外加成 */
+  setBonusOf(owned) {
+    const b = { hp: 0, atk: 0, def: 0, spd: 0, crit: 0, name: '' };
+    if (!owned.equip) return b;
+    const rs = ['weapon', 'armor', 'accessory'].map(slot => {
+      const iid = owned.equip[slot]; if (!iid) return null;
+      const inst = this.getGearInst(iid); if (!inst) return null;
+      const tpl = this.getGearTpl(inst.tpl); return tpl ? tpl.rarity : null;
+    });
+    if (rs.every(r => r === 5)) { b.crit += 0.08; b.atk += 40; b.spd += 6; b.name = '传说三件套'; }
+    else if (rs.every(r => r === 4)) { b.crit += 0.04; b.atk += 20; b.name = '稀有三件套'; }
+    else if (rs.every(r => r === 3)) { b.hp += 120; b.name = '坚甲三件套'; }
+    return b;
+  },
+  enhanceGear(iid) {
+    const inst = this.getGearInst(iid);
+    if (!inst) return { ok: false };
+    if ((inst.lvl || 0) >= this.GEAR_MAX_LVL) return { ok: false, msg: '已达最高强化' };
+    const cost = this.enhanceCost(inst);
+    if (this.state.gold < cost) return { ok: false, msg: '金币不足' };
+    this.state.gold -= cost;
+    inst.lvl = (inst.lvl || 0) + 1;
+    this.save();
+    return { ok: true, lvl: inst.lvl, cost };
+  },
+
   gearBonus(owned) {
     const b = { hp: 0, atk: 0, def: 0, spd: 0, crit: 0 };
     if (!owned.equip) return b;
@@ -277,15 +332,23 @@ const Game = {
       if (!inst) return;
       const tpl = this.getGearTpl(inst.tpl);
       if (!tpl) return;
-      Object.keys(tpl.stats).forEach(k => { b[k] = (b[k] || 0) + tpl.stats[k]; });
+      const em = this.enhanceMult(inst.lvl);           // 强化：放大主属性
+      Object.keys(tpl.stats).forEach(k => { b[k] = (b[k] || 0) + tpl.stats[k] * em; });
+      (inst.subs || []).forEach(s => { b[s.k] = (b[s.k] || 0) + s.v; }); // 副词条
     });
+    // 套装加成
+    const sb = this.setBonusOf(owned);
+    ['hp', 'atk', 'def', 'spd', 'crit'].forEach(k => { b[k] += sb[k]; });
+    ['hp', 'atk', 'def', 'spd'].forEach(k => { b[k] = Math.round(b[k]); });
     return b;
   },
 
   /** 新增一件装备到背包，返回 iid */
   addGear(tplId) {
     const iid = 'g' + (this.state._gearSeq++);
-    this.state.inventory.push({ iid, tpl: tplId });
+    const tpl = this.getGearTpl(tplId);
+    const subs = tpl ? this.rollSubs(tpl.rarity) : [];
+    this.state.inventory.push({ iid, tpl: tplId, lvl: 0, subs });
     return iid;
   },
 

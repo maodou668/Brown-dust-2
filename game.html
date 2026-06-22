@@ -848,6 +848,19 @@ body {
 .trial-meta span { font-size: 10px; }
 .trial-boss { color: #ff7a6a; font-weight: 700; }
 .trial-reward { color: var(--gold); font-weight: 700; }
+/* 装备深化：强化等级 / 副词条 / 套装 */
+.gp-lv { display: inline-block; margin-left: 5px; font-size: 10px; font-weight: 800; color: #241a08;
+  background: linear-gradient(135deg,#ffd35a,#ff9b3d); padding: 0 5px; border-radius: 5px; vertical-align: middle; }
+.gp-subs { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 3px; }
+.gp-subs span { font-size: 10px; color: #7ad6ff; }
+.gp-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+.gp-enh { background: linear-gradient(135deg,#ffb84a,#ff7a3a); color: #241a08; border: none;
+  border-radius: 8px; padding: 5px 9px; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.gp-enh:active { transform: scale(.95); }
+.gear-pick-item .gp-info { cursor: pointer; }
+.set-tag { display: inline-block; font-size: 10px; font-weight: 800; color: #241a08;
+  background: linear-gradient(135deg,#ffd35a,#ff9b3d); padding: 1px 7px; border-radius: 6px; vertical-align: middle; }
+
 .skill-item.boosted { border-color: rgba(255,155,61,.4); }
 .sk-boost { display: inline-block; margin: 2px 0 4px; font-size: 10px; font-weight: 800;
   color: #241a08; background: linear-gradient(135deg,#ffd35a,#ff9b3d); padding: 1px 7px; border-radius: 6px; }
@@ -2279,6 +2292,11 @@ const Game = {
     if (!this.state.seenStory) this.state.seenStory = [];
     if (!this.state.inventory) this.state.inventory = [];
     if (!this.state._gearSeq) this.state._gearSeq = 1;
+    // 装备深化迁移：旧装备补强化等级与副词条
+    this.state.inventory.forEach(g => {
+      if (g.lvl == null) g.lvl = 0;
+      if (!g.subs) { const tpl = this.getGearTpl(g.tpl); g.subs = tpl ? this.rollSubs(tpl.rarity) : []; }
+    });
     if (!this.state.worldFlags) this.state.worldFlags = {};
     if (!this.state.chapterProgress) this.state.chapterProgress = {};
     if (this.state.spark == null) this.state.spark = 0;
@@ -2522,6 +2540,56 @@ const Game = {
   },
 
   /** 汇总某角色已装备的属性加成 */
+  // ---------- 装备深化：强化 / 副词条 / 套装 ----------
+  GEAR_MAX_LVL: 15,
+  enhanceMult(lvl) { return 1 + (lvl || 0) * 0.05; }, // 主属性每级 +5%（满 +15 = +75%）
+  enhanceCost(inst) {
+    const tpl = this.getGearTpl(inst.tpl);
+    const r = tpl ? tpl.rarity : 3;
+    return Math.round((80 + (inst.lvl || 0) * 70) * (r === 5 ? 2 : r === 4 ? 1.5 : 1));
+  },
+  SUB_POOL: ['atk', 'def', 'hp', 'crit', 'spd'],
+  SUB_BASE: { atk: 8, def: 5, hp: 60, crit: 0.02, spd: 3 },
+  /** 按稀有度掷副词条：R=1 / SR=2 / UR=3 条 */
+  rollSubs(rarity) {
+    const n = rarity === 5 ? 3 : rarity === 4 ? 2 : 1;
+    const w = rarity === 5 ? 2.4 : rarity === 4 ? 1.6 : 1;
+    const pool = this.SUB_POOL.slice();
+    const subs = [];
+    for (let i = 0; i < n && pool.length; i++) {
+      const k = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+      let v = this.SUB_BASE[k] * w * (0.7 + Math.random() * 0.6);
+      v = (k === 'crit') ? Math.round(v * 1000) / 1000 : Math.round(v);
+      subs.push({ k, v });
+    }
+    return subs;
+  },
+  /** 套装：三件通用装备同稀有度时的额外加成 */
+  setBonusOf(owned) {
+    const b = { hp: 0, atk: 0, def: 0, spd: 0, crit: 0, name: '' };
+    if (!owned.equip) return b;
+    const rs = ['weapon', 'armor', 'accessory'].map(slot => {
+      const iid = owned.equip[slot]; if (!iid) return null;
+      const inst = this.getGearInst(iid); if (!inst) return null;
+      const tpl = this.getGearTpl(inst.tpl); return tpl ? tpl.rarity : null;
+    });
+    if (rs.every(r => r === 5)) { b.crit += 0.08; b.atk += 40; b.spd += 6; b.name = '传说三件套'; }
+    else if (rs.every(r => r === 4)) { b.crit += 0.04; b.atk += 20; b.name = '稀有三件套'; }
+    else if (rs.every(r => r === 3)) { b.hp += 120; b.name = '坚甲三件套'; }
+    return b;
+  },
+  enhanceGear(iid) {
+    const inst = this.getGearInst(iid);
+    if (!inst) return { ok: false };
+    if ((inst.lvl || 0) >= this.GEAR_MAX_LVL) return { ok: false, msg: '已达最高强化' };
+    const cost = this.enhanceCost(inst);
+    if (this.state.gold < cost) return { ok: false, msg: '金币不足' };
+    this.state.gold -= cost;
+    inst.lvl = (inst.lvl || 0) + 1;
+    this.save();
+    return { ok: true, lvl: inst.lvl, cost };
+  },
+
   gearBonus(owned) {
     const b = { hp: 0, atk: 0, def: 0, spd: 0, crit: 0 };
     if (!owned.equip) return b;
@@ -2532,15 +2600,23 @@ const Game = {
       if (!inst) return;
       const tpl = this.getGearTpl(inst.tpl);
       if (!tpl) return;
-      Object.keys(tpl.stats).forEach(k => { b[k] = (b[k] || 0) + tpl.stats[k]; });
+      const em = this.enhanceMult(inst.lvl);           // 强化：放大主属性
+      Object.keys(tpl.stats).forEach(k => { b[k] = (b[k] || 0) + tpl.stats[k] * em; });
+      (inst.subs || []).forEach(s => { b[s.k] = (b[s.k] || 0) + s.v; }); // 副词条
     });
+    // 套装加成
+    const sb = this.setBonusOf(owned);
+    ['hp', 'atk', 'def', 'spd', 'crit'].forEach(k => { b[k] += sb[k]; });
+    ['hp', 'atk', 'def', 'spd'].forEach(k => { b[k] = Math.round(b[k]); });
     return b;
   },
 
   /** 新增一件装备到背包，返回 iid */
   addGear(tplId) {
     const iid = 'g' + (this.state._gearSeq++);
-    this.state.inventory.push({ iid, tpl: tplId });
+    const tpl = this.getGearTpl(tplId);
+    const subs = tpl ? this.rollSubs(tpl.rarity) : [];
+    this.state.inventory.push({ iid, tpl: tplId, lvl: 0, subs });
     return iid;
   },
 
@@ -4061,8 +4137,10 @@ const UI = {
     if (gb.def) gbParts.push(`防+${gb.def}`);
     if (gb.hp) gbParts.push(`血+${gb.hp}`);
     if (gb.crit) gbParts.push(`暴击+${Math.round(gb.crit * 100)}%`);
+    const setB = Game.setBonusOf(o);
+    const setHtml = setB.name ? `<span class="set-tag">🏅${setB.name}</span>` : '<span class="muted" style="font-size:10px;">三件同稀有度通用装备→套装加成</span>';
     const gearHtml = `
-      <div class="section-title" style="font-size:14px;">装备 ${gbParts.length ? `<span class="muted" style="font-weight:400;font-size:11px;">（${gbParts.join('，')}）</span>` : ''}</div>
+      <div class="section-title" style="font-size:14px;">装备 ${gbParts.length ? `<span class="muted" style="font-weight:400;font-size:11px;">（${gbParts.join('，')}）</span>` : ''} ${setHtml}</div>
       <div class="gear-slots">
         ${this.gearSlotHtml(o, 'weapon', '武器')}
         ${this.gearSlotHtml(o, 'armor', '防具')}
@@ -4164,56 +4242,90 @@ const UI = {
     </div>`;
   },
 
-  /** 选择装备弹窗 */
+  /** 装备一件物品的属性字符串（含强化倍率 + 副词条） */
+  gearStatStr(inst) {
+    const tpl = Game.getGearTpl(inst.tpl);
+    const em = Game.enhanceMult(inst.lvl);
+    const lbl = { atk: '攻', def: '防', hp: '血', crit: '暴击', spd: '速' };
+    const main = Object.keys(tpl.stats).map(k => {
+      const v = tpl.stats[k] * em;
+      return k === 'crit' ? `${lbl[k]}+${Math.round(v * 100)}%` : `${lbl[k]}+${Math.round(v)}`;
+    }).join(' ');
+    const subs = (inst.subs || []).map(s => {
+      return s.k === 'crit' ? `${lbl[s.k]}+${Math.round(s.v * 100)}%` : `${lbl[s.k]}+${s.v}`;
+    });
+    return { main, subs };
+  },
+
+  /** 选择装备弹窗（含强化 / 副词条 / 套装） */
   showGearPicker(uid, slot) {
     const o = Game.getOwned(uid);
     const c = window.GameData.CHARACTERS[o.charId];
-    // 该槽位可装备的背包物品
-    const list = Game.state.inventory.filter(g => {
-      const tpl = Game.getGearTpl(g.tpl);
-      if (!tpl) return false;
-      if (slot === 'ex') return tpl.type === 'ex' && tpl.owner === o.charId;
-      return tpl.type === slot;
-    });
     const slotName = { weapon: '武器', armor: '防具', accessory: '饰品', ex: '专属武器' }[slot];
-    const itemsHtml = list.length ? list.map(g => {
-      const tpl = Game.getGearTpl(g.tpl);
-      const by = Game.gearEquippedBy(g.iid);
-      const equippedHere = o.equip[slot] === g.iid;
-      const byName = by && by.uid !== uid ? window.GameData.CHARACTERS[by.charId].name : null;
-      const statStr = Object.keys(tpl.stats).map(k => {
-        const lbl = { atk: '攻', def: '防', hp: '血', crit: '暴击', spd: '速' }[k];
-        return k === 'crit' ? `${lbl}+${Math.round(tpl.stats[k] * 100)}%` : `${lbl}+${tpl.stats[k]}`;
-      }).join(' ');
-      const exTag = tpl.type === 'ex' ? '<span class="ex-tag inline">专属</span>' : '';
-      return `<div class="gear-pick-item border-${this.rarityClass(tpl.rarity)} ${tpl.type === 'ex' ? 'is-ex' : ''}" data-iid="${g.iid}">
-        <span class="rarity-badge ${this.rarityClass(tpl.rarity)}" style="position:static;">${window.GameData.GEAR.RLABEL[tpl.rarity]}</span>
-        <span class="gp-icon">${tpl.icon}</span>
-        <div class="gp-info"><div class="gp-name">${tpl.name}${exTag}</div><div class="gp-stats muted">${statStr}</div></div>
-        ${equippedHere ? '<span class="gp-tag">已装备</span>' : (byName ? `<span class="gp-tag" style="background:var(--panel-2);color:var(--text-dim);">${byName}佩戴</span>` : '')}
-      </div>`;
-    }).join('') : `<p class="empty-hint">背包里没有可装备的${slotName}。<br>去「锻造坊」打造，或通关关卡掉落获取。</p>`;
-
+    const render = (m) => {
+      const list = Game.state.inventory.filter(g => {
+        const tpl = Game.getGearTpl(g.tpl);
+        if (!tpl) return false;
+        if (slot === 'ex') return tpl.type === 'ex' && tpl.owner === o.charId;
+        return tpl.type === slot;
+      });
+      const itemsHtml = list.length ? list.map(g => {
+        const tpl = Game.getGearTpl(g.tpl);
+        const by = Game.gearEquippedBy(g.iid);
+        const equippedHere = o.equip[slot] === g.iid;
+        const byName = by && by.uid !== uid ? window.GameData.CHARACTERS[by.charId].name : null;
+        const ss = this.gearStatStr(g);
+        const exTag = tpl.type === 'ex' ? '<span class="ex-tag inline">专属</span>' : '';
+        const lvBadge = (g.lvl || 0) > 0 ? `<span class="gp-lv">+${g.lvl}</span>` : '';
+        const subsHtml = ss.subs.length ? `<div class="gp-subs">${ss.subs.map(s => `<span>${s}</span>`).join('')}</div>` : '';
+        const maxed = (g.lvl || 0) >= Game.GEAR_MAX_LVL;
+        const enhBtn = `<button class="gp-enh" data-enh="${g.iid}">${maxed ? '满级' : '强化 🪙' + Game.enhanceCost(g)}</button>`;
+        return `<div class="gear-pick-item border-${this.rarityClass(tpl.rarity)} ${tpl.type === 'ex' ? 'is-ex' : ''}">
+          <span class="rarity-badge ${this.rarityClass(tpl.rarity)}" style="position:static;">${window.GameData.GEAR.RLABEL[tpl.rarity]}</span>
+          <span class="gp-icon">${tpl.icon}</span>
+          <div class="gp-info" data-iid="${g.iid}">
+            <div class="gp-name">${tpl.name}${lvBadge}${exTag}</div>
+            <div class="gp-stats muted">${ss.main}</div>
+            ${subsHtml}
+          </div>
+          <div class="gp-right">
+            ${equippedHere ? '<span class="gp-tag">已装备</span>' : (byName ? `<span class="gp-tag" style="background:var(--panel-2);color:var(--text-dim);">${byName}佩戴</span>` : '')}
+            ${enhBtn}
+          </div>
+        </div>`;
+      }).join('') : `<p class="empty-hint">背包里没有可装备的${slotName}。<br>去「锻造坊」打造，或通关关卡掉落获取。</p>`;
+      m.querySelector('.gear-pick-list').innerHTML = itemsHtml;
+      // 装备（点信息区）
+      m.querySelectorAll('.gp-info[data-iid]').forEach(el => el.onclick = () => {
+        const r = Game.equipGear(uid, el.dataset.iid);
+        if (!r.ok) { this.toast(r.msg); return; }
+        this.closeModal(m); this.showCharDetail(uid);
+      });
+      // 强化（点强化按钮，不触发装备）
+      m.querySelectorAll('[data-enh]').forEach(el => el.onclick = (e) => {
+        e.stopPropagation();
+        const r = Game.enhanceGear(el.dataset.enh);
+        if (!r.ok) { this.toast(r.msg); return; }
+        if (window.Sound) Sound.sfx('levelup');
+        this.toast(`强化至 +${r.lvl}（🪙${r.cost}）`);
+        this.updateResources();
+        render(m);
+      });
+    };
     const curIid = o.equip[slot];
     const m = this.openModal(`
       <h2>${c.name} · ${slotName}</h2>
-      <p class="muted" style="margin:6px 0 12px;">选择要装备的${slotName}。</p>
-      <div class="gear-pick-list">${itemsHtml}</div>
+      <p class="muted" style="margin:6px 0 12px;">点装备上阵 · 点「强化」用金币提升属性。副词条随掉落随机。</p>
+      <div class="gear-pick-list"></div>
       <div class="close-row">
         ${curIid ? '<button class="btn secondary" id="gp-unequip">卸下</button>' : ''}
         <button class="btn secondary" id="gp-close">返回</button>
       </div>
     `);
+    render(m);
     m.querySelector('#gp-close').onclick = () => { this.closeModal(m); this.showCharDetail(uid); };
     const un = m.querySelector('#gp-unequip');
     if (un) un.onclick = () => { Game.unequipGear(uid, slot); this.closeModal(m); this.showCharDetail(uid); };
-    m.querySelectorAll('[data-iid]').forEach(el =>
-      el.addEventListener('click', () => {
-        const r = Game.equipGear(uid, el.dataset.iid);
-        if (!r.ok) { this.toast(r.msg); return; }
-        this.closeModal(m);
-        this.showCharDetail(uid);
-      }));
   },
 
   /** 锻造坊 */
