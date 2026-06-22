@@ -214,12 +214,28 @@ const UI = {
     const m = this.openModal(`
       <h2>剧情回顾</h2>
       <p class="muted" style="margin:6px 0 12px;">重温你已经历的故事篇章。角色支线可在佣兵详情里随时观看。</p>
-      <div class="replay-group-title">主线剧情</div>
+      <div class="replay-group-title">📖 漫画剧场 <span class="muted" style="font-weight:400;font-size:11px;">· 分镜演出关键剧情</span></div>
+      <div class="comic-entry">
+        <div class="comic-entry-card" data-comic="ep_prologue">
+          <div class="ce-title">序章 · 烬火启程</div>
+          <div class="ce-sub">指挥官与佣兵团的相遇 ›</div>
+        </div>
+        <div class="comic-entry-card" data-comic="ep_twist">
+          <div class="ce-title">终章 · 魔王的真相</div>
+          <div class="ce-sub">巴尔临终揭示的秘密 ›</div>
+        </div>
+      </div>
+      <div class="replay-group-title" style="margin-top:14px;">主线剧情</div>
       <div class="story-replay-list">${main.map(row).join('')}</div>
       ${sidesHtml}
       <div class="close-row"><button class="btn secondary" id="sr-close">关闭</button></div>
     `);
     m.querySelector('#sr-close').onclick = () => this.closeModal(m);
+    m.querySelectorAll('[data-comic]').forEach(it =>
+      it.addEventListener('click', () => {
+        this.closeModal(m);
+        window.Comic && Comic.open(it.dataset.comic);
+      }));
     m.querySelectorAll('[data-replay]').forEach(it =>
       it.addEventListener('click', () => {
         this.closeModal(m);
