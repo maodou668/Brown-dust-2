@@ -697,6 +697,34 @@ const Game = {
     return { drop };
   },
 
+  /** 一键扫荡：已通关的试炼层，免战斗直接结算（复刷奖励，与再战同档：宝石按 30%） */
+  sweepTrial(idx) {
+    const t = window.GameData.TRIALS[idx];
+    if (!t) return { ok: false, msg: '关卡不存在' };
+    if (idx >= (this.state.trialMax || 0)) return { ok: false, msg: '通关该层后才能扫荡' };
+    const r = t.reward;
+    const gold = r.gold;
+    const gem = Math.round(r.gem * 0.3);
+    this.state.gold += gold;
+    this.state.gem += gem;
+    this.state.team.forEach(uid => { const o = this.getOwned(uid); if (o) this.addExp(o, r.exp); });
+    // 装备掉落（与 rewardStage 同概率/同加权）
+    let drop = null;
+    if (Math.random() < 0.40) {
+      const C = window.GameData.GEAR.CRAFT;
+      const type = C.types[Math.floor(Math.random() * C.types.length)];
+      const bonus = Math.min(0.30, t.id * 0.04);
+      const rr = Math.random();
+      let rarity = 3;
+      if (rr < C.rarityWeight[5] + bonus) rarity = 5;
+      else if (rr < C.rarityWeight[5] + C.rarityWeight[4] + bonus) rarity = 4;
+      drop = { weapon: 'wpn', armor: 'arm', accessory: 'acc' }[type] + '_' + { 3: 'r', 4: 'sr', 5: 'ur' }[rarity];
+      this.addGear(drop);
+    }
+    this.save();
+    return { ok: true, gold, gem, exp: r.exp, drop };
+  },
+
   // ---------- 成就系统 ----------
   // metric(s) 返回当前进度值；达到 target 即可领取 reward（一次性）
   ACHIEVEMENTS: [

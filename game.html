@@ -848,7 +848,13 @@ body {
 .trial-meta span { font-size: 10px; }
 .trial-boss { color: #ff7a6a; font-weight: 700; }
 .trial-reward { color: var(--gold); font-weight: 700; }
-.trial-go { color: #ff9b3d; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.trial-go { color: #ff9b3d; font-size: 13px; font-weight: 700; white-space: nowrap; text-align: center; }
+.trial-sweep {
+  background: linear-gradient(135deg, #ffb84a, #ff7a3a); color: #241a08;
+  border: none; border-radius: 9px; padding: 6px 12px; font-size: 12px; font-weight: 800;
+  cursor: pointer;
+}
+.trial-sweep:active { transform: scale(.95); }
 
 /* 探索：当前目标条 */
 .world-obj {
@@ -2942,6 +2948,34 @@ const Game = {
     return { drop };
   },
 
+  /** 一键扫荡：已通关的试炼层，免战斗直接结算（复刷奖励，与再战同档：宝石按 30%） */
+  sweepTrial(idx) {
+    const t = window.GameData.TRIALS[idx];
+    if (!t) return { ok: false, msg: '关卡不存在' };
+    if (idx >= (this.state.trialMax || 0)) return { ok: false, msg: '通关该层后才能扫荡' };
+    const r = t.reward;
+    const gold = r.gold;
+    const gem = Math.round(r.gem * 0.3);
+    this.state.gold += gold;
+    this.state.gem += gem;
+    this.state.team.forEach(uid => { const o = this.getOwned(uid); if (o) this.addExp(o, r.exp); });
+    // 装备掉落（与 rewardStage 同概率/同加权）
+    let drop = null;
+    if (Math.random() < 0.40) {
+      const C = window.GameData.GEAR.CRAFT;
+      const type = C.types[Math.floor(Math.random() * C.types.length)];
+      const bonus = Math.min(0.30, t.id * 0.04);
+      const rr = Math.random();
+      let rarity = 3;
+      if (rr < C.rarityWeight[5] + bonus) rarity = 5;
+      else if (rr < C.rarityWeight[5] + C.rarityWeight[4] + bonus) rarity = 4;
+      drop = { weapon: 'wpn', armor: 'arm', accessory: 'acc' }[type] + '_' + { 3: 'r', 4: 'sr', 5: 'ur' }[rarity];
+      this.addGear(drop);
+    }
+    this.save();
+    return { ok: true, gold, gem, exp: r.exp, drop };
+  },
+
   // ---------- 成就系统 ----------
   // metric(s) 返回当前进度值；达到 target 即可领取 reward（一次性）
   ACHIEVEMENTS: [
@@ -3780,6 +3814,18 @@ const UI = {
     this.screenEl.querySelectorAll('.trial-card[data-trial]').forEach(card => {
       card.addEventListener('click', () => this.showTrialConfirm(parseInt(card.dataset.trial, 10)));
     });
+    this.screenEl.querySelectorAll('.trial-sweep').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const r = Game.sweepTrial(parseInt(btn.dataset.sweep, 10));
+        if (!r.ok) { this.toast(r.msg || '无法扫荡'); return; }
+        if (window.Sound) Sound.sfx('levelup');
+        let msg = `扫荡完成：🪙${r.gold} 💎${r.gem}`;
+        if (r.drop) { const tpl = Game.getGearTpl(r.drop); if (tpl) msg += ` · 🎁${tpl.name}`; }
+        this.toast(msg);
+        this.updateResources();
+      });
+    });
   },
 
   /** 试炼之塔区块 HTML */
@@ -3798,7 +3844,7 @@ const UI = {
           <p>${unlocked ? t.desc : '通关上一层后开启'}</p>
           ${unlocked ? `<div class="trial-meta"><span class="muted">推荐 Lv.${t.recommend}</span>${bossName ? `<span class="trial-boss">BOSS ${bossName}</span>` : ''}<span class="trial-reward">🪙${t.reward.gold} 💎${t.reward.gem}</span></div>` : ''}
         </div>
-        <div class="trial-go">${unlocked ? (cleared ? '再战 ›' : '挑战 ›') : '🔒'}</div>
+        <div class="trial-go">${!unlocked ? '🔒' : cleared ? `<button class="trial-sweep" data-sweep="${i}">扫荡</button><div class="muted" style="font-size:10px;margin-top:4px;">再战 ›</div>` : '挑战 ›'}</div>
       </div>`;
     }).join('');
     return `
@@ -5678,12 +5724,17 @@ const BattleUI = {
   selectedSkill: null,   // 当前选中的技能 id
   busy: false,           // 动画/AI 执行中，锁定输入
   auto: false,           // 自动战斗
+  speed: 1,              // 战斗倍速 1/2/3（节奏计时除以它）
+
+  /** 倍速后的节奏时长 */
+  d(ms) { return Math.round(ms / (this.speed || 1)); },
 
   start(stage, onExit) {
     this.stage = stage;
     this.onExitCb = onExit || null;
     this.selectedSkill = null;
     this.busy = false;
+    try { this.speed = Math.min(3, Math.max(1, parseInt(localStorage.getItem('bd2_battle_speed'), 10) || 1)); } catch (e) { this.speed = 1; }
     Battle.setup(Game.state.team, stage);
     Battle.onEvent = (e) => this.handleEvent(e);
     if (window.Sound) Sound.bgm(stage.isBoss ? 'boss' : 'battle');
@@ -5706,6 +5757,7 @@ const BattleUI = {
           <span>${this.stage.name}</span>
           <span id="battle-round">第 1 回合</span>
           <div style="display:flex;gap:6px;">
+            <button class="auto-btn" id="battle-speed" title="战斗倍速">${this.speed}x</button>
             <button class="auto-btn ${this.auto ? 'on' : ''}" id="battle-auto" title="自动战斗">自动</button>
             <button class="ghost-btn" id="battle-flee" title="撤退">🏳️</button>
           </div>
@@ -5727,7 +5779,16 @@ const BattleUI = {
     document.body.appendChild(this.root);
     this.root.querySelector('#battle-flee').onclick = () => this.flee();
     this.root.querySelector('#battle-auto').onclick = () => this.toggleAuto();
+    this.root.querySelector('#battle-speed').onclick = () => this.cycleSpeed();
     this.spawnParticles(scene);
+  },
+
+  cycleSpeed() {
+    this.speed = this.speed >= 3 ? 1 : this.speed + 1;
+    try { localStorage.setItem('bd2_battle_speed', String(this.speed)); } catch (e) {}
+    const b = this.root && this.root.querySelector('#battle-speed');
+    if (b) b.textContent = this.speed + 'x';
+    if (window.Sound) Sound.sfx('tap');
   },
 
   toggleAuto() {
@@ -5947,14 +6008,14 @@ const BattleUI = {
       this.setHint(`💫 <b>${cur.name}</b> 被眩晕，跳过回合`);
       this.knockFloat(cur, '💫 眩晕');
       this.busy = true;
-      setTimeout(() => { this.busy = false; if (!Battle.finished) this.nextTurn(); }, 750);
+      setTimeout(() => { this.busy = false; if (!Battle.finished) this.nextTurn(); }, this.d(750));
       return;
     }
 
     if (cur.side === 'ally') {
       this.renderSkillBar(cur);
       this.setHint(`轮到 <b>${cur.name}</b> 行动，请选择技能`);
-      if (this.auto) { this.busy = true; setTimeout(() => { this.busy = false; this.autoAct(); }, 450); }
+      if (this.auto) { this.busy = true; setTimeout(() => { this.busy = false; this.autoAct(); }, this.d(450)); }
     } else {
       this.clearSkillBar();
       this.setHint(`<b>${cur.name}</b> 正在行动...`);
@@ -5964,7 +6025,7 @@ const BattleUI = {
         Battle.enemyAct();
         this.busy = false;
         if (!Battle.finished) this.nextTurn();
-      }, 850);
+      }, this.d(850));
     }
   },
 
@@ -6123,7 +6184,7 @@ const BattleUI = {
       this.refresh();
       this.busy = false;
       if (!Battle.finished) this.nextTurn();
-    }, 700);
+    }, this.d(700));
   },
 
   // ---------- 事件（演出、伤害飘字、结算） ----------

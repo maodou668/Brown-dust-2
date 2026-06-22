@@ -308,6 +308,18 @@ const UI = {
     this.screenEl.querySelectorAll('.trial-card[data-trial]').forEach(card => {
       card.addEventListener('click', () => this.showTrialConfirm(parseInt(card.dataset.trial, 10)));
     });
+    this.screenEl.querySelectorAll('.trial-sweep').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const r = Game.sweepTrial(parseInt(btn.dataset.sweep, 10));
+        if (!r.ok) { this.toast(r.msg || '无法扫荡'); return; }
+        if (window.Sound) Sound.sfx('levelup');
+        let msg = `扫荡完成：🪙${r.gold} 💎${r.gem}`;
+        if (r.drop) { const tpl = Game.getGearTpl(r.drop); if (tpl) msg += ` · 🎁${tpl.name}`; }
+        this.toast(msg);
+        this.updateResources();
+      });
+    });
   },
 
   /** 试炼之塔区块 HTML */
@@ -326,7 +338,7 @@ const UI = {
           <p>${unlocked ? t.desc : '通关上一层后开启'}</p>
           ${unlocked ? `<div class="trial-meta"><span class="muted">推荐 Lv.${t.recommend}</span>${bossName ? `<span class="trial-boss">BOSS ${bossName}</span>` : ''}<span class="trial-reward">🪙${t.reward.gold} 💎${t.reward.gem}</span></div>` : ''}
         </div>
-        <div class="trial-go">${unlocked ? (cleared ? '再战 ›' : '挑战 ›') : '🔒'}</div>
+        <div class="trial-go">${!unlocked ? '🔒' : cleared ? `<button class="trial-sweep" data-sweep="${i}">扫荡</button><div class="muted" style="font-size:10px;margin-top:4px;">再战 ›</div>` : '挑战 ›'}</div>
       </div>`;
     }).join('');
     return `

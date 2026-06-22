@@ -8,12 +8,17 @@ const BattleUI = {
   selectedSkill: null,   // 当前选中的技能 id
   busy: false,           // 动画/AI 执行中，锁定输入
   auto: false,           // 自动战斗
+  speed: 1,              // 战斗倍速 1/2/3（节奏计时除以它）
+
+  /** 倍速后的节奏时长 */
+  d(ms) { return Math.round(ms / (this.speed || 1)); },
 
   start(stage, onExit) {
     this.stage = stage;
     this.onExitCb = onExit || null;
     this.selectedSkill = null;
     this.busy = false;
+    try { this.speed = Math.min(3, Math.max(1, parseInt(localStorage.getItem('bd2_battle_speed'), 10) || 1)); } catch (e) { this.speed = 1; }
     Battle.setup(Game.state.team, stage);
     Battle.onEvent = (e) => this.handleEvent(e);
     if (window.Sound) Sound.bgm(stage.isBoss ? 'boss' : 'battle');
@@ -36,6 +41,7 @@ const BattleUI = {
           <span>${this.stage.name}</span>
           <span id="battle-round">第 1 回合</span>
           <div style="display:flex;gap:6px;">
+            <button class="auto-btn" id="battle-speed" title="战斗倍速">${this.speed}x</button>
             <button class="auto-btn ${this.auto ? 'on' : ''}" id="battle-auto" title="自动战斗">自动</button>
             <button class="ghost-btn" id="battle-flee" title="撤退">🏳️</button>
           </div>
@@ -57,7 +63,16 @@ const BattleUI = {
     document.body.appendChild(this.root);
     this.root.querySelector('#battle-flee').onclick = () => this.flee();
     this.root.querySelector('#battle-auto').onclick = () => this.toggleAuto();
+    this.root.querySelector('#battle-speed').onclick = () => this.cycleSpeed();
     this.spawnParticles(scene);
+  },
+
+  cycleSpeed() {
+    this.speed = this.speed >= 3 ? 1 : this.speed + 1;
+    try { localStorage.setItem('bd2_battle_speed', String(this.speed)); } catch (e) {}
+    const b = this.root && this.root.querySelector('#battle-speed');
+    if (b) b.textContent = this.speed + 'x';
+    if (window.Sound) Sound.sfx('tap');
   },
 
   toggleAuto() {
@@ -277,14 +292,14 @@ const BattleUI = {
       this.setHint(`💫 <b>${cur.name}</b> 被眩晕，跳过回合`);
       this.knockFloat(cur, '💫 眩晕');
       this.busy = true;
-      setTimeout(() => { this.busy = false; if (!Battle.finished) this.nextTurn(); }, 750);
+      setTimeout(() => { this.busy = false; if (!Battle.finished) this.nextTurn(); }, this.d(750));
       return;
     }
 
     if (cur.side === 'ally') {
       this.renderSkillBar(cur);
       this.setHint(`轮到 <b>${cur.name}</b> 行动，请选择技能`);
-      if (this.auto) { this.busy = true; setTimeout(() => { this.busy = false; this.autoAct(); }, 450); }
+      if (this.auto) { this.busy = true; setTimeout(() => { this.busy = false; this.autoAct(); }, this.d(450)); }
     } else {
       this.clearSkillBar();
       this.setHint(`<b>${cur.name}</b> 正在行动...`);
@@ -294,7 +309,7 @@ const BattleUI = {
         Battle.enemyAct();
         this.busy = false;
         if (!Battle.finished) this.nextTurn();
-      }, 850);
+      }, this.d(850));
     }
   },
 
@@ -453,7 +468,7 @@ const BattleUI = {
       this.refresh();
       this.busy = false;
       if (!Battle.finished) this.nextTurn();
-    }, 700);
+    }, this.d(700));
   },
 
   // ---------- 事件（演出、伤害飘字、结算） ----------

@@ -841,7 +841,13 @@ body {
 .trial-meta span { font-size: 10px; }
 .trial-boss { color: #ff7a6a; font-weight: 700; }
 .trial-reward { color: var(--gold); font-weight: 700; }
-.trial-go { color: #ff9b3d; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.trial-go { color: #ff9b3d; font-size: 13px; font-weight: 700; white-space: nowrap; text-align: center; }
+.trial-sweep {
+  background: linear-gradient(135deg, #ffb84a, #ff7a3a); color: #241a08;
+  border: none; border-radius: 9px; padding: 6px 12px; font-size: 12px; font-weight: 800;
+  cursor: pointer;
+}
+.trial-sweep:active { transform: scale(.95); }
 
 /* 探索：当前目标条 */
 .world-obj {
