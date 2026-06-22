@@ -93,7 +93,9 @@ const Battle = {
       const def = D.CHARACTERS[owned.charId];
       const cos = Game.activeCostumeDef(owned); // 当前装扮：属性/元素/配色
       const st = Game.computeStats(owned);
-      const pos = (def.cls === 'warrior' || def.cls === 'defender') ? 'front' : 'back';
+      // 三段站位：坦克/战士在前，弓手居中，法师/治疗在后
+      const pos = (def.cls === 'warrior' || def.cls === 'defender') ? 'front'
+                : (def.cls === 'archer' || def.cls === 'rogue') ? 'mid' : 'back';
       this.combatants.push(new Combatant({
         uid: 'A' + i, name: def.name, side: 'ally', charId: owned.charId,
         cls: def.cls, element: cos.element, color: cos.color, level: owned.level,
@@ -231,10 +233,16 @@ const Battle = {
     });
   },
 
-  /** 前排保护：有存活前排时只能选前排，否则可选后排 */
+  // 三段站位（由前到后）：前排 → 中排 → 后排
+  TIER_ORDER: ['front', 'mid', 'back'],
+  tierIdx(pos) { const i = this.TIER_ORDER.indexOf(pos); return i < 0 ? 0 : i; },
+
+  /** 前排保护：只能攻击「当前最靠前、仍有存活单位」的那一段站位（穿透技能除外） */
   frontline(units) {
-    const front = units.filter(u => u.alive && u.pos === 'front');
-    return front.length ? front : units.filter(u => u.alive);
+    const alive = units.filter(u => u.alive);
+    if (!alive.length) return [];
+    const minT = Math.min(...alive.map(u => this.tierIdx(u.pos)));
+    return alive.filter(u => this.tierIdx(u.pos) === minT);
   },
 
   /** 解析技能合法目标列表 */
@@ -389,11 +397,14 @@ const Battle = {
     this.checkEnd();
   },
 
-  /** 击退：前排→后排；已在后排则撞墙受额外伤害 */
+  /** 击退：沿站位向后推一段（前→中→后）；已在最后排则撞墙受额外伤害 */
   applyKnockback(attacker, target, baseDmg) {
-    if (target.pos === 'front') {
-      target.pos = 'back';
-      this.pushLog(`↩ ${target.name} 被击退到后排！`);
+    const order = this.TIER_ORDER;
+    const i = order.indexOf(target.pos);
+    if (i >= 0 && i < order.length - 1) {
+      const tierName = { mid: '中排', back: '后排' }[order[i + 1]] || '后排';
+      target.pos = order[i + 1];
+      this.pushLog(`↩ ${target.name} 被击退到${tierName}！`);
       if (this.onEvent) this.onEvent({ type: 'knockback', target, kind: 'push' });
     } else {
       // 撞墙：额外碰撞伤害

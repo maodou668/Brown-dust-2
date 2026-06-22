@@ -19,6 +19,10 @@ const BattleUI = {
     this.buildScreen();
     this.refresh();
     this.beginTurn();
+    if (!Game.state._tacticTip) {
+      Game.state._tacticTip = true; Game.save();
+      setTimeout(() => UI.toast('站位 前→中→后：前排先挨打。击退能把敌人推向后排，挤成一排后用范围技能集火！'), 500);
+    }
   },
 
   buildScreen() {
@@ -114,10 +118,12 @@ const BattleUI = {
   // ---------- 渲染单位（斜俯视角舞台，近大远小） ----------
   // 各排在舞台中的纵向位置/缩放/横向间距（百分比）
   ROWCFG: {
-    enemy_back:  { y: 17, s: 0.72, sp: 16 },
-    enemy_front: { y: 35, s: 0.84, sp: 20 },
-    ally_front:  { y: 58, s: 0.94, sp: 23 },
-    ally_back:   { y: 80, s: 1.06, sp: 27 },
+    enemy_back:  { y: 14, s: 0.70, sp: 15 },
+    enemy_mid:   { y: 24, s: 0.78, sp: 17 },
+    enemy_front: { y: 35, s: 0.86, sp: 19 },
+    ally_front:  { y: 56, s: 0.94, sp: 22 },
+    ally_mid:    { y: 68, s: 1.02, sp: 25 },
+    ally_back:   { y: 80, s: 1.10, sp: 28 },
   },
 
   unitHtml(c, side, pos, idx, count) {
@@ -154,7 +160,8 @@ const BattleUI = {
     const stage = this.root.querySelector('#battle-stage');
     if (!stage) return;
     let html = '';
-    [['enemy', 'back'], ['enemy', 'front'], ['ally', 'front'], ['ally', 'back']].forEach(([side, pos]) => {
+    [['enemy', 'back'], ['enemy', 'mid'], ['enemy', 'front'],
+     ['ally', 'front'], ['ally', 'mid'], ['ally', 'back']].forEach(([side, pos]) => {
       const list = Battle.combatants.filter(c => c.side === side && c.pos === pos);
       list.forEach((c, i) => { html += this.unitHtml(c, side, pos, i, list.length); });
     });
@@ -386,9 +393,11 @@ const BattleUI = {
         const atk = c.effAtk() * sk.power;
         if (sk.target === 'enemyAll') { val = atk * enemies.length * 0.9; target = enemies[0]; }
         else if (sk.target === 'enemyRow') {
-          // 选人数最多的一排
-          const front = enemies.filter(e => e.pos === 'front'), back = enemies.filter(e => e.pos === 'back');
-          const row = front.length >= back.length ? front : back;
+          // 选人数最多的一段站位（击退会把敌人挤到同一排，这里正好集火）
+          const tiers = {};
+          enemies.forEach(e => { (tiers[e.pos] = tiers[e.pos] || []).push(e); });
+          let row = [];
+          Object.values(tiers).forEach(r => { if (r.length > row.length) row = r; });
           val = atk * Math.max(1, row.length) * 0.95; target = row[0] || enemies[0];
         } else {
           const pool = sk.pierce ? enemies : Battle.frontline(enemies);
