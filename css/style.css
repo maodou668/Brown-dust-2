@@ -841,6 +841,10 @@ body {
 .trial-meta span { font-size: 10px; }
 .trial-boss { color: #ff7a6a; font-weight: 700; }
 .trial-reward { color: var(--gold); font-weight: 700; }
+.skill-item.boosted { border-color: rgba(255,155,61,.4); }
+.sk-boost { display: inline-block; margin: 2px 0 4px; font-size: 10px; font-weight: 800;
+  color: #241a08; background: linear-gradient(135deg,#ffd35a,#ff9b3d); padding: 1px 7px; border-radius: 6px; }
+
 .trial-go { color: #ff9b3d; font-size: 13px; font-weight: 700; white-space: nowrap; text-align: center; }
 .trial-sweep {
   background: linear-gradient(135deg, #ffb84a, #ff7a3a); color: #241a08;

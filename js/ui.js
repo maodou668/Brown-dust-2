@@ -482,12 +482,19 @@ const UI = {
     const lvCost = Game.levelUpCost(o.level);
     const cosDef = Game.activeCostumeDef(o);
     // 战斗技能池：普攻 + 各拥有服装的招式
+    const activeSig = Game.activeCostumeDef(o).signature;
+    const plus = o.plus || 0;
     const skillsHtml = Game.battleSkills(o).map(sid => {
       const sk = window.GameData.SKILLS[sid];
-      const cdTxt = sk.basic ? '回 SP' : `SP ${sk.sp}${sk.cd != null ? ' · 冷却' + sk.cd : ''}`;
-      return `<div class="skill-item">
+      // 突破强化：仅作用于「当前服装」的专属招式
+      const boosted = !sk.basic && sid === activeSig && plus > 0;
+      const effSp = boosted ? Math.max(0, (sk.sp || 0) - Math.floor(plus / 2)) : sk.sp;
+      const cdTxt = sk.basic ? '回 SP' : `SP ${effSp}${sk.cd != null ? ' · 冷却' + sk.cd : ''}`;
+      const boostTag = boosted ? `<span class="sk-boost">突破+${plus} · 威力+${plus * 6}%${effSp < sk.sp ? ' · SP-' + (sk.sp - effSp) : ''}</span>` : '';
+      return `<div class="skill-item ${boosted ? 'boosted' : ''}">
         <div class="sk-head"><span>${sk.icon}</span>${sk.name}
           <span class="sk-sp">${cdTxt}</span></div>
+        ${boostTag}
         <div class="sk-desc">${sk.desc}</div>
       </div>`;
     }).join('');

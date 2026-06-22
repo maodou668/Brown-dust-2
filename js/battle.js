@@ -26,6 +26,8 @@ class Combatant {
     this.crit = opts.crit;
 
     this.skills = opts.skills.slice(); // 技能 id 列表（含普攻）
+    this.sigSkillId = opts.sigSkillId || null; // 当前服装的专属招式（受突破强化）
+    this.sigPlus = opts.sigPlus || 0;          // 当前服装突破等级 0~5
     this.sp = 3;                       // 起始 SP（可开局放低费技能）
     this.maxSp = 6;
     this.cooldowns = {};               // skillId -> 剩余冷却回合
@@ -101,6 +103,8 @@ const Battle = {
         cls: def.cls, element: cos.element, color: cos.color, level: owned.level,
         pos, maxHp: st.maxHp, atk: st.atk, def: st.def, spd: st.spd, crit: st.crit,
         skills: Game.battleSkills(owned), // 普攻 + 各服装招式
+        sigSkillId: cos.signature,        // 当前服装专属招式（受突破强化）
+        sigPlus: owned.plus || 0,         // 突破等级
       }));
     });
 
@@ -177,13 +181,25 @@ const Battle = {
     return sp >= 4 ? 3 : sp >= 2 ? 2 : 1;
   },
 
+  /** 突破对「当前服装专属招式」的强化：威力倍率（每级 +6%） */
+  sigPowerMult(c, skillId) {
+    return (c.sigSkillId && c.sigSkillId === skillId && c.sigPlus) ? (1 + c.sigPlus * 0.06) : 1;
+  },
+  /** 突破对「当前服装专属招式」的 SP 减免：每 2 级 -1 SP（最低 0） */
+  skillSp(c, skillId) {
+    const sk = window.GameData.SKILLS[skillId];
+    let sp = sk.sp || 0;
+    if (c.sigSkillId && c.sigSkillId === skillId && c.sigPlus) sp = Math.max(0, sp - Math.floor(c.sigPlus / 2));
+    return sp;
+  },
+
   /** 技能当前是否可用（SP 足够、不在冷却、未被沉默）；普攻恒可用 */
   canUseSkill(combatant, skillId) {
     const sk = window.GameData.SKILLS[skillId];
     if (sk.basic) return true;
     if (this.isSilenced(combatant)) return false;
     if ((combatant.cooldowns[skillId] || 0) > 0) return false;
-    return combatant.sp >= (sk.sp || 0);
+    return combatant.sp >= this.skillSp(combatant, skillId);
   },
 
   // ---------- 状态效果 ----------
@@ -338,8 +354,9 @@ const Battle = {
   /** 执行一个技能 */
   executeSkill(combatant, skillId, picked) {
     const sk = window.GameData.SKILLS[skillId];
-    // 扣 SP
-    combatant.sp -= (sk.sp || 0);
+    // 扣 SP（突破对专属招式有减免）
+    combatant.sp -= this.skillSp(combatant, skillId);
+    const sigMul = this.sigPowerMult(combatant, skillId); // 突破对专属招式的威力强化
 
     const targets = this.resolveHitTargets(combatant, skillId, picked);
 
@@ -347,7 +364,7 @@ const Battle = {
       let summary = [];
       targets.forEach(t => {
         if (!t.alive) return;
-        const r = this.dealDamage(combatant, t, sk.power);
+        const r = this.dealDamage(combatant, t, sk.power * sigMul);
         summary.push(`${t.name} -${r.dmg}${r.tag}`);
         // 击退位移
         if (sk.knockback && t.alive) this.applyKnockback(combatant, t, r.dmg);
@@ -364,7 +381,7 @@ const Battle = {
         targets.forEach(t => { if (t.alive) this.applyStatus(t, sk.inflict, combatant); });
       }
     } else if (sk.effect === 'heal') {
-      const amt = Math.round(combatant.effAtk() * sk.power);
+      const amt = Math.round(combatant.effAtk() * sk.power * sigMul);
       let summary = [];
       targets.forEach(t => {
         if (!t.alive) return;
@@ -381,7 +398,7 @@ const Battle = {
       });
       this.pushLog(`${combatant.name} 使用「${sk.name}」，提升${stat === 'atk' ? '攻击' : '防御'}！`);
     } else if (sk.effect === 'shield') {
-      const amt = Math.round(combatant.effAtk() * sk.power);
+      const amt = Math.round(combatant.effAtk() * sk.power * sigMul);
       targets.forEach(t => { if (t.alive) t.shield += amt; });
       this.pushLog(`${combatant.name} 使用「${sk.name}」，为全队附加 ${amt} 点护盾！`);
       if (sk.extra && sk.extra.type === 'taunt') combatant.taunting = 2;
