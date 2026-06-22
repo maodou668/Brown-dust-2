@@ -131,7 +131,10 @@ const BattleUI = {
   unitHtml(c, side, pos, idx, count) {
     const isAlly = c.side === 'ally';
     const charDef = isAlly ? window.GameData.CHARACTERS[c.charId] : window.GameData.ENEMIES[c.charId];
-    const icon = isAlly ? window.GameData.CLASSES[charDef.cls].icon : '👹';
+    const fallback = isAlly ? window.GameData.CLASSES[charDef.cls].icon : '👹';
+    const icon = (charDef && charDef.art)
+      ? `<img class="u-img" src="${charDef.art}" alt="" onerror="this.outerHTML='${fallback}'">`
+      : fallback;
     const hpPct = Math.max(0, (c.hp / c.maxHp) * 100);
     const spPct = (c.sp / c.maxSp) * 100;
     const stIcon = { poison: '☠️', burn: '🔥', stun: '💫', silence: '🔇' };

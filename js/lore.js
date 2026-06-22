@@ -93,4 +93,8 @@ if (window.GameData && window.GameData.CHARACTERS) {
       Object.assign(window.GameData.CHARACTERS[id], CHAR_LORE[id]);
     }
   });
+  // 立绘美术资产（PixelLab 产出，严格遵循 ART_BIBLE）；渲染处图片优先、占位兜底
+  Object.keys(window.GameData.CHARACTERS).forEach(id => {
+    window.GameData.CHARACTERS[id].art = 'assets/characters/' + id + '.png';
+  });
 }

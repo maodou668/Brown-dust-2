@@ -23,6 +23,11 @@ const UI = {
   charAvatar(charId) {
     const c = window.GameData.CHARACTERS[charId];
     const clsIcon = window.GameData.CLASSES[c.cls].icon;
+    if (c.art) {
+      // 图片优先：加载失败自动回退到职业图标占位
+      return `<img class="char-img" src="${c.art}" alt="${c.name}" loading="lazy"
+        onerror="this.outerHTML='<span class=&quot;char-emoji&quot;>${clsIcon}</span>'">`;
+    }
     return clsIcon;
   },
 
