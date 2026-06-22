@@ -16,6 +16,7 @@ const BattleUI = {
     this.busy = false;
     Battle.setup(Game.state.team, stage);
     Battle.onEvent = (e) => this.handleEvent(e);
+    if (window.Sound) Sound.bgm(stage.isBoss ? 'boss' : 'battle');
     this.buildScreen();
     this.refresh();
     this.beginTurn();
@@ -109,6 +110,7 @@ const BattleUI = {
   exit() {
     if (this.root) this.root.remove();
     this.root = null;
+    if (window.Sound) Sound.bgm('home');
     const cb = this.onExitCb;
     this.onExitCb = null;
     if (cb) cb();
@@ -454,12 +456,13 @@ const BattleUI = {
   // ---------- 事件（演出、伤害飘字、结算） ----------
   handleEvent(e) {
     if (!this.root) return;
+    const S = window.Sound;
     if (e.type === 'log') {
       const logEl = this.root.querySelector('#battle-log');
       if (logEl) logEl.textContent = e.msg;
       // 技能横幅：从日志中提取「技能名」
       const mt = e.msg.match(/使用「(.+?)」/);
-      if (mt) this.showSkillBanner(mt[1]);
+      if (mt) { this.showSkillBanner(mt[1]); if (S) S.sfx('skill'); }
     } else if (e.type === 'damage') {
       if (e.dot) {
         this.floatText(e.target, e.amount, 'dot', false);
@@ -468,21 +471,26 @@ const BattleUI = {
         this.impactFlash(e.target, false);
         if (e.crit) this.screenShake();
         this.floatText(e.target, e.amount, 'damage', e.crit);
+        if (S) S.sfx(e.crit ? 'crit' : 'hit');
       }
       this.updateUnitDom(e.target);
     } else if (e.type === 'heal') {
       this.impactFlash(e.target, true);
       this.floatText(e.target, e.amount, 'heal', false);
+      if (S) S.sfx('heal');
       this.updateUnitDom(e.target);
     } else if (e.type === 'knockback') {
       this.knockFloat(e.target, e.kind === 'collide' ? '💥 撞击!' : '↩ 击退!');
+      if (S) S.sfx('knock');
     } else if (e.type === 'status') {
       const nm = { poison: '☠️中毒', burn: '🔥灼烧', stun: '💫眩晕', silence: '🔇沉默' }[e.status] || '';
       this.knockFloat(e.target, nm);
+      if (S) S.sfx('status');
       this.updateUnitDom(e.target);
     } else if (e.type === 'enrage') {
       this.showSkillBanner('狂暴!');
       this.screenShake();
+      if (S) S.sfx('enrage');
       this.updateUnitDom(e.target);
     } else if (e.type === 'end') {
       setTimeout(() => this.showResult(e.result), 700);
@@ -561,6 +569,7 @@ const BattleUI = {
   },
 
   showResult(result) {
+    if (window.Sound) Sound.sfx(result === 'win' ? 'victory' : 'defeat');
     if (result === 'win') {
       const firstClear = !Game.state.cleared.includes(this.stage.id);
       const before = { gold: Game.state.gold, gem: Game.state.gem };
@@ -667,6 +676,7 @@ const Main = {
 
   switchScreen(name) {
     this.current = name;
+    if (window.Sound) Sound.bgm('home');
     document.querySelectorAll('.nav-btn').forEach(b =>
       b.classList.toggle('active', b.dataset.screen === name));
     this.refreshCurrent();

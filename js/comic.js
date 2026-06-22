@@ -69,6 +69,7 @@ const Comic = {
         </div>
       </div>`);
     document.body.appendChild(this.root);
+    if (window.Sound) { Sound.bgm('story'); Sound.sfx('open'); }
     this.root.querySelector('#comic-close').onclick = () => this.close();
     // 进场：面板逐个淡入
     const sc = this.root.querySelector('.comic-scroll');
@@ -78,6 +79,7 @@ const Comic = {
 
   close() {
     if (!this.root) return;
+    if (window.Sound) Sound.bgm('home');
     const r = this.root;
     r.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220 }).onfinish = () => { r.remove(); };
     this.root = null;

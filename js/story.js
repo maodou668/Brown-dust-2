@@ -35,6 +35,7 @@ const Story = {
     this.beats = beats;
     this.idx = 0;
     this.onDone = () => { this.markSeen(id); if (onDone) onDone(); };
+    if (window.Sound) Sound.bgm('story');
     this.curBg = 'void';
     this.portraits = { left: null, right: null };
     this.build();
@@ -206,6 +207,7 @@ const Story = {
 
   finish() {
     clearInterval(this.typer);
+    if (window.Sound && !(window.BattleUI && BattleUI.root)) Sound.bgm('home');
     if (this.root) {
       this.root.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300 }).onfinish = () => {
         if (this.root) this.root.remove();

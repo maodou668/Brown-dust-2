@@ -557,6 +557,7 @@ const UI = {
     m.querySelector('#cd-levelup').onclick = () => {
       const r = Game.levelUpWithGold(uid);
       if (!r.ok) { this.toast(r.msg); return; }
+      if (window.Sound) Sound.sfx('levelup');
       this.toast(`${c.name} 升至 Lv.${r.level}！`);
       this.updateResources();
       this.closeModal(m);
@@ -781,6 +782,7 @@ const UI = {
     const results = [];
     for (let i = 0; i < count; i++) { const r = Game.gachaEx(); if (!r.ok) break; results.push(r); }
     this.updateResources();
+    if (window.Sound) Sound.sfx(results.some(r => { const t = Game.getGearTpl(r.tplId); return t && t.rarity >= 5; }) ? 'pull5' : 'pull');
     const grid = results.map(r => {
       const tpl = Game.getGearTpl(r.tplId);
       const rl = window.GameData.GEAR.RLABEL[tpl.rarity];
@@ -833,6 +835,7 @@ const UI = {
       Game.save();
     }
     this.updateResources();
+    if (window.Sound) Sound.sfx(results.some(r => r.rarity >= 5) ? 'pull5' : 'pull');
     this.showPullResults(results);
   },
 
