@@ -442,12 +442,27 @@ const UI = {
   // ============================================================
   renderRoster() {
     const s = Game.state;
-    // 按稀有度、等级排序
-    const sorted = s.roster.slice().sort((a, b) => {
-      const ca = window.GameData.CHARACTERS[a.charId], cb = window.GameData.CHARACTERS[b.charId];
-      return cb.rarity - ca.rarity || b.level - a.level;
+    const E = window.GameData.ELEMENTS;
+    this.rosterFilter = this.rosterFilter || { element: null, team: false };
+    this.rosterSort = this.rosterSort || 'rarity';
+    const f = this.rosterFilter;
+
+    // 筛选
+    let list = s.roster.filter(o => {
+      const c = window.GameData.CHARACTERS[o.charId];
+      if (f.element && c.element !== f.element) return false;
+      if (f.team && !Game.inTeam(o.uid)) return false;
+      return true;
     });
-    const cards = sorted.map(o => {
+    // 排序
+    const sortFns = {
+      rarity: (a, b) => { const ca = window.GameData.CHARACTERS[a.charId], cb = window.GameData.CHARACTERS[b.charId]; return cb.rarity - ca.rarity || b.level - a.level; },
+      level: (a, b) => b.level - a.level || (b.plus || 0) - (a.plus || 0),
+      element: (a, b) => { const order = ['fire', 'water', 'wind', 'earth', 'light', 'dark']; return order.indexOf(window.GameData.CHARACTERS[a.charId].element) - order.indexOf(window.GameData.CHARACTERS[b.charId].element); },
+    };
+    list = list.slice().sort(sortFns[this.rosterSort] || sortFns.rarity);
+
+    const cards = list.map(o => {
       const c = window.GameData.CHARACTERS[o.charId];
       const inTeam = Game.inTeam(o.uid);
       return `
@@ -457,18 +472,42 @@ const UI = {
             <span class="rarity-badge ${this.rarityClass(c.rarity)}">${c.rarity}★</span>
             ${o.plus ? `<span class="plus-badge corner">+${o.plus}</span>` : ''}
             ${this.charAvatar(o.charId)}
-            <span class="cls-chip">${window.GameData.ELEMENTS[c.element].icon}</span>
+            <span class="cls-chip">${E[c.element].icon}</span>
           </div>
           <div class="rc-info">
             <div class="rc-name">${c.name}</div>
             <div class="rc-lv">Lv.${o.level} · ${window.GameData.CLASSES[c.cls].name}</div>
           </div>
         </div>`;
-    }).join('');
+    }).join('') || '<p class="muted" style="grid-column:1/-1;padding:16px;text-align:center;">没有符合筛选的佣兵</p>';
+
+    const elemChip = (key, icon) => `<button class="rf-chip ${f.element === key ? 'on' : ''}" data-elem="${key || ''}">${icon}</button>`;
+    const sortLabel = { rarity: '稀有度', level: '等级', element: '元素' }[this.rosterSort];
+
     this.screenEl.innerHTML = `
       <div class="section-title">佣兵团（${s.roster.length}）</div>
-      <p class="muted" style="margin:-6px 0 12px;">点击佣兵查看详情、升级与编队 · 出战 ${s.team.length}/5</p>
+      <div class="roster-bar">
+        <div class="rf-elems">
+          ${elemChip(null, '全部')}
+          ${['fire', 'wind', 'earth', 'water', 'light', 'dark'].map(k => elemChip(k, E[k].icon)).join('')}
+        </div>
+        <div class="rf-ctrl">
+          <button class="rf-toggle ${f.team ? 'on' : ''}" id="rf-team">仅出战</button>
+          <button class="rf-sort" id="rf-sort">排序：${sortLabel}</button>
+        </div>
+      </div>
+      <p class="muted" style="margin:-2px 0 10px;font-size:11px;">点击佣兵查看详情、升级 · 出战 ${s.team.length}/5 · 显示 ${list.length}</p>
       <div class="roster-grid">${cards}</div>`;
+
+    this.screenEl.querySelectorAll('[data-elem]').forEach(b => b.onclick = () => {
+      f.element = b.dataset.elem || null; this.renderRoster();
+    });
+    this.screenEl.querySelector('#rf-team').onclick = () => { f.team = !f.team; this.renderRoster(); };
+    this.screenEl.querySelector('#rf-sort').onclick = () => {
+      const order = ['rarity', 'level', 'element'];
+      this.rosterSort = order[(order.indexOf(this.rosterSort) + 1) % order.length];
+      this.renderRoster();
+    };
     this.screenEl.querySelectorAll('.roster-card').forEach(card =>
       card.addEventListener('click', () => this.showCharDetail(card.dataset.uid)));
   },
@@ -1011,6 +1050,12 @@ const UI = {
         ${Game.achClaimable() ? `<span class="ach-entry-badge">${Game.achClaimable()} 可领</span>` : '<span class="ach-entry-go">›</span>'}
       </button>
 
+      <button class="ach-entry" id="open-save" style="background:linear-gradient(135deg,rgba(108,198,255,.14),var(--panel));border-color:rgba(108,198,255,.3);">
+        <span class="ach-entry-icon">💾</span>
+        <span class="ach-entry-text"><b>存档管理</b><span class="muted">导出/导入存档码，换设备或清缓存前务必备份</span></span>
+        <span class="ach-entry-go">›</span>
+      </button>
+
       <div class="section-title">每日签到 ${Game.canCheckIn() ? '' : '<span class="muted" style="font-weight:400;font-size:11px;">· 今日已签</span>'}</div>
       <div class="checkin-grid">${checkRow}</div>
       <button class="btn ${Game.canCheckIn() ? 'gold' : 'secondary'}" id="do-checkin" ${Game.canCheckIn() ? '' : 'disabled'} style="width:100%;margin-bottom:16px;">${Game.canCheckIn() ? '签到领取' : '明日再来'}</button>
@@ -1063,6 +1108,45 @@ const UI = {
     if (ds) ds.onclick = () => this.showSparkPicker();
     const oa = this.screenEl.querySelector('#open-ach');
     if (oa) oa.onclick = () => this.showAchievements();
+    const os = this.screenEl.querySelector('#open-save');
+    if (os) os.onclick = () => this.showSaveManager();
+  },
+
+  /** 存档管理：导出 / 导入 */
+  showSaveManager() {
+    const code = Game.exportSave() || '';
+    const m = this.openModal(`
+      <h2>💾 存档管理</h2>
+      <p class="muted" style="margin:6px 0 10px;">本游戏存档在本机浏览器。<b style="color:var(--danger);">清缓存/换设备会丢档</b>，请用下面的存档码备份。</p>
+      <div class="section-title" style="font-size:14px;">导出（备份）</div>
+      <textarea id="save-out" readonly class="save-box">${code}</textarea>
+      <button class="btn" id="save-copy" style="width:100%;margin:8px 0 16px;">复制存档码</button>
+      <div class="section-title" style="font-size:14px;">导入（恢复）</div>
+      <p class="muted" style="font-size:11px;margin:4px 0;">粘贴存档码后导入将<b style="color:var(--danger);">覆盖当前进度</b>。</p>
+      <textarea id="save-in" class="save-box" placeholder="在此粘贴存档码…"></textarea>
+      <div class="close-row">
+        <button class="btn secondary" id="save-close">关闭</button>
+        <button class="btn gold" id="save-import">导入覆盖</button>
+      </div>
+    `);
+    m.querySelector('#save-copy').onclick = () => {
+      const ta = m.querySelector('#save-out');
+      ta.select();
+      try { navigator.clipboard.writeText(ta.value); } catch (e) { document.execCommand && document.execCommand('copy'); }
+      this.toast('已复制存档码');
+    };
+    m.querySelector('#save-close').onclick = () => this.closeModal(m);
+    m.querySelector('#save-import').onclick = () => {
+      const code = m.querySelector('#save-in').value;
+      if (!code.trim()) { this.toast('请先粘贴存档码'); return; }
+      if (!confirm('导入将覆盖当前进度，确定？')) return;
+      const r = Game.importSave(code);
+      if (!r.ok) { this.toast(r.msg || '导入失败'); return; }
+      this.closeModal(m);
+      this.toast('存档已导入');
+      this.updateResources();
+      Main.switchScreen('home');
+    };
   },
 
   /** 成就殿堂 */

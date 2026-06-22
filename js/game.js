@@ -186,6 +186,32 @@ const Game = {
     this.save();
   },
 
+  /** 导出存档为可分享的字符串（清缓存/换设备的兜底） */
+  exportSave() {
+    try {
+      const json = JSON.stringify(this.state);
+      // 用 encodeURIComponent 兼容中文，再 base64
+      return 'BD2' + btoa(unescape(encodeURIComponent(json)));
+    } catch (e) { return null; }
+  },
+
+  /** 导入存档字符串；成功则替换当前存档并跑迁移 */
+  importSave(code) {
+    if (!code || typeof code !== 'string') return { ok: false, msg: '存档码为空' };
+    code = code.trim();
+    if (code.startsWith('BD2')) code = code.slice(3);
+    let data;
+    try {
+      data = JSON.parse(decodeURIComponent(escape(atob(code))));
+    } catch (e) { return { ok: false, msg: '存档码无效或已损坏' }; }
+    if (!data || !Array.isArray(data.roster)) return { ok: false, msg: '不是有效的存档' };
+    this.state = data;
+    this.save();   // 先落盘，避免 init() 从 localStorage 读回旧档
+    this.init();   // 跑迁移（补字段、修 uid、装备词条等）
+    this.save();
+    return { ok: true };
+  },
+
   // ---------- 角色数值计算 ----------
 
   // ---------- 服装（BD2 模型：服装=收集单位，自带属性+招式）----------
