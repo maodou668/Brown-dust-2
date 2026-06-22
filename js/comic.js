@@ -137,6 +137,27 @@ const COMIC = {
       { bg: 'town', narr: '魔王城外，褐尘暂歇。东方，撑开了一线黎明。', chars: [{ who: 'cmd', x: 26, w: 36 }, { who: 'teried', x: 52, w: 40 }, { who: 'lecliss', x: 78, w: 36 }], bubbles: [{ speaker: '泰瑞德', text: '旅程没结束——才刚刚开始！下一站，永夜！', type: 'shout', side: 'left' }], tall: true },
     ],
   },
+
+  ep_nightfall: {
+    title: '永夜将明 · 女皇的摇篮曲',
+    sub: '改编自《烬火行纪》第二卷终章',
+    cover: 'castle',
+    end: '——第二卷《永夜将明》 完',
+    panels: [
+      { bg: 'void', narr: '魔王陨落后，天没有亮。村镇一个接一个沉睡——人们闭上眼，再没醒来，嘴里哼着同一支摇篮曲。', sfx: '…呢喃…', sfxPos: 'tr', tall: true },
+      { bg: 'forest_deep', narr: '白衣的圣女，提着一盏光。她走过的地方，褐尘像怕光一样退开。', chars: [{ who: 'refithea', x: 50, w: 46 }], bubbles: [{ speaker: '蕾菲西亚', text: '是有人，在哄整个世界睡过去。', type: 'speech', side: 'right' }] },
+      { bg: 'void', narr: '永夜回廊。佣兵团，走向那扇虚掩的黑曜石大门。', chars: [{ who: 'teried', x: 30, w: 36 }, { who: 'refithea', x: 55, w: 34 }, { who: 'cmd', x: 78, w: 32, dim: true }], tall: true },
+      { bg: 'castle', narr: '涅夫提斯坐在褐尘凝成的王座上，疲惫、温柔，像一位守夜太久、自己也快睡着的母亲。', chars: [{ who: 'E:shadow_empress', x: 52, w: 54 }], sfx: '……', sfxPos: 'tr', tall: true },
+      { bg: 'castle', chars: [{ who: 'E:shadow_empress', x: 50, w: 52 }], bubbles: [{ speaker: '涅夫提斯', text: '这世界在受苦。我只想给它一场安眠……这难道，不是慈悲吗？', type: 'speech', side: 'right' }] },
+      { bg: 'void', narr: '回廊为莉可莉丝，浮现出烬火镇的虚影。「回家吧，」幻影里的母亲招手，「歇歇吧，别再打仗了。」', chars: [{ who: 'lecliss', x: 50, w: 44, dim: true }], sfx: '…来呀…', sfxPos: 'bl', tall: true },
+      { bg: 'castle', chars: [{ who: 'teried', x: 35, w: 40 }, { who: 'lecliss', x: 68, w: 40 }], narr: '泰瑞德一把攥住她的手腕。', bubbles: [{ speaker: '泰瑞德', text: '那不是真的。握着你手的我们，才是真的！', type: 'shout', side: 'left' }] },
+      { bg: 'castle', chars: [{ who: 'mina', x: 50, w: 44 }], bubbles: [{ speaker: '米娜', text: '醒着会疼……但假的安睡，再温柔我也不要！我要醒着，跟大家一起！', type: 'shout', side: 'right' }], tall: true },
+      { bg: 'castle', chars: [{ who: 'teried', x: 50, w: 46 }], bubbles: [{ speaker: '泰瑞德', text: '替这世界决定它该不该醒着的，是每个愿意揉揉眼继续走的人。这一次，我们选——醒着！', type: 'shout', side: 'left' }], tall: true },
+      { bg: 'castle', narr: '一场没有恨意、却最为惨烈的战斗。当暗潮第一次裂开——一剑，刺穿了那片温柔的黑。', chars: [{ who: 'E:shadow_empress', x: 50, w: 52, dim: true }], sfx: 'ドオオン', sfxPos: 'br', tall: true },
+      { bg: 'castle', chars: [{ who: 'E:shadow_empress', x: 50, w: 48, dim: true }], bubbles: [{ speaker: '涅夫提斯', text: '原来，有人愿意为了「醒着」疼成这样……替我，看看天亮的样子吧。', type: 'thought', side: 'right' }], sfx: 'サラ…', sfxPos: 'bl' },
+      { bg: 'town', narr: '一千年的永夜，被彻底打碎。褐尘散尽，黎明铺满整片天空。', chars: [{ who: 'teried', x: 30, w: 36 }, { who: 'mina', x: 54, w: 32 }, { who: 'lecliss', x: 76, w: 34 }], bubbles: [{ speaker: '泰瑞德', text: '真亮啊。', type: 'speech', side: 'left' }], tall: true },
+    ],
+  },
 };
 
 window.Comic = Comic;

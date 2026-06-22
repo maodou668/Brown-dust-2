@@ -1110,7 +1110,7 @@ body {
 .comic-end span { font-size: 11px; font-weight: 400; }
 
 /* 剧情回顾里的漫画入口卡 */
-.comic-entry { display: flex; gap: 8px; }
+.comic-entry { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .comic-entry-card {
   flex: 1; background: linear-gradient(160deg, rgba(58,42,26,.55), var(--panel));
   border: 1px solid rgba(255,155,61,.25); border-radius: 12px; padding: 12px;

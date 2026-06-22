@@ -427,30 +427,35 @@ const STORY = {
     { clear: true, text: '「不动」之名，是用一生的脊梁换来的。' },
   ],
 
-  // ---------- 第二部 · 关卡剧情 ----------
+  // ---------- 第二部 · 关卡剧情（改编自小说第二卷《永夜将明》） ----------
   stage6: [
-    { bg: 'forest_deep', text: '魔王陨落数月后，边境却被一层挥之不去的永夜笼罩。' },
-    { who: 'refithea', side: 'right', speaker: '蕾菲西亚', text: '这些亡魂……是被某种力量强行从安息中唤醒的。' },
-    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '又是黑暗……看来魔王，并不是终点。' },
-    { who: 'refithea', side: 'right', speaker: '蕾菲西亚', text: '小心。真正的源头，恐怕还藏在永夜的最深处。' },
+    { bg: 'forest_deep', text: '魔王陨落三个月后，边境却被一层化不开的永夜笼罩，褐尘比从前更密。' },
+    { bg: 'forest_deep', text: '村镇一个接一个陷入沉睡——人们不再逃、不再哭，只是闭上眼，再没醒来，嘴里哼着同一支摇篮曲。' },
+    { who: 'refithea', side: 'right', speaker: '蕾菲西亚', text: '不是瘟疫，也不是诅咒。是有人，在哄整个世界睡过去。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '哄睡……？' },
+    { who: 'refithea', side: 'right', speaker: '蕾菲西亚', text: '永夜女皇涅夫提斯，醒了。这些亡魂，是被她从安息里强行拖出来的。真正的源头，在永夜最深处。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '那就趁还有人没睡着——往最深处走。' },
   ],
   stage7: [
-    { bg: 'castle', text: '永夜回廊的尽头，暗影女皇涅夫提斯端坐于黑曜王座之上。' },
-    { who: 'E:shadow_empress', side: 'right', speaker: '暗影女皇 · 涅夫提斯', text: '哦……是你们终结了那头蠢熊巴尔？真是帮了本皇一个忙呢。' },
-    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '原来魔王，也只是你的一枚棋子……' },
-    { who: 'E:shadow_empress', side: 'right', speaker: '暗影女皇 · 涅夫提斯', text: '永夜，才是这世界的归宿。来吧，做本皇王座下，第一批长眠的祭品。' },
-    { who: 'rigenette', side: 'left', speaker: '莉洁奈特', text: '废话太多了。我的剑，可不会等你说完。' },
+    { bg: 'castle', text: '永夜回廊的尽头。涅夫提斯坐在褐尘凝成的王座上，疲惫、温柔，像一位守夜太久、自己也快睡着的母亲。' },
+    { who: 'E:shadow_empress', side: 'right', speaker: '涅夫提斯', text: '是你们，终结了那头替我看门的蠢熊巴尔……真是帮了我一个忙呢。' },
+    { who: 'E:shadow_empress', side: 'right', speaker: '涅夫提斯', text: '这世界在受苦。我只想给它一场安眠，让所有的疼、所有的怕都停下来。这难道，不是慈悲吗？' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '你说的苦，都是真的。可替这世界决定它该不该醒着的，不该是你。' },
+    { who: 'mina', side: 'right', speaker: '米娜', text: '醒着会疼……但假的安睡，再温柔，我也不要！我要醒着，跟大家一起！' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '这一次，我们选——醒着！' },
   ],
 
-  // ---------- 第二部 · 结局 ----------
+  // ---------- 第二部 · 结局（改编自小说第二卷终章「永夜将明」） ----------
   epilogue2: [
-    { bg: 'castle', text: '随着女皇的哀鸣消散，笼罩边境的永夜，终于裂开了一道曙光。' },
-    { who: 'refithea', side: 'right', speaker: '蕾菲西亚', text: '光……回来了。大地，终于能够安睡了。' },
-    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '从一个魔王，到一位女皇……我们走得比想象中更远。' },
-    { clear: true, bg: 'town', text: '佣兵团的名字，开始在大陆的每个角落被人传颂。' },
-    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '但只要还有黑暗，我们的旅途，就不会结束。' },
-    { who: 'rigenette', side: 'right', speaker: '莉洁奈特', text: '那就继续飞驰吧。下一阵风，已经在路上了。' },
-    { clear: true, bg: 'forest', text: '——佣兵团的传说，仍在续写。' },
+    { bg: 'castle', text: '涅夫提斯没有惨叫。她只是缓缓跪坐下去，像一个终于能放下守夜、自己也睡去的人。' },
+    { who: 'E:shadow_empress', side: 'right', speaker: '涅夫提斯', text: '原来……有人愿意为了「醒着」，疼成这样。那我守了一千年的这场安眠……也许，真的没必要了。' },
+    { who: 'E:shadow_empress', side: 'right', speaker: '涅夫提斯', text: '替我，看看天亮的样子吧，孩子们。我已经，太久没见过黎明了。' },
+    { clear: true, bg: 'town', text: '一千年的永夜，被彻底打碎。褐尘散尽，被哄睡的人们在各地睁开了眼——真正的黎明，铺满了整片天空。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '真亮啊。' },
+    { who: 'lecliss', side: 'right', speaker: '莉可莉丝', text: '……是啊。真亮。' },
+    { who: 'teried', side: 'left', speaker: '泰瑞德', text: '指挥官，下一站去哪儿？' },
+    { speaker: '指挥官', text: '哪儿都行。天亮了，路还长着呢。' },
+    { clear: true, bg: 'forest', text: '烬火不灭，长夜终明。后世把这一年，称作「曙光之年」。而他们的故事，仍在那条洒满阳光的路上继续着。' },
   ],
 };
 

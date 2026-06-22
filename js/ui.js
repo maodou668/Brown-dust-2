@@ -224,6 +224,10 @@ const UI = {
           <div class="ce-title">终章 · 魔王的真相</div>
           <div class="ce-sub">巴尔临终揭示的秘密 ›</div>
         </div>
+        <div class="comic-entry-card" data-comic="ep_nightfall">
+          <div class="ce-title">永夜将明 · 女皇的摇篮曲</div>
+          <div class="ce-sub">第二卷终章 · 涅夫提斯 ›</div>
+        </div>
       </div>
       <div class="replay-group-title" style="margin-top:14px;">主线剧情</div>
       <div class="story-replay-list">${main.map(row).join('')}</div>
