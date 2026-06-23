@@ -588,6 +588,25 @@ const BattleUI = {
 
   showResult(result) {
     if (window.Sound) Sound.sfx(result === 'win' ? 'victory' : 'defeat');
+    // 竞技场结算：不走关卡奖励，按积分处理
+    if (this.stage && this.stage.arena) {
+      const r = Game.arenaResolve(this.stage.oppId, result === 'win');
+      const sign = r.pts >= 0 ? '+' : '';
+      const body = result === 'win'
+        ? `<div class="reward-row"><div class="rw" style="color:var(--gold);">🪙 +${r.gold}</div><div class="rw" style="color:var(--gem);">💎 +${r.gem}</div></div>
+           <p class="muted">竞技积分 <b style="color:var(--accent);">${sign}${r.pts}</b> → ${r.points}</p>`
+        : `<p class="muted">惜败… 竞技积分 <b style="color:var(--danger);">${r.pts}</b> → ${r.points}</p>`;
+      const m = UI.openModal(`
+        <div class="result-modal">
+          <div class="result-title ${result === 'win' ? 'win' : 'lose'}">${result === 'win' ? '竞技胜利！' : '竞技失败'}</div>
+          <p class="muted">${this.stage.name}</p>
+          ${body}
+        </div>
+        <div class="close-row" style="justify-content:center;"><button class="btn" id="res-ok">${result === 'win' ? '领取' : '返回'}</button></div>
+      `, { noBackdropClose: true });
+      m.querySelector('#res-ok').onclick = () => { UI.closeModal(m); UI.updateResources(); this.exit(); };
+      return;
+    }
     if (result === 'win') {
       const firstClear = !Game.state.cleared.includes(this.stage.id);
       const before = { gold: Game.state.gold, gem: Game.state.gem };
@@ -715,6 +734,7 @@ const Main = {
       case 'welfare': UI.renderWelfare(); break;
       case 'dungeon': UI.renderDungeon(); break;
       case 'dispatch': UI.renderDispatch(); break;
+      case 'arena': UI.renderArena(); break;
     }
   },
 };

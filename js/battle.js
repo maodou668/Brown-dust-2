@@ -110,6 +110,22 @@ const Battle = {
 
     // 敌方
     stage.enemies.forEach((e, i) => {
+      // 竞技场 / 角色型敌人：用角色数据构建（与我方同一套属性体系）
+      if (e.char) {
+        const ao = Game.aiOwned(e.char, e.level || 1, e.plus || 0);
+        const cdef = D.CHARACTERS[e.char];
+        const cos = Game.activeCostumeDef(ao);
+        const st = Game.computeStats(ao);
+        const pos = e.pos || ((cdef.cls === 'warrior' || cdef.cls === 'defender') ? 'front'
+          : (cdef.cls === 'archer' || cdef.cls === 'rogue') ? 'mid' : 'back');
+        this.combatants.push(new Combatant({
+          uid: 'E' + i, name: cdef.name, side: 'enemy', charId: e.char,
+          cls: cdef.cls, element: cos.element, color: cos.color, level: ao.level, pos,
+          maxHp: st.maxHp, atk: st.atk, def: st.def, spd: st.spd, crit: st.crit,
+          skills: Game.battleSkills(ao), sigSkillId: cos.signature, sigPlus: ao.plus,
+        }));
+        return;
+      }
       const def = D.ENEMIES[e.id];
       const lv = e.level - 1;
       const grow = { hp: def.base.hp * 0.10, atk: def.base.atk * 0.08, def: def.base.def * 0.08 };

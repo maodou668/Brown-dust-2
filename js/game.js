@@ -953,6 +953,102 @@ const Game = {
     return { ok: false };
   },
 
+  // ============================================================
+  //  竞技场（模拟 PvP）—— 挑战 AI 防守队，积分排名
+  // ============================================================
+  ARENA_MAX_ATTEMPTS: 5,
+  ARENA_RANKS: [
+    { min: 0, name: '青铜', icon: '🥉' }, { min: 1100, name: '白银', icon: '🥈' },
+    { min: 1350, name: '黄金', icon: '🥇' }, { min: 1650, name: '铂金', icon: '💠' },
+    { min: 2000, name: '钻石', icon: '💎' }, { min: 2500, name: '大师', icon: '👑' },
+  ],
+  arenaRank(pts) {
+    let r = this.ARENA_RANKS[0];
+    for (const x of this.ARENA_RANKS) if (pts >= x.min) r = x;
+    return r;
+  },
+  // 合成一个「临时角色实例」给 AI / 战力估算用（不写入存档）
+  aiOwned(charId, level, plus) {
+    return {
+      uid: 'ai', charId, level: level || 1, exp: 0,
+      star: window.GameData.CHARACTERS[charId].rarity, plus: plus || 0,
+      costumes: ['base_' + charId], activeCostume: 'base_' + charId,
+      equip: { weapon: null, armor: null, accessory: null, ex: null },
+    };
+  },
+  teamPowerOf(list) { // list: [{char,level,plus}] 或 owned 数组
+    let p = 0;
+    list.forEach(e => {
+      const ao = e.charId ? e : this.aiOwned(e.char, e.level, e.plus || 0);
+      const st = this.computeStats(ao);
+      p += st.maxHp * 0.25 + st.atk * 1.5 + st.def;
+    });
+    return Math.round(p);
+  },
+  playerPower() {
+    return this.teamPowerOf(this.state.team.map(uid => this.getOwned(uid)).filter(Boolean));
+  },
+  arenaTeamLevel() {
+    const lv = this.state.team.map(uid => { const o = this.getOwned(uid); return o ? o.level : 0; }).filter(Boolean);
+    return Math.max(5, Math.round(lv.length ? lv.reduce((a, b) => a + b, 0) / lv.length : 8));
+  },
+  genArenaOpps() {
+    const ids = Object.keys(window.GameData.CHARACTERS);
+    const base = this.arenaTeamLevel();
+    const pts = (this.state.arena && this.state.arena.points) || 1000;
+    const opps = [];
+    for (let i = 0; i < 5; i++) {
+      const n = 3 + (Math.random() < 0.5 ? 0 : 1);
+      const pool = ids.slice().sort(() => Math.random() - 0.5).slice(0, n);
+      const team = pool.map(cid => ({ char: cid, level: Math.max(1, base + ((Math.random() * 8 - 3) | 0)), plus: Math.random() < 0.3 ? 1 : 0 }));
+      const lead = window.GameData.CHARACTERS[pool[0]];
+      opps.push({
+        id: 'o' + i + '_' + (Date.now() % 100000) + i, name: lead.name + ' 的佣兵团',
+        team, points: Math.max(800, Math.round(pts + (i - 2) * 45 + (Math.random() * 50 - 25))),
+        power: this.teamPowerOf(team), beaten: false,
+      });
+    }
+    return opps;
+  },
+  ensureArena() {
+    if (!this.state.arena) this.state.arena = { points: 1000, date: null, attempts: this.ARENA_MAX_ATTEMPTS, opps: [] };
+    const t = this.today();
+    if (this.state.arena.date !== t) {
+      this.state.arena.date = t;
+      this.state.arena.attempts = this.ARENA_MAX_ATTEMPTS;
+      this.state.arena.opps = this.genArenaOpps();
+      this.save();
+    } else if (!this.state.arena.opps || !this.state.arena.opps.length) {
+      this.state.arena.opps = this.genArenaOpps(); this.save();
+    }
+  },
+  arenaStartAttempt() {
+    this.ensureArena();
+    if (this.state.arena.attempts <= 0) return { ok: false, msg: '今日挑战次数已用完（明日重置）' };
+    this.state.arena.attempts--; this.save(); return { ok: true };
+  },
+  arenaRefresh() { this.ensureArena(); this.state.arena.opps = this.genArenaOpps(); this.save(); },
+  arenaResolve(oppId, win) {
+    this.ensureArena();
+    const a = this.state.arena;
+    const opp = a.opps.find(o => o.id === oppId);
+    const diff = opp ? (opp.points - a.points) : 0;
+    if (win) {
+      const pts = Math.max(8, Math.round(18 + diff * 0.05));
+      a.points += pts;
+      const gold = 600 + Math.round(Math.random() * 400), gem = 20;
+      this.state.gold += gold; this.state.gem += gem;
+      if (opp) opp.beaten = true;
+      this.incQuest('win', 1);
+      this.save();
+      return { win: true, pts, gold, gem, points: a.points };
+    }
+    const pts = Math.min(-5, Math.round(-12 + diff * 0.04));
+    a.points = Math.max(0, a.points + pts);
+    this.save();
+    return { win: false, pts, points: a.points };
+  },
+
   // ---------- 成就系统 ----------
   // metric(s) 返回当前进度值；达到 target 即可领取 reward（一次性）
   ACHIEVEMENTS: [

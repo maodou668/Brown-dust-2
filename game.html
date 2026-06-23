@@ -1339,6 +1339,24 @@ body {
 .disp-tier.sel { border-color: var(--accent); box-shadow: 0 0 10px rgba(176,107,255,.35); }
 .roster-card.sel-pick { outline: 2px solid var(--accent); outline-offset: 1px; box-shadow: 0 0 12px rgba(176,107,255,.45); }
 
+/* 竞技场 */
+.ar-head { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 12px; }
+.ar-rank { font-size: 17px; }
+.ar-rank .ar-pts { font-size: 12px; color: var(--accent); font-weight: 700; }
+.ar-stat { flex: 1; font-size: 12px; color: var(--text-dim); display: flex; flex-direction: column; gap: 3px; }
+.ar-head .btn.sm { margin-top: 0; }
+.ar-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.ar-card { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 10px 12px; }
+.ar-card.beaten { opacity: .5; }
+.ar-team { display: flex; gap: 3px; }
+.ar-mini { width: 30px; height: 30px; border-radius: 7px; display: grid; place-items: center; font-size: 17px; overflow: hidden; background: var(--panel-2); border: 1.5px solid rgba(255,255,255,.1); }
+.ar-mini img.char-img { width: 100%; height: 100%; object-fit: cover; }
+.ar-mid { flex: 1; min-width: 0; }
+.ar-name { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ar-meta { font-size: 11px; }
+.ar-done { font-size: 12px; }
+.ar-card .btn.sm { margin-top: 0; }
+
 </style>
 </head>
 <body>
@@ -1374,7 +1392,7 @@ body {
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '45';</script>
+  <script>window.ASSET_VER = '46';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -3397,6 +3415,102 @@ const Game = {
     return { ok: false };
   },
 
+  // ============================================================
+  //  竞技场（模拟 PvP）—— 挑战 AI 防守队，积分排名
+  // ============================================================
+  ARENA_MAX_ATTEMPTS: 5,
+  ARENA_RANKS: [
+    { min: 0, name: '青铜', icon: '🥉' }, { min: 1100, name: '白银', icon: '🥈' },
+    { min: 1350, name: '黄金', icon: '🥇' }, { min: 1650, name: '铂金', icon: '💠' },
+    { min: 2000, name: '钻石', icon: '💎' }, { min: 2500, name: '大师', icon: '👑' },
+  ],
+  arenaRank(pts) {
+    let r = this.ARENA_RANKS[0];
+    for (const x of this.ARENA_RANKS) if (pts >= x.min) r = x;
+    return r;
+  },
+  // 合成一个「临时角色实例」给 AI / 战力估算用（不写入存档）
+  aiOwned(charId, level, plus) {
+    return {
+      uid: 'ai', charId, level: level || 1, exp: 0,
+      star: window.GameData.CHARACTERS[charId].rarity, plus: plus || 0,
+      costumes: ['base_' + charId], activeCostume: 'base_' + charId,
+      equip: { weapon: null, armor: null, accessory: null, ex: null },
+    };
+  },
+  teamPowerOf(list) { // list: [{char,level,plus}] 或 owned 数组
+    let p = 0;
+    list.forEach(e => {
+      const ao = e.charId ? e : this.aiOwned(e.char, e.level, e.plus || 0);
+      const st = this.computeStats(ao);
+      p += st.maxHp * 0.25 + st.atk * 1.5 + st.def;
+    });
+    return Math.round(p);
+  },
+  playerPower() {
+    return this.teamPowerOf(this.state.team.map(uid => this.getOwned(uid)).filter(Boolean));
+  },
+  arenaTeamLevel() {
+    const lv = this.state.team.map(uid => { const o = this.getOwned(uid); return o ? o.level : 0; }).filter(Boolean);
+    return Math.max(5, Math.round(lv.length ? lv.reduce((a, b) => a + b, 0) / lv.length : 8));
+  },
+  genArenaOpps() {
+    const ids = Object.keys(window.GameData.CHARACTERS);
+    const base = this.arenaTeamLevel();
+    const pts = (this.state.arena && this.state.arena.points) || 1000;
+    const opps = [];
+    for (let i = 0; i < 5; i++) {
+      const n = 3 + (Math.random() < 0.5 ? 0 : 1);
+      const pool = ids.slice().sort(() => Math.random() - 0.5).slice(0, n);
+      const team = pool.map(cid => ({ char: cid, level: Math.max(1, base + ((Math.random() * 8 - 3) | 0)), plus: Math.random() < 0.3 ? 1 : 0 }));
+      const lead = window.GameData.CHARACTERS[pool[0]];
+      opps.push({
+        id: 'o' + i + '_' + (Date.now() % 100000) + i, name: lead.name + ' 的佣兵团',
+        team, points: Math.max(800, Math.round(pts + (i - 2) * 45 + (Math.random() * 50 - 25))),
+        power: this.teamPowerOf(team), beaten: false,
+      });
+    }
+    return opps;
+  },
+  ensureArena() {
+    if (!this.state.arena) this.state.arena = { points: 1000, date: null, attempts: this.ARENA_MAX_ATTEMPTS, opps: [] };
+    const t = this.today();
+    if (this.state.arena.date !== t) {
+      this.state.arena.date = t;
+      this.state.arena.attempts = this.ARENA_MAX_ATTEMPTS;
+      this.state.arena.opps = this.genArenaOpps();
+      this.save();
+    } else if (!this.state.arena.opps || !this.state.arena.opps.length) {
+      this.state.arena.opps = this.genArenaOpps(); this.save();
+    }
+  },
+  arenaStartAttempt() {
+    this.ensureArena();
+    if (this.state.arena.attempts <= 0) return { ok: false, msg: '今日挑战次数已用完（明日重置）' };
+    this.state.arena.attempts--; this.save(); return { ok: true };
+  },
+  arenaRefresh() { this.ensureArena(); this.state.arena.opps = this.genArenaOpps(); this.save(); },
+  arenaResolve(oppId, win) {
+    this.ensureArena();
+    const a = this.state.arena;
+    const opp = a.opps.find(o => o.id === oppId);
+    const diff = opp ? (opp.points - a.points) : 0;
+    if (win) {
+      const pts = Math.max(8, Math.round(18 + diff * 0.05));
+      a.points += pts;
+      const gold = 600 + Math.round(Math.random() * 400), gem = 20;
+      this.state.gold += gold; this.state.gem += gem;
+      if (opp) opp.beaten = true;
+      this.incQuest('win', 1);
+      this.save();
+      return { win: true, pts, gold, gem, points: a.points };
+    }
+    const pts = Math.min(-5, Math.round(-12 + diff * 0.04));
+    a.points = Math.max(0, a.points + pts);
+    this.save();
+    return { win: false, pts, points: a.points };
+  },
+
   // ---------- 成就系统 ----------
   // metric(s) 返回当前进度值；达到 target 即可领取 reward（一次性）
   ACHIEVEMENTS: [
@@ -3563,6 +3677,22 @@ const Battle = {
 
     // 敌方
     stage.enemies.forEach((e, i) => {
+      // 竞技场 / 角色型敌人：用角色数据构建（与我方同一套属性体系）
+      if (e.char) {
+        const ao = Game.aiOwned(e.char, e.level || 1, e.plus || 0);
+        const cdef = D.CHARACTERS[e.char];
+        const cos = Game.activeCostumeDef(ao);
+        const st = Game.computeStats(ao);
+        const pos = e.pos || ((cdef.cls === 'warrior' || cdef.cls === 'defender') ? 'front'
+          : (cdef.cls === 'archer' || cdef.cls === 'rogue') ? 'mid' : 'back');
+        this.combatants.push(new Combatant({
+          uid: 'E' + i, name: cdef.name, side: 'enemy', charId: e.char,
+          cls: cdef.cls, element: cos.element, color: cos.color, level: ao.level, pos,
+          maxHp: st.maxHp, atk: st.atk, def: st.def, spd: st.spd, crit: st.crit,
+          skills: Game.battleSkills(ao), sigSkillId: cos.signature, sigPlus: ao.plus,
+        }));
+        return;
+      }
       const def = D.ENEMIES[e.id];
       const lv = e.level - 1;
       const grow = { hp: def.base.hp * 0.10, atk: def.base.atk * 0.08, def: def.base.def * 0.08 };
@@ -4014,6 +4144,7 @@ const UI = {
       { go: 'stages', icon: '🗺️', label: '冒险', sub: `${cleared}/${window.GameData.STAGES.length}` },
       { go: 'dungeon', icon: '⚡', label: '副本', sub: `体力${s.stamina}` },
       { go: 'dispatch', icon: '🧭', label: '远征', sub: '挂机产出' },
+      { go: 'arena', icon: '🏆', label: '竞技场', sub: `${Game.arenaRank((s.arena && s.arena.points) || 1000).name}` },
       { go: 'gacha', icon: '🎴', label: '招募', sub: `💎${s.gem}` },
       { go: 'roster', icon: '👥', label: '佣兵', sub: `${totalChars}名` },
       { act: 'team', icon: '⚔️', label: '编队', sub: `${s.team.length}/5` },
@@ -5234,6 +5365,60 @@ const UI = {
       if (!r.ok) { this.toast(r.msg); return; }
       this.closeModal(m); this.toast('佣兵已派遣出发'); this.renderDispatch();
     };
+  },
+
+  // ============================================================
+  //  竞技场（模拟 PvP）
+  // ============================================================
+  renderArena() {
+    Game.ensureArena();
+    const a = Game.state.arena;
+    const rank = Game.arenaRank(a.points);
+    const myPow = Game.playerPower();
+    const teamMini = (team) => team.slice(0, 4).map(e => {
+      const c = window.GameData.CHARACTERS[e.char];
+      return `<span class="ar-mini border-${this.rarityClass(c.rarity)}">${this.charAvatar(e.char)}</span>`;
+    }).join('');
+    const oppCards = a.opps.map(o => {
+      const adv = o.power > myPow * 1.1 ? '<span style="color:var(--danger);">强</span>'
+        : o.power < myPow * 0.9 ? '<span style="color:var(--hp);">弱</span>' : '<span class="muted">均</span>';
+      return `<div class="ar-card ${o.beaten ? 'beaten' : ''}">
+        <div class="ar-team">${teamMini(o.team)}</div>
+        <div class="ar-mid">
+          <div class="ar-name">${o.name}</div>
+          <div class="ar-meta muted">积分 ${o.points} · 战力 ${o.power} ${adv}</div>
+        </div>
+        ${o.beaten ? '<div class="ar-done muted">已击败</div>'
+          : `<button class="btn sm" data-fight="${o.id}">挑战</button>`}
+      </div>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="section-title">竞技场</div>
+      <div class="ar-head">
+        <div class="ar-rank">${rank.icon} <b>${rank.name}</b><div class="ar-pts">${a.points} 分</div></div>
+        <div class="ar-stat">
+          <div>我的战力 <b style="color:var(--accent);">${myPow}</b></div>
+          <div>今日挑战 <b>${a.attempts}/${Game.ARENA_MAX_ATTEMPTS}</b></div>
+        </div>
+        <button class="btn secondary sm" id="ar-refresh">换一批</button>
+      </div>
+      <p class="muted" style="margin:8px 0 12px;">挑战其他佣兵团的防守队，胜利涨分、获得金币宝石。每日 ${Game.ARENA_MAX_ATTEMPTS} 次挑战，跨日重置。</p>
+      <div class="ar-list">${oppCards}</div>`;
+    this.screenEl.querySelector('#ar-refresh').onclick = () => { Game.arenaRefresh(); this.renderArena(); };
+    this.screenEl.querySelectorAll('[data-fight]').forEach(b => b.onclick = () => this.startArenaFight(b.dataset.fight));
+  },
+  startArenaFight(oppId) {
+    if (!Game.state.team.length) { this.toast('请先编队'); return; }
+    const opp = Game.state.arena.opps.find(o => o.id === oppId);
+    if (!opp || opp.beaten) return;
+    const att = Game.arenaStartAttempt();
+    if (!att.ok) { this.toast(att.msg); return; }
+    const stage = {
+      id: 'arena_' + oppId, name: '竞技场 · ' + opp.name, arena: true, oppId,
+      enemies: opp.team.map(e => ({ char: e.char, level: e.level, plus: e.plus || 0 })),
+      reward: { gold: 0, gem: 0, exp: 0 },
+    };
+    BattleUI.start(stage, () => { if (Main.current === 'arena') this.renderArena(); });
   },
 
   /** 存档管理：导出 / 导入 */
@@ -7140,6 +7325,25 @@ const BattleUI = {
 
   showResult(result) {
     if (window.Sound) Sound.sfx(result === 'win' ? 'victory' : 'defeat');
+    // 竞技场结算：不走关卡奖励，按积分处理
+    if (this.stage && this.stage.arena) {
+      const r = Game.arenaResolve(this.stage.oppId, result === 'win');
+      const sign = r.pts >= 0 ? '+' : '';
+      const body = result === 'win'
+        ? `<div class="reward-row"><div class="rw" style="color:var(--gold);">🪙 +${r.gold}</div><div class="rw" style="color:var(--gem);">💎 +${r.gem}</div></div>
+           <p class="muted">竞技积分 <b style="color:var(--accent);">${sign}${r.pts}</b> → ${r.points}</p>`
+        : `<p class="muted">惜败… 竞技积分 <b style="color:var(--danger);">${r.pts}</b> → ${r.points}</p>`;
+      const m = UI.openModal(`
+        <div class="result-modal">
+          <div class="result-title ${result === 'win' ? 'win' : 'lose'}">${result === 'win' ? '竞技胜利！' : '竞技失败'}</div>
+          <p class="muted">${this.stage.name}</p>
+          ${body}
+        </div>
+        <div class="close-row" style="justify-content:center;"><button class="btn" id="res-ok">${result === 'win' ? '领取' : '返回'}</button></div>
+      `, { noBackdropClose: true });
+      m.querySelector('#res-ok').onclick = () => { UI.closeModal(m); UI.updateResources(); this.exit(); };
+      return;
+    }
     if (result === 'win') {
       const firstClear = !Game.state.cleared.includes(this.stage.id);
       const before = { gold: Game.state.gold, gem: Game.state.gem };
@@ -7267,6 +7471,7 @@ const Main = {
       case 'welfare': UI.renderWelfare(); break;
       case 'dungeon': UI.renderDungeon(); break;
       case 'dispatch': UI.renderDispatch(); break;
+      case 'arena': UI.renderArena(); break;
     }
   },
 };

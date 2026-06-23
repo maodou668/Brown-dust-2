@@ -70,6 +70,7 @@ const UI = {
       { go: 'stages', icon: '🗺️', label: '冒险', sub: `${cleared}/${window.GameData.STAGES.length}` },
       { go: 'dungeon', icon: '⚡', label: '副本', sub: `体力${s.stamina}` },
       { go: 'dispatch', icon: '🧭', label: '远征', sub: '挂机产出' },
+      { go: 'arena', icon: '🏆', label: '竞技场', sub: `${Game.arenaRank((s.arena && s.arena.points) || 1000).name}` },
       { go: 'gacha', icon: '🎴', label: '招募', sub: `💎${s.gem}` },
       { go: 'roster', icon: '👥', label: '佣兵', sub: `${totalChars}名` },
       { act: 'team', icon: '⚔️', label: '编队', sub: `${s.team.length}/5` },
@@ -1290,6 +1291,60 @@ const UI = {
       if (!r.ok) { this.toast(r.msg); return; }
       this.closeModal(m); this.toast('佣兵已派遣出发'); this.renderDispatch();
     };
+  },
+
+  // ============================================================
+  //  竞技场（模拟 PvP）
+  // ============================================================
+  renderArena() {
+    Game.ensureArena();
+    const a = Game.state.arena;
+    const rank = Game.arenaRank(a.points);
+    const myPow = Game.playerPower();
+    const teamMini = (team) => team.slice(0, 4).map(e => {
+      const c = window.GameData.CHARACTERS[e.char];
+      return `<span class="ar-mini border-${this.rarityClass(c.rarity)}">${this.charAvatar(e.char)}</span>`;
+    }).join('');
+    const oppCards = a.opps.map(o => {
+      const adv = o.power > myPow * 1.1 ? '<span style="color:var(--danger);">强</span>'
+        : o.power < myPow * 0.9 ? '<span style="color:var(--hp);">弱</span>' : '<span class="muted">均</span>';
+      return `<div class="ar-card ${o.beaten ? 'beaten' : ''}">
+        <div class="ar-team">${teamMini(o.team)}</div>
+        <div class="ar-mid">
+          <div class="ar-name">${o.name}</div>
+          <div class="ar-meta muted">积分 ${o.points} · 战力 ${o.power} ${adv}</div>
+        </div>
+        ${o.beaten ? '<div class="ar-done muted">已击败</div>'
+          : `<button class="btn sm" data-fight="${o.id}">挑战</button>`}
+      </div>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="section-title">竞技场</div>
+      <div class="ar-head">
+        <div class="ar-rank">${rank.icon} <b>${rank.name}</b><div class="ar-pts">${a.points} 分</div></div>
+        <div class="ar-stat">
+          <div>我的战力 <b style="color:var(--accent);">${myPow}</b></div>
+          <div>今日挑战 <b>${a.attempts}/${Game.ARENA_MAX_ATTEMPTS}</b></div>
+        </div>
+        <button class="btn secondary sm" id="ar-refresh">换一批</button>
+      </div>
+      <p class="muted" style="margin:8px 0 12px;">挑战其他佣兵团的防守队，胜利涨分、获得金币宝石。每日 ${Game.ARENA_MAX_ATTEMPTS} 次挑战，跨日重置。</p>
+      <div class="ar-list">${oppCards}</div>`;
+    this.screenEl.querySelector('#ar-refresh').onclick = () => { Game.arenaRefresh(); this.renderArena(); };
+    this.screenEl.querySelectorAll('[data-fight]').forEach(b => b.onclick = () => this.startArenaFight(b.dataset.fight));
+  },
+  startArenaFight(oppId) {
+    if (!Game.state.team.length) { this.toast('请先编队'); return; }
+    const opp = Game.state.arena.opps.find(o => o.id === oppId);
+    if (!opp || opp.beaten) return;
+    const att = Game.arenaStartAttempt();
+    if (!att.ok) { this.toast(att.msg); return; }
+    const stage = {
+      id: 'arena_' + oppId, name: '竞技场 · ' + opp.name, arena: true, oppId,
+      enemies: opp.team.map(e => ({ char: e.char, level: e.level, plus: e.plus || 0 })),
+      reward: { gold: 0, gem: 0, exp: 0 },
+    };
+    BattleUI.start(stage, () => { if (Main.current === 'arena') this.renderArena(); });
   },
 
   /** 存档管理：导出 / 导入 */
