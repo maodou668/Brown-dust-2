@@ -27,6 +27,8 @@
   --r4: #b06bff;
   --r3: #6c9fff;
   --shadow: 0 6px 24px rgba(0,0,0,.45);
+  /* 横版舞台宽度：占满视口宽，但限制为横向比例（高 × 2.15），桌面端居中不至过宽 */
+  --frame: min(100vw, calc(100dvh * 2.15));
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -42,7 +44,8 @@ body {
 }
 
 #app {
-  max-width: 480px;
+  width: var(--frame);
+  max-width: 100vw;
   height: 100vh;       /* 兜底：不支持 dvh 的旧浏览器 */
   height: 100dvh;      /* 动态视口高度：扣除移动端 Chrome 的工具栏，保证底栏可见 */
   margin: 0 auto;
@@ -335,7 +338,7 @@ body {
 
 /* ---------- 战斗界面 ---------- */
 #battle-screen {
-  position: fixed; inset: 0; max-width: 480px; margin: 0 auto;
+  position: fixed; inset: 0; max-width: var(--frame); margin: 0 auto;
   background: linear-gradient(180deg, #1a1326 0%, #0e0a14 100%);
   z-index: 48; display: flex; flex-direction: column;
 }
@@ -461,7 +464,7 @@ body {
    叙事演出 / 视觉小说界面（阶段一）
    ============================================================ */
 #story-screen {
-  position: fixed; inset: 0; max-width: 480px; margin: 0 auto;
+  position: fixed; inset: 0; max-width: var(--frame); margin: 0 auto;
   z-index: 70; overflow: hidden; background: #000;
   animation: fadeIn .3s;
 }
@@ -742,7 +745,7 @@ body {
    俯视角探索地图
    ============================================================ */
 #world-screen {
-  position: fixed; inset: 0; max-width: 480px; margin: 0 auto; z-index: 45;
+  position: fixed; inset: 0; max-width: var(--frame); margin: 0 auto; z-index: 45;
   background: #0e0a14; display: flex; flex-direction: column; overflow: hidden;
 }
 .world-top {
@@ -1083,7 +1086,7 @@ body {
 
 /* ============ 漫画演出（条漫式竖向滚动） ============ */
 #comic-screen {
-  position: fixed; inset: 0; max-width: 480px; margin: 0 auto; z-index: 49;
+  position: fixed; inset: 0; max-width: var(--frame); margin: 0 auto; z-index: 49;
   background: #0a0810; display: flex; flex-direction: column;
 }
 .comic-top {
@@ -1179,6 +1182,33 @@ body {
 .comic-entry-card .ce-title { font-weight: 700; font-size: 13px; }
 .comic-entry-card .ce-sub { font-size: 10px; color: var(--text-dim); margin-top: 3px; }
 
+/* ============================================================
+   横版（landscape）—— 整体改为横屏游玩
+   ============================================================ */
+/* 竖屏时提示旋转设备；横屏时隐藏 */
+#rotate-tip {
+  display: none;
+  position: fixed; inset: 0; z-index: 9999;
+  background: radial-gradient(circle at 50% 40%, #2a2038, var(--bg) 70%);
+  color: var(--text);
+  flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  text-align: center; padding: 30px;
+}
+#rotate-tip .rt-icon { font-size: 64px; animation: rtspin 2.4s ease-in-out infinite; }
+#rotate-tip .rt-title { font-size: 19px; font-weight: 800; letter-spacing: .5px; }
+#rotate-tip .rt-sub { font-size: 13px; color: var(--text-dim); line-height: 1.7; max-width: 280px; }
+@keyframes rtspin {
+  0%, 40% { transform: rotate(0deg); }
+  60%, 100% { transform: rotate(-90deg); }
+}
+@media (orientation: portrait) {
+  #rotate-tip { display: flex; }
+  #app { visibility: hidden; }   /* 竖屏不渲染主界面，避免误操作 */
+}
+@media (orientation: landscape) {
+  #rotate-tip { display: none; }
+}
+
 </style>
 </head>
 <body>
@@ -1213,7 +1243,14 @@ body {
   <!-- 弹窗容器 -->
   <div id="modal-root"></div>
 
-  <script>window.ASSET_VER = '40';</script>
+  <!-- 竖屏旋转提示（横版游戏） -->
+  <div id="rotate-tip">
+    <div class="rt-icon">📱</div>
+    <div class="rt-title">请横屏游玩</div>
+    <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
+  </div>
+
+  <script>window.ASSET_VER = '41';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
