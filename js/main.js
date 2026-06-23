@@ -629,6 +629,39 @@ const BattleUI = {
       m.querySelector('#res-ok').onclick = () => { UI.closeModal(m); UI.updateResources(); this.exit(); };
       return;
     }
+    // 混战（无尽波次）结算
+    if (this.stage && this.stage.mayhem) {
+      const wave = this.stage.wave;
+      if (result === 'win') {
+        const rw = Game.mayhemWaveReward(wave);
+        Game.applyReward({ gold: rw.gold, gem: rw.gem });
+        Game.state.team.forEach(uid => { const o = Game.getOwned(uid); if (o) Game.addExp(o, rw.exp); });
+        Game.recordMayhem(wave);
+        Game.incQuest('win', 1);
+        Game.save();
+        const m = UI.openModal(`
+          <div class="result-modal">
+            <div class="result-title win">第 ${wave} 波 突破！</div>
+            <div class="reward-row"><div class="rw" style="color:var(--gold);">🪙 +${rw.gold}</div>${rw.gem ? `<div class="rw" style="color:var(--gem);">💎 +${rw.gem}</div>` : ''}<div class="rw" style="color:var(--accent);">📘 +${rw.exp}</div></div>
+            <p class="muted">队伍满血进入下一波，越深奖励越高。</p>
+          </div>
+          <div class="close-row" style="justify-content:center;">
+            <button class="btn secondary" id="mh-stop">结算离场</button>
+            <button class="btn gold" id="mh-next">挑战第 ${wave + 1} 波 ›</button>
+          </div>`, { noBackdropClose: true });
+        m.querySelector('#mh-next').onclick = () => { UI.closeModal(m); UI.updateResources(); UI.startMayhemWave(wave + 1); };
+        m.querySelector('#mh-stop').onclick = () => { UI.closeModal(m); UI.updateResources(); this.exit(); };
+      } else {
+        const m = UI.openModal(`
+          <div class="result-modal">
+            <div class="result-title lose">混战结束</div>
+            <p class="muted">止步第 ${wave} 波 · 历史最高 ${Game.mayhemBest()} 波</p>
+          </div>
+          <div class="close-row" style="justify-content:center;"><button class="btn" id="res-ok">返回</button></div>`, { noBackdropClose: true });
+        m.querySelector('#res-ok').onclick = () => { UI.closeModal(m); UI.updateResources(); this.exit(); };
+      }
+      return;
+    }
     if (result === 'win') {
       const firstClear = !Game.state.cleared.includes(this.stage.id);
       const before = { gold: Game.state.gold, gem: Game.state.gem };
@@ -760,6 +793,9 @@ const Main = {
     UI.updateResources();
     switch (this.current) {
       case 'home': UI.renderHome(); break;
+      case 'gamecards': UI.renderGameCards(); break;
+      case 'mayhem': UI.renderMayhem(); break;
+      case 'restaurant': UI.renderRestaurant(); break;
       case 'stages': UI.renderStages(); break;
       case 'roster': UI.renderRoster(); break;
       case 'gacha': UI.renderGacha(); break;

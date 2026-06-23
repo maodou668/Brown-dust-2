@@ -124,8 +124,8 @@ const UI = {
         <!-- 底部功能行 + 出战 CTA + 角色缩略 -->
         <div class="lobby-bottombar">
           <div class="lb-funcs">${bottomFuncs.map(funcBtn).join('')}</div>
-          <button class="lb-cta" data-go="stages">
-            <span class="cta-go">出 战</span><span class="cta-sub">主线 ${cleared}/${total}</span>
+          <button class="lb-cta" data-go="gamecards">
+            <span class="cta-go">出 战</span><span class="cta-sub">游戏卡 · 主线 ${cleared}/${total}</span>
           </button>
           <button class="lb-thumb" data-go="roster" title="${leadName}">
             <span class="lt-art">${leadAvatar}</span>
@@ -1921,6 +1921,135 @@ const UI = {
       reward: { gold: 0, gem: 0, exp: 0 }, isBoss: id === 'ev3',
     };
     BattleUI.start(stage, () => { if (Main.current === 'event') this.renderEvent(); });
+  },
+
+  // ============================================================
+  //  游戏卡珍藏集（出战）—— 四大类卡带货架（对照 BD2）
+  // ============================================================
+  renderGameCards() {
+    const cats = Game.gameCardCats();
+    const cart = (c) => {
+      const lock = !c.owned;
+      const badge = c.tag ? c.tag : ('VOL.' + (c.vol || 1));
+      return `<button class="gcard ${lock ? 'locked' : ''} ${c.done ? 'done' : ''}"
+        ${lock ? '' : `data-go="${c.go || ''}" data-side="${c.side || ''}" data-evsel="${c.evSel || ''}"`}>
+        <span class="gcard-badge">${badge}</span>
+        <span class="gcard-art">${lock ? '🔒' : c.icon}</span>
+        <span class="gcard-strip">${lock ? '？？？' : c.name}</span>
+        ${c.done ? '<span class="gcard-clear">✓</span>' : (lock ? '' : '<span class="gcard-plus">＋</span>')}
+      </button>`;
+    };
+    const rows = cats.map(cat => `
+      <div class="gc-row">
+        <div class="gc-rowhead">
+          <span class="gc-rowname">${cat.name} <b>${cat.owned}/${cat.total}</b></span>
+          <span class="gc-rowsub muted">${cat.sub}</span>
+        </div>
+        <div class="gc-shelf">${cat.cards.map(cart).join('')}</div>
+      </div>`).join('');
+    this.screenEl.innerHTML = `<div class="gamecard-coll">
+      <div class="gc-head">🎮 游戏卡珍藏集 <span class="muted" style="font-size:12px;font-weight:400;">· 选择游戏卡开始游玩</span></div>
+      ${rows}</div>`;
+    this.screenEl.querySelectorAll('.gcard:not(.locked)').forEach(el => el.onclick = () => {
+      const evsel = el.dataset.evsel, go = el.dataset.go, side = el.dataset.side;
+      if (evsel) { this.eventSel = evsel; Main.switchScreen('event'); return; }
+      if (side) { if (window.Story) Story.play(side); return; }
+      if (go) { Main.switchScreen(go); return; }
+    });
+  },
+
+  // ============================================================
+  //  玩法卡 · 混战（无尽波次生存）
+  // ============================================================
+  renderMayhem() {
+    const best = Game.mayhemBest();
+    const preview = [1, 5, 10, 15].map(w => {
+      const r = Game.mayhemWaveReward(w);
+      const boss = w % 5 === 0;
+      return `<div class="mh-prev ${boss ? 'boss' : ''}"><span class="mh-prev-w">第 ${w} 波${boss ? ' 👑' : ''}</span><span class="mh-prev-rw">🪙${r.gold}${r.gem ? ' 💎' + r.gem : ''}</span></div>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="section-title">混战 · 无尽波次 <span class="muted" style="font-weight:400;font-size:11px;">· 越往后敌人越强，每 5 波出现 BOSS</span></div>
+      <div class="mayhem-card">
+        <div class="mh-best">🏆 历史最高波数 <b>${best}</b></div>
+        <p class="muted" style="font-size:12px;line-height:1.6;">连续挑战波次，胜利自动进入下一波，队伍每波满血再战；越深奖励越高。中途可结算离场，失败则本轮结束。</p>
+        <div class="mh-prev-list">${preview}</div>
+        <div class="mh-actions">
+          <button class="btn gold" id="mh-start">从第 1 波开始</button>
+          ${best > 0 ? `<button class="btn" id="mh-resume">从第 ${best + 1} 波冲榜</button>` : ''}
+        </div>
+      </div>`;
+    const st = this.screenEl.querySelector('#mh-start');
+    if (st) st.onclick = () => this.startMayhemWave(1);
+    const rs = this.screenEl.querySelector('#mh-resume');
+    if (rs) rs.onclick = () => this.startMayhemWave(best + 1);
+  },
+  startMayhemWave(wave) {
+    if (!Game.state.team.length) { this.toast('请先编队'); return; }
+    const stage = {
+      id: 'mayhem_' + wave, name: '混战 · 第 ' + wave + ' 波', mayhem: true, wave,
+      enemies: Game.mayhemEnemies(wave), reward: { gold: 0, gem: 0, exp: 0 }, isBoss: wave % 5 === 0,
+    };
+    BattleUI.start(stage, () => { if (Main.current === 'mayhem') this.renderMayhem(); });
+  },
+
+  // ============================================================
+  //  玩法卡 · 经营（格鲁菲餐厅，挂机产出营业额）
+  // ============================================================
+  renderRestaurant() {
+    const r = Game.state.restaurant;
+    const rate = Game.restaurantRate();
+    const pending = Game.restaurantPending();
+    const full = Game.restaurantFull();
+    const cost = Game.restaurantUpgradeCost();
+    const slots = (r.staff || [null, null, null]).map((uid, i) => {
+      const o = uid && Game.getOwned(uid);
+      const c = o && window.GameData.CHARACTERS[o.charId];
+      return o
+        ? `<button class="rst-slot filled" data-staff="${i}"><span class="rst-staff-art">${this.charAvatar(o.charId)}</span><span class="rst-staff-name">${c.name}</span></button>`
+        : `<button class="rst-slot empty" data-staff="${i}"><span class="rst-staff-art">＋</span><span class="rst-staff-name muted">空缺</span></button>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="section-title">格鲁菲餐厅 <span class="muted" style="font-weight:400;font-size:11px;">· 安排员工挂机经营，结算营业额（金币）</span></div>
+      <div class="rst-card">
+        <div class="rst-top">
+          <div class="rst-shop">🍴</div>
+          <div class="rst-info">
+            <div class="rst-lv">餐厅 Lv.${r.level || 1}</div>
+            <div class="rst-rate muted">营业额速率 🪙${rate}/小时 · 满仓 ${Game.RESTAURANT.capHours} 小时</div>
+          </div>
+        </div>
+        <div class="rst-pending">
+          <div class="rst-pend-num">🪙 ${pending}</div>
+          <div class="muted" style="font-size:11px;">${full ? '已满仓，快来结算！' : '营业额累积中…'}</div>
+        </div>
+        <button class="btn ${pending > 0 ? 'gold' : 'secondary'}" id="rst-claim" ${pending > 0 ? '' : 'disabled'} style="width:100%;">结算营业额</button>
+        <div class="rst-staff-title">员工配置 <span class="muted" style="font-size:11px;font-weight:400;">· 每名在岗员工 +35% 速率</span></div>
+        <div class="rst-slots">${slots}</div>
+        <button class="btn ${Game.state.gold >= cost ? '' : 'secondary'}" id="rst-up" ${Game.state.gold >= cost ? '' : 'disabled'} style="width:100%;margin-top:10px;">升级餐厅 · 🪙${cost}</button>
+      </div>`;
+    const cl = this.screenEl.querySelector('#rst-claim');
+    if (cl) cl.onclick = () => { const res = Game.claimRestaurant(); if (!res.ok) { this.toast(res.msg); return; } if (window.Sound) Sound.sfx('levelup'); this.toast(`结算营业额 🪙${res.gold}`); this.updateResources(); this.renderRestaurant(); };
+    const up = this.screenEl.querySelector('#rst-up');
+    if (up) up.onclick = () => { const res = Game.upgradeRestaurant(); if (!res.ok) { this.toast(res.msg); return; } this.toast(`餐厅升级至 Lv.${res.level}`); this.updateResources(); this.renderRestaurant(); };
+    this.screenEl.querySelectorAll('[data-staff]').forEach(b => b.onclick = () => this.showRestaurantStaffPicker(parseInt(b.dataset.staff, 10)));
+  },
+  showRestaurantStaffPicker(slot) {
+    const r = Game.state.restaurant;
+    const onDuty = new Set((r.staff || []).filter(Boolean));
+    const list = Game.state.roster.map(o => {
+      const c = window.GameData.CHARACTERS[o.charId];
+      const here = onDuty.has(o.uid);
+      return `<button class="rst-pick ${here ? 'on' : ''}" data-uid="${o.uid}">
+        <span class="rst-pick-art">${this.charAvatar(o.charId)}</span>
+        <span class="rst-pick-name">${c.name}</span>${here ? '<span class="rst-pick-tag">在岗</span>' : ''}</button>`;
+    }).join('');
+    const m = this.openModal(`<h2>安排员工 · 第 ${slot + 1} 岗</h2>
+      <div class="rst-pick-grid">${list}</div>
+      <div class="close-row"><button class="btn secondary" id="rst-clear">清空该岗</button><button class="btn" id="rst-cancel">关闭</button></div>`, { wide: true });
+    m.querySelectorAll('[data-uid]').forEach(b => b.onclick = () => { Game.assignRestaurantStaff(slot, b.dataset.uid); this.closeModal(m); this.updateResources(); this.renderRestaurant(); });
+    m.querySelector('#rst-clear').onclick = () => { Game.assignRestaurantStaff(slot, null); this.closeModal(m); this.renderRestaurant(); };
+    m.querySelector('#rst-cancel').onclick = () => this.closeModal(m);
   },
 
   // ============================================================

@@ -45,6 +45,8 @@ const Game = {
     if (!this.state.quests) this.state.quests = { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} };
     if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
     if (!this.state.shop2) this.state.shop2 = { bought: {} };
+    if (!this.state.mayhem) this.state.mayhem = { best: 0 };
+    if (!this.state.restaurant) this.state.restaurant = { staff: [null, null, null], ts: Date.now(), level: 1 };
     if (this.state.stamina == null) { this.state.stamina = 120; this.state.staminaTs = Date.now(); }
     if (!this.state.dispatch) this.state.dispatch = { slots: [null, null, null] };
     if (this.state.awakenStone == null) this.state.awakenStone = 0;
@@ -1709,6 +1711,126 @@ const Game = {
     return 0;
   },
   eventHubAnyClaimable() { return this.EVENT_HUB.reduce((n, ev) => n + this.eventHubClaimable(ev), 0); },
+
+  // ============================================================
+  //  游戏卡 · 混战（Mayhem）—— 波次生存，越往后越强，刷新最高波数
+  // ============================================================
+  MAYHEM_POOL: ['goblin', 'goblin_archer', 'wolf', 'ogre', 'dark_mage', 'revenant', 'dark_knight'],
+  MAYHEM_BOSS: ['troll_king', 'demon_lord', 'shadow_empress'],
+  mayhemEnemies(wave) {
+    const D = window.GameData;
+    const level = 5 + wave * 3;
+    if (wave % 5 === 0) {                       // 每 5 波一个 BOSS
+      const id = this.MAYHEM_BOSS[(wave / 5 - 1) % this.MAYHEM_BOSS.length];
+      const adds = wave >= 10 ? [{ id: this.MAYHEM_POOL[wave % this.MAYHEM_POOL.length], level, pos: 'front' }] : [];
+      return [{ id, level: level + 4, pos: 'mid' }, ...adds];
+    }
+    const count = Math.min(5, 2 + Math.floor(wave / 2));
+    const arr = [];
+    const poss = ['front', 'front', 'mid', 'mid', 'back'];
+    for (let i = 0; i < count; i++) {
+      const id = this.MAYHEM_POOL[(wave + i) % this.MAYHEM_POOL.length];
+      arr.push({ id, level, pos: poss[i] });
+    }
+    return arr;
+  },
+  mayhemWaveReward(wave) {
+    return { gold: 400 * wave, gem: wave % 5 === 0 ? 20 : 0, exp: 200 + wave * 40 };
+  },
+  mayhemBest() { return (this.state.mayhem && this.state.mayhem.best) || 0; },
+  recordMayhem(wave) {
+    if (!this.state.mayhem) this.state.mayhem = { best: 0 };
+    if (wave > this.state.mayhem.best) { this.state.mayhem.best = wave; this.save(); }
+  },
+
+  // ============================================================
+  //  游戏卡 · 经营（格鲁菲餐厅）—— 派员工挂机产出营业额（金币）
+  // ============================================================
+  RESTAURANT: { baseRate: 1800, capHours: 8, slots: 3 },
+  restaurantUpgradeCost() { return 20000 * (this.state.restaurant.level || 1); },
+  restaurantRate() {
+    const r = this.state.restaurant;
+    const filled = (r.staff || []).filter(Boolean).length;
+    return Math.round(this.RESTAURANT.baseRate * (r.level || 1) * (1 + 0.35 * filled));
+  },
+  restaurantPending() {
+    const r = this.state.restaurant;
+    const rate = this.restaurantRate();
+    const hrs = Math.min(this.RESTAURANT.capHours, (Date.now() - (r.ts || Date.now())) / 3600000);
+    return Math.floor(rate * hrs);
+  },
+  restaurantFull() {
+    const r = this.state.restaurant;
+    return (Date.now() - (r.ts || Date.now())) / 3600000 >= this.RESTAURANT.capHours;
+  },
+  claimRestaurant() {
+    const g = this.restaurantPending();
+    if (g <= 0) return { ok: false, msg: '暂无营业额可结算' };
+    this.state.gold += g;
+    this.state.restaurant.ts = Date.now();
+    this.save();
+    return { ok: true, gold: g };
+  },
+  assignRestaurantStaff(slot, uid) {
+    const r = this.state.restaurant;
+    if (!r.staff) r.staff = [null, null, null];
+    // 同一人不可重复上岗
+    r.staff = r.staff.map(u => u === uid ? null : u);
+    r.staff[slot] = uid;
+    // 调整人员即结算一次，避免速率跳变占便宜
+    const g = this.restaurantPending();
+    if (g > 0) { this.state.gold += g; }
+    r.ts = Date.now();
+    this.save();
+    return { ok: true };
+  },
+  upgradeRestaurant() {
+    const cost = this.restaurantUpgradeCost();
+    if (this.state.gold < cost) return { ok: false, msg: '金币不足' };
+    const g = this.restaurantPending();
+    if (g > 0) this.state.gold += g;
+    this.spendGold(cost);
+    this.state.restaurant.level = (this.state.restaurant.level || 1) + 1;
+    this.state.restaurant.ts = Date.now();
+    this.save();
+    return { ok: true, level: this.state.restaurant.level };
+  },
+
+  // ============================================================
+  //  游戏卡珍藏集（Game Card Collection）—— 四大类卡片汇总
+  // ============================================================
+  gameCardCats() {
+    const D = window.GameData;
+    // 剧情游戏卡：按主线章节
+    const storyCards = window.World.CHAPTERS.map((ch, i) => ({
+      id: ch.id, name: ch.name, icon: { forest: '🌲', cave: '⛏️', castle: '🏰' }[ch.theme] || '🗺️',
+      owned: window.World.isChapterUnlocked(i), done: window.World.isChapterDone(ch),
+      go: 'stages', vol: i + 1,
+    }));
+    // 角色游戏卡：拥有的角色支线
+    const seen = new Set(); const charCards = [];
+    this.state.roster.forEach(o => {
+      const c = D.CHARACTERS[o.charId];
+      if (c.side && !seen.has(c.charId)) { seen.add(c.charId); charCards.push({ id: c.side, name: c.name, icon: D.CLASSES[c.cls].icon, owned: true, charId: o.charId, act: 'charstory', side: c.side, vol: charCards.length + 1 }); }
+    });
+    const charTotal = Object.values(D.CHARACTERS).filter(c => c.side).length;
+    // 玩法游戏卡：5 种核心玩法
+    const playCards = [
+      { id: 'pvp', name: 'PvP · 竞技场', icon: '🏆', owned: true, go: 'arena', tag: 'PvP' },
+      { id: 'challenge', name: '挑战 · 试炼之塔', icon: '🗼', owned: true, go: 'stages', tag: '挑战' },
+      { id: 'growth', name: '成长 · 资源副本', icon: '⚡', owned: true, go: 'dungeon', tag: '成长' },
+      { id: 'mayhem', name: '混战 · 无尽波次', icon: '🌀', owned: true, go: 'mayhem', tag: '混战' },
+      { id: 'restaurant', name: '经营 · 格鲁菲餐厅', icon: '🍴', owned: true, go: 'restaurant', tag: '经营' },
+    ];
+    // 活动游戏卡：活动中心
+    const evCards = this.EVENT_HUB.map(ev => ({ id: ev.id, name: ev.title, icon: ev.art, owned: true, go: 'event', evSel: ev.id, vol: ev.cd }));
+    return [
+      { id: 'story', name: '剧情游戏卡', sub: '主线剧情游戏卡', owned: storyCards.filter(c => c.owned).length, total: storyCards.length, cards: storyCards },
+      { id: 'char', name: '角色游戏卡', sub: '各角色的剧情/世界剧情游戏卡', owned: charCards.length, total: charTotal, cards: charCards },
+      { id: 'play', name: '玩法游戏卡', sub: '可进行 PvP、挑战、成长等各种玩法', owned: playCards.length, total: playCards.length, cards: playCards },
+      { id: 'event', name: '活动游戏卡', sub: '活动限定提供的相关游戏卡', owned: evCards.length, total: evCards.length, cards: evCards },
+    ];
+  },
 
   // ---------- 成就系统 ----------
   // metric(s) 返回当前进度值；达到 target 即可领取 reward（一次性）

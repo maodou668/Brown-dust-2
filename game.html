@@ -2018,6 +2018,68 @@ button.ac-circle:active { transform: scale(.92); }
 .sp-price:not(:disabled):active { transform: scale(.95); }
 @media (max-width: 720px) { .sp-side { flex-basis: 76px; } .sp-merchant { flex-basis: 28%; } .sp-merchant-art { font-size: clamp(50px, 14vh, 110px); } }
 
+/* ===== 游戏卡珍藏集（出战 · 卡带货架） ===== */
+.gamecard-coll { padding: 12px; height: 100%; overflow-y: auto; box-sizing: border-box; }
+.gc-head { font-size: 17px; font-weight: 900; margin-bottom: 12px; }
+.gc-row { margin-bottom: 16px; }
+.gc-rowhead { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,.07); }
+.gc-rowname { font-size: 14px; font-weight: 800; }
+.gc-rowname b { color: var(--gold); }
+.gc-rowsub { font-size: 11px; }
+.gc-shelf { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 10px; }
+.gcard {
+  flex: 0 0 auto; width: 104px; height: 124px; cursor: pointer; position: relative;
+  background: linear-gradient(160deg, #3a4150, #232834); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px 10px 6px 6px; padding: 8px 8px 6px; display: flex; flex-direction: column; align-items: center;
+  box-shadow: 0 6px 12px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.08);
+}
+.gcard::before { content: ''; position: absolute; top: 5px; left: 50%; transform: translateX(-50%); width: 46px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.18); }
+.gcard:not(.locked):active { transform: translateY(2px); }
+.gcard.locked { opacity: .5; cursor: default; filter: grayscale(.6); }
+.gcard-badge { font-size: 9px; font-weight: 800; color: #cdb27a; margin-top: 8px; letter-spacing: .5px; }
+.gcard-art { font-size: 38px; margin: 6px 0 auto; filter: drop-shadow(0 3px 6px rgba(0,0,0,.4)); }
+.gcard-strip {
+  width: 100%; font-size: 10px; font-weight: 700; text-align: center; line-height: 1.2;
+  background: rgba(0,0,0,.35); border-radius: 5px; padding: 4px 3px; color: #e8e2f0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gcard-clear { position: absolute; top: 6px; right: 6px; font-size: 13px; color: #4caf72; }
+.gcard-plus { position: absolute; top: 4px; right: 6px; font-size: 14px; color: var(--gold); font-weight: 900; }
+.gcard.done { border-color: rgba(76,175,114,.4); }
+
+/* ===== 混战 ===== */
+.mayhem-card { background: var(--panel); border: 1px solid rgba(255,255,255,.07); border-radius: 14px; padding: 16px; }
+.mh-best { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+.mh-best b { color: var(--gold); font-size: 22px; }
+.mh-prev-list { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+.mh-prev { display: flex; justify-content: space-between; background: var(--panel-2); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+.mh-prev.boss { border: 1px solid rgba(240,198,116,.4); }
+.mh-prev-rw { color: var(--gold); font-weight: 700; }
+.mh-actions { display: flex; gap: 10px; }
+.mh-actions .btn { flex: 1; }
+
+/* ===== 经营 · 餐厅 ===== */
+.rst-card { background: var(--panel); border: 1px solid rgba(255,255,255,.07); border-radius: 14px; padding: 16px; }
+.rst-top { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.rst-shop { font-size: 46px; }
+.rst-lv { font-size: 17px; font-weight: 800; }
+.rst-rate { font-size: 12px; margin-top: 3px; }
+.rst-pending { text-align: center; background: var(--panel-2); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+.rst-pend-num { font-size: 26px; font-weight: 900; color: var(--gold); }
+.rst-staff-title { font-size: 13px; font-weight: 800; margin: 16px 0 8px; }
+.rst-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rst-slot { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; background: var(--panel-2); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 12px 6px; }
+.rst-slot.empty .rst-staff-art { color: var(--text-dim); }
+.rst-staff-art { font-size: 32px; }
+.rst-staff-name { font-size: 12px; font-weight: 700; }
+.rst-slot:active { transform: scale(.96); }
+.rst-pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; max-height: 50vh; overflow-y: auto; margin: 10px 0; }
+.rst-pick { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; background: var(--panel); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 10px 4px; }
+.rst-pick.on { border-color: var(--gold); }
+.rst-pick-art { font-size: 28px; }
+.rst-pick-name { font-size: 11px; }
+.rst-pick-tag { position: absolute; top: 3px; right: 3px; font-size: 9px; color: var(--gold); background: rgba(0,0,0,.5); padding: 1px 4px; border-radius: 4px; }
+
 </style>
 </head>
 <body>
@@ -2063,7 +2125,7 @@ button.ac-circle:active { transform: scale(.92); }
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '63';</script>
+  <script>window.ASSET_VER = '64';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -3178,6 +3240,8 @@ const Game = {
     if (!this.state.quests) this.state.quests = { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} };
     if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
     if (!this.state.shop2) this.state.shop2 = { bought: {} };
+    if (!this.state.mayhem) this.state.mayhem = { best: 0 };
+    if (!this.state.restaurant) this.state.restaurant = { staff: [null, null, null], ts: Date.now(), level: 1 };
     if (this.state.stamina == null) { this.state.stamina = 120; this.state.staminaTs = Date.now(); }
     if (!this.state.dispatch) this.state.dispatch = { slots: [null, null, null] };
     if (this.state.awakenStone == null) this.state.awakenStone = 0;
@@ -4843,6 +4907,126 @@ const Game = {
   },
   eventHubAnyClaimable() { return this.EVENT_HUB.reduce((n, ev) => n + this.eventHubClaimable(ev), 0); },
 
+  // ============================================================
+  //  游戏卡 · 混战（Mayhem）—— 波次生存，越往后越强，刷新最高波数
+  // ============================================================
+  MAYHEM_POOL: ['goblin', 'goblin_archer', 'wolf', 'ogre', 'dark_mage', 'revenant', 'dark_knight'],
+  MAYHEM_BOSS: ['troll_king', 'demon_lord', 'shadow_empress'],
+  mayhemEnemies(wave) {
+    const D = window.GameData;
+    const level = 5 + wave * 3;
+    if (wave % 5 === 0) {                       // 每 5 波一个 BOSS
+      const id = this.MAYHEM_BOSS[(wave / 5 - 1) % this.MAYHEM_BOSS.length];
+      const adds = wave >= 10 ? [{ id: this.MAYHEM_POOL[wave % this.MAYHEM_POOL.length], level, pos: 'front' }] : [];
+      return [{ id, level: level + 4, pos: 'mid' }, ...adds];
+    }
+    const count = Math.min(5, 2 + Math.floor(wave / 2));
+    const arr = [];
+    const poss = ['front', 'front', 'mid', 'mid', 'back'];
+    for (let i = 0; i < count; i++) {
+      const id = this.MAYHEM_POOL[(wave + i) % this.MAYHEM_POOL.length];
+      arr.push({ id, level, pos: poss[i] });
+    }
+    return arr;
+  },
+  mayhemWaveReward(wave) {
+    return { gold: 400 * wave, gem: wave % 5 === 0 ? 20 : 0, exp: 200 + wave * 40 };
+  },
+  mayhemBest() { return (this.state.mayhem && this.state.mayhem.best) || 0; },
+  recordMayhem(wave) {
+    if (!this.state.mayhem) this.state.mayhem = { best: 0 };
+    if (wave > this.state.mayhem.best) { this.state.mayhem.best = wave; this.save(); }
+  },
+
+  // ============================================================
+  //  游戏卡 · 经营（格鲁菲餐厅）—— 派员工挂机产出营业额（金币）
+  // ============================================================
+  RESTAURANT: { baseRate: 1800, capHours: 8, slots: 3 },
+  restaurantUpgradeCost() { return 20000 * (this.state.restaurant.level || 1); },
+  restaurantRate() {
+    const r = this.state.restaurant;
+    const filled = (r.staff || []).filter(Boolean).length;
+    return Math.round(this.RESTAURANT.baseRate * (r.level || 1) * (1 + 0.35 * filled));
+  },
+  restaurantPending() {
+    const r = this.state.restaurant;
+    const rate = this.restaurantRate();
+    const hrs = Math.min(this.RESTAURANT.capHours, (Date.now() - (r.ts || Date.now())) / 3600000);
+    return Math.floor(rate * hrs);
+  },
+  restaurantFull() {
+    const r = this.state.restaurant;
+    return (Date.now() - (r.ts || Date.now())) / 3600000 >= this.RESTAURANT.capHours;
+  },
+  claimRestaurant() {
+    const g = this.restaurantPending();
+    if (g <= 0) return { ok: false, msg: '暂无营业额可结算' };
+    this.state.gold += g;
+    this.state.restaurant.ts = Date.now();
+    this.save();
+    return { ok: true, gold: g };
+  },
+  assignRestaurantStaff(slot, uid) {
+    const r = this.state.restaurant;
+    if (!r.staff) r.staff = [null, null, null];
+    // 同一人不可重复上岗
+    r.staff = r.staff.map(u => u === uid ? null : u);
+    r.staff[slot] = uid;
+    // 调整人员即结算一次，避免速率跳变占便宜
+    const g = this.restaurantPending();
+    if (g > 0) { this.state.gold += g; }
+    r.ts = Date.now();
+    this.save();
+    return { ok: true };
+  },
+  upgradeRestaurant() {
+    const cost = this.restaurantUpgradeCost();
+    if (this.state.gold < cost) return { ok: false, msg: '金币不足' };
+    const g = this.restaurantPending();
+    if (g > 0) this.state.gold += g;
+    this.spendGold(cost);
+    this.state.restaurant.level = (this.state.restaurant.level || 1) + 1;
+    this.state.restaurant.ts = Date.now();
+    this.save();
+    return { ok: true, level: this.state.restaurant.level };
+  },
+
+  // ============================================================
+  //  游戏卡珍藏集（Game Card Collection）—— 四大类卡片汇总
+  // ============================================================
+  gameCardCats() {
+    const D = window.GameData;
+    // 剧情游戏卡：按主线章节
+    const storyCards = window.World.CHAPTERS.map((ch, i) => ({
+      id: ch.id, name: ch.name, icon: { forest: '🌲', cave: '⛏️', castle: '🏰' }[ch.theme] || '🗺️',
+      owned: window.World.isChapterUnlocked(i), done: window.World.isChapterDone(ch),
+      go: 'stages', vol: i + 1,
+    }));
+    // 角色游戏卡：拥有的角色支线
+    const seen = new Set(); const charCards = [];
+    this.state.roster.forEach(o => {
+      const c = D.CHARACTERS[o.charId];
+      if (c.side && !seen.has(c.charId)) { seen.add(c.charId); charCards.push({ id: c.side, name: c.name, icon: D.CLASSES[c.cls].icon, owned: true, charId: o.charId, act: 'charstory', side: c.side, vol: charCards.length + 1 }); }
+    });
+    const charTotal = Object.values(D.CHARACTERS).filter(c => c.side).length;
+    // 玩法游戏卡：5 种核心玩法
+    const playCards = [
+      { id: 'pvp', name: 'PvP · 竞技场', icon: '🏆', owned: true, go: 'arena', tag: 'PvP' },
+      { id: 'challenge', name: '挑战 · 试炼之塔', icon: '🗼', owned: true, go: 'stages', tag: '挑战' },
+      { id: 'growth', name: '成长 · 资源副本', icon: '⚡', owned: true, go: 'dungeon', tag: '成长' },
+      { id: 'mayhem', name: '混战 · 无尽波次', icon: '🌀', owned: true, go: 'mayhem', tag: '混战' },
+      { id: 'restaurant', name: '经营 · 格鲁菲餐厅', icon: '🍴', owned: true, go: 'restaurant', tag: '经营' },
+    ];
+    // 活动游戏卡：活动中心
+    const evCards = this.EVENT_HUB.map(ev => ({ id: ev.id, name: ev.title, icon: ev.art, owned: true, go: 'event', evSel: ev.id, vol: ev.cd }));
+    return [
+      { id: 'story', name: '剧情游戏卡', sub: '主线剧情游戏卡', owned: storyCards.filter(c => c.owned).length, total: storyCards.length, cards: storyCards },
+      { id: 'char', name: '角色游戏卡', sub: '各角色的剧情/世界剧情游戏卡', owned: charCards.length, total: charTotal, cards: charCards },
+      { id: 'play', name: '玩法游戏卡', sub: '可进行 PvP、挑战、成长等各种玩法', owned: playCards.length, total: playCards.length, cards: playCards },
+      { id: 'event', name: '活动游戏卡', sub: '活动限定提供的相关游戏卡', owned: evCards.length, total: evCards.length, cards: evCards },
+    ];
+  },
+
   // ---------- 成就系统 ----------
   // metric(s) 返回当前进度值；达到 target 即可领取 reward（一次性）
   ACHIEVEMENTS: [
@@ -5643,8 +5827,8 @@ const UI = {
         <!-- 底部功能行 + 出战 CTA + 角色缩略 -->
         <div class="lobby-bottombar">
           <div class="lb-funcs">${bottomFuncs.map(funcBtn).join('')}</div>
-          <button class="lb-cta" data-go="stages">
-            <span class="cta-go">出 战</span><span class="cta-sub">主线 ${cleared}/${total}</span>
+          <button class="lb-cta" data-go="gamecards">
+            <span class="cta-go">出 战</span><span class="cta-sub">游戏卡 · 主线 ${cleared}/${total}</span>
           </button>
           <button class="lb-thumb" data-go="roster" title="${leadName}">
             <span class="lt-art">${leadAvatar}</span>
@@ -7440,6 +7624,135 @@ const UI = {
       reward: { gold: 0, gem: 0, exp: 0 }, isBoss: id === 'ev3',
     };
     BattleUI.start(stage, () => { if (Main.current === 'event') this.renderEvent(); });
+  },
+
+  // ============================================================
+  //  游戏卡珍藏集（出战）—— 四大类卡带货架（对照 BD2）
+  // ============================================================
+  renderGameCards() {
+    const cats = Game.gameCardCats();
+    const cart = (c) => {
+      const lock = !c.owned;
+      const badge = c.tag ? c.tag : ('VOL.' + (c.vol || 1));
+      return `<button class="gcard ${lock ? 'locked' : ''} ${c.done ? 'done' : ''}"
+        ${lock ? '' : `data-go="${c.go || ''}" data-side="${c.side || ''}" data-evsel="${c.evSel || ''}"`}>
+        <span class="gcard-badge">${badge}</span>
+        <span class="gcard-art">${lock ? '🔒' : c.icon}</span>
+        <span class="gcard-strip">${lock ? '？？？' : c.name}</span>
+        ${c.done ? '<span class="gcard-clear">✓</span>' : (lock ? '' : '<span class="gcard-plus">＋</span>')}
+      </button>`;
+    };
+    const rows = cats.map(cat => `
+      <div class="gc-row">
+        <div class="gc-rowhead">
+          <span class="gc-rowname">${cat.name} <b>${cat.owned}/${cat.total}</b></span>
+          <span class="gc-rowsub muted">${cat.sub}</span>
+        </div>
+        <div class="gc-shelf">${cat.cards.map(cart).join('')}</div>
+      </div>`).join('');
+    this.screenEl.innerHTML = `<div class="gamecard-coll">
+      <div class="gc-head">🎮 游戏卡珍藏集 <span class="muted" style="font-size:12px;font-weight:400;">· 选择游戏卡开始游玩</span></div>
+      ${rows}</div>`;
+    this.screenEl.querySelectorAll('.gcard:not(.locked)').forEach(el => el.onclick = () => {
+      const evsel = el.dataset.evsel, go = el.dataset.go, side = el.dataset.side;
+      if (evsel) { this.eventSel = evsel; Main.switchScreen('event'); return; }
+      if (side) { if (window.Story) Story.play(side); return; }
+      if (go) { Main.switchScreen(go); return; }
+    });
+  },
+
+  // ============================================================
+  //  玩法卡 · 混战（无尽波次生存）
+  // ============================================================
+  renderMayhem() {
+    const best = Game.mayhemBest();
+    const preview = [1, 5, 10, 15].map(w => {
+      const r = Game.mayhemWaveReward(w);
+      const boss = w % 5 === 0;
+      return `<div class="mh-prev ${boss ? 'boss' : ''}"><span class="mh-prev-w">第 ${w} 波${boss ? ' 👑' : ''}</span><span class="mh-prev-rw">🪙${r.gold}${r.gem ? ' 💎' + r.gem : ''}</span></div>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="section-title">混战 · 无尽波次 <span class="muted" style="font-weight:400;font-size:11px;">· 越往后敌人越强，每 5 波出现 BOSS</span></div>
+      <div class="mayhem-card">
+        <div class="mh-best">🏆 历史最高波数 <b>${best}</b></div>
+        <p class="muted" style="font-size:12px;line-height:1.6;">连续挑战波次，胜利自动进入下一波，队伍每波满血再战；越深奖励越高。中途可结算离场，失败则本轮结束。</p>
+        <div class="mh-prev-list">${preview}</div>
+        <div class="mh-actions">
+          <button class="btn gold" id="mh-start">从第 1 波开始</button>
+          ${best > 0 ? `<button class="btn" id="mh-resume">从第 ${best + 1} 波冲榜</button>` : ''}
+        </div>
+      </div>`;
+    const st = this.screenEl.querySelector('#mh-start');
+    if (st) st.onclick = () => this.startMayhemWave(1);
+    const rs = this.screenEl.querySelector('#mh-resume');
+    if (rs) rs.onclick = () => this.startMayhemWave(best + 1);
+  },
+  startMayhemWave(wave) {
+    if (!Game.state.team.length) { this.toast('请先编队'); return; }
+    const stage = {
+      id: 'mayhem_' + wave, name: '混战 · 第 ' + wave + ' 波', mayhem: true, wave,
+      enemies: Game.mayhemEnemies(wave), reward: { gold: 0, gem: 0, exp: 0 }, isBoss: wave % 5 === 0,
+    };
+    BattleUI.start(stage, () => { if (Main.current === 'mayhem') this.renderMayhem(); });
+  },
+
+  // ============================================================
+  //  玩法卡 · 经营（格鲁菲餐厅，挂机产出营业额）
+  // ============================================================
+  renderRestaurant() {
+    const r = Game.state.restaurant;
+    const rate = Game.restaurantRate();
+    const pending = Game.restaurantPending();
+    const full = Game.restaurantFull();
+    const cost = Game.restaurantUpgradeCost();
+    const slots = (r.staff || [null, null, null]).map((uid, i) => {
+      const o = uid && Game.getOwned(uid);
+      const c = o && window.GameData.CHARACTERS[o.charId];
+      return o
+        ? `<button class="rst-slot filled" data-staff="${i}"><span class="rst-staff-art">${this.charAvatar(o.charId)}</span><span class="rst-staff-name">${c.name}</span></button>`
+        : `<button class="rst-slot empty" data-staff="${i}"><span class="rst-staff-art">＋</span><span class="rst-staff-name muted">空缺</span></button>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="section-title">格鲁菲餐厅 <span class="muted" style="font-weight:400;font-size:11px;">· 安排员工挂机经营，结算营业额（金币）</span></div>
+      <div class="rst-card">
+        <div class="rst-top">
+          <div class="rst-shop">🍴</div>
+          <div class="rst-info">
+            <div class="rst-lv">餐厅 Lv.${r.level || 1}</div>
+            <div class="rst-rate muted">营业额速率 🪙${rate}/小时 · 满仓 ${Game.RESTAURANT.capHours} 小时</div>
+          </div>
+        </div>
+        <div class="rst-pending">
+          <div class="rst-pend-num">🪙 ${pending}</div>
+          <div class="muted" style="font-size:11px;">${full ? '已满仓，快来结算！' : '营业额累积中…'}</div>
+        </div>
+        <button class="btn ${pending > 0 ? 'gold' : 'secondary'}" id="rst-claim" ${pending > 0 ? '' : 'disabled'} style="width:100%;">结算营业额</button>
+        <div class="rst-staff-title">员工配置 <span class="muted" style="font-size:11px;font-weight:400;">· 每名在岗员工 +35% 速率</span></div>
+        <div class="rst-slots">${slots}</div>
+        <button class="btn ${Game.state.gold >= cost ? '' : 'secondary'}" id="rst-up" ${Game.state.gold >= cost ? '' : 'disabled'} style="width:100%;margin-top:10px;">升级餐厅 · 🪙${cost}</button>
+      </div>`;
+    const cl = this.screenEl.querySelector('#rst-claim');
+    if (cl) cl.onclick = () => { const res = Game.claimRestaurant(); if (!res.ok) { this.toast(res.msg); return; } if (window.Sound) Sound.sfx('levelup'); this.toast(`结算营业额 🪙${res.gold}`); this.updateResources(); this.renderRestaurant(); };
+    const up = this.screenEl.querySelector('#rst-up');
+    if (up) up.onclick = () => { const res = Game.upgradeRestaurant(); if (!res.ok) { this.toast(res.msg); return; } this.toast(`餐厅升级至 Lv.${res.level}`); this.updateResources(); this.renderRestaurant(); };
+    this.screenEl.querySelectorAll('[data-staff]').forEach(b => b.onclick = () => this.showRestaurantStaffPicker(parseInt(b.dataset.staff, 10)));
+  },
+  showRestaurantStaffPicker(slot) {
+    const r = Game.state.restaurant;
+    const onDuty = new Set((r.staff || []).filter(Boolean));
+    const list = Game.state.roster.map(o => {
+      const c = window.GameData.CHARACTERS[o.charId];
+      const here = onDuty.has(o.uid);
+      return `<button class="rst-pick ${here ? 'on' : ''}" data-uid="${o.uid}">
+        <span class="rst-pick-art">${this.charAvatar(o.charId)}</span>
+        <span class="rst-pick-name">${c.name}</span>${here ? '<span class="rst-pick-tag">在岗</span>' : ''}</button>`;
+    }).join('');
+    const m = this.openModal(`<h2>安排员工 · 第 ${slot + 1} 岗</h2>
+      <div class="rst-pick-grid">${list}</div>
+      <div class="close-row"><button class="btn secondary" id="rst-clear">清空该岗</button><button class="btn" id="rst-cancel">关闭</button></div>`, { wide: true });
+    m.querySelectorAll('[data-uid]').forEach(b => b.onclick = () => { Game.assignRestaurantStaff(slot, b.dataset.uid); this.closeModal(m); this.updateResources(); this.renderRestaurant(); });
+    m.querySelector('#rst-clear').onclick = () => { Game.assignRestaurantStaff(slot, null); this.closeModal(m); this.renderRestaurant(); };
+    m.querySelector('#rst-cancel').onclick = () => this.closeModal(m);
   },
 
   // ============================================================
@@ -9936,6 +10249,39 @@ const BattleUI = {
       m.querySelector('#res-ok').onclick = () => { UI.closeModal(m); UI.updateResources(); this.exit(); };
       return;
     }
+    // 混战（无尽波次）结算
+    if (this.stage && this.stage.mayhem) {
+      const wave = this.stage.wave;
+      if (result === 'win') {
+        const rw = Game.mayhemWaveReward(wave);
+        Game.applyReward({ gold: rw.gold, gem: rw.gem });
+        Game.state.team.forEach(uid => { const o = Game.getOwned(uid); if (o) Game.addExp(o, rw.exp); });
+        Game.recordMayhem(wave);
+        Game.incQuest('win', 1);
+        Game.save();
+        const m = UI.openModal(`
+          <div class="result-modal">
+            <div class="result-title win">第 ${wave} 波 突破！</div>
+            <div class="reward-row"><div class="rw" style="color:var(--gold);">🪙 +${rw.gold}</div>${rw.gem ? `<div class="rw" style="color:var(--gem);">💎 +${rw.gem}</div>` : ''}<div class="rw" style="color:var(--accent);">📘 +${rw.exp}</div></div>
+            <p class="muted">队伍满血进入下一波，越深奖励越高。</p>
+          </div>
+          <div class="close-row" style="justify-content:center;">
+            <button class="btn secondary" id="mh-stop">结算离场</button>
+            <button class="btn gold" id="mh-next">挑战第 ${wave + 1} 波 ›</button>
+          </div>`, { noBackdropClose: true });
+        m.querySelector('#mh-next').onclick = () => { UI.closeModal(m); UI.updateResources(); UI.startMayhemWave(wave + 1); };
+        m.querySelector('#mh-stop').onclick = () => { UI.closeModal(m); UI.updateResources(); this.exit(); };
+      } else {
+        const m = UI.openModal(`
+          <div class="result-modal">
+            <div class="result-title lose">混战结束</div>
+            <p class="muted">止步第 ${wave} 波 · 历史最高 ${Game.mayhemBest()} 波</p>
+          </div>
+          <div class="close-row" style="justify-content:center;"><button class="btn" id="res-ok">返回</button></div>`, { noBackdropClose: true });
+        m.querySelector('#res-ok').onclick = () => { UI.closeModal(m); UI.updateResources(); this.exit(); };
+      }
+      return;
+    }
     if (result === 'win') {
       const firstClear = !Game.state.cleared.includes(this.stage.id);
       const before = { gold: Game.state.gold, gem: Game.state.gem };
@@ -10067,6 +10413,9 @@ const Main = {
     UI.updateResources();
     switch (this.current) {
       case 'home': UI.renderHome(); break;
+      case 'gamecards': UI.renderGameCards(); break;
+      case 'mayhem': UI.renderMayhem(); break;
+      case 'restaurant': UI.renderRestaurant(); break;
       case 'stages': UI.renderStages(); break;
       case 'roster': UI.renderRoster(); break;
       case 'gacha': UI.renderGacha(); break;
