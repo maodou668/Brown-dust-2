@@ -46,6 +46,7 @@ const UI = {
     set('res-stam', Game.state.stamina);
     set('pc-lv', Game.accountLevel());
     set('pc-pow', Game.playerPower());
+    set('pc-name', Game.currentTitle().name);
     const dot = document.getElementById('mail-dot');
     if (dot) dot.style.display = Game.mailUnclaimed() > 0 ? '' : 'none';
   },
@@ -80,7 +81,7 @@ const UI = {
       { go: 'tasks', icon: '📋', label: '任务', dot: Game.tasksAnyClaimable() ? '!' : '' },
       { go: 'codex', icon: '📖', label: '珍藏集' },
       { act: 'forge', icon: '🔨', label: '锻造' },
-      { act: 'ach', icon: '🏅', label: '成就' },
+      { go: 'ach', icon: '🏅', label: '成就', dot: Game.achAnyClaimable() ? '!' : '' },
       { go: 'story', icon: '🎬', label: '剧情' },
     ];
     // 右侧活动/模式 banner 卡（对应 BD2 右侧活动横幅栈）
@@ -1483,7 +1484,7 @@ const UI = {
     const ds = this.screenEl.querySelector('#do-spark');
     if (ds) ds.onclick = () => this.showSparkPicker();
     const oa = this.screenEl.querySelector('#open-ach');
-    if (oa) oa.onclick = () => this.showAchievements();
+    if (oa) oa.onclick = () => Main.switchScreen('ach');
     const os = this.screenEl.querySelector('#open-save');
     if (os) os.onclick = () => this.showSaveManager();
   },
@@ -2193,6 +2194,129 @@ const UI = {
   },
 
   /** 成就殿堂 */
+  // ============================================================
+  //  成就板（成就 / 成就等级 / 称号）—— 对照 BD2 成就面板
+  // ============================================================
+  renderAchievements() {
+    this.achTab = this.achTab || 'ach';
+    const tab = this.achTab;
+    const sideTab = (id, name, claimable) =>
+      `<button class="ac-tab ${tab === id ? 'on' : ''}" data-atab="${id}">${name}${claimable ? '<span class="tk-dot"></span>' : ''}</button>`;
+
+    let head = '', body = '', foot = '';
+    if (tab === 'ach') {
+      const list = Game.ACHIEVEMENTS.slice().sort((a, b) => {
+        const rank = x => Game.state.achClaimed[x.id] ? 2 : (Game.achValue(x) >= x.target ? 0 : 1);
+        return rank(a) - rank(b);
+      });
+      head = `🏆 成就 <span class="muted" style="font-size:13px;font-weight:400;">${Game.achDoneCount()}/${Game.ACHIEVEMENTS.length}</span>`;
+      body = list.map(a => {
+        const cur = Game.achValue(a), done = cur >= a.target, claimed = !!Game.state.achClaimed[a.id];
+        const pct = Math.min(100, cur / a.target * 100);
+        const state = claimed ? 'claimed' : (done ? 'ready' : 'todo');
+        const btn = claimed ? '<span class="ac-circle claimed">✓</span>'
+          : (done ? `<button class="ac-circle ready" data-claim="${a.id}">🤲</button>`
+            : `<span class="ac-circle lock"><span class="ac-ring" style="--p:${pct}"></span>🤲</span>`);
+        return `<div class="ac-row ${state}">
+          <div class="ac-banner ach">${a.icon}</div>
+          <div class="ac-mid">
+            <div class="ac-name">${a.name} <span class="ac-prog">${Math.min(cur, a.target)} / ${a.target}</span></div>
+            <div class="ac-desc">${a.desc}</div>
+            <div class="ac-exp">🏆 成就经验值 ${Game.achExpOf(a)}</div>
+          </div>
+          ${btn}
+        </div>`;
+      }).join('');
+      foot = `<button class="btn ${Game.achClaimable() ? 'gold' : 'secondary'}" id="ac-all" ${Game.achClaimable() ? '' : 'disabled'}>全部获得</button>`;
+    } else if (tab === 'level') {
+      const top = Game.achLevel(), prog = Game.achLevelProg();
+      head = `🏆 成就等级 <b style="color:var(--gold);">${top}</b>`;
+      const hi = top + 5, lo = Math.max(1, top - 6);
+      const rows = [];
+      for (let lv = hi; lv >= lo; lv--) {
+        const r = Game.achLevelReward(lv);
+        const reached = lv <= top, claimed = !!(Game.state.achLvClaimed && Game.state.achLvClaimed[lv]);
+        const isCur = lv === top + 1;
+        const state = claimed ? 'claimed' : (reached ? 'ready' : 'lock');
+        const btn = claimed ? '<span class="ac-circle claimed">✓</span>'
+          : (reached ? `<button class="ac-circle ready" data-lvl="${lv}">🤲</button>` : '<span class="ac-circle lock">🔒</span>');
+        rows.push(`<div class="ac-lv ${state} ${isCur ? 'cur' : ''}">
+          <div class="ac-lv-node">${isCur ? `<span class="ac-lv-mark">${prog}</span>` : ''}<span class="ac-lv-name">Lv.${lv}</span></div>
+          <div class="ac-lv-rw">${this._rwLabel(r)}</div>
+          ${btn}
+        </div>`);
+      }
+      body = `<div class="ac-lv-hint muted">提升成就等级可获得额外奖励。成就等级通过获取成就经验值提升（每 ${Game.ACH_LV_NEED} 点升 1 级）。</div>` + rows.join('');
+      foot = `<button class="btn ${Game.achLevelClaimable() ? 'gold' : 'secondary'}" id="ac-all" ${Game.achLevelClaimable() ? '' : 'disabled'}>全部获得</button>`;
+    } else {
+      const owned = Game.TITLES.filter(t => Game.titleOwned(t.id)).length;
+      head = `🏆 称号 <span class="muted" style="font-size:13px;font-weight:400;">${owned}/${Game.TITLES.length}</span>`;
+      body = Game.TITLES.map(t => {
+        const unlocked = Game.titleUnlocked(t), has = Game.titleOwned(t.id), equipped = Game.currentTitle().id === t.id;
+        let btn;
+        if (equipped) btn = '<span class="ac-circle equipped">装备中</span>';
+        else if (has) btn = `<button class="ac-circle equip" data-equip="${t.id}">装备</button>`;
+        else if (unlocked) btn = `<button class="ac-circle ready" data-title="${t.id}">🤲</button>`;
+        else btn = '<span class="ac-circle lock">🔒</span>';
+        return `<div class="ac-row ${equipped ? 'ready' : (has ? '' : (unlocked ? 'ready' : 'todo'))}">
+          <div class="ac-banner title">★</div>
+          <div class="ac-mid">
+            <div class="ac-name">${t.name}</div>
+            <div class="ac-desc">${t.desc}</div>
+            <div class="ac-title-chip ${has ? '' : 'locked'}">「${t.name}」</div>
+          </div>
+          ${btn}
+        </div>`;
+      }).join('');
+      foot = `<button class="btn ${Game.titlesClaimable() ? 'gold' : 'secondary'}" id="ac-all" ${Game.titlesClaimable() ? '' : 'disabled'}>全部获得</button>`;
+    }
+
+    this.screenEl.innerHTML = `
+      <div class="ach-board">
+        <div class="ac-side">
+          <div class="ac-side-title">🏆 成就</div>
+          ${sideTab('ach', '成就', Game.achClaimable())}
+          ${sideTab('level', '成就等级', Game.achLevelClaimable())}
+          ${sideTab('title', '称号', Game.titlesClaimable())}
+        </div>
+        <div class="ac-main">
+          <div class="ac-head">${head}</div>
+          <div class="ac-list">${body}</div>
+          <div class="ac-foot">${foot}</div>
+        </div>
+      </div>`;
+
+    this.screenEl.querySelectorAll('[data-atab]').forEach(b => b.onclick = () => { this.achTab = b.dataset.atab; this.renderAchievements(); });
+    this.screenEl.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => {
+      const r = Game.claimAch(b.dataset.claim);
+      if (!r.ok) { this.toast(r.msg || '不可领取'); return; }
+      if (window.Sound) Sound.sfx('levelup');
+      this.toast(`成就达成！${this._rwLabel(r.reward)} · 🏆经验+${r.exp}`); this.updateResources(); this.renderAchievements();
+    });
+    this.screenEl.querySelectorAll('[data-lvl]').forEach(b => b.onclick = () => {
+      const r = Game.claimAchLevel(parseInt(b.dataset.lvl, 10));
+      if (!r.ok) { this.toast(r.msg || '不可领取'); return; }
+      this.toast(`等级奖励：${this._rwLabel(r.reward)}`); this.updateResources(); this.renderAchievements();
+    });
+    this.screenEl.querySelectorAll('[data-title]').forEach(b => b.onclick = () => {
+      const id = b.dataset.title; const r = Game.claimTitle(id);
+      if (!r.ok) { this.toast(r.msg || '不可领取'); return; }
+      Game.equipTitle(id); this.toast(`获得称号「${Game.TITLES.find(t => t.id === id).name}」并装备`); this.updateResources(); this.renderAchievements();
+    });
+    this.screenEl.querySelectorAll('[data-equip]').forEach(b => b.onclick = () => {
+      Game.equipTitle(b.dataset.equip); this.toast('已装备称号'); this.updateResources(); this.renderAchievements();
+    });
+    const all = this.screenEl.querySelector('#ac-all');
+    if (all) all.onclick = () => {
+      let r;
+      if (tab === 'ach') r = Game.claimAllAch();
+      else if (tab === 'level') r = Game.claimAllAchLevels();
+      else { let n = 0; Game.TITLES.forEach(t => { if (Game.titleUnlocked(t) && !Game.titleOwned(t.id)) { if (Game.claimTitle(t.id).ok) n++; } }); r = { ok: n > 0, n }; }
+      if (!r.ok) { this.toast('没有可领取的奖励'); return; }
+      this.toast(`一键领取 ${r.n} 项`); this.updateResources(); this.renderAchievements();
+    };
+  },
+
   showAchievements() {
     const render = (m) => {
       const list = Game.ACHIEVEMENTS.slice().sort((a, b) => {

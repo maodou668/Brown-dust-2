@@ -1860,6 +1860,65 @@ body {
 .tk-foot .btn { width: auto; padding: 8px 22px; }
 @media (max-width: 720px) { .tk-side { flex: 0 0 104px; } .tk-reward { flex-basis: 52px; } }
 
+/* ===== 成就板（成就 / 成就等级 / 称号） ===== */
+.ach-board { display: flex; gap: 14px; height: 100%; padding: 12px; box-sizing: border-box; }
+.ac-side { flex: 0 0 132px; display: flex; flex-direction: column; gap: 8px; }
+.ac-side-title { font-size: 16px; font-weight: 900; padding: 4px 6px 8px; }
+.ac-tab {
+  position: relative; text-align: left; background: var(--panel); border: 1px solid rgba(255,255,255,.06);
+  color: var(--text-dim); border-radius: 10px; padding: 13px 12px; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.ac-tab.on { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border-color: transparent; }
+
+.ac-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ac-head { font-size: 16px; font-weight: 900; padding: 4px 6px 10px; border-bottom: 1px solid rgba(255,255,255,.07); margin-bottom: 8px; }
+.ac-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+.ac-foot { display: flex; justify-content: flex-end; padding: 10px 4px 2px; border-top: 1px solid rgba(255,255,255,.07); margin-top: 8px; }
+.ac-foot .btn { width: auto; padding: 8px 22px; }
+
+/* 成就行 / 称号行 */
+.ac-row { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 10px 14px; }
+.ac-row.ready { border-color: rgba(176,107,255,.5); background: linear-gradient(90deg, rgba(176,107,255,.12), var(--panel)); }
+.ac-row.claimed, .ac-row.todo { }
+.ac-banner {
+  flex: 0 0 auto; width: 42px; height: 54px; display: grid; place-items: center; font-size: 22px; color: #fff;
+  clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%);
+}
+.ac-banner.ach { background: linear-gradient(160deg, #7a5cff, #432a86); }
+.ac-banner.title { background: linear-gradient(160deg, #d9434f, #7d1f2a); }
+.ac-mid { flex: 1; min-width: 0; }
+.ac-name { font-size: 15px; font-weight: 800; }
+.ac-prog { font-size: 12px; color: var(--text-dim); font-weight: 600; margin-left: 4px; }
+.ac-desc { font-size: 12px; color: var(--text-dim); margin: 3px 0; }
+.ac-exp { font-size: 12px; color: var(--accent); font-weight: 700; }
+.ac-title-chip { display: inline-block; font-size: 12px; color: var(--gold); background: var(--panel-2); border: 1px solid rgba(240,198,116,.3); border-radius: 6px; padding: 2px 10px; }
+.ac-title-chip.locked { color: var(--text-dim); border-color: rgba(255,255,255,.1); }
+
+/* 圆形领取按钮 */
+.ac-circle {
+  flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 16px; border: 2px solid rgba(255,255,255,.12); background: var(--panel-2); color: #fff;
+}
+button.ac-circle { cursor: pointer; }
+button.ac-circle:active { transform: scale(.92); }
+.ac-circle.ready { border-color: var(--accent); box-shadow: 0 0 10px rgba(176,107,255,.5); animation: tkPulse 1.4s ease-in-out infinite; }
+.ac-circle.claimed { border-color: #4caf72; color: #4caf72; background: #2c3a2f; }
+.ac-circle.lock { opacity: .5; }
+.ac-circle.equip { border-color: var(--gold); color: var(--gold); width: auto; height: 32px; border-radius: 16px; padding: 0 14px; font-size: 13px; font-weight: 700; }
+.ac-circle.equipped { border-color: #4caf72; color: #4caf72; width: auto; height: 32px; border-radius: 16px; padding: 0 12px; font-size: 12px; font-weight: 700; background: #2c3a2f; }
+
+/* 成就等级轨道 */
+.ac-lv-hint { font-size: 12px; padding: 4px 6px 10px; line-height: 1.6; }
+.ac-lv { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 10px 14px; }
+.ac-lv.lock { opacity: .55; }
+.ac-lv.cur { border-color: var(--accent); }
+.ac-lv-node { flex: 0 0 88px; display: flex; align-items: center; gap: 8px; }
+.ac-lv-name { font-size: 14px; font-weight: 800; }
+.ac-lv-mark { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 8px; }
+.ac-lv-rw { flex: 1; font-size: 13px; color: var(--gold); font-weight: 700; }
+.ac-lv.claimed .ac-lv-rw { color: var(--text-dim); }
+@media (max-width: 720px) { .ac-side { flex: 0 0 104px; } }
+
 </style>
 </head>
 <body>
@@ -1869,7 +1928,7 @@ body {
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
         <span class="pc-avatar">🎖️</span>
         <span class="pc-info">
-          <span class="pc-name">指挥官</span>
+          <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
         </span>
       </button>
@@ -1905,7 +1964,7 @@ body {
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '60';</script>
+  <script>window.ASSET_VER = '61';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -3012,6 +3071,10 @@ const Game = {
     if (this.state.trialMax == null) this.state.trialMax = 0;
     if (!this.state.stats) this.state.stats = { pulls: 0, wins: 0 };
     if (!this.state.achClaimed) this.state.achClaimed = {};
+    if (this.state.achExp == null) this.state.achExp = 0;
+    if (!this.state.achLvClaimed) this.state.achLvClaimed = {};
+    if (!this.state.title) this.state.title = 'commander';
+    if (!this.state.titlesOwned) this.state.titlesOwned = [];
     if (!this.state.daily) this.state.daily = { lastClaim: null, streak: 0 };
     if (!this.state.quests) this.state.quests = { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} };
     if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
@@ -3120,6 +3183,10 @@ const Game = {
       trialMax: 0,     // 试炼之塔已通关的最高层数（用于解锁下一层）
       stats: { pulls: 0, wins: 0 }, // 终身统计（成就用）
       achClaimed: {},  // 已领取的成就 id
+      achExp: 0,       // 成就经验值（→ 成就等级）
+      achLvClaimed: {},// 已领取的成就等级奖励
+      title: 'commander', // 当前装备称号
+      titlesOwned: [], // 已获得称号
       // 保底货币
       spark: 0,    // 闪耀之星：每抽 +1，200 兑换自选服装
       powder: 0,   // 希望之粉：每抽 +10，商店兑换必出 5★
@@ -4467,10 +4534,94 @@ const Game = {
     if (this.state.achClaimed[id]) return { ok: false, msg: '已领取' };
     if (this.achValue(a) < a.target) return { ok: false, msg: '未达成' };
     this.grantReward(a.reward);
+    this.state.achExp = (this.state.achExp || 0) + this.achExpOf(a);  // 累积成就经验值 → 成就等级
     this.state.achClaimed[id] = true;
     this.save();
-    return { ok: true, reward: a.reward };
+    return { ok: true, reward: a.reward, exp: this.achExpOf(a) };
   },
+  /** 一键领取全部可领成就 */
+  claimAllAch() {
+    let n = 0;
+    this.ACHIEVEMENTS.forEach(a => { if (!this.state.achClaimed[a.id] && this.achValue(a) >= a.target) { if (this.claimAch(a.id).ok) n++; } });
+    return { ok: n > 0, n };
+  },
+
+  // ---------- 成就经验值 / 成就等级 ----------
+  achExpOf(a) {
+    if (a.achExp) return a.achExp;
+    if (a.reward.gem) return Math.max(20, Math.round(a.reward.gem / 4));
+    if (a.reward.gold) return Math.max(20, Math.round(a.reward.gold / 30));
+    return 30;
+  },
+  achDoneCount() { return this.ACHIEVEMENTS.filter(a => this.achValue(a) >= a.target).length; },
+  ACH_LV_NEED: 100,
+  achTotalExp() { return this.state.achExp || 0; },
+  achLevel() { return Math.floor(this.achTotalExp() / this.ACH_LV_NEED); },
+  achLevelProg() { return this.achTotalExp() % this.ACH_LV_NEED; },
+  achLevelReward(lv) {
+    if (lv % 10 === 0) return { gem: 2000, gold: 80000, gear: 'arm_ur' };
+    if (lv % 5 === 0) return { gem: 1000, gold: 50000 };
+    return { gem: 600, gold: 8000 };
+  },
+  achLevelClaimable() {
+    const top = this.achLevel(), cl = this.state.achLvClaimed || {};
+    let n = 0;
+    for (let lv = 1; lv <= top; lv++) if (!cl[lv]) n++;
+    return n;
+  },
+  claimAchLevel(lv) {
+    if (lv > this.achLevel()) return { ok: false, msg: '未达到' };
+    if (!this.state.achLvClaimed) this.state.achLvClaimed = {};
+    if (this.state.achLvClaimed[lv]) return { ok: false, msg: '已领取' };
+    const r = this.achLevelReward(lv);
+    this.grantReward(r);
+    this.state.achLvClaimed[lv] = true;
+    this.save();
+    return { ok: true, reward: r };
+  },
+  claimAllAchLevels() {
+    const top = this.achLevel();
+    let n = 0;
+    for (let lv = 1; lv <= top; lv++) if (this.claimAchLevel(lv).ok) n++;
+    return { ok: n > 0, n };
+  },
+
+  // ---------- 称号 ----------
+  TITLES: [
+    { id: 'commander', name: '指挥官',     desc: '初始称号，与佣兵团一同启程。',  req: () => true },
+    { id: 'leader',    name: '佣兵团长',   desc: '收集 10 名角色。',              req: s => s.roster.length >= 10 },
+    { id: 'slayer',    name: '魔王讨伐者', desc: '通关全部主线关卡。',            req: s => s.cleared.filter(id => typeof id === 'number' && id < 100).length >= 7 },
+    { id: 'champion',  name: '竞技场王者', desc: '竞技场积分达到 1200。',         req: s => (s.arena && s.arena.points || 1000) >= 1200 },
+    { id: 'stylist',   name: '时装大师',   desc: '累计拥有 12 套服装。',          req: s => s.roster.reduce((n, o) => n + (o.costumes ? o.costumes.length : 0), 0) >= 12 },
+    { id: 'mentor',    name: '觉醒导师',   desc: '任一角色觉醒至 5★。',           req: s => s.roster.some(o => (o.awaken || 0) >= 5) },
+    { id: 'tycoon',    name: '黄金富豪',   desc: '持有金币达到 100000。',         req: s => s.gold >= 100000 },
+    { id: 'veteran',   name: '百战老兵',   desc: '累计胜利 100 场。',             req: s => s.stats.wins >= 100 },
+  ],
+  titleUnlocked(t) { return !!t.req(this.state); },
+  titleOwned(id) { return id === 'commander' || (this.state.titlesOwned && this.state.titlesOwned.includes(id)); },
+  claimTitle(id) {
+    const t = this.TITLES.find(x => x.id === id);
+    if (!t) return { ok: false };
+    if (this.titleOwned(id)) return { ok: false, msg: '已拥有' };
+    if (!this.titleUnlocked(t)) return { ok: false, msg: '未解锁' };
+    this.state.titlesOwned = this.state.titlesOwned || [];
+    this.state.titlesOwned.push(id);
+    this.save();
+    return { ok: true };
+  },
+  equipTitle(id) {
+    if (!this.titleOwned(id)) return { ok: false, msg: '未拥有该称号' };
+    this.state.title = id;
+    this.save();
+    return { ok: true };
+  },
+  currentTitle() {
+    const id = this.state.title || 'commander';
+    return this.TITLES.find(t => t.id === id) || this.TITLES[0];
+  },
+  titlesClaimable() { return this.TITLES.filter(t => this.titleUnlocked(t) && !this.titleOwned(t.id)).length; },
+  /** 成就板任意可领（成就 + 等级 + 称号），用于红点 */
+  achAnyClaimable() { return this.achClaimable() + this.achLevelClaimable() + this.titlesClaimable(); },
 };
 
 window.Game = Game;
@@ -5059,6 +5210,7 @@ const UI = {
     set('res-stam', Game.state.stamina);
     set('pc-lv', Game.accountLevel());
     set('pc-pow', Game.playerPower());
+    set('pc-name', Game.currentTitle().name);
     const dot = document.getElementById('mail-dot');
     if (dot) dot.style.display = Game.mailUnclaimed() > 0 ? '' : 'none';
   },
@@ -5093,7 +5245,7 @@ const UI = {
       { go: 'tasks', icon: '📋', label: '任务', dot: Game.tasksAnyClaimable() ? '!' : '' },
       { go: 'codex', icon: '📖', label: '珍藏集' },
       { act: 'forge', icon: '🔨', label: '锻造' },
-      { act: 'ach', icon: '🏅', label: '成就' },
+      { go: 'ach', icon: '🏅', label: '成就', dot: Game.achAnyClaimable() ? '!' : '' },
       { go: 'story', icon: '🎬', label: '剧情' },
     ];
     // 右侧活动/模式 banner 卡（对应 BD2 右侧活动横幅栈）
@@ -6496,7 +6648,7 @@ const UI = {
     const ds = this.screenEl.querySelector('#do-spark');
     if (ds) ds.onclick = () => this.showSparkPicker();
     const oa = this.screenEl.querySelector('#open-ach');
-    if (oa) oa.onclick = () => this.showAchievements();
+    if (oa) oa.onclick = () => Main.switchScreen('ach');
     const os = this.screenEl.querySelector('#open-save');
     if (os) os.onclick = () => this.showSaveManager();
   },
@@ -7206,6 +7358,129 @@ const UI = {
   },
 
   /** 成就殿堂 */
+  // ============================================================
+  //  成就板（成就 / 成就等级 / 称号）—— 对照 BD2 成就面板
+  // ============================================================
+  renderAchievements() {
+    this.achTab = this.achTab || 'ach';
+    const tab = this.achTab;
+    const sideTab = (id, name, claimable) =>
+      `<button class="ac-tab ${tab === id ? 'on' : ''}" data-atab="${id}">${name}${claimable ? '<span class="tk-dot"></span>' : ''}</button>`;
+
+    let head = '', body = '', foot = '';
+    if (tab === 'ach') {
+      const list = Game.ACHIEVEMENTS.slice().sort((a, b) => {
+        const rank = x => Game.state.achClaimed[x.id] ? 2 : (Game.achValue(x) >= x.target ? 0 : 1);
+        return rank(a) - rank(b);
+      });
+      head = `🏆 成就 <span class="muted" style="font-size:13px;font-weight:400;">${Game.achDoneCount()}/${Game.ACHIEVEMENTS.length}</span>`;
+      body = list.map(a => {
+        const cur = Game.achValue(a), done = cur >= a.target, claimed = !!Game.state.achClaimed[a.id];
+        const pct = Math.min(100, cur / a.target * 100);
+        const state = claimed ? 'claimed' : (done ? 'ready' : 'todo');
+        const btn = claimed ? '<span class="ac-circle claimed">✓</span>'
+          : (done ? `<button class="ac-circle ready" data-claim="${a.id}">🤲</button>`
+            : `<span class="ac-circle lock"><span class="ac-ring" style="--p:${pct}"></span>🤲</span>`);
+        return `<div class="ac-row ${state}">
+          <div class="ac-banner ach">${a.icon}</div>
+          <div class="ac-mid">
+            <div class="ac-name">${a.name} <span class="ac-prog">${Math.min(cur, a.target)} / ${a.target}</span></div>
+            <div class="ac-desc">${a.desc}</div>
+            <div class="ac-exp">🏆 成就经验值 ${Game.achExpOf(a)}</div>
+          </div>
+          ${btn}
+        </div>`;
+      }).join('');
+      foot = `<button class="btn ${Game.achClaimable() ? 'gold' : 'secondary'}" id="ac-all" ${Game.achClaimable() ? '' : 'disabled'}>全部获得</button>`;
+    } else if (tab === 'level') {
+      const top = Game.achLevel(), prog = Game.achLevelProg();
+      head = `🏆 成就等级 <b style="color:var(--gold);">${top}</b>`;
+      const hi = top + 5, lo = Math.max(1, top - 6);
+      const rows = [];
+      for (let lv = hi; lv >= lo; lv--) {
+        const r = Game.achLevelReward(lv);
+        const reached = lv <= top, claimed = !!(Game.state.achLvClaimed && Game.state.achLvClaimed[lv]);
+        const isCur = lv === top + 1;
+        const state = claimed ? 'claimed' : (reached ? 'ready' : 'lock');
+        const btn = claimed ? '<span class="ac-circle claimed">✓</span>'
+          : (reached ? `<button class="ac-circle ready" data-lvl="${lv}">🤲</button>` : '<span class="ac-circle lock">🔒</span>');
+        rows.push(`<div class="ac-lv ${state} ${isCur ? 'cur' : ''}">
+          <div class="ac-lv-node">${isCur ? `<span class="ac-lv-mark">${prog}</span>` : ''}<span class="ac-lv-name">Lv.${lv}</span></div>
+          <div class="ac-lv-rw">${this._rwLabel(r)}</div>
+          ${btn}
+        </div>`);
+      }
+      body = `<div class="ac-lv-hint muted">提升成就等级可获得额外奖励。成就等级通过获取成就经验值提升（每 ${Game.ACH_LV_NEED} 点升 1 级）。</div>` + rows.join('');
+      foot = `<button class="btn ${Game.achLevelClaimable() ? 'gold' : 'secondary'}" id="ac-all" ${Game.achLevelClaimable() ? '' : 'disabled'}>全部获得</button>`;
+    } else {
+      const owned = Game.TITLES.filter(t => Game.titleOwned(t.id)).length;
+      head = `🏆 称号 <span class="muted" style="font-size:13px;font-weight:400;">${owned}/${Game.TITLES.length}</span>`;
+      body = Game.TITLES.map(t => {
+        const unlocked = Game.titleUnlocked(t), has = Game.titleOwned(t.id), equipped = Game.currentTitle().id === t.id;
+        let btn;
+        if (equipped) btn = '<span class="ac-circle equipped">装备中</span>';
+        else if (has) btn = `<button class="ac-circle equip" data-equip="${t.id}">装备</button>`;
+        else if (unlocked) btn = `<button class="ac-circle ready" data-title="${t.id}">🤲</button>`;
+        else btn = '<span class="ac-circle lock">🔒</span>';
+        return `<div class="ac-row ${equipped ? 'ready' : (has ? '' : (unlocked ? 'ready' : 'todo'))}">
+          <div class="ac-banner title">★</div>
+          <div class="ac-mid">
+            <div class="ac-name">${t.name}</div>
+            <div class="ac-desc">${t.desc}</div>
+            <div class="ac-title-chip ${has ? '' : 'locked'}">「${t.name}」</div>
+          </div>
+          ${btn}
+        </div>`;
+      }).join('');
+      foot = `<button class="btn ${Game.titlesClaimable() ? 'gold' : 'secondary'}" id="ac-all" ${Game.titlesClaimable() ? '' : 'disabled'}>全部获得</button>`;
+    }
+
+    this.screenEl.innerHTML = `
+      <div class="ach-board">
+        <div class="ac-side">
+          <div class="ac-side-title">🏆 成就</div>
+          ${sideTab('ach', '成就', Game.achClaimable())}
+          ${sideTab('level', '成就等级', Game.achLevelClaimable())}
+          ${sideTab('title', '称号', Game.titlesClaimable())}
+        </div>
+        <div class="ac-main">
+          <div class="ac-head">${head}</div>
+          <div class="ac-list">${body}</div>
+          <div class="ac-foot">${foot}</div>
+        </div>
+      </div>`;
+
+    this.screenEl.querySelectorAll('[data-atab]').forEach(b => b.onclick = () => { this.achTab = b.dataset.atab; this.renderAchievements(); });
+    this.screenEl.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => {
+      const r = Game.claimAch(b.dataset.claim);
+      if (!r.ok) { this.toast(r.msg || '不可领取'); return; }
+      if (window.Sound) Sound.sfx('levelup');
+      this.toast(`成就达成！${this._rwLabel(r.reward)} · 🏆经验+${r.exp}`); this.updateResources(); this.renderAchievements();
+    });
+    this.screenEl.querySelectorAll('[data-lvl]').forEach(b => b.onclick = () => {
+      const r = Game.claimAchLevel(parseInt(b.dataset.lvl, 10));
+      if (!r.ok) { this.toast(r.msg || '不可领取'); return; }
+      this.toast(`等级奖励：${this._rwLabel(r.reward)}`); this.updateResources(); this.renderAchievements();
+    });
+    this.screenEl.querySelectorAll('[data-title]').forEach(b => b.onclick = () => {
+      const id = b.dataset.title; const r = Game.claimTitle(id);
+      if (!r.ok) { this.toast(r.msg || '不可领取'); return; }
+      Game.equipTitle(id); this.toast(`获得称号「${Game.TITLES.find(t => t.id === id).name}」并装备`); this.updateResources(); this.renderAchievements();
+    });
+    this.screenEl.querySelectorAll('[data-equip]').forEach(b => b.onclick = () => {
+      Game.equipTitle(b.dataset.equip); this.toast('已装备称号'); this.updateResources(); this.renderAchievements();
+    });
+    const all = this.screenEl.querySelector('#ac-all');
+    if (all) all.onclick = () => {
+      let r;
+      if (tab === 'ach') r = Game.claimAllAch();
+      else if (tab === 'level') r = Game.claimAllAchLevels();
+      else { let n = 0; Game.TITLES.forEach(t => { if (Game.titleUnlocked(t) && !Game.titleOwned(t.id)) { if (Game.claimTitle(t.id).ok) n++; } }); r = { ok: n > 0, n }; }
+      if (!r.ok) { this.toast('没有可领取的奖励'); return; }
+      this.toast(`一键领取 ${r.n} 项`); this.updateResources(); this.renderAchievements();
+    };
+  },
+
   showAchievements() {
     const render = (m) => {
       const list = Game.ACHIEVEMENTS.slice().sort((a, b) => {
@@ -9255,6 +9530,7 @@ const Main = {
       case 'inventory': UI.renderInventory(); break;
       case 'story': UI.renderStory(); break;
       case 'tasks': UI.renderTasks(); break;
+      case 'ach': UI.renderAchievements(); break;
       case 'codex': UI.renderCollection(); break;
       case 'shop': UI.renderShop(); break;
     }

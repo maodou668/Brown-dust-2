@@ -37,6 +37,10 @@ const Game = {
     if (this.state.trialMax == null) this.state.trialMax = 0;
     if (!this.state.stats) this.state.stats = { pulls: 0, wins: 0 };
     if (!this.state.achClaimed) this.state.achClaimed = {};
+    if (this.state.achExp == null) this.state.achExp = 0;
+    if (!this.state.achLvClaimed) this.state.achLvClaimed = {};
+    if (!this.state.title) this.state.title = 'commander';
+    if (!this.state.titlesOwned) this.state.titlesOwned = [];
     if (!this.state.daily) this.state.daily = { lastClaim: null, streak: 0 };
     if (!this.state.quests) this.state.quests = { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} };
     if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
@@ -145,6 +149,10 @@ const Game = {
       trialMax: 0,     // 试炼之塔已通关的最高层数（用于解锁下一层）
       stats: { pulls: 0, wins: 0 }, // 终身统计（成就用）
       achClaimed: {},  // 已领取的成就 id
+      achExp: 0,       // 成就经验值（→ 成就等级）
+      achLvClaimed: {},// 已领取的成就等级奖励
+      title: 'commander', // 当前装备称号
+      titlesOwned: [], // 已获得称号
       // 保底货币
       spark: 0,    // 闪耀之星：每抽 +1，200 兑换自选服装
       powder: 0,   // 希望之粉：每抽 +10，商店兑换必出 5★
@@ -1492,10 +1500,94 @@ const Game = {
     if (this.state.achClaimed[id]) return { ok: false, msg: '已领取' };
     if (this.achValue(a) < a.target) return { ok: false, msg: '未达成' };
     this.grantReward(a.reward);
+    this.state.achExp = (this.state.achExp || 0) + this.achExpOf(a);  // 累积成就经验值 → 成就等级
     this.state.achClaimed[id] = true;
     this.save();
-    return { ok: true, reward: a.reward };
+    return { ok: true, reward: a.reward, exp: this.achExpOf(a) };
   },
+  /** 一键领取全部可领成就 */
+  claimAllAch() {
+    let n = 0;
+    this.ACHIEVEMENTS.forEach(a => { if (!this.state.achClaimed[a.id] && this.achValue(a) >= a.target) { if (this.claimAch(a.id).ok) n++; } });
+    return { ok: n > 0, n };
+  },
+
+  // ---------- 成就经验值 / 成就等级 ----------
+  achExpOf(a) {
+    if (a.achExp) return a.achExp;
+    if (a.reward.gem) return Math.max(20, Math.round(a.reward.gem / 4));
+    if (a.reward.gold) return Math.max(20, Math.round(a.reward.gold / 30));
+    return 30;
+  },
+  achDoneCount() { return this.ACHIEVEMENTS.filter(a => this.achValue(a) >= a.target).length; },
+  ACH_LV_NEED: 100,
+  achTotalExp() { return this.state.achExp || 0; },
+  achLevel() { return Math.floor(this.achTotalExp() / this.ACH_LV_NEED); },
+  achLevelProg() { return this.achTotalExp() % this.ACH_LV_NEED; },
+  achLevelReward(lv) {
+    if (lv % 10 === 0) return { gem: 2000, gold: 80000, gear: 'arm_ur' };
+    if (lv % 5 === 0) return { gem: 1000, gold: 50000 };
+    return { gem: 600, gold: 8000 };
+  },
+  achLevelClaimable() {
+    const top = this.achLevel(), cl = this.state.achLvClaimed || {};
+    let n = 0;
+    for (let lv = 1; lv <= top; lv++) if (!cl[lv]) n++;
+    return n;
+  },
+  claimAchLevel(lv) {
+    if (lv > this.achLevel()) return { ok: false, msg: '未达到' };
+    if (!this.state.achLvClaimed) this.state.achLvClaimed = {};
+    if (this.state.achLvClaimed[lv]) return { ok: false, msg: '已领取' };
+    const r = this.achLevelReward(lv);
+    this.grantReward(r);
+    this.state.achLvClaimed[lv] = true;
+    this.save();
+    return { ok: true, reward: r };
+  },
+  claimAllAchLevels() {
+    const top = this.achLevel();
+    let n = 0;
+    for (let lv = 1; lv <= top; lv++) if (this.claimAchLevel(lv).ok) n++;
+    return { ok: n > 0, n };
+  },
+
+  // ---------- 称号 ----------
+  TITLES: [
+    { id: 'commander', name: '指挥官',     desc: '初始称号，与佣兵团一同启程。',  req: () => true },
+    { id: 'leader',    name: '佣兵团长',   desc: '收集 10 名角色。',              req: s => s.roster.length >= 10 },
+    { id: 'slayer',    name: '魔王讨伐者', desc: '通关全部主线关卡。',            req: s => s.cleared.filter(id => typeof id === 'number' && id < 100).length >= 7 },
+    { id: 'champion',  name: '竞技场王者', desc: '竞技场积分达到 1200。',         req: s => (s.arena && s.arena.points || 1000) >= 1200 },
+    { id: 'stylist',   name: '时装大师',   desc: '累计拥有 12 套服装。',          req: s => s.roster.reduce((n, o) => n + (o.costumes ? o.costumes.length : 0), 0) >= 12 },
+    { id: 'mentor',    name: '觉醒导师',   desc: '任一角色觉醒至 5★。',           req: s => s.roster.some(o => (o.awaken || 0) >= 5) },
+    { id: 'tycoon',    name: '黄金富豪',   desc: '持有金币达到 100000。',         req: s => s.gold >= 100000 },
+    { id: 'veteran',   name: '百战老兵',   desc: '累计胜利 100 场。',             req: s => s.stats.wins >= 100 },
+  ],
+  titleUnlocked(t) { return !!t.req(this.state); },
+  titleOwned(id) { return id === 'commander' || (this.state.titlesOwned && this.state.titlesOwned.includes(id)); },
+  claimTitle(id) {
+    const t = this.TITLES.find(x => x.id === id);
+    if (!t) return { ok: false };
+    if (this.titleOwned(id)) return { ok: false, msg: '已拥有' };
+    if (!this.titleUnlocked(t)) return { ok: false, msg: '未解锁' };
+    this.state.titlesOwned = this.state.titlesOwned || [];
+    this.state.titlesOwned.push(id);
+    this.save();
+    return { ok: true };
+  },
+  equipTitle(id) {
+    if (!this.titleOwned(id)) return { ok: false, msg: '未拥有该称号' };
+    this.state.title = id;
+    this.save();
+    return { ok: true };
+  },
+  currentTitle() {
+    const id = this.state.title || 'commander';
+    return this.TITLES.find(t => t.id === id) || this.TITLES[0];
+  },
+  titlesClaimable() { return this.TITLES.filter(t => this.titleUnlocked(t) && !this.titleOwned(t.id)).length; },
+  /** 成就板任意可领（成就 + 等级 + 称号），用于红点 */
+  achAnyClaimable() { return this.achClaimable() + this.achLevelClaimable() + this.titlesClaimable(); },
 };
 
 window.Game = Game;
