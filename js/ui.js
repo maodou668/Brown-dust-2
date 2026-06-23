@@ -2189,41 +2189,84 @@ const UI = {
   // ============================================================
   //  商店（每日装备商店 + 保底兑换）
   // ============================================================
+  // ============================================================
+  //  商店中心（Hub）—— 左侧分类 + 商人立绘 + 商品网格（对照 BD2）
+  // ============================================================
   renderShop() {
     Game.ensureDaily();
+    const hub = Game.SHOP_HUB;
+    this.shopSel = this.shopSel && hub.find(c => c.id === this.shopSel) ? this.shopSel : hub[0].id;
+    const cat = Game.getShopCat(this.shopSel);
     const s = Game.state;
-    const slots = s.shop.slots.map((slot, i) => {
-      const tpl = Game.getGearTpl(slot.tpl);
-      const sold = s.shop.bought[i];
-      return `<div class="shop-card border-${this.rarityClass(tpl.rarity)} ${sold ? 'sold' : ''}">
-        <div class="shop-ico">${tpl.icon}</div>
-        <div class="shop-name">${tpl.name}</div>
-        <div class="muted" style="font-size:11px;">${window.GameData.GEAR.RLABEL[tpl.rarity]}</div>
-        <button class="btn sm ${sold ? 'secondary' : 'gold'}" data-buy="${i}" ${sold || s.gold < slot.price ? 'disabled' : ''}>${sold ? '已售出' : `🪙${slot.price}`}</button>
-      </div>`;
+
+    const sideHtml = hub.map(c =>
+      `<button class="sp-cat ${c.id === this.shopSel ? 'on' : ''}" data-shopcat="${c.id}">
+        <span class="sp-cat-ico">${c.icon}</span><span class="sp-cat-name">${c.name}</span>
+      </button>`).join('');
+
+    // 顶部货币（该分类使用的货币 + 通用）
+    const curBar = `<span class="sp-cur">${Game.CUR_ICON[cat.cur]} ${Game.curBalance(cat.cur)}</span>`;
+
+    // 商品卡
+    const card = (inner) => `<div class="sp-card">${inner}</div>`;
+    let cardsHtml = '';
+    // 金币商店：先放每日随机装备
+    if (cat.daily) {
+      cardsHtml += s.shop.slots.map((slot, i) => {
+        const tpl = Game.getGearTpl(slot.tpl);
+        const sold = s.shop.bought[i];
+        return card(`<div class="sp-qty">×1</div>
+          <div class="sp-ico border-${this.rarityClass(tpl.rarity)}">${tpl.icon}</div>
+          <div class="sp-name">${tpl.name}</div>
+          <div class="sp-lim muted">每日刷新</div>
+          <button class="sp-price ${sold ? 'sold' : ''}" data-buygear="${i}" ${sold || s.gold < slot.price ? 'disabled' : ''}>
+            ${sold ? '已售出' : `🪙 ${slot.price}`}</button>`);
+      }).join('');
+    }
+    // 通用商品
+    cardsHtml += cat.items.map(it => {
+      const left = Game.shopLeft(it);
+      const sold = it.limit && left <= 0;
+      const can = !sold && Game.curBalance(it.cur) >= it.price;
+      const limTxt = it.limit ? `${{ day: '每日', week: '每周', month: '每月' }[it.period] || ''}限购 ${Game.shopBoughtCount(it)}/${it.limit}` : '不限量';
+      const give = this._rwLabel(it.give.gearScale ? { gear: 1 } : it.give) || '神秘奖励';
+      return card(`<div class="sp-qty">×1</div>
+        <div class="sp-ico">${it.icon}</div>
+        <div class="sp-name">${it.name}</div>
+        <div class="sp-give muted">${give}</div>
+        <div class="sp-lim muted">${limTxt}</div>
+        <button class="sp-price ${sold ? 'sold' : ''}" data-buyitem="${it.id}" ${can ? '' : 'disabled'}>
+          ${sold ? '已售罄' : `${Game.CUR_ICON[it.cur]} ${it.price}`}</button>`);
     }).join('');
+
     this.screenEl.innerHTML = `
-      <div class="section-title">商店 <span class="muted" style="font-weight:400;font-size:12px;">· 每日刷新</span></div>
-      <div class="shop-grid">${slots}</div>
-      <div class="section-title" style="margin-top:16px;">保底兑换</div>
-      <div class="exchange-card">
-        <div><b>✨ 希望之粉</b> <span class="muted">${s.powder}/${Game.POWDER_COST}</span><div class="muted" style="font-size:11px;">兑换必出 5★ 招募</div></div>
-        <button class="btn sm ${s.powder >= Game.POWDER_COST ? 'gold' : 'secondary'}" id="sh-powder" ${s.powder >= Game.POWDER_COST ? '' : 'disabled'}>兑换</button>
-      </div>
-      <div class="exchange-card">
-        <div><b>⭐ 闪耀之星</b> <span class="muted">${s.spark}/${Game.SPARK_COST}</span><div class="muted" style="font-size:11px;">自选一套 5★ 服装</div></div>
-        <button class="btn sm ${s.spark >= Game.SPARK_COST ? '' : 'secondary'}" id="sh-spark" ${s.spark >= Game.SPARK_COST ? '' : 'disabled'}>自选</button>
+      <div class="shop-hub">
+        <div class="sp-side">${sideHtml}</div>
+        <div class="sp-main">
+          <div class="sp-head"><span class="sp-title">${cat.icon} ${cat.name}</span>${curBar}</div>
+          <div class="sp-stage">
+            <div class="sp-merchant">
+              <div class="sp-merchant-art">${cat.merchant}</div>
+              <div class="sp-bubble">${cat.npc}</div>
+            </div>
+            <div class="sp-grid">${cardsHtml}</div>
+          </div>
+        </div>
       </div>`;
-    this.screenEl.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => {
-      const r = Game.buyShopItem(parseInt(b.dataset.buy, 10));
+
+    this.screenEl.querySelectorAll('[data-shopcat]').forEach(b => b.onclick = () => { this.shopSel = b.dataset.shopcat; this.renderShop(); });
+    this.screenEl.querySelectorAll('[data-buygear]').forEach(b => b.onclick = () => {
+      const r = Game.buyShopItem(parseInt(b.dataset.buygear, 10));
       if (!r.ok) { this.toast(r.msg); return; }
-      const tpl = Game.getGearTpl(r.tpl);
-      this.toast(`购买成功：${tpl.name}`); this.updateResources(); this.renderShop();
+      if (window.Sound) Sound.sfx('levelup');
+      this.toast(`购买成功：${Game.getGearTpl(r.tpl).name}`); this.updateResources(); this.renderShop();
     });
-    const pw = this.screenEl.querySelector('#sh-powder');
-    if (pw) pw.onclick = () => { const r = Game.powderBox(); if (!r.ok) { this.toast(r.msg); return; } this.closeModal && 0; this.toast('已兑换必出 5★ 招募券，请在招募使用'); this.updateResources(); this.renderShop(); };
-    const sp = this.screenEl.querySelector('#sh-spark');
-    if (sp) sp.onclick = () => this.showSparkPicker();
+    this.screenEl.querySelectorAll('[data-buyitem]').forEach(b => b.onclick = () => {
+      const r = Game.buyShop2(this.shopSel, b.dataset.buyitem);
+      if (!r.ok) { this.toast(r.msg); return; }
+      if (window.Sound) Sound.sfx('levelup');
+      this.toast('购买成功 · ' + (this._rwLabel(r.give.gearScale ? { gear: 1 } : r.give) || '已入库')); this.updateResources(); this.renderShop();
+    });
   },
 
   // ============================================================

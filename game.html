@@ -1978,6 +1978,46 @@ button.ac-circle:active { transform: scale(.92); }
 .evb-line.done { border-color: var(--gold); color: var(--gold); }
 @media (max-width: 720px) { .evh-list { flex-basis: 120px; } .evh-head-title { font-size: 19px; } .evb-wrap { flex-direction: column; } }
 
+/* ===== 商店中心（Hub） ===== */
+.shop-hub { display: flex; gap: 10px; height: 100%; padding: 12px; box-sizing: border-box; }
+.sp-side { flex: 0 0 96px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+.sp-cat {
+  display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer;
+  background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 10px 4px;
+  color: var(--text-dim);
+}
+.sp-cat.on { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border-color: transparent; }
+.sp-cat-ico { font-size: 22px; }
+.sp-cat-name { font-size: 11px; font-weight: 700; }
+
+.sp-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sp-head { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px 10px; border-bottom: 1px solid rgba(255,255,255,.07); margin-bottom: 10px; }
+.sp-title { font-size: 16px; font-weight: 900; }
+.sp-cur { font-size: 14px; font-weight: 800; color: var(--gold); background: var(--panel); padding: 4px 12px; border-radius: 20px; }
+
+.sp-stage { flex: 1; display: flex; gap: 12px; min-height: 0; }
+.sp-merchant { flex: 0 0 32%; max-width: 320px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  background: radial-gradient(circle at 50% 40%, rgba(176,107,255,.18), transparent 70%); border-radius: 14px; padding: 14px; }
+.sp-merchant-art { font-size: clamp(70px, 20vh, 170px); filter: drop-shadow(0 10px 24px rgba(0,0,0,.5)); }
+.sp-bubble { position: relative; background: var(--panel); border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 10px 12px; font-size: 12px; color: #d8cfe6; line-height: 1.5; margin-top: 10px; }
+.sp-bubble::before { content: ''; position: absolute; top: -7px; left: 28px; border: 7px solid transparent; border-top: 0; border-bottom-color: var(--panel); }
+
+.sp-grid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; align-content: start; padding-right: 4px; }
+.sp-card { position: relative; background: var(--panel); border: 1px solid rgba(255,255,255,.07); border-radius: 12px; padding: 12px 8px 10px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.sp-qty { position: absolute; top: 5px; right: 8px; font-size: 10px; color: var(--text-dim); }
+.sp-ico { width: 52px; height: 52px; border-radius: 10px; display: grid; place-items: center; font-size: 30px; background: var(--panel-2); border: 1px solid rgba(255,255,255,.08); }
+.sp-name { font-size: 12px; font-weight: 700; line-height: 1.2; }
+.sp-give { font-size: 10px; }
+.sp-lim { font-size: 10px; }
+.sp-price {
+  margin-top: 4px; width: 100%; cursor: pointer; border: none; border-radius: 8px; padding: 6px 4px;
+  font-size: 12px; font-weight: 800; color: #2a1f12; background: linear-gradient(135deg, #f0c674, #d9a648);
+}
+.sp-price:disabled { cursor: not-allowed; opacity: .55; }
+.sp-price.sold { background: var(--panel-2); color: var(--text-dim); }
+.sp-price:not(:disabled):active { transform: scale(.95); }
+@media (max-width: 720px) { .sp-side { flex-basis: 76px; } .sp-merchant { flex-basis: 28%; } .sp-merchant-art { font-size: clamp(50px, 14vh, 110px); } }
+
 </style>
 </head>
 <body>
@@ -2023,7 +2063,7 @@ button.ac-circle:active { transform: scale(.92); }
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '62';</script>
+  <script>window.ASSET_VER = '63';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -3137,6 +3177,7 @@ const Game = {
     if (!this.state.daily) this.state.daily = { lastClaim: null, streak: 0 };
     if (!this.state.quests) this.state.quests = { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} };
     if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
+    if (!this.state.shop2) this.state.shop2 = { bought: {} };
     if (this.state.stamina == null) { this.state.stamina = 120; this.state.staminaTs = Date.now(); }
     if (!this.state.dispatch) this.state.dispatch = { slots: [null, null, null] };
     if (this.state.awakenStone == null) this.state.awakenStone = 0;
@@ -4144,6 +4185,83 @@ const Game = {
     this.state.shop.bought[idx] = true;
     this.save();
     return { ok: true, tpl: slot.tpl };
+  },
+
+  // ============================================================
+  //  商店中心（Shop Hub）—— 对照 BD2 商店：左侧分类 + 商人 + 商品网格
+  //  多货币 + 限购周期（日 / 周 / 月 / 永久）
+  // ============================================================
+  SHOP_HUB: [
+    { id: 'item', name: '道具', icon: '📦', cur: 'gem', merchant: '🧝‍♀️', cd: 0,
+      npc: '这里出售各种有用的道具，也只有我才有能力找到这些物品。',
+      items: [
+        { id: 'it_stam',   name: '体力补给',     icon: '⚡', price: 50,  cur: 'gem', limit: 5, period: 'day',  give: { stam: 60 } },
+        { id: 'it_gold',   name: '金币袋',       icon: '🪙', price: 80,  cur: 'gem', limit: 5, period: 'day',  give: { gold: 50000 } },
+        { id: 'it_stone',  name: '觉醒石礼盒',   icon: '🔮', price: 100, cur: 'gem', limit: 5, period: 'week', give: { stone: 5 } },
+        { id: 'it_powder', name: '希望之粉袋',   icon: '✨', price: 150, cur: 'gem', limit: 5, period: 'week', give: { powder: 50 } },
+        { id: 'it_spark',  name: '闪耀之星袋',   icon: '⭐', price: 200, cur: 'gem', limit: 3, period: 'week', give: { spark: 30 } },
+        { id: 'it_gearbox',name: '装备宝箱',     icon: '🎁', price: 120, cur: 'gem', limit: 3, period: 'week', give: { gearScale: 1.6 } },
+        { id: 'it_contract',name:'高级招募契约', icon: '📜', price: 10,  cur: 'gem', limit: 1, period: 'day',  give: { powder: 10 } },
+      ] },
+    { id: 'gold', name: '金币商店', icon: '🪙', cur: 'gold', merchant: '👩‍🦱', daily: true, cd: 0,
+      npc: '你想要装备？那你可算是找对地方啦！每日都有新货色。',
+      items: [
+        { id: 'gd_stam',   name: '体力补给',   icon: '⚡', price: 8000,  cur: 'gold', limit: 3, period: 'day',  give: { stam: 30 } },
+        { id: 'gd_powder', name: '希望之粉',   icon: '✨', price: 20000, cur: 'gold', limit: 3, period: 'week', give: { powder: 20 } },
+        { id: 'gd_stone',  name: '觉醒石',     icon: '🔮', price: 30000, cur: 'gold', limit: 3, period: 'week', give: { stone: 3 } },
+      ] },
+    { id: 'points', name: '点数', icon: '🟡', cur: 'coin', merchant: '🧙‍♀️', cd: 8,
+      npc: '这里有看见您希望但还没钱购买的物品，别光顾着参观，赶快购买吧！',
+      items: [
+        { id: 'pt_refine',  name: '精炼石',       icon: '💠', price: 50,  cur: 'coin', limit: 5, period: 'week',  give: { stone: 3 } },
+        { id: 'pt_star3',   name: '3★升星之星',   icon: '⭐', price: 35,  cur: 'coin', limit: 5, period: 'month', give: { spark: 3 } },
+        { id: 'pt_star4',   name: '4★升星之星',   icon: '🌟', price: 225, cur: 'coin', limit: 3, period: 'month', give: { spark: 5 } },
+        { id: 'pt_goldbag', name: '金币袋',       icon: '🪙', price: 90,  cur: 'coin', limit: 5, period: 'week',  give: { gold: 50000 } },
+        { id: 'pt_powder',  name: '希望之粉',     icon: '✨', price: 200, cur: 'coin', limit: 2, period: 'month', give: { powder: 30 } },
+        { id: 'pt_water',   name: '精炼水晶',     icon: '🔷', price: 67,  cur: 'coin', limit: 3, period: 'week',  give: { stone: 4 } },
+      ] },
+    { id: 'recharge', name: '充值商店', icon: '💎', cur: 'gem', merchant: '💁‍♀️', cd: 0,
+      npc: '欢迎光临！看看今天的超值特惠礼包吧，机会难得哦。',
+      items: [
+        { id: 'rc_ap',     name: 'AP 恢复礼盒',  icon: '🥃', price: 170, cur: 'gem', limit: 5, period: 'day',  give: { stam: 120 } },
+        { id: 'rc_gold',   name: '巨额金币袋',   icon: '💰', price: 200, cur: 'gem', limit: 2, period: 'week', give: { gold: 200000 } },
+        { id: 'rc_stone',  name: '觉醒石礼包',   icon: '🔮', price: 280, cur: 'gem', limit: 2, period: 'week', give: { stone: 15 } },
+        { id: 'rc_ur',     name: '专属装备箱',   icon: '🗡️', price: 500, cur: 'gem', limit: 1, period: 'week', give: { gear: 'arm_ur' } },
+      ] },
+  ],
+  CUR_ICON: { gold: '🪙', gem: '💎', coin: '🎟️' },
+  getShopCat(id) { return this.SHOP_HUB.find(c => c.id === id); },
+  curBalance(cur) { return cur === 'gold' ? this.state.gold : cur === 'gem' ? this.state.gem : cur === 'coin' ? (this.state.event.coin || 0) : 0; },
+  shopPeriodKey(period) {
+    if (period === 'day') return 'd' + this.today();
+    if (period === 'week') return 'w' + this.weekId();
+    if (period === 'month') { const d = new Date(); return 'm' + d.getFullYear() + '-' + (d.getMonth() + 1); }
+    return 'none';
+  },
+  shopBoughtCount(item) {
+    const rec = this.state.shop2.bought[item.id];
+    if (!rec) return 0;
+    if (rec.key !== this.shopPeriodKey(item.period)) return 0;
+    return rec.n || 0;
+  },
+  shopLeft(item) { return item.limit ? item.limit - this.shopBoughtCount(item) : 999; },
+  buyShop2(catId, itemId) {
+    const cat = this.getShopCat(catId);
+    const item = cat && cat.items.find(i => i.id === itemId);
+    if (!item) return { ok: false };
+    if (this.shopLeft(item) <= 0) return { ok: false, msg: '已达购买上限' };
+    if (this.curBalance(item.cur) < item.price) return { ok: false, msg: (item.cur === 'gold' ? '金币' : item.cur === 'gem' ? '宝石' : '活动币') + '不足' };
+    if (item.cur === 'gold') this.spendGold(item.price);
+    else if (item.cur === 'gem') this.state.gem -= item.price;
+    else if (item.cur === 'coin') this.state.event.coin -= item.price;
+    if (item.give.gearScale) this.rollGear(item.give.gearScale);
+    else this.applyReward(item.give || {});
+    const key = this.shopPeriodKey(item.period);
+    const rec = this.state.shop2.bought[itemId];
+    if (rec && rec.key === key) rec.n++;
+    else this.state.shop2.bought[itemId] = { n: 1, key };
+    this.save();
+    return { ok: true, give: item.give };
   },
 
   // ---------- 关卡结算 ----------
@@ -7590,41 +7708,84 @@ const UI = {
   // ============================================================
   //  商店（每日装备商店 + 保底兑换）
   // ============================================================
+  // ============================================================
+  //  商店中心（Hub）—— 左侧分类 + 商人立绘 + 商品网格（对照 BD2）
+  // ============================================================
   renderShop() {
     Game.ensureDaily();
+    const hub = Game.SHOP_HUB;
+    this.shopSel = this.shopSel && hub.find(c => c.id === this.shopSel) ? this.shopSel : hub[0].id;
+    const cat = Game.getShopCat(this.shopSel);
     const s = Game.state;
-    const slots = s.shop.slots.map((slot, i) => {
-      const tpl = Game.getGearTpl(slot.tpl);
-      const sold = s.shop.bought[i];
-      return `<div class="shop-card border-${this.rarityClass(tpl.rarity)} ${sold ? 'sold' : ''}">
-        <div class="shop-ico">${tpl.icon}</div>
-        <div class="shop-name">${tpl.name}</div>
-        <div class="muted" style="font-size:11px;">${window.GameData.GEAR.RLABEL[tpl.rarity]}</div>
-        <button class="btn sm ${sold ? 'secondary' : 'gold'}" data-buy="${i}" ${sold || s.gold < slot.price ? 'disabled' : ''}>${sold ? '已售出' : `🪙${slot.price}`}</button>
-      </div>`;
+
+    const sideHtml = hub.map(c =>
+      `<button class="sp-cat ${c.id === this.shopSel ? 'on' : ''}" data-shopcat="${c.id}">
+        <span class="sp-cat-ico">${c.icon}</span><span class="sp-cat-name">${c.name}</span>
+      </button>`).join('');
+
+    // 顶部货币（该分类使用的货币 + 通用）
+    const curBar = `<span class="sp-cur">${Game.CUR_ICON[cat.cur]} ${Game.curBalance(cat.cur)}</span>`;
+
+    // 商品卡
+    const card = (inner) => `<div class="sp-card">${inner}</div>`;
+    let cardsHtml = '';
+    // 金币商店：先放每日随机装备
+    if (cat.daily) {
+      cardsHtml += s.shop.slots.map((slot, i) => {
+        const tpl = Game.getGearTpl(slot.tpl);
+        const sold = s.shop.bought[i];
+        return card(`<div class="sp-qty">×1</div>
+          <div class="sp-ico border-${this.rarityClass(tpl.rarity)}">${tpl.icon}</div>
+          <div class="sp-name">${tpl.name}</div>
+          <div class="sp-lim muted">每日刷新</div>
+          <button class="sp-price ${sold ? 'sold' : ''}" data-buygear="${i}" ${sold || s.gold < slot.price ? 'disabled' : ''}>
+            ${sold ? '已售出' : `🪙 ${slot.price}`}</button>`);
+      }).join('');
+    }
+    // 通用商品
+    cardsHtml += cat.items.map(it => {
+      const left = Game.shopLeft(it);
+      const sold = it.limit && left <= 0;
+      const can = !sold && Game.curBalance(it.cur) >= it.price;
+      const limTxt = it.limit ? `${{ day: '每日', week: '每周', month: '每月' }[it.period] || ''}限购 ${Game.shopBoughtCount(it)}/${it.limit}` : '不限量';
+      const give = this._rwLabel(it.give.gearScale ? { gear: 1 } : it.give) || '神秘奖励';
+      return card(`<div class="sp-qty">×1</div>
+        <div class="sp-ico">${it.icon}</div>
+        <div class="sp-name">${it.name}</div>
+        <div class="sp-give muted">${give}</div>
+        <div class="sp-lim muted">${limTxt}</div>
+        <button class="sp-price ${sold ? 'sold' : ''}" data-buyitem="${it.id}" ${can ? '' : 'disabled'}>
+          ${sold ? '已售罄' : `${Game.CUR_ICON[it.cur]} ${it.price}`}</button>`);
     }).join('');
+
     this.screenEl.innerHTML = `
-      <div class="section-title">商店 <span class="muted" style="font-weight:400;font-size:12px;">· 每日刷新</span></div>
-      <div class="shop-grid">${slots}</div>
-      <div class="section-title" style="margin-top:16px;">保底兑换</div>
-      <div class="exchange-card">
-        <div><b>✨ 希望之粉</b> <span class="muted">${s.powder}/${Game.POWDER_COST}</span><div class="muted" style="font-size:11px;">兑换必出 5★ 招募</div></div>
-        <button class="btn sm ${s.powder >= Game.POWDER_COST ? 'gold' : 'secondary'}" id="sh-powder" ${s.powder >= Game.POWDER_COST ? '' : 'disabled'}>兑换</button>
-      </div>
-      <div class="exchange-card">
-        <div><b>⭐ 闪耀之星</b> <span class="muted">${s.spark}/${Game.SPARK_COST}</span><div class="muted" style="font-size:11px;">自选一套 5★ 服装</div></div>
-        <button class="btn sm ${s.spark >= Game.SPARK_COST ? '' : 'secondary'}" id="sh-spark" ${s.spark >= Game.SPARK_COST ? '' : 'disabled'}>自选</button>
+      <div class="shop-hub">
+        <div class="sp-side">${sideHtml}</div>
+        <div class="sp-main">
+          <div class="sp-head"><span class="sp-title">${cat.icon} ${cat.name}</span>${curBar}</div>
+          <div class="sp-stage">
+            <div class="sp-merchant">
+              <div class="sp-merchant-art">${cat.merchant}</div>
+              <div class="sp-bubble">${cat.npc}</div>
+            </div>
+            <div class="sp-grid">${cardsHtml}</div>
+          </div>
+        </div>
       </div>`;
-    this.screenEl.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => {
-      const r = Game.buyShopItem(parseInt(b.dataset.buy, 10));
+
+    this.screenEl.querySelectorAll('[data-shopcat]').forEach(b => b.onclick = () => { this.shopSel = b.dataset.shopcat; this.renderShop(); });
+    this.screenEl.querySelectorAll('[data-buygear]').forEach(b => b.onclick = () => {
+      const r = Game.buyShopItem(parseInt(b.dataset.buygear, 10));
       if (!r.ok) { this.toast(r.msg); return; }
-      const tpl = Game.getGearTpl(r.tpl);
-      this.toast(`购买成功：${tpl.name}`); this.updateResources(); this.renderShop();
+      if (window.Sound) Sound.sfx('levelup');
+      this.toast(`购买成功：${Game.getGearTpl(r.tpl).name}`); this.updateResources(); this.renderShop();
     });
-    const pw = this.screenEl.querySelector('#sh-powder');
-    if (pw) pw.onclick = () => { const r = Game.powderBox(); if (!r.ok) { this.toast(r.msg); return; } this.closeModal && 0; this.toast('已兑换必出 5★ 招募券，请在招募使用'); this.updateResources(); this.renderShop(); };
-    const sp = this.screenEl.querySelector('#sh-spark');
-    if (sp) sp.onclick = () => this.showSparkPicker();
+    this.screenEl.querySelectorAll('[data-buyitem]').forEach(b => b.onclick = () => {
+      const r = Game.buyShop2(this.shopSel, b.dataset.buyitem);
+      if (!r.ok) { this.toast(r.msg); return; }
+      if (window.Sound) Sound.sfx('levelup');
+      this.toast('购买成功 · ' + (this._rwLabel(r.give.gearScale ? { gear: 1 } : r.give) || '已入库')); this.updateResources(); this.renderShop();
+    });
   },
 
   // ============================================================

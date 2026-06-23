@@ -44,6 +44,7 @@ const Game = {
     if (!this.state.daily) this.state.daily = { lastClaim: null, streak: 0 };
     if (!this.state.quests) this.state.quests = { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} };
     if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
+    if (!this.state.shop2) this.state.shop2 = { bought: {} };
     if (this.state.stamina == null) { this.state.stamina = 120; this.state.staminaTs = Date.now(); }
     if (!this.state.dispatch) this.state.dispatch = { slots: [null, null, null] };
     if (this.state.awakenStone == null) this.state.awakenStone = 0;
@@ -1051,6 +1052,83 @@ const Game = {
     this.state.shop.bought[idx] = true;
     this.save();
     return { ok: true, tpl: slot.tpl };
+  },
+
+  // ============================================================
+  //  商店中心（Shop Hub）—— 对照 BD2 商店：左侧分类 + 商人 + 商品网格
+  //  多货币 + 限购周期（日 / 周 / 月 / 永久）
+  // ============================================================
+  SHOP_HUB: [
+    { id: 'item', name: '道具', icon: '📦', cur: 'gem', merchant: '🧝‍♀️', cd: 0,
+      npc: '这里出售各种有用的道具，也只有我才有能力找到这些物品。',
+      items: [
+        { id: 'it_stam',   name: '体力补给',     icon: '⚡', price: 50,  cur: 'gem', limit: 5, period: 'day',  give: { stam: 60 } },
+        { id: 'it_gold',   name: '金币袋',       icon: '🪙', price: 80,  cur: 'gem', limit: 5, period: 'day',  give: { gold: 50000 } },
+        { id: 'it_stone',  name: '觉醒石礼盒',   icon: '🔮', price: 100, cur: 'gem', limit: 5, period: 'week', give: { stone: 5 } },
+        { id: 'it_powder', name: '希望之粉袋',   icon: '✨', price: 150, cur: 'gem', limit: 5, period: 'week', give: { powder: 50 } },
+        { id: 'it_spark',  name: '闪耀之星袋',   icon: '⭐', price: 200, cur: 'gem', limit: 3, period: 'week', give: { spark: 30 } },
+        { id: 'it_gearbox',name: '装备宝箱',     icon: '🎁', price: 120, cur: 'gem', limit: 3, period: 'week', give: { gearScale: 1.6 } },
+        { id: 'it_contract',name:'高级招募契约', icon: '📜', price: 10,  cur: 'gem', limit: 1, period: 'day',  give: { powder: 10 } },
+      ] },
+    { id: 'gold', name: '金币商店', icon: '🪙', cur: 'gold', merchant: '👩‍🦱', daily: true, cd: 0,
+      npc: '你想要装备？那你可算是找对地方啦！每日都有新货色。',
+      items: [
+        { id: 'gd_stam',   name: '体力补给',   icon: '⚡', price: 8000,  cur: 'gold', limit: 3, period: 'day',  give: { stam: 30 } },
+        { id: 'gd_powder', name: '希望之粉',   icon: '✨', price: 20000, cur: 'gold', limit: 3, period: 'week', give: { powder: 20 } },
+        { id: 'gd_stone',  name: '觉醒石',     icon: '🔮', price: 30000, cur: 'gold', limit: 3, period: 'week', give: { stone: 3 } },
+      ] },
+    { id: 'points', name: '点数', icon: '🟡', cur: 'coin', merchant: '🧙‍♀️', cd: 8,
+      npc: '这里有看见您希望但还没钱购买的物品，别光顾着参观，赶快购买吧！',
+      items: [
+        { id: 'pt_refine',  name: '精炼石',       icon: '💠', price: 50,  cur: 'coin', limit: 5, period: 'week',  give: { stone: 3 } },
+        { id: 'pt_star3',   name: '3★升星之星',   icon: '⭐', price: 35,  cur: 'coin', limit: 5, period: 'month', give: { spark: 3 } },
+        { id: 'pt_star4',   name: '4★升星之星',   icon: '🌟', price: 225, cur: 'coin', limit: 3, period: 'month', give: { spark: 5 } },
+        { id: 'pt_goldbag', name: '金币袋',       icon: '🪙', price: 90,  cur: 'coin', limit: 5, period: 'week',  give: { gold: 50000 } },
+        { id: 'pt_powder',  name: '希望之粉',     icon: '✨', price: 200, cur: 'coin', limit: 2, period: 'month', give: { powder: 30 } },
+        { id: 'pt_water',   name: '精炼水晶',     icon: '🔷', price: 67,  cur: 'coin', limit: 3, period: 'week',  give: { stone: 4 } },
+      ] },
+    { id: 'recharge', name: '充值商店', icon: '💎', cur: 'gem', merchant: '💁‍♀️', cd: 0,
+      npc: '欢迎光临！看看今天的超值特惠礼包吧，机会难得哦。',
+      items: [
+        { id: 'rc_ap',     name: 'AP 恢复礼盒',  icon: '🥃', price: 170, cur: 'gem', limit: 5, period: 'day',  give: { stam: 120 } },
+        { id: 'rc_gold',   name: '巨额金币袋',   icon: '💰', price: 200, cur: 'gem', limit: 2, period: 'week', give: { gold: 200000 } },
+        { id: 'rc_stone',  name: '觉醒石礼包',   icon: '🔮', price: 280, cur: 'gem', limit: 2, period: 'week', give: { stone: 15 } },
+        { id: 'rc_ur',     name: '专属装备箱',   icon: '🗡️', price: 500, cur: 'gem', limit: 1, period: 'week', give: { gear: 'arm_ur' } },
+      ] },
+  ],
+  CUR_ICON: { gold: '🪙', gem: '💎', coin: '🎟️' },
+  getShopCat(id) { return this.SHOP_HUB.find(c => c.id === id); },
+  curBalance(cur) { return cur === 'gold' ? this.state.gold : cur === 'gem' ? this.state.gem : cur === 'coin' ? (this.state.event.coin || 0) : 0; },
+  shopPeriodKey(period) {
+    if (period === 'day') return 'd' + this.today();
+    if (period === 'week') return 'w' + this.weekId();
+    if (period === 'month') { const d = new Date(); return 'm' + d.getFullYear() + '-' + (d.getMonth() + 1); }
+    return 'none';
+  },
+  shopBoughtCount(item) {
+    const rec = this.state.shop2.bought[item.id];
+    if (!rec) return 0;
+    if (rec.key !== this.shopPeriodKey(item.period)) return 0;
+    return rec.n || 0;
+  },
+  shopLeft(item) { return item.limit ? item.limit - this.shopBoughtCount(item) : 999; },
+  buyShop2(catId, itemId) {
+    const cat = this.getShopCat(catId);
+    const item = cat && cat.items.find(i => i.id === itemId);
+    if (!item) return { ok: false };
+    if (this.shopLeft(item) <= 0) return { ok: false, msg: '已达购买上限' };
+    if (this.curBalance(item.cur) < item.price) return { ok: false, msg: (item.cur === 'gold' ? '金币' : item.cur === 'gem' ? '宝石' : '活动币') + '不足' };
+    if (item.cur === 'gold') this.spendGold(item.price);
+    else if (item.cur === 'gem') this.state.gem -= item.price;
+    else if (item.cur === 'coin') this.state.event.coin -= item.price;
+    if (item.give.gearScale) this.rollGear(item.give.gearScale);
+    else this.applyReward(item.give || {});
+    const key = this.shopPeriodKey(item.period);
+    const rec = this.state.shop2.bought[itemId];
+    if (rec && rec.key === key) rec.n++;
+    else this.state.shop2.bought[itemId] = { n: 1, key };
+    this.save();
+    return { ok: true, give: item.give };
   },
 
   // ---------- 关卡结算 ----------
