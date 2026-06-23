@@ -48,6 +48,12 @@ const Game = {
     if (!this.state.dispatch) this.state.dispatch = { slots: [null, null, null] };
     if (this.state.awakenStone == null) this.state.awakenStone = 0;
     if (!this.state.event) this.state.event = { date: null, runs: {}, coin: 0, stock: {} };
+    if (this.state.goldSpent == null) this.state.goldSpent = 0;
+    if (this.state.enhanceCount == null) this.state.enhanceCount = 0;
+    if (!this.state.actClaimed) this.state.actClaimed = {};
+    if (!this.state.actDraw) this.state.actDraw = { tickets: 3, drawn: 0 };
+    if (!this.state.actBingo) this.state.actBingo = { revealed: [], clears: 0 };
+    if (!this.state.actLogin) this.state.actLogin = {};
     this.state.roster.forEach(o => { if (o.aff == null) o.aff = 0; if (o.awaken == null) o.awaken = 0; });
     this.state.roster.forEach(o => {
       if (!o.equip) o.equip = { weapon: null, armor: null, accessory: null, ex: null };
@@ -317,7 +323,7 @@ const Game = {
     const o = this.getOwned(uid); if (!o) return { ok: false };
     if ((o.aff || 0) >= this.AFF_MAX) return { ok: false, msg: '好感已满' };
     if (this.state.gold < this.GIFT_COST) return { ok: false, msg: '金币不足' };
-    this.state.gold -= this.GIFT_COST;
+    this.spendGold(this.GIFT_COST);
     o.aff = Math.min(this.AFF_MAX, (o.aff || 0) + this.GIFT_AFF);
     this.save();
     return { ok: true, aff: o.aff, lv: this.affLevel(o) };
@@ -331,7 +337,7 @@ const Game = {
     const c = this.awakenCost(lv);
     if ((this.state.awakenStone || 0) < c.stone) return { ok: false, msg: '觉醒石不足' };
     if (this.state.gold < c.gold) return { ok: false, msg: '金币不足' };
-    this.state.awakenStone -= c.stone; this.state.gold -= c.gold;
+    this.state.awakenStone -= c.stone; this.spendGold(c.gold);
     o.awaken = lv + 1;
     this.save();
     return { ok: true, awaken: o.awaken };
@@ -488,8 +494,9 @@ const Game = {
     if ((inst.lvl || 0) >= this.GEAR_MAX_LVL) return { ok: false, msg: '已达最高强化' };
     const cost = this.enhanceCost(inst);
     if (this.state.gold < cost) return { ok: false, msg: '金币不足' };
-    this.state.gold -= cost;
+    this.spendGold(cost);
     inst.lvl = (inst.lvl || 0) + 1;
+    this.state.enhanceCount = (this.state.enhanceCount || 0) + 1;
     this.save();
     return { ok: true, lvl: inst.lvl, cost };
   },
@@ -615,7 +622,7 @@ const Game = {
   craftGear() {
     const C = window.GameData.GEAR.CRAFT;
     if (this.state.gold < C.goldCost) return { ok: false, msg: '金币不足' };
-    this.state.gold -= C.goldCost;
+    this.spendGold(C.goldCost);
     const type = C.types[Math.floor(Math.random() * C.types.length)];
     const r = Math.random();
     let rarity = 3;
@@ -676,7 +683,7 @@ const Game = {
     if (!owned || owned.level >= 60) return { ok: false, msg: '已达最大等级' };
     const cost = 50 + owned.level * 30;
     if (this.state.gold < cost) return { ok: false, msg: '金币不足' };
-    this.state.gold -= cost;
+    this.spendGold(cost);
     owned.level++;
     owned.exp = 0;
     this.incQuest('levelup', 1);
@@ -849,6 +856,13 @@ const Game = {
     if (r.gear) this.addGear(r.gear);
     if (r.stone) this.state.awakenStone = (this.state.awakenStone || 0) + r.stone;
     if (r.stam) this.state.stamina = (this.state.stamina || 0) + r.stam;
+    if (r.ticket) this.state.actDraw.tickets = (this.state.actDraw.tickets || 0) + r.ticket;
+    if (r.coin) this.state.event.coin = (this.state.event.coin || 0) + r.coin;
+  },
+  /** 扣金币并累计「消耗金币」（活动任务用） */
+  spendGold(n) {
+    this.state.gold -= n;
+    this.state.goldSpent = (this.state.goldSpent || 0) + n;
   },
 
   canCheckIn() { return this.state.daily.lastClaim !== this.today(); },
@@ -1032,7 +1046,7 @@ const Game = {
     const slot = this.state.shop.slots[idx];
     if (!slot) return { ok: false };
     if (this.state.gold < slot.price) return { ok: false, msg: '金币不足' };
-    this.state.gold -= slot.price;
+    this.spendGold(slot.price);
     this.addGear(slot.tpl);
     this.state.shop.bought[idx] = true;
     this.save();
@@ -1453,6 +1467,170 @@ const Game = {
     this.save();
     return { ok: true };
   },
+
+  // ============================================================
+  //  活动中心（活动 Hub）—— 对照 BD2 活动面板
+  //  左侧活动列表 + 右侧按类型切换（任务 / 登录 / 抽抽乐 / 宾果 / 赛季战斗）
+  // ============================================================
+  EVENT_HUB: [
+    { id: 'season_battle', tab: '赛季活动 · 回响', cd: 8, type: 'battle', title: '限时回响', sub: '赛季活动', art: '🌫️', color: '#7a5cff' },
+    { id: 'anniv_draw', tab: '幸运抽抽乐', cd: 8, type: 'draw', title: '幸运抽抽乐', sub: '3 周年纪念！', art: '🎡', color: '#d9434f',
+      prizes: [
+        { id: 'p1', name: '专属武器箱', icon: '🗡️', count: 1, reward: { gear: 'arm_ur' } },
+        { id: 'p2', name: '宝石礼包', icon: '💎', count: 1, reward: { gem: 300 } },
+        { id: 'p3', name: '觉醒石', icon: '🔮', count: 2, reward: { stone: 10 } },
+        { id: 'p4', name: '金币袋', icon: '🪙', count: 5, reward: { gold: 20000 } },
+        { id: 'p5', name: '希望之粉', icon: '✨', count: 11, reward: { powder: 30 } },
+      ] },
+    { id: 'login_1p1', tab: '登录活动 1+1', cd: 36, type: 'login', title: '登录活动 I', sub: '3 周年成长支援', art: '🎁', color: '#ff6b9d',
+      days: [
+        { gem: 50 }, { gem: 50 }, { gold: 20000 }, { stone: 5 }, { gem: 80 }, { powder: 30 }, { gem: 100 },
+        { gold: 40000 }, { stone: 8 }, { gem: 120 }, { powder: 50 }, { gem: 150 }, { gear: 'wpn_sr' }, { gem: 200 },
+      ] },
+    { id: 'pickup_costume', tab: '服装 Pickup 活动任务', cd: 8, type: 'task', title: '活动任务', sub: '服装 Pickup · 海洋先锋', art: '🌊', color: '#5aa9e6',
+      tasks: [
+        { id: 'pc1', name: '获得 Pickup 服装', desc: '累计拥有 2 套服装。', target: 2, reward: { coin: 10 }, metric: s => s.roster.reduce((n, o) => n + (o.costumes ? o.costumes.length : 0), 0) },
+        { id: 'pc2', name: '强化 Pickup 服装', desc: '强化装备 1 次。', target: 1, reward: { coin: 10 }, metric: s => s.enhanceCount || 0 },
+        { id: 'pc3', name: '强化 Pickup 服装', desc: '强化装备 2 次。', target: 2, reward: { coin: 10 }, metric: s => s.enhanceCount || 0 },
+        { id: 'pc4', name: '强化 Pickup 服装', desc: '强化装备 3 次。', target: 3, reward: { coin: 10 }, metric: s => s.enhanceCount || 0 },
+      ] },
+    { id: 'end_gamble', tab: 'End of Gamble · 助力任务', cd: 8, type: 'task', title: '助力任务', sub: 'End of Gamble', art: '🎆', color: '#b06bff',
+      tasks: [
+        { id: 'eg1', name: '进行赛季活动战斗', desc: '进行普通战斗或挑战 5 次。', target: 5, reward: { gem: 100 }, metric: s => s.stats.wins },
+        { id: 'eg2', name: '进行赛季活动战斗', desc: '进行普通战斗或挑战 15 次。', target: 15, reward: { gem: 100 }, metric: s => s.stats.wins },
+        { id: 'eg3', name: '进行赛季活动战斗', desc: '进行普通战斗或挑战 25 次。', target: 25, reward: { gem: 100 }, metric: s => s.stats.wins },
+        { id: 'eg4', name: '消耗活动币兑换', desc: '累计获得 1000 活动币。', target: 1000, reward: { gem: 100 }, metric: s => (s.event && s.event.coin) || 0 },
+      ] },
+    { id: 'gold_payback', tab: 'Gold Payback · 助力任务', cd: 8, type: 'task', title: 'Gold Payback', sub: '使用金币 · 助力任务', art: '🏆', color: '#f0c674',
+      tasks: [
+        { id: 'gp1', name: '消耗金币', desc: '累计消耗金币 200,000。', target: 200000, reward: { gold: 100000 }, metric: s => s.goldSpent || 0 },
+        { id: 'gp2', name: '消耗金币', desc: '累计消耗金币 400,000。', target: 400000, reward: { gold: 100000 }, metric: s => s.goldSpent || 0 },
+        { id: 'gp3', name: '消耗金币', desc: '累计消耗金币 600,000。', target: 600000, reward: { gem: 200 }, metric: s => s.goldSpent || 0 },
+        { id: 'gp4', name: '消耗金币', desc: '累计消耗金币 1,000,000。', target: 1000000, reward: { gem: 400 }, metric: s => s.goldSpent || 0 },
+      ] },
+    { id: 'my_pick', tab: 'MY PICK! · 活动任务', cd: 8, type: 'task', title: 'MY PICK!', sub: '活动任务 · 完成获取奖励', art: '🃏', color: '#e8a33d',
+      tasks: [
+        { id: 'mp1', name: '每日登录', desc: '登录游戏。', target: 1, reward: { gem: 20 }, metric: s => (s.tasks && s.tasks.d && s.tasks.d.login) || 0 },
+        { id: 'mp2', name: '进行招募', desc: '累计招募 2 次。', target: 2, reward: { gem: 30 }, metric: s => s.stats.pulls },
+        { id: 'mp3', name: '试玩抽抽乐', desc: '进行 1 次幸运抽抽乐。', target: 1, reward: { gem: 20 }, metric: s => (s.actDraw && s.actDraw.drawn) || 0 },
+        { id: 'mp4', name: '通关主线', desc: '通关任意主线 1 关。', target: 1, reward: { gem: 20 }, metric: s => s.cleared.filter(id => typeof id === 'number' && id < 100).length },
+      ] },
+    { id: 'epic_bingo', tab: 'Epic Bingo Event · 宾果', cd: 8, type: 'bingo', title: 'Epic Bingo Event', sub: '宾果板通关奖励', art: '🎰', color: '#c98b3a',
+      cells: [
+        { gem: 20 }, { gold: 10000 }, { stone: 2 }, { gem: 30 }, { powder: 10 },
+        { gold: 8000 }, { gem: 20 }, { stone: 1 }, { gem: 30 }, { gold: 10000 },
+        { powder: 8 }, { gem: 20 }, { gem: 100 }, { stone: 2 }, { gem: 20 },
+        { gold: 8000 }, { gem: 30 }, { stone: 1 }, { gem: 20 }, { powder: 10 },
+        { gem: 20 }, { gold: 10000 }, { gem: 30 }, { stone: 2 }, { gem: 50 },
+      ],
+      lineRewards: [{ gold: 100000 }, { gear: 'arm_sr' }, { powder: 50 }, { stone: 10 }, { gem: 90 }] },
+  ],
+  REVEAL_COST: 1,   // 宾果每格揭示消耗活动币
+  DRAW_COST: 1,     // 抽抽乐每抽消耗 1 抽抽乐券
+
+  getEventHub(id) { return this.EVENT_HUB.find(e => e.id === id); },
+  // ---- 任务型活动 ----
+  eventTaskList(ev) {
+    return ev.tasks.map(t => {
+      const cur = Math.min(t.target, t.metric(this.state));
+      const done = cur >= t.target;
+      const key = ev.id + ':' + t.id;
+      return Object.assign({}, t, { cur, done, claimed: !!this.state.actClaimed[key], key });
+    });
+  },
+  claimEventTask(ev, taskId) {
+    const t = this.eventTaskList(ev).find(x => x.id === taskId);
+    if (!t) return { ok: false };
+    if (t.claimed) return { ok: false, msg: '已领取' };
+    if (!t.done) return { ok: false, msg: '未完成' };
+    this.applyReward(t.reward);
+    this.state.actClaimed[t.key] = true;
+    this.save();
+    return { ok: true, reward: t.reward };
+  },
+  claimAllEventTasks(ev) {
+    let n = 0;
+    this.eventTaskList(ev).forEach(t => { if (t.done && !t.claimed) { if (this.claimEventTask(ev, t.id).ok) n++; } });
+    return { ok: n > 0, n };
+  },
+  // ---- 登录型活动 ----
+  eventLoginClaimed(ev) { return this.state.actLogin[ev.id] || 0; },
+  eventLoginCanClaim(ev) {
+    const last = (this.state.actLogin[ev.id + ':date']) || null;
+    return this.eventLoginClaimed(ev) < ev.days.length && last !== this.today();
+  },
+  claimEventLogin(ev) {
+    if (!this.eventLoginCanClaim(ev)) return { ok: false, msg: '今日已领取或已领完' };
+    const idx = this.eventLoginClaimed(ev);
+    const reward = ev.days[idx];
+    this.applyReward(reward);
+    this.state.actLogin[ev.id] = idx + 1;
+    this.state.actLogin[ev.id + ':date'] = this.today();
+    this.save();
+    return { ok: true, reward, day: idx + 1 };
+  },
+  // ---- 抽抽乐 ----
+  drawTickets() { return this.state.actDraw.tickets || 0; },
+  buyDrawTicket() {
+    if (this.state.gem < 100) return { ok: false, msg: '宝石不足' };
+    this.state.gem -= 100;
+    this.state.actDraw.tickets = (this.state.actDraw.tickets || 0) + 1;
+    this.save();
+    return { ok: true };
+  },
+  eventDrawPool(ev) {
+    const taken = this.state.actClaimed['draw:' + ev.id] || {};
+    return ev.prizes.map(p => ({ id: p.id, name: p.name, icon: p.icon, left: p.count - (taken[p.id] || 0), reward: p.reward }));
+  },
+  doEventDraw(ev) {
+    if ((this.state.actDraw.tickets || 0) < this.DRAW_COST) return { ok: false, msg: '抽抽乐券不足' };
+    const pool = this.eventDrawPool(ev).filter(p => p.left > 0);
+    if (!pool.length) return { ok: false, msg: '奖池已抽空' };
+    this.state.actDraw.tickets -= this.DRAW_COST;
+    this.state.actDraw.drawn = (this.state.actDraw.drawn || 0) + 1;
+    const prize = pool[Math.floor(Math.random() * pool.length)];
+    const taken = this.state.actClaimed['draw:' + ev.id] || {};
+    taken[prize.id] = (taken[prize.id] || 0) + 1;
+    this.state.actClaimed['draw:' + ev.id] = taken;
+    this.applyReward(prize.reward);
+    this.save();
+    return { ok: true, prize };
+  },
+  // ---- 宾果 ----
+  BINGO_LINES: [
+    [0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12, 13, 14], [15, 16, 17, 18, 19], [20, 21, 22, 23, 24],
+    [0, 5, 10, 15, 20], [1, 6, 11, 16, 21], [2, 7, 12, 17, 22], [3, 8, 13, 18, 23], [4, 9, 14, 19, 24],
+    [0, 6, 12, 18, 24], [4, 8, 12, 16, 20],
+  ],
+  bingoRevealed(ev) { return this.state.actBingo.revealed || []; },
+  bingoLinesCleared(ev) {
+    const rev = new Set(this.bingoRevealed(ev));
+    return this.BINGO_LINES.filter(line => line.every(i => rev.has(i))).length;
+  },
+  revealBingoCell(ev, idx) {
+    const rev = this.state.actBingo.revealed || [];
+    if (rev.includes(idx)) return { ok: false, msg: '已揭示' };
+    if ((this.state.event.coin || 0) < this.REVEAL_COST) return { ok: false, msg: '活动币不足' };
+    this.state.event.coin -= this.REVEAL_COST;
+    const linesBefore = this.bingoLinesCleared(ev);
+    rev.push(idx);
+    this.state.actBingo.revealed = rev;
+    this.applyReward(ev.cells[idx]);                 // 翻开即得格子奖励
+    const linesAfter = this.bingoLinesCleared(ev);
+    let lineReward = null;
+    for (let l = linesBefore; l < linesAfter && l < ev.lineRewards.length; l++) {
+      this.applyReward(ev.lineRewards[l]); lineReward = ev.lineRewards[l];   // 新连线奖励
+    }
+    this.save();
+    return { ok: true, cell: ev.cells[idx], lineReward, lines: linesAfter };
+  },
+  // ---- 红点聚合 ----
+  eventHubClaimable(ev) {
+    if (ev.type === 'task') return this.eventTaskList(ev).filter(t => t.done && !t.claimed).length;
+    if (ev.type === 'login') return this.eventLoginCanClaim(ev) ? 1 : 0;
+    return 0;
+  },
+  eventHubAnyClaimable() { return this.EVENT_HUB.reduce((n, ev) => n + this.eventHubClaimable(ev), 0); },
 
   // ---------- 成就系统 ----------
   // metric(s) 返回当前进度值；达到 target 即可领取 reward（一次性）

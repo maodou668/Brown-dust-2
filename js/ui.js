@@ -1284,7 +1284,7 @@ const UI = {
   //  任务板（每日 / 每周）—— 对照 BD2 任务面板
   // ============================================================
   _rwLabel(r) {
-    const map = { gold: '🪙', gem: '💎', powder: '✨', spark: '⭐', stone: '🔮', stam: '⚡' };
+    const map = { gold: '🪙', gem: '💎', powder: '✨', spark: '⭐', stone: '🔮', stam: '⚡', coin: '🎟️', ticket: '🎫' };
     const parts = Object.entries(r).map(([k, v]) => k === 'gear' ? '🎁装备' : (map[k] || '') + v);
     return parts.join(' ');
   },
@@ -1714,7 +1714,159 @@ const UI = {
   // ============================================================
   //  限时活动（活动本 + 活动商店）
   // ============================================================
+  // ============================================================
+  //  活动中心（Hub）—— 左侧活动列表 + 右侧按类型切换
+  // ============================================================
   renderEvent() {
+    Game.ensureEvent();
+    const hub = Game.EVENT_HUB;
+    this.eventSel = this.eventSel && hub.find(e => e.id === this.eventSel) ? this.eventSel : hub[0].id;
+    const ev = Game.getEventHub(this.eventSel);
+
+    // 左侧活动列表
+    const listHtml = hub.map(e => {
+      const dot = Game.eventHubClaimable(e) ? '<span class="evh-dot"></span>' : '';
+      return `<button class="evh-item ${e.id === this.eventSel ? 'on' : ''}" data-ev-sel="${e.id}">
+        <span class="evh-cd">D-${e.cd}</span>
+        <span class="evh-thumb" style="background:linear-gradient(135deg, ${e.color}, ${e.color}55);">${e.art}</span>
+        <span class="evh-name">${e.tab}</span>${dot}
+      </button>`;
+    }).join('');
+
+    // 右侧面板主体（按类型）
+    let body = '';
+    if (ev.type === 'battle') body = this.renderEventBattle();
+    else if (ev.type === 'task') body = this._evTaskBody(ev);
+    else if (ev.type === 'login') body = this._evLoginBody(ev);
+    else if (ev.type === 'draw') body = this._evDrawBody(ev);
+    else if (ev.type === 'bingo') body = this._evBingoBody(ev);
+
+    this.screenEl.innerHTML = `
+      <div class="event-hub">
+        <div class="evh-list">${listHtml}</div>
+        <div class="evh-panel" style="--ev-color:${ev.color};">
+          <div class="evh-head" style="background:linear-gradient(120deg, ${ev.color}cc, ${ev.color}33);">
+            <div class="evh-head-art">${ev.art}</div>
+            <div class="evh-head-txt">
+              <div class="evh-head-sub">${ev.sub}</div>
+              <div class="evh-head-title">${ev.title}</div>
+              <div class="evh-head-cd">⏱ 活动 还剩 ${ev.cd} 天</div>
+            </div>
+          </div>
+          <div class="evh-body">${body}</div>
+        </div>
+      </div>`;
+
+    this.screenEl.querySelectorAll('[data-ev-sel]').forEach(b => b.onclick = () => { this.eventSel = b.dataset.evSel; this.renderEvent(); });
+    if (ev.type === 'battle') this.bindEventBattle();
+    else if (ev.type === 'task') this._bindEvTask(ev);
+    else if (ev.type === 'login') this._bindEvLogin(ev);
+    else if (ev.type === 'draw') this._bindEvDraw(ev);
+    else if (ev.type === 'bingo') this._bindEvBingo(ev);
+  },
+
+  // ---- 任务型 ----
+  _evTaskBody(ev) {
+    const list = Game.eventTaskList(ev);
+    const rows = list.map(t => {
+      const rw = this._rwLabel(t.reward);
+      const btn = t.claimed ? '<span class="ac-circle claimed">✓</span>'
+        : (t.done ? `<button class="ac-circle ready" data-evtask="${t.id}">🤲</button>` : '<span class="ac-circle lock">🤲</span>');
+      return `<div class="ac-row ${t.claimed ? '' : (t.done ? 'ready' : 'todo')}">
+        <div class="evt-rw"><span class="evt-rw-ic">🎟️</span><span class="evt-rw-amt">${rw}</span></div>
+        <div class="ac-mid"><div class="ac-name">${t.name} <span class="ac-prog">${t.cur} / ${t.target}</span></div>
+          <div class="ac-desc">${t.desc}</div></div>
+        ${btn}
+      </div>`;
+    }).join('');
+    return `<div class="ac-list">${rows}</div>
+      <div class="ac-foot"><button class="btn ${Game.eventHubClaimable(ev) ? 'gold' : 'secondary'}" id="evt-all" ${Game.eventHubClaimable(ev) ? '' : 'disabled'}>全部领取</button></div>`;
+  },
+  _bindEvTask(ev) {
+    this.screenEl.querySelectorAll('[data-evtask]').forEach(b => b.onclick = () => {
+      const r = Game.claimEventTask(ev, b.dataset.evtask);
+      if (!r.ok) { this.toast(r.msg || '不可领取'); return; }
+      this.toast('领取：' + this._rwLabel(r.reward)); this.updateResources(); this.renderEvent();
+    });
+    const all = this.screenEl.querySelector('#evt-all');
+    if (all) all.onclick = () => { const r = Game.claimAllEventTasks(ev); if (!r.ok) { this.toast('没有可领取'); return; } this.toast(`领取 ${r.n} 项`); this.updateResources(); this.renderEvent(); };
+  },
+
+  // ---- 登录型 ----
+  _evLoginBody(ev) {
+    const claimed = Game.eventLoginClaimed(ev);
+    const canToday = Game.eventLoginCanClaim(ev);
+    const cells = ev.days.map((d, i) => {
+      const got = i < claimed;
+      const isNext = i === claimed && canToday;
+      return `<div class="evl-cell ${got ? 'got' : ''} ${isNext ? 'next' : ''}">
+        <div class="evl-day">第${i + 1}天</div>
+        <div class="evl-rw">${this._rwLabel(d)}</div>
+        ${got ? '<div class="evl-tick">✓</div>' : ''}
+      </div>`;
+    }).join('');
+    return `<div class="evl-grid">${cells}</div>
+      <div class="ac-foot"><button class="btn ${canToday ? 'gold' : 'secondary'}" id="evl-claim" ${canToday ? '' : 'disabled'}>${canToday ? '签到领取' : (claimed >= ev.days.length ? '已领完' : '明日再来')}</button></div>`;
+  },
+  _bindEvLogin(ev) {
+    const b = this.screenEl.querySelector('#evl-claim');
+    if (b) b.onclick = () => { const r = Game.claimEventLogin(ev); if (!r.ok) { this.toast(r.msg); return; } this.toast(`第${r.day}天签到：${this._rwLabel(r.reward)}`); this.updateResources(); this.renderEvent(); };
+  },
+
+  // ---- 抽抽乐 ----
+  _evDrawBody(ev) {
+    const pool = Game.eventDrawPool(ev);
+    const cells = pool.map(p => `<div class="evd-prize ${p.left <= 0 ? 'empty' : ''}">
+        <div class="evd-prize-left">还剩 ${p.left} 个</div>
+        <div class="evd-prize-ico">${p.icon}</div>
+        <div class="evd-prize-name">${p.name}</div>
+      </div>`).join('');
+    return `<div class="evd-pool">${cells}</div>
+      <div class="evd-bar">
+        <button class="btn secondary" id="evd-buy">购买抽抽乐券 💎100</button>
+        <button class="btn gold" id="evd-draw">抽抽乐 🎟️${Game.drawTickets()}</button>
+      </div>`;
+  },
+  _bindEvDraw(ev) {
+    const buy = this.screenEl.querySelector('#evd-buy');
+    if (buy) buy.onclick = () => { const r = Game.buyDrawTicket(); if (!r.ok) { this.toast(r.msg); return; } this.toast('购买成功 +1 券'); this.updateResources(); this.renderEvent(); };
+    const draw = this.screenEl.querySelector('#evd-draw');
+    if (draw) draw.onclick = () => {
+      const r = Game.doEventDraw(ev);
+      if (!r.ok) { this.toast(r.msg); return; }
+      if (window.Sound) Sound.sfx('levelup');
+      this.toast(`抽中：${r.prize.icon} ${r.prize.name}`); this.updateResources(); this.renderEvent();
+    };
+  },
+
+  // ---- 宾果 ----
+  _evBingoBody(ev) {
+    const rev = new Set(Game.bingoRevealed(ev));
+    const cells = ev.cells.map((c, i) => rev.has(i)
+      ? `<div class="evb-cell got">✓<span class="evb-cell-rw">${this._rwLabel(c)}</span></div>`
+      : `<button class="evb-cell" data-bingo="${i}">?</button>`).join('');
+    const lines = Game.bingoLinesCleared(ev);
+    const lineRw = ev.lineRewards.map((r, i) => `<div class="evb-line ${i < lines ? 'done' : ''}">${i + 1}线<br>${this._rwLabel(r)}</div>`).join('');
+    return `<div class="evb-wrap">
+        <div class="evb-board">${cells}</div>
+        <div class="evb-side">
+          <div class="evb-coin">🎟️ ${Game.state.event.coin}</div>
+          <div class="evb-lines">${lineRw}</div>
+          <div class="muted" style="font-size:11px;">每格消耗 🎟️${Game.REVEAL_COST}，连成一线得额外奖励</div>
+        </div>
+      </div>`;
+  },
+  _bindEvBingo(ev) {
+    this.screenEl.querySelectorAll('[data-bingo]').forEach(b => b.onclick = () => {
+      const r = Game.revealBingoCell(ev, parseInt(b.dataset.bingo, 10));
+      if (!r.ok) { this.toast(r.msg); return; }
+      let msg = '翻开：' + this._rwLabel(r.cell);
+      if (r.lineReward) msg += ` · 连线奖励 ${this._rwLabel(r.lineReward)}`;
+      this.toast(msg); this.updateResources(); this.renderEvent();
+    });
+  },
+
+  renderEventBattle() {
     Game.ensureEvent();
     const ev = Game.EVENT;
     const coin = Game.state.event.coin;
@@ -1741,16 +1893,14 @@ const UI = {
         <button class="btn sm" data-buy="${it.id}" ${can ? '' : 'disabled'}>🎟️${it.cost}</button>
       </div>`;
     }).join('');
-    this.screenEl.innerHTML = `
-      <div class="event-banner">
-        <div class="eb-title">🎏 ${ev.name}</div>
-        <div class="eb-desc">${ev.desc}</div>
-        <div class="eb-coin">🎟️ 活动币：<b>${coin}</b></div>
-      </div>
+    return `
+      <div class="eb-coin" style="margin-bottom:10px;">🎟️ 活动币：<b>${coin}</b></div>
       <div class="section-title" style="font-size:14px;">活动关卡</div>
       <div class="farm-list">${stageCards}</div>
       <div class="section-title" style="font-size:14px;margin-top:14px;">活动商店</div>
       <div class="ev-shop">${shopCards}</div>`;
+  },
+  bindEventBattle() {
     this.screenEl.querySelectorAll('[data-ev]').forEach(b => b.onclick = () => this.startEventFight(b.dataset.ev));
     this.screenEl.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => {
       const r = Game.eventBuy(b.dataset.buy);
