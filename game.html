@@ -95,7 +95,7 @@ body {
 /* ---------- 主区域 ---------- */
 #screen {
   flex: 1; overflow-y: auto; overflow-x: hidden;
-  padding: 14px;
+  padding: 14px; position: relative;
   -webkit-overflow-scrolling: touch;
 }
 #screen::-webkit-scrollbar { width: 0; }
@@ -1256,12 +1256,14 @@ body {
 }
 .lobby-actions::-webkit-scrollbar { height: 0; }
 .lobby-btn {
-  flex: 0 0 auto; min-width: 76px;
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  flex: 0 0 auto; min-width: 58px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
   background: rgba(38,29,51,.72); border: 1px solid rgba(255,255,255,.08);
-  border-radius: 14px; padding: 9px 10px 8px; cursor: pointer;
+  border-radius: 12px; padding: 6px 8px 5px; cursor: pointer;
   backdrop-filter: blur(4px); transition: transform .1s, border-color .2s;
 }
+.lobby-btn .lb-icon { font-size: 22px; line-height: 1; }
+.lobby-btn .lb-label { font-size: 10px; }
 .lobby-btn:active { transform: translateY(2px) scale(.97); }
 .lobby-btn:hover { border-color: rgba(176,107,255,.5); }
 .lobby-btn .lb-icon { font-size: 26px; line-height: 1; }
@@ -1563,13 +1565,13 @@ body {
 
 /* 折叠屏 / 宽屏放大 */
 @media (min-width: 820px) {
-  .lobby-left { grid-template-columns: repeat(2, 60px); gap: 8px; }
-  .ll-tile { width: 60px; height: 60px; } .ll-ico { font-size: 26px; } .ll-lab { font-size: 11px; }
-  .lobby-right { width: 200px; } .lr-name { font-size: 15px; } .lr-ico { font-size: 28px; }
-  .lb-cta { padding: 14px 40px; } .lb-cta .cta-go { font-size: 24px; }
-  .lb-thumb { width: 70px; height: 70px; }
-  .lobby-btn { min-width: 90px; } .lobby-btn .lb-icon { font-size: 28px; }
-  .lobby-art-ph { font-size: 96px; }
+  .lobby-left { grid-template-columns: repeat(2, 52px); gap: 7px; }
+  .ll-tile { width: 52px; height: 52px; } .ll-ico { font-size: 22px; } .ll-lab { font-size: 10px; }
+  .lobby-right { width: 184px; } .lr-name { font-size: 14px; } .lr-ico { font-size: 24px; }
+  .lb-cta { padding: 12px 32px; } .lb-cta .cta-go { font-size: 21px; }
+  .lb-thumb { width: 62px; height: 62px; }
+  .lobby-btn { min-width: 66px; } .lobby-btn .lb-icon { font-size: 24px; }
+  .lobby-art-ph { font-size: 88px; }
 }
 @media (max-width: 520px) {
   .lobby-right { width: 120px; } .lr-name { font-size: 11px; } .lr-ico { font-size: 18px; }
@@ -1621,7 +1623,7 @@ body {
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '53';</script>
+  <script>window.ASSET_VER = '54';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
