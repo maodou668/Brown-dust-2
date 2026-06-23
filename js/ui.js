@@ -62,10 +62,9 @@ const UI = {
   // ============================================================
   renderHome() {
     const s = Game.state;
-    const teamHtml = this.renderTeamSlots();
     const totalChars = s.roster.length;
     const cleared = s.cleared.length;
-    // 单一主界面（大厅）：满屏背景（未来放动态背景图）+ 中部出战队伍 + 底部横向功能按钮
+    // 单一主界面（大厅）：满屏背景（未来放动态背景图）+ 底部横向功能按钮（含编队）
     const actions = [
       { go: 'stages', icon: '🗺️', label: '冒险', sub: `${cleared}/${window.GameData.STAGES.length}` },
       { go: 'gacha', icon: '🎴', label: '招募', sub: `💎${s.gem}` },
@@ -90,10 +89,6 @@ const UI = {
               <h1>棕色尘埃 <small>2</small></h1>
               <p class="muted">欢迎回来，指挥官 · 已通关 ${cleared}/${window.GameData.STAGES.length} 关</p>
             </div>
-            <div class="lobby-team">
-              <div class="lobby-team-label">出战队伍 · 点击槽位编辑（${s.team.length}/5）</div>
-              <div class="team-slots" id="team-slots">${teamHtml}</div>
-            </div>
           </div>
           <div class="lobby-actions">${btns}</div>
         </div>
@@ -108,9 +103,6 @@ const UI = {
         else if (a === 'forge') this.showForge();
         else if (a === 'story') this.showStoryReplay();
       }));
-    const ts = this.screenEl.querySelector('#team-slots');
-    if (ts) ts.querySelectorAll('.team-slot').forEach((slot, i) =>
-      slot.addEventListener('click', () => this.showTeamEditor(i)));
   },
 
   /** 队伍编辑器：从出战框直接编辑 */

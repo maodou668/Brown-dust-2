@@ -13,18 +13,10 @@ const World = {
   input: { up: false, down: false, left: false, right: false },
   nodes: [], cur: null, busyTrigger: false, active: false,
 
-  // 顶视角 tilemap —— Kenney「Tiny」系列 CC0 图集（16px 格，统一风格的成套美术）
-  ATLAS: { town: 'assets/world/kenney/town.png', dungeon: 'assets/world/kenney/dungeon.png' },
+  // 顶视角占位渲染（纯色地块 + emoji 道具，无外接美术）
   TILE: 16, SCALE: 3,            // 屏上 48px / 格
-  TIDX: {
-    grass: [0, 1], flower: 2,
-    dirt9: [12, 13, 14, 24, 25, 26, 36, 37, 38],   // 3×3 自动拼接（草地上的土路）
-    pines: [{ top: 3, bot: 15 }, { top: 4, bot: 16 }],
-    bush: [5, 27, 28], mush: 29,
-    hero: { atlas: 'dungeon', idx: 84 },           // 紫袍法师（契合炽焰魔女）
-    mon: { atlas: 'dungeon', idx: [108, 110, 121] },
-  },
-  atlasImg: {}, atlasReady: false,
+  COL: { grass: '#4f7a3a', grass2: '#578544', path: '#8a6a3a', water: '#2f6aa0' },
+  EMO: { tree: '🌲', rock: '🪨', bush: '🌿', mush: '🍄', mon: ['👹', '👺', '💀'] },
 
   // 节点在地图中的预设槽位（从下往上推进，制造「前进」感）
   SLOTS: [
@@ -197,7 +189,7 @@ const World = {
     // 在战斗节点附近散布几只小怪（叙事点缀：森林里的哥布林/魔物）
     this.mons = [];
     this.nodes.filter(n => n.type === 'battle').forEach(n => {
-      const idx = this.TIDX.mon.idx[(this.vrand(n.x | 0, n.y | 0) * 3) | 0];
+      const idx = (this.vrand(n.x | 0, n.y | 0) * 3) | 0;
       this.mons.push({ x: n.x + 0.85, y: n.y + 0.5, idx, ph: this.vrand(n.x, n.y) * 6.28 });
     });
     this.buildScatter();
@@ -235,28 +227,16 @@ const World = {
     }
   },
 
-  // 加载图集（异步，未就绪时回退占位）
-  loadArt() {
-    const ver = (window.ASSET_VER || '');
-    this.atlasImg = {}; const all = [];
-    for (const k in this.ATLAS) {
-      const img = new Image(); img.src = this.ATLAS[k] + (ver ? '?v=' + ver : '');
-      this.atlasImg[k] = img; all.push(img);
-    }
-    const check = () => { this.atlasReady = all.every(i => i.complete && i.naturalWidth); };
-    all.forEach(i => { i.onload = check; }); check();
-  },
+  loadArt() { /* 占位渲染，无需加载外部美术 */ },
 
   // 确定性伪随机（按格选变体，保证每次渲染一致）
   vrand(x, y) { let h = ((x | 0) * 73856093) ^ ((y | 0) * 19349663); h = (h ^ (h >>> 13)) >>> 0; return h / 4294967295; },
 
-  // 画图集某格到屏幕（dx,dy 屏幕左上角；scale 默认整图缩放）
-  blit(atlasKey, idx, dx, dy, scale) {
-    const a = this.atlasImg[atlasKey]; if (!a || !a.naturalWidth) return;
-    const cols = (a.naturalWidth / this.TILE) | 0;
-    const sx = (idx % cols) * this.TILE, sy = ((idx / cols) | 0) * this.TILE;
-    const w = this.TILE * (scale || this.SCALE);
-    this.ctx.drawImage(a, sx, sy, this.TILE, this.TILE, Math.round(dx), Math.round(dy), Math.round(w), Math.round(w));
+  // emoji 立绘式贴地绘制（底部中心对齐格底）
+  emoji(ch, sx, sy, size) {
+    const ctx = this.ctx, TS = this.TILE * this.SCALE;
+    ctx.font = size + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText(ch, sx + TS / 2, sy + TS * 0.92);
   },
 
   isSolid(t) { return t === 'tree' || t === 'rock' || t === 'water'; },
@@ -414,25 +394,23 @@ const World = {
     m.querySelector('#npc-ok').onclick = () => { UI.closeModal(m); if (onDone) onDone(); };
   },
 
-  // ---------- 渲染（顶视角 tilemap）----------
+  // ---------- 渲染（顶视角 · 占位）----------
   render() {
     const ctx = this.ctx;
-    ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#4f7a3a'; ctx.fillRect(0, 0, this.vw, this.vh);   // 草地底色
-    if (!this.atlasReady) { this.drawPlayer(); return; }
+    ctx.fillStyle = this.COL.grass; ctx.fillRect(0, 0, this.vw, this.vh);
 
     const TS = this.TILE * this.SCALE;
     const x0 = Math.max(0, ((this.cam.x / TS) | 0) - 1), x1 = Math.min(this.w - 1, (((this.cam.x + this.vw) / TS) | 0) + 1);
     const y0 = Math.max(0, ((this.cam.y / TS) | 0) - 1), y1 = Math.min(this.h - 1, (((this.cam.y + this.vh) / TS) | 0) + 2);
 
-    // 1) 地面层（草地 + 自动拼接土路 + 偶发花）
+    // 1) 地面层（纯色地块：草/路/水）
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
-        const sx = x * TS - this.cam.x, sy = y * TS - this.cam.y;
-        this.blit('town', this.vrand(x, y) > 0.86 ? this.TIDX.grass[1] : this.TIDX.grass[0], sx, sy);
+        const sx = Math.round(x * TS - this.cam.x), sy = Math.round(y * TS - this.cam.y);
         const t = this.grid[y][x];
-        if (t === 'path') this.blit('town', this.dirtAuto(x, y), sx, sy);
-        else if (t === 'grass' && this.vrand(x + 7, y + 3) > 0.88) this.blit('town', this.TIDX.flower, sx, sy);
+        ctx.fillStyle = t === 'water' ? this.COL.water : t === 'path' ? this.COL.path
+          : ((x + y) & 1 ? this.COL.grass2 : this.COL.grass);
+        ctx.fillRect(sx, sy, TS + 1, TS + 1);
       }
     }
 
@@ -440,7 +418,7 @@ const World = {
     const objs = [];
     for (let y = 0; y < this.h; y++) for (let x = 0; x < this.w; x++) {
       const t = this.grid[y][x];
-      if (t === 'tree' || t === 'rock' || t === 'water') objs.push({ sy: y + 0.9, kind: 'deco', tt: t, gx: x, gy: y });
+      if (t === 'tree' || t === 'rock') objs.push({ sy: y + 0.9, kind: 'deco', tt: t, gx: x, gy: y });
     }
     (this.scatter || []).forEach(s => objs.push({ sy: s.y, kind: 'scatter', s }));
     this.nodes.forEach(n => objs.push({ sy: n.y, kind: 'node', node: n }));
@@ -460,54 +438,31 @@ const World = {
     g.addColorStop(0, 'rgba(12,18,32,0.30)'); g.addColorStop(0.55, 'rgba(12,18,32,0.04)'); g.addColorStop(1, 'rgba(40,30,18,0.0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, this.vw, this.vh);
 
-    this.drawDust();        // 飘落褐尘（呼应剧情）
+    this.drawDust();
     this.drawGuideArrow();
   },
 
-  // 土路 3×3 自动拼接（按四邻是否为路选角/边/中）
-  dirtAuto(x, y) {
-    const P = (xx, yy) => xx >= 0 && yy >= 0 && xx < this.w && yy < this.h && this.grid[yy][xx] === 'path';
-    const col = !P(x - 1, y) ? 0 : !P(x + 1, y) ? 2 : 1;
-    const row = !P(x, y - 1) ? 0 : !P(x, y + 1) ? 2 : 1;
-    return this.TIDX.dirt9[row * 3 + col];
-  },
-
-  // 树（两格高松树）/ 灌木（石、水占位）
+  // 树/石（emoji 占位）
   drawDeco(x, y, tt) {
     const TS = this.TILE * this.SCALE;
     const sx = x * TS - this.cam.x, sy = y * TS - this.cam.y;
-    if (tt === 'tree') {
-      const p = this.TIDX.pines[this.vrand(x, y) > 0.5 ? 1 : 0];
-      this.blit('town', p.bot, sx, sy);
-      this.blit('town', p.top, sx, sy - TS);
-    } else {
-      this.blit('town', this.TIDX.bush[(this.vrand(x, y) * 3) | 0], sx, sy);
-    }
+    this.emoji(tt === 'tree' ? this.EMO.tree : this.EMO.rock, sx, sy, tt === 'tree' ? 40 : 32);
   },
 
-  // 散布装饰（小树/灌木/蘑菇）
+  // 散布装饰（小树/灌木/蘑菇，emoji 占位）
   drawScatter(s) {
     const TS = this.TILE * this.SCALE;
     const sx = s.gx * TS - this.cam.x, sy = s.gy * TS - this.cam.y;
-    if (s.kind === 'tree') {
-      const p = this.TIDX.pines[this.vrand(s.gx, s.gy) > 0.5 ? 1 : 0];
-      this.blit('town', p.bot, sx, sy); this.blit('town', p.top, sx, sy - TS);
-    } else if (s.kind === 'bush') {
-      this.blit('town', this.TIDX.bush[(this.vrand(s.gx + 2, s.gy) * 3) | 0], sx, sy);
-    } else {
-      this.blit('town', this.TIDX.mush, sx, sy);
-    }
+    const ch = s.kind === 'tree' ? this.EMO.tree : s.kind === 'bush' ? this.EMO.bush : this.EMO.mush;
+    this.emoji(ch, sx, sy, s.kind === 'tree' ? 34 : 22);
   },
 
-  // 小怪（图集精灵 + 轻微浮动）
+  // 小怪（emoji + 轻微浮动）
   drawMon(m) {
     const TS = this.TILE * this.SCALE;
     const sx = m.x * TS - this.cam.x, sy = m.y * TS - this.cam.y;
-    const bob = Math.sin(performance.now() / 500 + m.ph) * 2.5;
-    const ctx = this.ctx;
-    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(sx, sy + TS * 0.36, TS * 0.24, TS * 0.1, 0, 0, 7); ctx.fill();
-    const w = this.TILE * this.SCALE * 0.85;
-    this.blit(this.TIDX.mon.atlas, m.idx, sx - w / 2, sy + TS * 0.36 - w - bob, this.SCALE * 0.85);
+    const bob = Math.sin(performance.now() / 500 + m.ph) * 3;
+    this.emoji(this.EMO.mon[m.idx % this.EMO.mon.length], sx, sy - bob, 28);
   },
 
   // 节点标记（顶视角）
@@ -552,25 +507,19 @@ const World = {
   drawPlayer() {
     const ctx = this.ctx, p = this.player;
     const TS = this.TILE * this.SCALE;
-    const sx = p.x * TS - this.cam.x, sy = p.y * TS - this.cam.y;
+    const cx = p.x * TS - this.cam.x, cy = p.y * TS - this.cam.y;
     const moving = p.step > 0;
     const bob = moving ? Math.abs(Math.sin(p.step / 95)) * 4 : (Math.sin(performance.now() / 620) * 0.5 + 0.5) * 2;
     // 阴影
-    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(sx, sy + TS * 0.38, TS * 0.28, TS * 0.12, 0, 0, 7); ctx.fill();
-    const a = this.atlasImg[this.TIDX.hero.atlas];
-    if (a && a.naturalWidth) {
-      const cols = (a.naturalWidth / this.TILE) | 0, idx = this.TIDX.hero.idx;
-      const tx = (idx % cols) * this.TILE, ty = ((idx / cols) | 0) * this.TILE;
-      const w = this.TILE * this.SCALE * 1.15;
-      const dx = sx - w / 2, dy = sy + TS * 0.38 - w - bob;
-      const flip = (p.dir === 'right');
-      ctx.save(); ctx.imageSmoothingEnabled = false;
-      if (flip) { ctx.translate(Math.round(dx + w), Math.round(dy)); ctx.scale(-1, 1); ctx.drawImage(a, tx, ty, 16, 16, 0, 0, w, w); }
-      else ctx.drawImage(a, tx, ty, 16, 16, Math.round(dx), Math.round(dy), w, w);
-      ctx.restore();
-      return;
-    }
-    ctx.fillStyle = p.color; this.rr(sx - 8, sy - 18 - bob, 16, 18, 5); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(cx, cy + TS * 0.34, TS * 0.26, TS * 0.11, 0, 0, 7); ctx.fill();
+    // 占位主角：圆头 + 身体 + 朝向小点
+    const bx = cx, by = cy + TS * 0.18 - bob;
+    ctx.fillStyle = p.color || '#b06bff';
+    this.rr(bx - 9, by - 18, 18, 20, 6); ctx.fill();
+    ctx.fillStyle = '#ffe0c0'; ctx.beginPath(); ctx.arc(bx, by - 22, 8, 0, 7); ctx.fill();
+    ctx.fillStyle = '#3a2a2a';
+    const off = { up: [0, -3], down: [0, 2], left: [-3, 0], right: [3, 0] }[p.dir] || [0, 2];
+    ctx.beginPath(); ctx.arc(bx + off[0], by - 22 + off[1], 1.8, 0, 7); ctx.fill();
   },
 
   rr(x, y, w, h, r) {
