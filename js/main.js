@@ -770,6 +770,7 @@ const Main = {
       case 'event': UI.renderEvent(); break;
       case 'inventory': UI.renderInventory(); break;
       case 'story': UI.renderStory(); break;
+      case 'tasks': UI.renderTasks(); break;
       case 'codex': UI.renderCollection(); break;
       case 'shop': UI.renderShop(); break;
     }

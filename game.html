@@ -1793,6 +1793,73 @@ body {
   .col-cat-ico { font-size: 26px; }
 }
 
+/* ===== 任务板（每日 / 每周） ===== */
+.task-board { display: flex; gap: 14px; height: 100%; padding: 12px; box-sizing: border-box; }
+.tk-side { flex: 0 0 140px; display: flex; flex-direction: column; gap: 8px; }
+.tk-side-title { font-size: 16px; font-weight: 900; padding: 4px 6px 8px; }
+.tk-tab {
+  position: relative; text-align: left; background: var(--panel);
+  border: 1px solid rgba(255,255,255,.06); color: var(--text-dim);
+  border-radius: 10px; padding: 14px 12px; font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.tk-tab.on { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border-color: transparent; }
+.tk-dot { position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: #ff5274; box-shadow: 0 0 6px #ff5274; }
+
+.tk-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+/* 区间奖励轨道 */
+.tk-milerow { display: flex; align-items: center; gap: 12px; padding: 6px 8px 26px; }
+.tk-mile-label { font-size: 13px; font-weight: 700; color: var(--text-dim); white-space: nowrap; }
+.tk-track { position: relative; flex: 1; height: 6px; border-radius: 4px; background: var(--panel-2); }
+.tk-track-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.tk-node {
+  position: absolute; top: 50%; transform: translate(-50%,-50%);
+  width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+  background: var(--panel-2); border: 2px solid rgba(255,255,255,.15);
+  display: grid; place-items: center; color: #fff; font-size: 11px; font-weight: 800;
+}
+.tk-node .tk-node-at { pointer-events: none; }
+.tk-node .tk-node-rw {
+  position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  margin-bottom: 6px; font-size: 11px; white-space: nowrap; color: var(--gold);
+}
+.tk-node.lock { opacity: .55; }
+.tk-node.ready { border-color: var(--gold); background: linear-gradient(135deg, var(--accent), var(--accent-2)); animation: tkPulse 1.4s ease-in-out infinite; }
+.tk-node.claimed { border-color: #4caf72; background: #2c3a2f; color: #4caf72; }
+.tk-node.claimed::after { content: '✓'; position: absolute; }
+.tk-node.claimed .tk-node-at { visibility: hidden; }
+@keyframes tkPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(240,198,116,.5); } 50% { box-shadow: 0 0 0 6px rgba(240,198,116,0); } }
+
+/* 任务列表 */
+.tk-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+.tk-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--panel); border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px; padding: 10px 14px;
+}
+.tk-row.ready { background: linear-gradient(90deg, rgba(76,175,114,.16), var(--panel)); border-color: rgba(76,175,114,.4); }
+.tk-row.claimed { opacity: .6; }
+.tk-reward { flex: 0 0 64px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.tk-rico { font-size: 26px; }
+.tk-ramt { font-size: 11px; color: var(--gold); font-weight: 700; white-space: nowrap; }
+.tk-info { flex: 1; min-width: 0; }
+.tk-name { font-size: 15px; font-weight: 800; }
+.tk-prog { font-size: 12px; color: var(--text-dim); font-weight: 600; margin-left: 4px; }
+.tk-desc { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+.tk-act {
+  flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
+  border: 2px solid rgba(255,255,255,.12); background: var(--panel-2); color: #fff; font-size: 18px;
+  display: grid; place-items: center;
+}
+.tk-act.ready { border-color: #4caf72; box-shadow: 0 0 10px rgba(76,175,114,.5); }
+.tk-act.go { border-color: var(--accent); }
+.tk-act.lock { opacity: .4; cursor: not-allowed; }
+.tk-act:active { transform: scale(.92); }
+.tk-claimed { flex: 0 0 auto; font-size: 12px; color: var(--text-dim); width: 56px; text-align: center; }
+.tk-foot { display: flex; justify-content: space-between; align-items: center; padding: 12px 4px 2px; border-top: 1px solid rgba(255,255,255,.07); margin-top: 8px; }
+.tk-foot .btn { width: auto; padding: 8px 22px; }
+@media (max-width: 720px) { .tk-side { flex: 0 0 104px; } .tk-reward { flex-basis: 52px; } }
+
 </style>
 </head>
 <body>
@@ -1838,7 +1905,7 @@ body {
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '59';</script>
+  <script>window.ASSET_VER = '60';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -2967,6 +3034,7 @@ const Game = {
     this._repairIds();
     // 初始化当日任务/商店
     this.ensureDaily();
+    this.ensureTasks();
     return this.state;
   },
 
@@ -3736,6 +3804,7 @@ const Game = {
   incQuest(key, n) {
     this.ensureDaily();
     this.state.quests.progress[key] = (this.state.quests.progress[key] || 0) + n;
+    this.bumpTask(key, n);   // 同步任务板（win/pull/levelup）
     this.save();
   },
 
@@ -3746,6 +3815,7 @@ const Game = {
     if (r.spark) this.state.spark += r.spark;
     if (r.gear) this.addGear(r.gear);
     if (r.stone) this.state.awakenStone = (this.state.awakenStone || 0) + r.stone;
+    if (r.stam) this.state.stamina = (this.state.stamina || 0) + r.stam;
   },
 
   canCheckIn() { return this.state.daily.lastClaim !== this.today(); },
@@ -3771,6 +3841,124 @@ const Game = {
     this.state.quests.claimed[id] = true;
     this.save();
     return { ok: true, reward: q.reward };
+  },
+
+  // ============================================================
+  //  任务板（每日 / 每周）—— 对照 BD2 任务面板
+  //  日任务跨日重置，周任务跨周重置；含「区间奖励」里程碑
+  // ============================================================
+  TASKS_DAILY: [
+    { id: 'd_login',  name: '每日登录',       desc: '登录游戏即可完成。',           icon: '🪙', target: 1, reward: { gold: 1000 }, key: 'login' },
+    { id: 'd_battle', name: '进行 3 场战斗',  desc: '在任意战斗或关卡中作战 3 次。', icon: '⚔️', target: 3, reward: { gold: 500 },  key: 'win' },
+    { id: 'd_farm',   name: '挑战资源副本',   desc: '在资源副本中完成 1 次战斗。',   icon: '⚡', target: 1, reward: { gold: 300 },  key: 'farm',  go: 'dungeon' },
+    { id: 'd_pull',   name: '进行 1 次招募',  desc: '在招募中抽取 1 次。',           icon: '🎴', target: 1, reward: { gold: 500 },  key: 'pull',  go: 'gacha' },
+    { id: 'd_arena',  name: '竞技场出战',     desc: '在竞技场中进行 1 次对战。',     icon: '🏆', target: 1, reward: { gold: 300 },  key: 'arena', go: 'arena' },
+    { id: 'd_level',  name: '升级佣兵 2 次',  desc: '提升佣兵等级 2 次。',           icon: '⭐', target: 2, reward: { gem: 20 },    key: 'levelup' },
+    { id: 'd_clear',  name: '通关主线 1 关',  desc: '通关任意主线关卡 1 次。',       icon: '🗺️', target: 1, reward: { stam: 30 },   key: 'clear', go: 'stages' },
+  ],
+  TASKS_WEEKLY: [
+    { id: 'w_battle', name: '本周进行 20 场战斗', desc: '累计作战 20 次。',       icon: '⚔️', target: 20, reward: { gem: 60 },    key: 'win' },
+    { id: 'w_pull',   name: '本周招募 10 次',     desc: '累计招募 10 次。',       icon: '🎴', target: 10, reward: { gem: 80 },    key: 'pull' },
+    { id: 'w_farm',   name: '本周资源副本 15 次', desc: '资源副本作战 15 次。',   icon: '⚡', target: 15, reward: { gold: 3000 }, key: 'farm' },
+    { id: 'w_clear',  name: '本周通关 8 关',      desc: '通关主线关卡 8 次。',     icon: '🗺️', target: 8,  reward: { gem: 60 },    key: 'clear' },
+    { id: 'w_arena',  name: '本周竞技场 10 次',   desc: '竞技场对战 10 次。',     icon: '🏆', target: 10, reward: { gem: 80 },    key: 'arena' },
+  ],
+  // 区间奖励里程碑：完成 N 个任务可领（对照 BD2 顶部进度条节点）
+  TASK_MILES: {
+    daily:  [{ at: 3, reward: { stam: 60 } }, { at: 5, reward: { gear: 'arm_sr' } }, { at: 7, reward: { gem: 60 } }],
+    weekly: [{ at: 2, reward: { gold: 5000 } }, { at: 4, reward: { gear: 'wpn_ur' } }, { at: 5, reward: { gem: 120 } }],
+  },
+
+  weekId() {
+    const d = new Date();
+    const onejan = new Date(d.getFullYear(), 0, 1);
+    const week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+    return d.getFullYear() + 'W' + week;
+  },
+  freshTasks() {
+    return { dDate: null, wWeek: null, d: {}, w: {}, dClaimed: {}, wClaimed: {}, dMile: {}, wMile: {}, login: false };
+  },
+  ensureTasks() {
+    if (!this.state.tasks) this.state.tasks = this.freshTasks();
+    const T = this.state.tasks, t = this.today(), w = this.weekId();
+    if (T.dDate !== t) { T.dDate = t; T.d = {}; T.dClaimed = {}; T.dMile = {}; T.login = false; }
+    if (T.wWeek !== w) { T.wWeek = w; T.w = {}; T.wClaimed = {}; T.wMile = {}; }
+    if (!T.login) { T.login = true; T.d.login = 1; }
+  },
+  /** 累加任务计数（同时计入日 / 周） */
+  bumpTask(key, n = 1) {
+    this.ensureTasks();
+    const T = this.state.tasks;
+    T.d[key] = (T.d[key] || 0) + n;
+    T.w[key] = (T.w[key] || 0) + n;
+    this.save();
+  },
+  _taskDefs(tab) { return tab === 'weekly' ? this.TASKS_WEEKLY : this.TASKS_DAILY; },
+  _taskProg(tab) { this.ensureTasks(); return tab === 'weekly' ? this.state.tasks.w : this.state.tasks.d; },
+  _taskClaimed(tab) { this.ensureTasks(); return tab === 'weekly' ? this.state.tasks.wClaimed : this.state.tasks.dClaimed; },
+  _taskMileState(tab) { this.ensureTasks(); return tab === 'weekly' ? this.state.tasks.wMile : this.state.tasks.dMile; },
+  /** 某分页的任务清单（含进度 / 是否完成 / 是否已领） */
+  taskList(tab) {
+    const prog = this._taskProg(tab), claimed = this._taskClaimed(tab);
+    return this._taskDefs(tab).map(d => {
+      const cur = Math.min(d.target, prog[d.key] || 0);
+      const done = cur >= d.target;
+      return Object.assign({}, d, { cur, done, claimed: !!claimed[d.id] });
+    });
+  },
+  /** 已完成任务数（用于区间奖励进度） */
+  taskDoneCount(tab) { return this.taskList(tab).filter(t => t.done).length; },
+  /** 区间奖励里程碑状态 */
+  taskMiles(tab) {
+    const done = this.taskDoneCount(tab), ms = this._taskMileState(tab);
+    return (this.TASK_MILES[tab] || []).map((m, i) => ({ idx: i, at: m.at, reward: m.reward, reached: done >= m.at, claimed: !!ms[i] }));
+  },
+  claimTask(tab, id) {
+    const t = this.taskList(tab).find(x => x.id === id);
+    if (!t) return { ok: false };
+    if (t.claimed) return { ok: false, msg: '已领取' };
+    if (!t.done) return { ok: false, msg: '未完成' };
+    this.applyReward(t.reward);
+    this._taskClaimed(tab)[id] = true;
+    this.save();
+    return { ok: true, reward: t.reward };
+  },
+  claimTaskMile(tab, idx) {
+    const m = this.taskMiles(tab)[idx];
+    if (!m) return { ok: false };
+    if (m.claimed) return { ok: false, msg: '已领取' };
+    if (!m.reached) return { ok: false, msg: '进度不足' };
+    this.applyReward(m.reward);
+    this._taskMileState(tab)[idx] = true;
+    this.save();
+    return { ok: true, reward: m.reward };
+  },
+  /** 一键领取该分页全部可领任务 + 里程碑 */
+  claimAllTasks(tab) {
+    let n = 0;
+    this.taskList(tab).forEach(t => { if (t.done && !t.claimed) { if (this.claimTask(tab, t.id).ok) n++; } });
+    this.taskMiles(tab).forEach(m => { if (m.reached && !m.claimed) { if (this.claimTaskMile(tab, m.idx).ok) n++; } });
+    return { ok: n > 0, n };
+  },
+  /** 该分页可领取数量（任务 + 里程碑），用于红点 */
+  taskClaimable(tab) {
+    let n = this.taskList(tab).filter(t => t.done && !t.claimed).length;
+    n += this.taskMiles(tab).filter(m => m.reached && !m.claimed).length;
+    return n;
+  },
+  tasksAnyClaimable() { return this.taskClaimable('daily') + this.taskClaimable('weekly'); },
+  /** 距重置剩余文案 */
+  taskResetText(tab) {
+    const now = new Date();
+    let target;
+    if (tab === 'weekly') {
+      target = new Date(now); const day = (now.getDay() + 6) % 7; // 周一为一周起点
+      target.setDate(now.getDate() + (7 - day)); target.setHours(0, 0, 0, 0);
+    } else {
+      target = new Date(now); target.setHours(24, 0, 0, 0);
+    }
+    const ms = target - now, h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+    return tab === 'weekly' ? `${Math.floor(ms / 86400000)} 天 ${h % 24} 小时后重置` : `还剩 ${h} 小时 ${m} 分钟`;
   },
 
   /** 闪耀之星兑换自选服装 */
@@ -3832,6 +4020,7 @@ const Game = {
       const o = this.getOwned(uid);
       if (o) this.addExp(o, r.exp);
     });
+    this.bumpTask('clear', 1);
     if (firstClear && !this.state.cleared.includes(stage.id)) {
       this.state.cleared.push(stage.id);
     }
@@ -3951,6 +4140,7 @@ const Game = {
     if (this.state.stamina < cost) return { ok: false, msg: '体力不足' };
     this.spendStamina(cost);
     this.state.farmRuns = (this.state.farmRuns || 0) + times;
+    this.bumpTask('farm', times);
     const tot = { gold: 0, exp: 0, gears: [] };
     for (let i = 0; i < times; i++) {
       const r = d.reward;
@@ -4141,6 +4331,7 @@ const Game = {
   arenaRefresh() { this.ensureArena(); this.state.arena.opps = this.genArenaOpps(); this.save(); },
   arenaResolve(oppId, win) {
     this.ensureArena();
+    this.bumpTask('arena', 1);
     const a = this.state.arena;
     const opp = a.opps.find(o => o.id === oppId);
     const diff = opp ? (opp.points - a.points) : 0;
@@ -4899,6 +5090,7 @@ const UI = {
     const leadName = lead ? window.GameData.CHARACTERS[lead.charId].name : '未编队';
     // 左上集群（系统/养成小入口）
     const leftCluster = [
+      { go: 'tasks', icon: '📋', label: '任务', dot: Game.tasksAnyClaimable() ? '!' : '' },
       { go: 'codex', icon: '📖', label: '珍藏集' },
       { act: 'forge', icon: '🔨', label: '锻造' },
       { act: 'ach', icon: '🏅', label: '成就' },
@@ -4921,7 +5113,7 @@ const UI = {
       { go: 'shop', icon: '🛒', label: '商店' },
     ];
     const clusterBtn = a => `<button class="ll-tile" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
-      <span class="ll-ico">${a.icon}</span><span class="ll-lab">${a.label}</span></button>`;
+      <span class="ll-ico">${a.icon}</span><span class="ll-lab">${a.label}</span>${a.dot ? `<span class="lb-dot">${a.dot}</span>` : ''}</button>`;
     const bannerBtn = a => `<button class="lr-banner ${a.cls}" data-go="${a.go}">
       <span class="lr-ico">${a.icon}</span>
       <span class="lr-text"><span class="lr-name">${a.name}</span><span class="lr-tag">${a.tag}</span></span></button>`;
@@ -6100,6 +6292,97 @@ const UI = {
   // ============================================================
   //  福利：签到 / 任务 / 保底兑换 / 商店
   // ============================================================
+  // ============================================================
+  //  任务板（每日 / 每周）—— 对照 BD2 任务面板
+  // ============================================================
+  _rwLabel(r) {
+    const map = { gold: '🪙', gem: '💎', powder: '✨', spark: '⭐', stone: '🔮', stam: '⚡' };
+    const parts = Object.entries(r).map(([k, v]) => k === 'gear' ? '🎁装备' : (map[k] || '') + v);
+    return parts.join(' ');
+  },
+  renderTasks() {
+    Game.ensureTasks();
+    this.taskTab = this.taskTab || 'daily';
+    const tab = this.taskTab;
+    const list = Game.taskList(tab);
+    const miles = Game.taskMiles(tab);
+    const doneCount = Game.taskDoneCount(tab);
+    const totalCount = list.length;
+    const sideTab = (id, name) => {
+      const dot = Game.taskClaimable(id) ? '<span class="tk-dot"></span>' : '';
+      return `<button class="tk-tab ${tab === id ? 'on' : ''}" data-ttab="${id}">${name}${dot}</button>`;
+    };
+    // 区间奖励里程碑轨道
+    const maxAt = miles.length ? miles[miles.length - 1].at : 1;
+    const fillPct = Math.min(100, doneCount / maxAt * 100);
+    const mileNodes = miles.map(m => {
+      const left = (m.at / maxAt) * 100;
+      const cls = m.claimed ? 'claimed' : (m.reached ? 'ready' : 'lock');
+      return `<button class="tk-node ${cls}" data-mile="${m.idx}" style="left:${left}%;">
+        <span class="tk-node-rw">${this._rwLabel(m.reward)}</span>
+        <span class="tk-node-at">${m.at}</span>
+      </button>`;
+    }).join('');
+    // 任务行
+    const rows = list.map(t => {
+      const state = t.claimed ? 'claimed' : (t.done ? 'ready' : 'todo');
+      const btn = t.claimed
+        ? '<span class="tk-claimed">已领取</span>'
+        : (t.done
+          ? `<button class="tk-act ready" data-claim="${t.id}" title="领取">🤲</button>`
+          : (t.go
+            ? `<button class="tk-act go" data-go2="${t.go}" title="前往">↗</button>`
+            : '<button class="tk-act lock" disabled>🤲</button>'));
+      return `<div class="tk-row ${state}">
+        <div class="tk-reward"><span class="tk-rico">${t.icon}</span><span class="tk-ramt">${this._rwLabel(t.reward)}</span></div>
+        <div class="tk-info">
+          <div class="tk-name">${t.name} <span class="tk-prog">${t.cur} / ${t.target}</span></div>
+          <div class="tk-desc">${t.desc}</div>
+        </div>
+        ${btn}
+      </div>`;
+    }).join('');
+
+    this.screenEl.innerHTML = `
+      <div class="task-board">
+        <div class="tk-side">
+          <div class="tk-side-title">📋 任务</div>
+          ${sideTab('daily', '每日任务')}
+          ${sideTab('weekly', '每周任务')}
+        </div>
+        <div class="tk-main">
+          <div class="tk-milerow">
+            <span class="tk-mile-label">区间奖励</span>
+            <div class="tk-track"><div class="tk-track-fill" style="width:${fillPct}%;"></div>${mileNodes}</div>
+          </div>
+          <div class="tk-list">${rows}</div>
+          <div class="tk-foot">
+            <span class="muted">⏱ ${Game.taskResetText(tab)}</span>
+            <button class="btn ${Game.taskClaimable(tab) ? 'gold' : 'secondary'}" id="tk-all" ${Game.taskClaimable(tab) ? '' : 'disabled'}>全部获得</button>
+          </div>
+        </div>
+      </div>`;
+
+    this.screenEl.querySelectorAll('[data-ttab]').forEach(b => b.onclick = () => { this.taskTab = b.dataset.ttab; this.renderTasks(); });
+    this.screenEl.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => {
+      const r = Game.claimTask(tab, b.dataset.claim);
+      if (!r.ok) { this.toast(r.msg || '不可领取'); return; }
+      this.toast('已领取：' + this._rwLabel(r.reward)); this.updateResources(); this.renderTasks();
+    });
+    this.screenEl.querySelectorAll('[data-mile]').forEach(b => b.onclick = () => {
+      const r = Game.claimTaskMile(tab, parseInt(b.dataset.mile, 10));
+      if (!r.ok) { this.toast(r.msg || '不可领取'); return; }
+      this.toast('区间奖励：' + this._rwLabel(r.reward)); this.updateResources(); this.renderTasks();
+    });
+    this.screenEl.querySelectorAll('[data-go2]').forEach(b => b.onclick = () => Main.switchScreen(b.dataset.go2));
+    const all = this.screenEl.querySelector('#tk-all');
+    if (all) all.onclick = () => {
+      const r = Game.claimAllTasks(tab);
+      if (!r.ok) { this.toast('没有可领取的奖励'); return; }
+      this.toast(`一键领取 ${r.n} 项奖励`); this.updateResources(); this.renderTasks();
+    };
+  },
+
   renderWelfare() {
     Game.ensureDaily();
     const s = Game.state;
@@ -8971,6 +9254,7 @@ const Main = {
       case 'event': UI.renderEvent(); break;
       case 'inventory': UI.renderInventory(); break;
       case 'story': UI.renderStory(); break;
+      case 'tasks': UI.renderTasks(); break;
       case 'codex': UI.renderCollection(); break;
       case 'shop': UI.renderShop(); break;
     }

@@ -1785,3 +1785,70 @@ body {
   .col-left { flex: 0 0 32%; }
   .col-cat-ico { font-size: 26px; }
 }
+
+/* ===== 任务板（每日 / 每周） ===== */
+.task-board { display: flex; gap: 14px; height: 100%; padding: 12px; box-sizing: border-box; }
+.tk-side { flex: 0 0 140px; display: flex; flex-direction: column; gap: 8px; }
+.tk-side-title { font-size: 16px; font-weight: 900; padding: 4px 6px 8px; }
+.tk-tab {
+  position: relative; text-align: left; background: var(--panel);
+  border: 1px solid rgba(255,255,255,.06); color: var(--text-dim);
+  border-radius: 10px; padding: 14px 12px; font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.tk-tab.on { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border-color: transparent; }
+.tk-dot { position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: #ff5274; box-shadow: 0 0 6px #ff5274; }
+
+.tk-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+/* 区间奖励轨道 */
+.tk-milerow { display: flex; align-items: center; gap: 12px; padding: 6px 8px 26px; }
+.tk-mile-label { font-size: 13px; font-weight: 700; color: var(--text-dim); white-space: nowrap; }
+.tk-track { position: relative; flex: 1; height: 6px; border-radius: 4px; background: var(--panel-2); }
+.tk-track-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.tk-node {
+  position: absolute; top: 50%; transform: translate(-50%,-50%);
+  width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+  background: var(--panel-2); border: 2px solid rgba(255,255,255,.15);
+  display: grid; place-items: center; color: #fff; font-size: 11px; font-weight: 800;
+}
+.tk-node .tk-node-at { pointer-events: none; }
+.tk-node .tk-node-rw {
+  position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  margin-bottom: 6px; font-size: 11px; white-space: nowrap; color: var(--gold);
+}
+.tk-node.lock { opacity: .55; }
+.tk-node.ready { border-color: var(--gold); background: linear-gradient(135deg, var(--accent), var(--accent-2)); animation: tkPulse 1.4s ease-in-out infinite; }
+.tk-node.claimed { border-color: #4caf72; background: #2c3a2f; color: #4caf72; }
+.tk-node.claimed::after { content: '✓'; position: absolute; }
+.tk-node.claimed .tk-node-at { visibility: hidden; }
+@keyframes tkPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(240,198,116,.5); } 50% { box-shadow: 0 0 0 6px rgba(240,198,116,0); } }
+
+/* 任务列表 */
+.tk-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+.tk-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--panel); border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px; padding: 10px 14px;
+}
+.tk-row.ready { background: linear-gradient(90deg, rgba(76,175,114,.16), var(--panel)); border-color: rgba(76,175,114,.4); }
+.tk-row.claimed { opacity: .6; }
+.tk-reward { flex: 0 0 64px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.tk-rico { font-size: 26px; }
+.tk-ramt { font-size: 11px; color: var(--gold); font-weight: 700; white-space: nowrap; }
+.tk-info { flex: 1; min-width: 0; }
+.tk-name { font-size: 15px; font-weight: 800; }
+.tk-prog { font-size: 12px; color: var(--text-dim); font-weight: 600; margin-left: 4px; }
+.tk-desc { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+.tk-act {
+  flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
+  border: 2px solid rgba(255,255,255,.12); background: var(--panel-2); color: #fff; font-size: 18px;
+  display: grid; place-items: center;
+}
+.tk-act.ready { border-color: #4caf72; box-shadow: 0 0 10px rgba(76,175,114,.5); }
+.tk-act.go { border-color: var(--accent); }
+.tk-act.lock { opacity: .4; cursor: not-allowed; }
+.tk-act:active { transform: scale(.92); }
+.tk-claimed { flex: 0 0 auto; font-size: 12px; color: var(--text-dim); width: 56px; text-align: center; }
+.tk-foot { display: flex; justify-content: space-between; align-items: center; padding: 12px 4px 2px; border-top: 1px solid rgba(255,255,255,.07); margin-top: 8px; }
+.tk-foot .btn { width: auto; padding: 8px 22px; }
+@media (max-width: 720px) { .tk-side { flex: 0 0 104px; } .tk-reward { flex-basis: 52px; } }

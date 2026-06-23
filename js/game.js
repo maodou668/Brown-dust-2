@@ -59,6 +59,7 @@ const Game = {
     this._repairIds();
     // 初始化当日任务/商店
     this.ensureDaily();
+    this.ensureTasks();
     return this.state;
   },
 
@@ -828,6 +829,7 @@ const Game = {
   incQuest(key, n) {
     this.ensureDaily();
     this.state.quests.progress[key] = (this.state.quests.progress[key] || 0) + n;
+    this.bumpTask(key, n);   // 同步任务板（win/pull/levelup）
     this.save();
   },
 
@@ -838,6 +840,7 @@ const Game = {
     if (r.spark) this.state.spark += r.spark;
     if (r.gear) this.addGear(r.gear);
     if (r.stone) this.state.awakenStone = (this.state.awakenStone || 0) + r.stone;
+    if (r.stam) this.state.stamina = (this.state.stamina || 0) + r.stam;
   },
 
   canCheckIn() { return this.state.daily.lastClaim !== this.today(); },
@@ -863,6 +866,124 @@ const Game = {
     this.state.quests.claimed[id] = true;
     this.save();
     return { ok: true, reward: q.reward };
+  },
+
+  // ============================================================
+  //  任务板（每日 / 每周）—— 对照 BD2 任务面板
+  //  日任务跨日重置，周任务跨周重置；含「区间奖励」里程碑
+  // ============================================================
+  TASKS_DAILY: [
+    { id: 'd_login',  name: '每日登录',       desc: '登录游戏即可完成。',           icon: '🪙', target: 1, reward: { gold: 1000 }, key: 'login' },
+    { id: 'd_battle', name: '进行 3 场战斗',  desc: '在任意战斗或关卡中作战 3 次。', icon: '⚔️', target: 3, reward: { gold: 500 },  key: 'win' },
+    { id: 'd_farm',   name: '挑战资源副本',   desc: '在资源副本中完成 1 次战斗。',   icon: '⚡', target: 1, reward: { gold: 300 },  key: 'farm',  go: 'dungeon' },
+    { id: 'd_pull',   name: '进行 1 次招募',  desc: '在招募中抽取 1 次。',           icon: '🎴', target: 1, reward: { gold: 500 },  key: 'pull',  go: 'gacha' },
+    { id: 'd_arena',  name: '竞技场出战',     desc: '在竞技场中进行 1 次对战。',     icon: '🏆', target: 1, reward: { gold: 300 },  key: 'arena', go: 'arena' },
+    { id: 'd_level',  name: '升级佣兵 2 次',  desc: '提升佣兵等级 2 次。',           icon: '⭐', target: 2, reward: { gem: 20 },    key: 'levelup' },
+    { id: 'd_clear',  name: '通关主线 1 关',  desc: '通关任意主线关卡 1 次。',       icon: '🗺️', target: 1, reward: { stam: 30 },   key: 'clear', go: 'stages' },
+  ],
+  TASKS_WEEKLY: [
+    { id: 'w_battle', name: '本周进行 20 场战斗', desc: '累计作战 20 次。',       icon: '⚔️', target: 20, reward: { gem: 60 },    key: 'win' },
+    { id: 'w_pull',   name: '本周招募 10 次',     desc: '累计招募 10 次。',       icon: '🎴', target: 10, reward: { gem: 80 },    key: 'pull' },
+    { id: 'w_farm',   name: '本周资源副本 15 次', desc: '资源副本作战 15 次。',   icon: '⚡', target: 15, reward: { gold: 3000 }, key: 'farm' },
+    { id: 'w_clear',  name: '本周通关 8 关',      desc: '通关主线关卡 8 次。',     icon: '🗺️', target: 8,  reward: { gem: 60 },    key: 'clear' },
+    { id: 'w_arena',  name: '本周竞技场 10 次',   desc: '竞技场对战 10 次。',     icon: '🏆', target: 10, reward: { gem: 80 },    key: 'arena' },
+  ],
+  // 区间奖励里程碑：完成 N 个任务可领（对照 BD2 顶部进度条节点）
+  TASK_MILES: {
+    daily:  [{ at: 3, reward: { stam: 60 } }, { at: 5, reward: { gear: 'arm_sr' } }, { at: 7, reward: { gem: 60 } }],
+    weekly: [{ at: 2, reward: { gold: 5000 } }, { at: 4, reward: { gear: 'wpn_ur' } }, { at: 5, reward: { gem: 120 } }],
+  },
+
+  weekId() {
+    const d = new Date();
+    const onejan = new Date(d.getFullYear(), 0, 1);
+    const week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+    return d.getFullYear() + 'W' + week;
+  },
+  freshTasks() {
+    return { dDate: null, wWeek: null, d: {}, w: {}, dClaimed: {}, wClaimed: {}, dMile: {}, wMile: {}, login: false };
+  },
+  ensureTasks() {
+    if (!this.state.tasks) this.state.tasks = this.freshTasks();
+    const T = this.state.tasks, t = this.today(), w = this.weekId();
+    if (T.dDate !== t) { T.dDate = t; T.d = {}; T.dClaimed = {}; T.dMile = {}; T.login = false; }
+    if (T.wWeek !== w) { T.wWeek = w; T.w = {}; T.wClaimed = {}; T.wMile = {}; }
+    if (!T.login) { T.login = true; T.d.login = 1; }
+  },
+  /** 累加任务计数（同时计入日 / 周） */
+  bumpTask(key, n = 1) {
+    this.ensureTasks();
+    const T = this.state.tasks;
+    T.d[key] = (T.d[key] || 0) + n;
+    T.w[key] = (T.w[key] || 0) + n;
+    this.save();
+  },
+  _taskDefs(tab) { return tab === 'weekly' ? this.TASKS_WEEKLY : this.TASKS_DAILY; },
+  _taskProg(tab) { this.ensureTasks(); return tab === 'weekly' ? this.state.tasks.w : this.state.tasks.d; },
+  _taskClaimed(tab) { this.ensureTasks(); return tab === 'weekly' ? this.state.tasks.wClaimed : this.state.tasks.dClaimed; },
+  _taskMileState(tab) { this.ensureTasks(); return tab === 'weekly' ? this.state.tasks.wMile : this.state.tasks.dMile; },
+  /** 某分页的任务清单（含进度 / 是否完成 / 是否已领） */
+  taskList(tab) {
+    const prog = this._taskProg(tab), claimed = this._taskClaimed(tab);
+    return this._taskDefs(tab).map(d => {
+      const cur = Math.min(d.target, prog[d.key] || 0);
+      const done = cur >= d.target;
+      return Object.assign({}, d, { cur, done, claimed: !!claimed[d.id] });
+    });
+  },
+  /** 已完成任务数（用于区间奖励进度） */
+  taskDoneCount(tab) { return this.taskList(tab).filter(t => t.done).length; },
+  /** 区间奖励里程碑状态 */
+  taskMiles(tab) {
+    const done = this.taskDoneCount(tab), ms = this._taskMileState(tab);
+    return (this.TASK_MILES[tab] || []).map((m, i) => ({ idx: i, at: m.at, reward: m.reward, reached: done >= m.at, claimed: !!ms[i] }));
+  },
+  claimTask(tab, id) {
+    const t = this.taskList(tab).find(x => x.id === id);
+    if (!t) return { ok: false };
+    if (t.claimed) return { ok: false, msg: '已领取' };
+    if (!t.done) return { ok: false, msg: '未完成' };
+    this.applyReward(t.reward);
+    this._taskClaimed(tab)[id] = true;
+    this.save();
+    return { ok: true, reward: t.reward };
+  },
+  claimTaskMile(tab, idx) {
+    const m = this.taskMiles(tab)[idx];
+    if (!m) return { ok: false };
+    if (m.claimed) return { ok: false, msg: '已领取' };
+    if (!m.reached) return { ok: false, msg: '进度不足' };
+    this.applyReward(m.reward);
+    this._taskMileState(tab)[idx] = true;
+    this.save();
+    return { ok: true, reward: m.reward };
+  },
+  /** 一键领取该分页全部可领任务 + 里程碑 */
+  claimAllTasks(tab) {
+    let n = 0;
+    this.taskList(tab).forEach(t => { if (t.done && !t.claimed) { if (this.claimTask(tab, t.id).ok) n++; } });
+    this.taskMiles(tab).forEach(m => { if (m.reached && !m.claimed) { if (this.claimTaskMile(tab, m.idx).ok) n++; } });
+    return { ok: n > 0, n };
+  },
+  /** 该分页可领取数量（任务 + 里程碑），用于红点 */
+  taskClaimable(tab) {
+    let n = this.taskList(tab).filter(t => t.done && !t.claimed).length;
+    n += this.taskMiles(tab).filter(m => m.reached && !m.claimed).length;
+    return n;
+  },
+  tasksAnyClaimable() { return this.taskClaimable('daily') + this.taskClaimable('weekly'); },
+  /** 距重置剩余文案 */
+  taskResetText(tab) {
+    const now = new Date();
+    let target;
+    if (tab === 'weekly') {
+      target = new Date(now); const day = (now.getDay() + 6) % 7; // 周一为一周起点
+      target.setDate(now.getDate() + (7 - day)); target.setHours(0, 0, 0, 0);
+    } else {
+      target = new Date(now); target.setHours(24, 0, 0, 0);
+    }
+    const ms = target - now, h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+    return tab === 'weekly' ? `${Math.floor(ms / 86400000)} 天 ${h % 24} 小时后重置` : `还剩 ${h} 小时 ${m} 分钟`;
   },
 
   /** 闪耀之星兑换自选服装 */
@@ -924,6 +1045,7 @@ const Game = {
       const o = this.getOwned(uid);
       if (o) this.addExp(o, r.exp);
     });
+    this.bumpTask('clear', 1);
     if (firstClear && !this.state.cleared.includes(stage.id)) {
       this.state.cleared.push(stage.id);
     }
@@ -1043,6 +1165,7 @@ const Game = {
     if (this.state.stamina < cost) return { ok: false, msg: '体力不足' };
     this.spendStamina(cost);
     this.state.farmRuns = (this.state.farmRuns || 0) + times;
+    this.bumpTask('farm', times);
     const tot = { gold: 0, exp: 0, gears: [] };
     for (let i = 0; i < times; i++) {
       const r = d.reward;
@@ -1233,6 +1356,7 @@ const Game = {
   arenaRefresh() { this.ensureArena(); this.state.arena.opps = this.genArenaOpps(); this.save(); },
   arenaResolve(oppId, win) {
     this.ensureArena();
+    this.bumpTask('arena', 1);
     const a = this.state.arena;
     const opp = a.opps.find(o => o.id === oppId);
     const diff = opp ? (opp.points - a.points) : 0;

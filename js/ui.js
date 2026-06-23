@@ -77,6 +77,7 @@ const UI = {
     const leadName = lead ? window.GameData.CHARACTERS[lead.charId].name : '未编队';
     // 左上集群（系统/养成小入口）
     const leftCluster = [
+      { go: 'tasks', icon: '📋', label: '任务', dot: Game.tasksAnyClaimable() ? '!' : '' },
       { go: 'codex', icon: '📖', label: '珍藏集' },
       { act: 'forge', icon: '🔨', label: '锻造' },
       { act: 'ach', icon: '🏅', label: '成就' },
@@ -99,7 +100,7 @@ const UI = {
       { go: 'shop', icon: '🛒', label: '商店' },
     ];
     const clusterBtn = a => `<button class="ll-tile" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
-      <span class="ll-ico">${a.icon}</span><span class="ll-lab">${a.label}</span></button>`;
+      <span class="ll-ico">${a.icon}</span><span class="ll-lab">${a.label}</span>${a.dot ? `<span class="lb-dot">${a.dot}</span>` : ''}</button>`;
     const bannerBtn = a => `<button class="lr-banner ${a.cls}" data-go="${a.go}">
       <span class="lr-ico">${a.icon}</span>
       <span class="lr-text"><span class="lr-name">${a.name}</span><span class="lr-tag">${a.tag}</span></span></button>`;
@@ -1278,6 +1279,97 @@ const UI = {
   // ============================================================
   //  福利：签到 / 任务 / 保底兑换 / 商店
   // ============================================================
+  // ============================================================
+  //  任务板（每日 / 每周）—— 对照 BD2 任务面板
+  // ============================================================
+  _rwLabel(r) {
+    const map = { gold: '🪙', gem: '💎', powder: '✨', spark: '⭐', stone: '🔮', stam: '⚡' };
+    const parts = Object.entries(r).map(([k, v]) => k === 'gear' ? '🎁装备' : (map[k] || '') + v);
+    return parts.join(' ');
+  },
+  renderTasks() {
+    Game.ensureTasks();
+    this.taskTab = this.taskTab || 'daily';
+    const tab = this.taskTab;
+    const list = Game.taskList(tab);
+    const miles = Game.taskMiles(tab);
+    const doneCount = Game.taskDoneCount(tab);
+    const totalCount = list.length;
+    const sideTab = (id, name) => {
+      const dot = Game.taskClaimable(id) ? '<span class="tk-dot"></span>' : '';
+      return `<button class="tk-tab ${tab === id ? 'on' : ''}" data-ttab="${id}">${name}${dot}</button>`;
+    };
+    // 区间奖励里程碑轨道
+    const maxAt = miles.length ? miles[miles.length - 1].at : 1;
+    const fillPct = Math.min(100, doneCount / maxAt * 100);
+    const mileNodes = miles.map(m => {
+      const left = (m.at / maxAt) * 100;
+      const cls = m.claimed ? 'claimed' : (m.reached ? 'ready' : 'lock');
+      return `<button class="tk-node ${cls}" data-mile="${m.idx}" style="left:${left}%;">
+        <span class="tk-node-rw">${this._rwLabel(m.reward)}</span>
+        <span class="tk-node-at">${m.at}</span>
+      </button>`;
+    }).join('');
+    // 任务行
+    const rows = list.map(t => {
+      const state = t.claimed ? 'claimed' : (t.done ? 'ready' : 'todo');
+      const btn = t.claimed
+        ? '<span class="tk-claimed">已领取</span>'
+        : (t.done
+          ? `<button class="tk-act ready" data-claim="${t.id}" title="领取">🤲</button>`
+          : (t.go
+            ? `<button class="tk-act go" data-go2="${t.go}" title="前往">↗</button>`
+            : '<button class="tk-act lock" disabled>🤲</button>'));
+      return `<div class="tk-row ${state}">
+        <div class="tk-reward"><span class="tk-rico">${t.icon}</span><span class="tk-ramt">${this._rwLabel(t.reward)}</span></div>
+        <div class="tk-info">
+          <div class="tk-name">${t.name} <span class="tk-prog">${t.cur} / ${t.target}</span></div>
+          <div class="tk-desc">${t.desc}</div>
+        </div>
+        ${btn}
+      </div>`;
+    }).join('');
+
+    this.screenEl.innerHTML = `
+      <div class="task-board">
+        <div class="tk-side">
+          <div class="tk-side-title">📋 任务</div>
+          ${sideTab('daily', '每日任务')}
+          ${sideTab('weekly', '每周任务')}
+        </div>
+        <div class="tk-main">
+          <div class="tk-milerow">
+            <span class="tk-mile-label">区间奖励</span>
+            <div class="tk-track"><div class="tk-track-fill" style="width:${fillPct}%;"></div>${mileNodes}</div>
+          </div>
+          <div class="tk-list">${rows}</div>
+          <div class="tk-foot">
+            <span class="muted">⏱ ${Game.taskResetText(tab)}</span>
+            <button class="btn ${Game.taskClaimable(tab) ? 'gold' : 'secondary'}" id="tk-all" ${Game.taskClaimable(tab) ? '' : 'disabled'}>全部获得</button>
+          </div>
+        </div>
+      </div>`;
+
+    this.screenEl.querySelectorAll('[data-ttab]').forEach(b => b.onclick = () => { this.taskTab = b.dataset.ttab; this.renderTasks(); });
+    this.screenEl.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => {
+      const r = Game.claimTask(tab, b.dataset.claim);
+      if (!r.ok) { this.toast(r.msg || '不可领取'); return; }
+      this.toast('已领取：' + this._rwLabel(r.reward)); this.updateResources(); this.renderTasks();
+    });
+    this.screenEl.querySelectorAll('[data-mile]').forEach(b => b.onclick = () => {
+      const r = Game.claimTaskMile(tab, parseInt(b.dataset.mile, 10));
+      if (!r.ok) { this.toast(r.msg || '不可领取'); return; }
+      this.toast('区间奖励：' + this._rwLabel(r.reward)); this.updateResources(); this.renderTasks();
+    });
+    this.screenEl.querySelectorAll('[data-go2]').forEach(b => b.onclick = () => Main.switchScreen(b.dataset.go2));
+    const all = this.screenEl.querySelector('#tk-all');
+    if (all) all.onclick = () => {
+      const r = Game.claimAllTasks(tab);
+      if (!r.ok) { this.toast('没有可领取的奖励'); return; }
+      this.toast(`一键领取 ${r.n} 项奖励`); this.updateResources(); this.renderTasks();
+    };
+  },
+
   renderWelfare() {
     Game.ensureDaily();
     const s = Game.state;
