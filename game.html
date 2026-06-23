@@ -1209,6 +1209,77 @@ body {
   #rotate-tip { display: none; }
 }
 
+/* ============================================================
+   单一主界面（大厅）—— 满屏背景 + 底部横向功能按钮
+   ============================================================ */
+#screen.lobby-mode { padding: 0; overflow: hidden; }
+
+.lobby { position: absolute; inset: 0; }
+/* 满屏背景层：当前为占位渐变，未来可替换为动态背景图/视频 */
+.lobby-bg {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(176,107,255,.30), transparent 60%),
+    radial-gradient(100% 70% at 80% 110%, rgba(255,107,157,.22), transparent 60%),
+    linear-gradient(160deg, #241b33 0%, var(--bg) 55%, #0e0b14 100%);
+}
+.lobby-bg::after {   /* 缓慢流动的光晕，模拟「动态」氛围（占位） */
+  content: ''; position: absolute; inset: -20%;
+  background: radial-gradient(40% 40% at 30% 40%, rgba(108,198,255,.12), transparent 70%);
+  animation: lobbyGlow 14s ease-in-out infinite alternate;
+}
+@keyframes lobbyGlow { from { transform: translate(-6%, -4%) scale(1); } to { transform: translate(8%, 6%) scale(1.15); } }
+.lobby-bg-grid {
+  position: absolute; inset: 0; opacity: .06;
+  background-image: linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(80% 70% at 50% 40%, #000 30%, transparent 80%);
+}
+
+.lobby-content { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; }
+.lobby-hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 14px 18px; min-height: 0; }
+.lobby-welcome { text-align: center; }
+.lobby-welcome h1 { font-size: 28px; font-weight: 800; letter-spacing: 1px; text-shadow: 0 2px 18px rgba(176,107,255,.4); }
+.lobby-welcome h1 small { color: var(--accent); font-size: 18px; }
+.lobby-welcome .muted { margin-top: 4px; font-size: 12px; }
+.lobby-team { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.lobby-team-label { font-size: 11px; color: var(--text-dim); }
+
+/* 底部横向功能按钮（从左到右），过窄时横向滚动而非换行 */
+.lobby-actions {
+  display: flex; gap: 8px; padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+  justify-content: center; align-items: flex-end;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  background: linear-gradient(0deg, rgba(10,7,16,.85), transparent);
+}
+.lobby-actions::-webkit-scrollbar { height: 0; }
+.lobby-btn {
+  flex: 0 0 auto; min-width: 76px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: rgba(38,29,51,.72); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px; padding: 9px 10px 8px; cursor: pointer;
+  backdrop-filter: blur(4px); transition: transform .1s, border-color .2s;
+}
+.lobby-btn:active { transform: translateY(2px) scale(.97); }
+.lobby-btn:hover { border-color: rgba(176,107,255,.5); }
+.lobby-btn .lb-icon { font-size: 26px; line-height: 1; }
+.lobby-btn .lb-label { font-size: 12px; font-weight: 700; }
+.lobby-btn .lb-sub { font-size: 10px; color: var(--text-dim); }
+
+/* 返回主界面按钮（功能面板左上角浮动） */
+.back-btn {
+  position: absolute; top: 58px; left: 12px; z-index: 30;
+  background: rgba(38,29,51,.85); color: var(--text);
+  border: 1px solid rgba(255,255,255,.12); border-radius: 20px;
+  padding: 7px 15px 7px 11px; font-size: 13px; font-weight: 700; cursor: pointer;
+  backdrop-filter: blur(4px); box-shadow: 0 4px 14px rgba(0,0,0,.4);
+}
+.back-btn:active { transform: scale(.95); }
+
+/* 功能面板（非主页）顶部留出返回按钮空间 */
+#screen:not(.lobby-mode) { padding-top: 50px; }
+
 </style>
 </head>
 <body>
@@ -1227,17 +1298,11 @@ body {
       </div>
     </header>
 
-    <!-- 主内容区（各页面切换） -->
-    <main id="screen"></main>
+    <!-- 返回主界面（非主页时显示） -->
+    <button id="btn-back" class="back-btn" style="display:none;">‹ 返回</button>
 
-    <!-- 底部导航 -->
-    <nav id="navbar">
-      <button class="nav-btn active" data-screen="home"><span>🏰</span>主页</button>
-      <button class="nav-btn" data-screen="stages"><span>🗺️</span>冒险</button>
-      <button class="nav-btn" data-screen="roster"><span>👥</span>佣兵</button>
-      <button class="nav-btn" data-screen="gacha"><span>🎴</span>招募</button>
-      <button class="nav-btn" data-screen="welfare"><span>🎁</span>福利</button>
-    </nav>
+    <!-- 主内容区（单一主界面 + 功能面板覆盖） -->
+    <main id="screen"></main>
   </div>
 
   <!-- 弹窗容器 -->
@@ -1250,7 +1315,7 @@ body {
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '41';</script>
+  <script>window.ASSET_VER = '42';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -3749,50 +3814,49 @@ const UI = {
     const teamHtml = this.renderTeamSlots();
     const totalChars = s.roster.length;
     const cleared = s.cleared.length;
+    // 单一主界面（大厅）：满屏背景（未来放动态背景图）+ 中部出战队伍 + 底部横向功能按钮
+    const actions = [
+      { go: 'stages', icon: '🗺️', label: '冒险', sub: `${cleared}/${window.GameData.STAGES.length}` },
+      { go: 'gacha', icon: '🎴', label: '招募', sub: `💎${s.gem}` },
+      { go: 'roster', icon: '👥', label: '佣兵', sub: `${totalChars}名` },
+      { act: 'team', icon: '⚔️', label: '编队', sub: `${s.team.length}/5` },
+      { act: 'forge', icon: '🔨', label: '锻造', sub: `${s.inventory.length}件` },
+      { go: 'welfare', icon: '🎁', label: '福利', sub: '签到/任务' },
+      { act: 'story', icon: '📖', label: '剧情', sub: '回顾' },
+    ];
+    const btns = actions.map(a =>
+      `<button class="lobby-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
+        <span class="lb-icon">${a.icon}</span>
+        <span class="lb-label">${a.label}</span>
+        <span class="lb-sub">${a.sub}</span>
+      </button>`).join('');
     this.screenEl.innerHTML = `
-      <div class="hero-banner">
-        <h1>欢迎回来，指挥官</h1>
-        <p>组建你的佣兵团，踏上拯救大陆的冒险。挑战关卡、招募强力佣兵，击败魔王巴尔！</p>
-      </div>
-      <div class="quick-grid">
-        <div class="quick-card" data-go="stages">
-          <div class="qc-icon">🗺️</div>
-          <div class="qc-title">继续冒险</div>
-          <div class="qc-sub">已通关 ${cleared}/${window.GameData.STAGES.length} 关</div>
+      <div class="lobby">
+        <div class="lobby-bg"><div class="lobby-bg-grid"></div></div>
+        <div class="lobby-content">
+          <div class="lobby-hero">
+            <div class="lobby-welcome">
+              <h1>棕色尘埃 <small>2</small></h1>
+              <p class="muted">欢迎回来，指挥官 · 已通关 ${cleared}/${window.GameData.STAGES.length} 关</p>
+            </div>
+            <div class="lobby-team">
+              <div class="lobby-team-label">出战队伍 · 点击槽位编辑（${s.team.length}/5）</div>
+              <div class="team-slots" id="team-slots">${teamHtml}</div>
+            </div>
+          </div>
+          <div class="lobby-actions">${btns}</div>
         </div>
-        <div class="quick-card" data-go="gacha">
-          <div class="qc-icon">🎴</div>
-          <div class="qc-title">佣兵招募</div>
-          <div class="qc-sub">💎 ${s.gem} 可用</div>
-        </div>
-        <div class="quick-card" data-go="roster">
-          <div class="qc-icon">👥</div>
-          <div class="qc-title">佣兵团</div>
-          <div class="qc-sub">共 ${totalChars} 名佣兵</div>
-        </div>
-        <div class="quick-card" data-story-replay>
-          <div class="qc-icon">📖</div>
-          <div class="qc-title">剧情回顾</div>
-          <div class="qc-sub">重温已解锁的故事</div>
-        </div>
-        <div class="quick-card" data-forge>
-          <div class="qc-icon">🔨</div>
-          <div class="qc-title">锻造坊</div>
-          <div class="qc-sub">背包 ${s.inventory.length} 件装备</div>
-        </div>
-      </div>
-      <div class="team-preview">
-        <div class="section-title">出战队伍 <span class="muted" style="font-weight:400;font-size:11px;">· 点击槽位编辑（${s.team.length}/5）</span></div>
-        <div class="team-slots" id="team-slots">${teamHtml}</div>
-        <p class="muted" style="margin-top:8px;">点击下方任意槽位即可添加 / 更换 / 移出出战角色。</p>
       </div>
     `;
     this.screenEl.querySelectorAll('[data-go]').forEach(c =>
       c.addEventListener('click', () => Main.switchScreen(c.dataset.go)));
-    const replay = this.screenEl.querySelector('[data-story-replay]');
-    if (replay) replay.addEventListener('click', () => this.showStoryReplay());
-    const forge = this.screenEl.querySelector('[data-forge]');
-    if (forge) forge.addEventListener('click', () => this.showForge());
+    this.screenEl.querySelectorAll('[data-act]').forEach(c =>
+      c.addEventListener('click', () => {
+        const a = c.dataset.act;
+        if (a === 'team') this.showTeamEditor(0);
+        else if (a === 'forge') this.showForge();
+        else if (a === 'story') this.showStoryReplay();
+      }));
     const ts = this.screenEl.querySelector('#team-slots');
     if (ts) ts.querySelectorAll('.team-slot').forEach((slot, i) =>
       slot.addEventListener('click', () => this.showTeamEditor(i)));
@@ -6824,9 +6888,9 @@ const Main = {
       Game.save();
     }
 
-    // 导航
-    document.querySelectorAll('.nav-btn').forEach(btn =>
-      btn.addEventListener('click', () => this.switchScreen(btn.dataset.screen)));
+    // 返回主界面
+    const backBtn = document.getElementById('btn-back');
+    if (backBtn) backBtn.addEventListener('click', () => this.switchScreen('home'));
 
     // 重置存档
     document.getElementById('btn-reset').addEventListener('click', () => {
@@ -6858,9 +6922,14 @@ const Main = {
   switchScreen(name) {
     this.current = name;
     if (window.Sound) Sound.bgm('home');
-    document.querySelectorAll('.nav-btn').forEach(b =>
-      b.classList.toggle('active', b.dataset.screen === name));
+    const isHome = name === 'home';
+    // 单一主界面：主页为满屏大厅；其余功能为覆盖面板 + 返回按钮
+    const screen = document.getElementById('screen');
+    if (screen) screen.classList.toggle('lobby-mode', isHome);
+    const backBtn = document.getElementById('btn-back');
+    if (backBtn) backBtn.style.display = isHome ? 'none' : '';
     this.refreshCurrent();
+    if (screen) screen.scrollTop = 0;
   },
 
   refreshCurrent() {

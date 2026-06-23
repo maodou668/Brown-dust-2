@@ -65,50 +65,49 @@ const UI = {
     const teamHtml = this.renderTeamSlots();
     const totalChars = s.roster.length;
     const cleared = s.cleared.length;
+    // 单一主界面（大厅）：满屏背景（未来放动态背景图）+ 中部出战队伍 + 底部横向功能按钮
+    const actions = [
+      { go: 'stages', icon: '🗺️', label: '冒险', sub: `${cleared}/${window.GameData.STAGES.length}` },
+      { go: 'gacha', icon: '🎴', label: '招募', sub: `💎${s.gem}` },
+      { go: 'roster', icon: '👥', label: '佣兵', sub: `${totalChars}名` },
+      { act: 'team', icon: '⚔️', label: '编队', sub: `${s.team.length}/5` },
+      { act: 'forge', icon: '🔨', label: '锻造', sub: `${s.inventory.length}件` },
+      { go: 'welfare', icon: '🎁', label: '福利', sub: '签到/任务' },
+      { act: 'story', icon: '📖', label: '剧情', sub: '回顾' },
+    ];
+    const btns = actions.map(a =>
+      `<button class="lobby-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
+        <span class="lb-icon">${a.icon}</span>
+        <span class="lb-label">${a.label}</span>
+        <span class="lb-sub">${a.sub}</span>
+      </button>`).join('');
     this.screenEl.innerHTML = `
-      <div class="hero-banner">
-        <h1>欢迎回来，指挥官</h1>
-        <p>组建你的佣兵团，踏上拯救大陆的冒险。挑战关卡、招募强力佣兵，击败魔王巴尔！</p>
-      </div>
-      <div class="quick-grid">
-        <div class="quick-card" data-go="stages">
-          <div class="qc-icon">🗺️</div>
-          <div class="qc-title">继续冒险</div>
-          <div class="qc-sub">已通关 ${cleared}/${window.GameData.STAGES.length} 关</div>
+      <div class="lobby">
+        <div class="lobby-bg"><div class="lobby-bg-grid"></div></div>
+        <div class="lobby-content">
+          <div class="lobby-hero">
+            <div class="lobby-welcome">
+              <h1>棕色尘埃 <small>2</small></h1>
+              <p class="muted">欢迎回来，指挥官 · 已通关 ${cleared}/${window.GameData.STAGES.length} 关</p>
+            </div>
+            <div class="lobby-team">
+              <div class="lobby-team-label">出战队伍 · 点击槽位编辑（${s.team.length}/5）</div>
+              <div class="team-slots" id="team-slots">${teamHtml}</div>
+            </div>
+          </div>
+          <div class="lobby-actions">${btns}</div>
         </div>
-        <div class="quick-card" data-go="gacha">
-          <div class="qc-icon">🎴</div>
-          <div class="qc-title">佣兵招募</div>
-          <div class="qc-sub">💎 ${s.gem} 可用</div>
-        </div>
-        <div class="quick-card" data-go="roster">
-          <div class="qc-icon">👥</div>
-          <div class="qc-title">佣兵团</div>
-          <div class="qc-sub">共 ${totalChars} 名佣兵</div>
-        </div>
-        <div class="quick-card" data-story-replay>
-          <div class="qc-icon">📖</div>
-          <div class="qc-title">剧情回顾</div>
-          <div class="qc-sub">重温已解锁的故事</div>
-        </div>
-        <div class="quick-card" data-forge>
-          <div class="qc-icon">🔨</div>
-          <div class="qc-title">锻造坊</div>
-          <div class="qc-sub">背包 ${s.inventory.length} 件装备</div>
-        </div>
-      </div>
-      <div class="team-preview">
-        <div class="section-title">出战队伍 <span class="muted" style="font-weight:400;font-size:11px;">· 点击槽位编辑（${s.team.length}/5）</span></div>
-        <div class="team-slots" id="team-slots">${teamHtml}</div>
-        <p class="muted" style="margin-top:8px;">点击下方任意槽位即可添加 / 更换 / 移出出战角色。</p>
       </div>
     `;
     this.screenEl.querySelectorAll('[data-go]').forEach(c =>
       c.addEventListener('click', () => Main.switchScreen(c.dataset.go)));
-    const replay = this.screenEl.querySelector('[data-story-replay]');
-    if (replay) replay.addEventListener('click', () => this.showStoryReplay());
-    const forge = this.screenEl.querySelector('[data-forge]');
-    if (forge) forge.addEventListener('click', () => this.showForge());
+    this.screenEl.querySelectorAll('[data-act]').forEach(c =>
+      c.addEventListener('click', () => {
+        const a = c.dataset.act;
+        if (a === 'team') this.showTeamEditor(0);
+        else if (a === 'forge') this.showForge();
+        else if (a === 'story') this.showStoryReplay();
+      }));
     const ts = this.screenEl.querySelector('#team-slots');
     if (ts) ts.querySelectorAll('.team-slot').forEach((slot, i) =>
       slot.addEventListener('click', () => this.showTeamEditor(i)));

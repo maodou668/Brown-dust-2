@@ -661,9 +661,9 @@ const Main = {
       Game.save();
     }
 
-    // 导航
-    document.querySelectorAll('.nav-btn').forEach(btn =>
-      btn.addEventListener('click', () => this.switchScreen(btn.dataset.screen)));
+    // 返回主界面
+    const backBtn = document.getElementById('btn-back');
+    if (backBtn) backBtn.addEventListener('click', () => this.switchScreen('home'));
 
     // 重置存档
     document.getElementById('btn-reset').addEventListener('click', () => {
@@ -695,9 +695,14 @@ const Main = {
   switchScreen(name) {
     this.current = name;
     if (window.Sound) Sound.bgm('home');
-    document.querySelectorAll('.nav-btn').forEach(b =>
-      b.classList.toggle('active', b.dataset.screen === name));
+    const isHome = name === 'home';
+    // 单一主界面：主页为满屏大厅；其余功能为覆盖面板 + 返回按钮
+    const screen = document.getElementById('screen');
+    if (screen) screen.classList.toggle('lobby-mode', isHome);
+    const backBtn = document.getElementById('btn-back');
+    if (backBtn) backBtn.style.display = isHome ? 'none' : '';
     this.refreshCurrent();
+    if (screen) screen.scrollTop = 0;
   },
 
   refreshCurrent() {
