@@ -2072,3 +2072,14 @@ button.ac-circle:active { transform: scale(.92); }
 .rst-pick-art { font-size: 28px; }
 .rst-pick-name { font-size: 11px; }
 .rst-pick-tag { position: absolute; top: 3px; right: 3px; font-size: 9px; color: var(--gold); background: rgba(0,0,0,.5); padding: 1px 4px; border-radius: 4px; }
+
+/* ===== PWA 安全区（刘海 / 灵动岛 / 状态栏遮挡） ===== */
+#topbar {
+  padding-top: calc(10px + env(safe-area-inset-top));
+  padding-left: calc(14px + env(safe-area-inset-left));
+  padding-right: calc(14px + env(safe-area-inset-right));
+}
+.back-btn { left: calc(10px + env(safe-area-inset-left)) !important; }
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  #app { padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; }
+}

@@ -751,15 +751,18 @@ const Main = {
 
     // 全屏：按钮切换 + 首次交互自动请求（浏览器要求用户手势触发）
     const fsBtn = document.getElementById('btn-fullscreen');
-    if (fsBtn) fsBtn.addEventListener('click', () => this.toggleFullscreen());
+    if (fsBtn) {
+      if (this.isStandalone()) fsBtn.style.display = 'none';   // 已从主屏全屏启动则隐藏
+      fsBtn.addEventListener('click', () => this.toggleFullscreen());
+    }
     const syncFsIcon = () => { if (fsBtn) fsBtn.textContent = this.isFullscreen() ? '🗗' : '⛶'; };
     document.addEventListener('fullscreenchange', syncFsIcon);
     document.addEventListener('webkitfullscreenchange', syncFsIcon);
-    const autoFs = () => {
-      document.removeEventListener('pointerdown', autoFs);
-      if (!this.isFullscreen()) this.requestFullscreen();
-    };
-    document.addEventListener('pointerdown', autoFs, { once: true });
+    // 首次交互自动进全屏（仅在浏览器支持时；iOS 不支持则不打扰）
+    if (this.fullscreenSupported() && !this.isStandalone()) {
+      const autoFs = () => { if (!this.isFullscreen()) this.requestFullscreen(); };
+      document.addEventListener('pointerdown', autoFs, { once: true });
+    }
 
     // 重置存档
     document.getElementById('btn-reset').addEventListener('click', () => {
@@ -790,6 +793,18 @@ const Main = {
 
   // ---------- 全屏 ----------
   isFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
+  fullscreenSupported() {
+    const el = document.documentElement;
+    return !!(el.requestFullscreen || el.webkitRequestFullscreen || el.webkitRequestFullScreen);
+  },
+  isStandalone() {
+    return window.navigator.standalone === true ||
+      (window.matchMedia && (window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches));
+  },
+  isIOS() {
+    const ua = navigator.userAgent || '';
+    return /iPhone|iPad|iPod/.test(ua) || (/Mac/.test(navigator.platform || '') && navigator.maxTouchPoints > 1);
+  },
   requestFullscreen() {
     const el = document.documentElement;
     const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitRequestFullScreen;
@@ -800,8 +815,23 @@ const Main = {
     if (fn) { try { fn.call(document); } catch (e) {} }
   },
   toggleFullscreen() {
-    if (this.isFullscreen()) this.exitFullscreen();
-    else this.requestFullscreen();
+    if (this.isFullscreen()) { this.exitFullscreen(); return; }
+    if (this.fullscreenSupported()) { this.requestFullscreen(); return; }
+    this.showIOSFullscreenTip();   // iOS Safari 不支持全屏 API → 引导添加到主屏幕
+  },
+  showIOSFullscreenTip() {
+    if (this.isStandalone()) { UI.toast('已是全屏模式'); return; }
+    const m = UI.openModal(`
+      <h2>📱 iOS 全屏玩法</h2>
+      <p class="muted" style="margin:8px 0 12px;line-height:1.8;">iOS 的 Safari 不开放网页全屏，但可以「添加到主屏幕」，从主屏图标打开即为<b style="color:var(--gold);">无地址栏全屏</b>：</p>
+      <ol style="line-height:2;font-size:14px;padding-left:20px;margin:0 0 12px;">
+        <li>点击 Safari 底部的 <b>分享</b> 按钮 <span style="font-size:18px;">􀈂</span>（方框带向上箭头）</li>
+        <li>在列表中选择 <b>「添加到主屏幕」</b></li>
+        <li>回到桌面，点开 <b>棕色尘埃2</b> 图标即可全屏游玩</li>
+      </ol>
+      <p class="muted" style="font-size:12px;">提示：横屏握持手机以获得最佳体验。</p>
+      <div class="close-row"><button class="btn" id="iostip-ok">知道了</button></div>`);
+    m.querySelector('#iostip-ok').onclick = () => UI.closeModal(m);
   },
 
   switchScreen(name) {

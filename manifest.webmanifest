@@ -1,0 +1,17 @@
+{
+  "name": "棕色尘埃 2 · Brown Dust 2",
+  "short_name": "棕色尘埃2",
+  "description": "横版 JRPG 战棋养成 · Brown Dust 2 风格",
+  "lang": "zh-CN",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "background_color": "#1a1422",
+  "theme_color": "#1a1422",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
