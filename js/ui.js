@@ -1588,33 +1588,77 @@ const UI = {
   //  背包（装备一览）
   // ============================================================
   renderInventory() {
-    const inv = Game.state.inventory;
-    if (!this._invSort) this._invSort = 'rarity';
-    const equippedSet = new Set();
-    Game.state.roster.forEach(o => Object.values(o.equip || {}).forEach(iid => iid && equippedSet.add(iid)));
-    const items = inv.slice().sort((a, b) => {
-      const ta = Game.getGearTpl(a.tpl), tb = Game.getGearTpl(b.tpl);
-      if (this._invSort === 'rarity') return (tb.rarity - ta.rarity) || (b.lvl - a.lvl);
-      return (b.lvl || 0) - (a.lvl || 0);
-    });
-    const cards = items.length ? items.map(g => {
-      const tpl = Game.getGearTpl(g.tpl);
-      const eq = equippedSet.has(g.iid);
-      return `<div class="inv-item border-${this.rarityClass(tpl.rarity)}">
-        <div class="inv-ico">${tpl.icon}</div>
-        <div class="inv-main"><div class="inv-name">${tpl.name}${g.lvl ? ` +${g.lvl}` : ''}</div>
-          <div class="muted" style="font-size:11px;">${window.GameData.GEAR.RLABEL[tpl.rarity]} · ${({ weapon: '武器', armor: '防具', accessory: '饰品', ex: '专属' }[tpl.type] || '')}${eq ? ' · <span style="color:var(--accent);">已装备</span>' : ''}</div></div>
-      </div>`;
-    }).join('') : '<div class="muted" style="padding:24px;text-align:center;grid-column:1/-1;">背包空空如也，去锻造或副本获取装备吧。</div>';
+    const s = Game.state;
+    this.invTab = this.invTab || 'gear';
+    const lead = s.team[0] && Game.getOwned(s.team[0]);
+    const leadAvatar = lead ? this.charAvatar(lead.charId) : '🎒';
+    const leadColor = lead ? Game.activeColor(lead) : '#b06bff';
+    const dots = r => `<div class="bag-rdots ${this.rarityClass(r)}">${'◆'.repeat(r)}</div>`;
+    const fmt = n => n >= 100000 ? (n / 1000 | 0) + 'k' : (n >= 10000 ? (n / 1000).toFixed(1) + 'k' : n);
+
+    let cells, count, capLabel;
+    if (this.invTab === 'gear') {
+      const equipped = new Set();
+      s.roster.forEach(o => Object.values(o.equip || {}).forEach(iid => iid && equipped.add(iid)));
+      const items = s.inventory.slice().sort((a, b) => { const ta = Game.getGearTpl(a.tpl), tb = Game.getGearTpl(b.tpl); return tb.rarity - ta.rarity || (b.lvl || 0) - (a.lvl || 0); });
+      count = items.length;
+      capLabel = `${count}/200`;
+      cells = items.length ? items.map(g => {
+        const tpl = Game.getGearTpl(g.tpl); const eq = equipped.has(g.iid);
+        return `<div class="bag-cell border-${this.rarityClass(tpl.rarity)}" title="${tpl.name}${eq ? '（已装备）' : ''}">
+          ${dots(tpl.rarity)}
+          <div class="bag-ico">${tpl.icon}</div>
+          ${g.lvl ? `<span class="bag-lv">+${g.lvl}</span>` : ''}
+          ${eq ? '<span class="bag-eq">装</span>' : ''}
+        </div>`;
+      }).join('') : '<div class="muted bag-empty">背包没有装备，去锻造或副本获取吧</div>';
+    } else {
+      const mats = [
+        { icon: '🪙', name: '金币', qty: s.gold, r: 3 },
+        { icon: '💎', name: '宝石', qty: s.gem, r: 5 },
+        { icon: '🔮', name: '觉醒石', qty: s.awakenStone || 0, r: 4 },
+        { icon: '⭐', name: '闪耀之星', qty: s.spark || 0, r: 5 },
+        { icon: '✨', name: '希望之粉', qty: s.powder || 0, r: 4 },
+        { icon: '🎟️', name: '活动币', qty: (s.event && s.event.coin) || 0, r: 4 },
+        { icon: '⚡', name: '体力', qty: s.stamina, r: 3 },
+      ];
+      count = mats.length; capLabel = '材料';
+      cells = mats.map(m => `<div class="bag-cell border-${this.rarityClass(m.r)} mat" title="${m.name}">
+        ${dots(m.r)}<div class="bag-ico">${m.icon}</div><span class="bag-qty">${fmt(m.qty)}</span><div class="bag-cell-name">${m.name}</div>
+      </div>`).join('');
+    }
+
     this.screenEl.innerHTML = `
-      <div class="section-title">背包 <span class="muted" style="font-weight:400;font-size:12px;">· 共 ${inv.length} 件装备</span></div>
-      <div class="inv-tools">
-        <button class="btn secondary sm" id="inv-sort">排序：${this._invSort === 'rarity' ? '稀有度' : '强化等级'}</button>
-        <button class="btn secondary sm" id="inv-forge">🔨 前往锻造</button>
-      </div>
-      <div class="inv-grid">${cards}</div>`;
-    this.screenEl.querySelector('#inv-sort').onclick = () => { this._invSort = this._invSort === 'rarity' ? 'lvl' : 'rarity'; this.renderInventory(); };
-    this.screenEl.querySelector('#inv-forge').onclick = () => this.showForge();
+      <div class="bag2">
+        <div class="bag-top">
+          <div class="bag-tabs">
+            <button class="bag-tab ${this.invTab === 'gear' ? 'on' : ''}" data-bag="gear">⚔️ 装备</button>
+            <button class="bag-tab ${this.invTab === 'material' ? 'on' : ''}" data-bag="material">🧪 材料</button>
+          </div>
+          <div class="bag-count muted">${capLabel}</div>
+        </div>
+        <div class="bag-body">
+          <div class="bag-left">
+            <div class="bag-char border-r5" style="background:linear-gradient(180deg, ${leadColor}66 0%, ${leadColor}22 45%, var(--bg) 90%);">
+              <div class="bag-char-avatar">${leadAvatar}</div>
+            </div>
+          </div>
+          <div class="bag-grid">${cells}</div>
+        </div>
+        <div class="bag-actions">
+          <button class="btn secondary sm" id="bag-forge">🔨 锻造</button>
+          ${this.invTab === 'gear' ? '<button class="btn sm" id="bag-dismantle">一键分解 R/SR</button>' : ''}
+        </div>
+      </div>`;
+
+    this.screenEl.querySelectorAll('[data-bag]').forEach(b => b.onclick = () => { this.invTab = b.dataset.bag; this.renderInventory(); });
+    this.screenEl.querySelector('#bag-forge').onclick = () => this.showForge();
+    const dis = this.screenEl.querySelector('#bag-dismantle');
+    if (dis) dis.onclick = () => {
+      const r = Game.dismantleGear();
+      this.toast(r.n ? `分解 ${r.n} 件，获得 🪙${r.gold}` : '没有可分解的 R/SR 装备');
+      this.updateResources(); this.renderInventory();
+    };
   },
 
   // ============================================================

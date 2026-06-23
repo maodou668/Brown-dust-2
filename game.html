@@ -1432,13 +1432,35 @@ body {
   .lobby-cta { padding: 10px 30px; } .lobby-cta .cta-go { font-size: 18px; }
 }
 
-/* 背包 */
-.inv-tools { display: flex; gap: 8px; margin-bottom: 10px; }
-.inv-tools .btn.sm { margin-top: 0; }
-.inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-.inv-item { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 8px 10px; }
-.inv-ico { font-size: 24px; }
-.inv-main { min-width: 0; } .inv-name { font-weight: 700; font-size: 13px; }
+/* 背包（BD2 式：左角色立绘 + 右密集物品网格 + 分类页签 + 一键操作） */
+.bag2 { display: flex; flex-direction: column; height: 100%; gap: 8px; }
+.bag-top { display: flex; align-items: center; justify-content: space-between; }
+.bag-tabs { display: flex; gap: 6px; }
+.bag-tab { background: var(--panel); border: 1px solid rgba(255,255,255,.08); color: var(--text-dim); border-radius: 9px; padding: 7px 14px; font-size: 13px; cursor: pointer; }
+.bag-tab.on { background: var(--accent); color: #fff; border-color: transparent; }
+.bag-count { font-size: 12px; }
+.bag-body { flex: 1; display: flex; gap: 10px; min-height: 0; }
+.bag-left { flex: 0 0 28%; min-width: 130px; max-width: 280px; display: flex; }
+.bag-char { flex: 1; position: relative; border-radius: 14px; overflow: hidden; border-width: 2px; }
+.bag-char-avatar { position: absolute; inset: 0; display: grid; place-items: center; font-size: clamp(80px, 20vmin, 200px); }
+.bag-char-avatar img.char-img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
+.bag-grid { flex: 1; min-width: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); gap: 6px; align-content: start; }
+.bag-cell { position: relative; aspect-ratio: 1/1; border-radius: 10px; background: var(--panel); border-width: 2px; display: grid; place-items: center; cursor: default; overflow: hidden; }
+.bag-ico { font-size: 28px; }
+.bag-rdots { position: absolute; top: 2px; left: 0; right: 0; text-align: center; font-size: 7px; letter-spacing: -1px; color: var(--r5); text-shadow: 0 1px 1px #000; }
+.bag-rdots.r4 { color: var(--r4); } .bag-rdots.r3 { color: var(--r3); }
+.bag-lv { position: absolute; bottom: 2px; left: 3px; font-size: 10px; font-weight: 800; color: var(--gold); text-shadow: 0 1px 2px #000; }
+.bag-qty { position: absolute; bottom: 1px; right: 3px; font-size: 11px; font-weight: 800; text-shadow: 0 1px 2px #000; }
+.bag-eq { position: absolute; top: 2px; right: 2px; background: var(--accent); color: #fff; font-size: 8px; padding: 0 4px; border-radius: 5px; }
+.bag-cell.mat .bag-ico { font-size: 24px; margin-bottom: 8px; }
+.bag-cell-name { position: absolute; bottom: 1px; left: 0; right: 0; text-align: center; font-size: 8px; color: var(--text-dim); }
+.bag-empty { grid-column: 1 / -1; padding: 24px; text-align: center; }
+.bag-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.bag-actions .btn.sm { margin-top: 0; }
+@media (min-width: 820px) {
+  .bag-grid { grid-template-columns: repeat(auto-fill, minmax(82px, 1fr)); gap: 8px; }
+  .bag-ico { font-size: 34px; }
+}
 
 /* 图鉴 */
 .codex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
@@ -1674,7 +1696,7 @@ body {
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '56';</script>
+  <script>window.ASSET_VER = '57';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -3199,6 +3221,20 @@ const Game = {
   hasUnequippedEx(charId) {
     const exId = 'ex_' + charId;
     return this.state.inventory.some(g => g.tpl === exId && !this.gearEquippedBy(g.iid));
+  },
+
+  /** 一键分解：未装备的 R/SR 通用装备转为金币 */
+  dismantleGear() {
+    let gold = 0, n = 0;
+    this.state.inventory = this.state.inventory.filter(g => {
+      const tpl = this.getGearTpl(g.tpl);
+      if (tpl && tpl.type !== 'ex' && tpl.rarity < 5 && !this.gearEquippedBy(g.iid)) {
+        gold += (tpl.rarity === 4 ? 300 : 100) + (g.lvl || 0) * 50; n++; return false;
+      }
+      return true;
+    });
+    this.state.gold += gold; this.save();
+    return { n, gold };
   },
 
   /** 某槽位背包中评分最高的未装备件，返回 iid */
@@ -6135,33 +6171,77 @@ const UI = {
   //  背包（装备一览）
   // ============================================================
   renderInventory() {
-    const inv = Game.state.inventory;
-    if (!this._invSort) this._invSort = 'rarity';
-    const equippedSet = new Set();
-    Game.state.roster.forEach(o => Object.values(o.equip || {}).forEach(iid => iid && equippedSet.add(iid)));
-    const items = inv.slice().sort((a, b) => {
-      const ta = Game.getGearTpl(a.tpl), tb = Game.getGearTpl(b.tpl);
-      if (this._invSort === 'rarity') return (tb.rarity - ta.rarity) || (b.lvl - a.lvl);
-      return (b.lvl || 0) - (a.lvl || 0);
-    });
-    const cards = items.length ? items.map(g => {
-      const tpl = Game.getGearTpl(g.tpl);
-      const eq = equippedSet.has(g.iid);
-      return `<div class="inv-item border-${this.rarityClass(tpl.rarity)}">
-        <div class="inv-ico">${tpl.icon}</div>
-        <div class="inv-main"><div class="inv-name">${tpl.name}${g.lvl ? ` +${g.lvl}` : ''}</div>
-          <div class="muted" style="font-size:11px;">${window.GameData.GEAR.RLABEL[tpl.rarity]} · ${({ weapon: '武器', armor: '防具', accessory: '饰品', ex: '专属' }[tpl.type] || '')}${eq ? ' · <span style="color:var(--accent);">已装备</span>' : ''}</div></div>
-      </div>`;
-    }).join('') : '<div class="muted" style="padding:24px;text-align:center;grid-column:1/-1;">背包空空如也，去锻造或副本获取装备吧。</div>';
+    const s = Game.state;
+    this.invTab = this.invTab || 'gear';
+    const lead = s.team[0] && Game.getOwned(s.team[0]);
+    const leadAvatar = lead ? this.charAvatar(lead.charId) : '🎒';
+    const leadColor = lead ? Game.activeColor(lead) : '#b06bff';
+    const dots = r => `<div class="bag-rdots ${this.rarityClass(r)}">${'◆'.repeat(r)}</div>`;
+    const fmt = n => n >= 100000 ? (n / 1000 | 0) + 'k' : (n >= 10000 ? (n / 1000).toFixed(1) + 'k' : n);
+
+    let cells, count, capLabel;
+    if (this.invTab === 'gear') {
+      const equipped = new Set();
+      s.roster.forEach(o => Object.values(o.equip || {}).forEach(iid => iid && equipped.add(iid)));
+      const items = s.inventory.slice().sort((a, b) => { const ta = Game.getGearTpl(a.tpl), tb = Game.getGearTpl(b.tpl); return tb.rarity - ta.rarity || (b.lvl || 0) - (a.lvl || 0); });
+      count = items.length;
+      capLabel = `${count}/200`;
+      cells = items.length ? items.map(g => {
+        const tpl = Game.getGearTpl(g.tpl); const eq = equipped.has(g.iid);
+        return `<div class="bag-cell border-${this.rarityClass(tpl.rarity)}" title="${tpl.name}${eq ? '（已装备）' : ''}">
+          ${dots(tpl.rarity)}
+          <div class="bag-ico">${tpl.icon}</div>
+          ${g.lvl ? `<span class="bag-lv">+${g.lvl}</span>` : ''}
+          ${eq ? '<span class="bag-eq">装</span>' : ''}
+        </div>`;
+      }).join('') : '<div class="muted bag-empty">背包没有装备，去锻造或副本获取吧</div>';
+    } else {
+      const mats = [
+        { icon: '🪙', name: '金币', qty: s.gold, r: 3 },
+        { icon: '💎', name: '宝石', qty: s.gem, r: 5 },
+        { icon: '🔮', name: '觉醒石', qty: s.awakenStone || 0, r: 4 },
+        { icon: '⭐', name: '闪耀之星', qty: s.spark || 0, r: 5 },
+        { icon: '✨', name: '希望之粉', qty: s.powder || 0, r: 4 },
+        { icon: '🎟️', name: '活动币', qty: (s.event && s.event.coin) || 0, r: 4 },
+        { icon: '⚡', name: '体力', qty: s.stamina, r: 3 },
+      ];
+      count = mats.length; capLabel = '材料';
+      cells = mats.map(m => `<div class="bag-cell border-${this.rarityClass(m.r)} mat" title="${m.name}">
+        ${dots(m.r)}<div class="bag-ico">${m.icon}</div><span class="bag-qty">${fmt(m.qty)}</span><div class="bag-cell-name">${m.name}</div>
+      </div>`).join('');
+    }
+
     this.screenEl.innerHTML = `
-      <div class="section-title">背包 <span class="muted" style="font-weight:400;font-size:12px;">· 共 ${inv.length} 件装备</span></div>
-      <div class="inv-tools">
-        <button class="btn secondary sm" id="inv-sort">排序：${this._invSort === 'rarity' ? '稀有度' : '强化等级'}</button>
-        <button class="btn secondary sm" id="inv-forge">🔨 前往锻造</button>
-      </div>
-      <div class="inv-grid">${cards}</div>`;
-    this.screenEl.querySelector('#inv-sort').onclick = () => { this._invSort = this._invSort === 'rarity' ? 'lvl' : 'rarity'; this.renderInventory(); };
-    this.screenEl.querySelector('#inv-forge').onclick = () => this.showForge();
+      <div class="bag2">
+        <div class="bag-top">
+          <div class="bag-tabs">
+            <button class="bag-tab ${this.invTab === 'gear' ? 'on' : ''}" data-bag="gear">⚔️ 装备</button>
+            <button class="bag-tab ${this.invTab === 'material' ? 'on' : ''}" data-bag="material">🧪 材料</button>
+          </div>
+          <div class="bag-count muted">${capLabel}</div>
+        </div>
+        <div class="bag-body">
+          <div class="bag-left">
+            <div class="bag-char border-r5" style="background:linear-gradient(180deg, ${leadColor}66 0%, ${leadColor}22 45%, var(--bg) 90%);">
+              <div class="bag-char-avatar">${leadAvatar}</div>
+            </div>
+          </div>
+          <div class="bag-grid">${cells}</div>
+        </div>
+        <div class="bag-actions">
+          <button class="btn secondary sm" id="bag-forge">🔨 锻造</button>
+          ${this.invTab === 'gear' ? '<button class="btn sm" id="bag-dismantle">一键分解 R/SR</button>' : ''}
+        </div>
+      </div>`;
+
+    this.screenEl.querySelectorAll('[data-bag]').forEach(b => b.onclick = () => { this.invTab = b.dataset.bag; this.renderInventory(); });
+    this.screenEl.querySelector('#bag-forge').onclick = () => this.showForge();
+    const dis = this.screenEl.querySelector('#bag-dismantle');
+    if (dis) dis.onclick = () => {
+      const r = Game.dismantleGear();
+      this.toast(r.n ? `分解 ${r.n} 件，获得 🪙${r.gold}` : '没有可分解的 R/SR 装备');
+      this.updateResources(); this.renderInventory();
+    };
   },
 
   // ============================================================

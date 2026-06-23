@@ -457,6 +457,20 @@ const Game = {
     return this.state.inventory.some(g => g.tpl === exId && !this.gearEquippedBy(g.iid));
   },
 
+  /** 一键分解：未装备的 R/SR 通用装备转为金币 */
+  dismantleGear() {
+    let gold = 0, n = 0;
+    this.state.inventory = this.state.inventory.filter(g => {
+      const tpl = this.getGearTpl(g.tpl);
+      if (tpl && tpl.type !== 'ex' && tpl.rarity < 5 && !this.gearEquippedBy(g.iid)) {
+        gold += (tpl.rarity === 4 ? 300 : 100) + (g.lvl || 0) * 50; n++; return false;
+      }
+      return true;
+    });
+    this.state.gold += gold; this.save();
+    return { n, gold };
+  },
+
   /** 某槽位背包中评分最高的未装备件，返回 iid */
   bestUnequippedGear(type, charId) {
     let best = null, bestScore = -1;
