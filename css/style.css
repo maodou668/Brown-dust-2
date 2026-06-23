@@ -1511,3 +1511,60 @@ body {
   .gacha-banner-card { flex: 0 0 auto; min-width: 140px; }
   .gacha-mileage { margin: 0; padding: 0; align-self: center; }
 }
+
+/* ============================================================
+   主页 hub v2 —— 按 BD2 分区：左集群 / 右活动横幅栈 / 音乐挂件 / 底部功能行+出战+缩略
+   ============================================================ */
+.lobby-art-ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: 56px; color: var(--text-dim); opacity: .35; pointer-events: none; }
+.lobby-art-ph .muted { font-size: 12px; }
+
+/* 左上集群 */
+.lobby-left { position: absolute; top: 10px; left: 10px; z-index: 2; display: grid; grid-template-columns: repeat(2, 46px); gap: 6px; }
+.ll-tile { width: 46px; height: 46px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; background: rgba(38,29,51,.78); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; cursor: pointer; color: var(--text); backdrop-filter: blur(4px); }
+.ll-tile:active { transform: scale(.93); }
+.ll-ico { font-size: 19px; line-height: 1; } .ll-lab { font-size: 9px; }
+
+/* 右侧活动横幅栈 */
+.lobby-right { position: absolute; top: 10px; right: 10px; bottom: 92px; z-index: 2; display: flex; flex-direction: column; gap: 8px; width: 150px; overflow-y: auto; }
+.lobby-right::-webkit-scrollbar { width: 0; }
+.lr-banner { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; text-align: left; padding: 9px 10px; border-radius: 12px; cursor: pointer; color: #fff; border: 1px solid rgba(255,255,255,.12); overflow: hidden; position: relative; }
+.lr-banner:active { transform: scale(.97); }
+.lr-banner.bn-arena { background: linear-gradient(120deg, #b06bff, #6a3aa0); }
+.lr-banner.bn-dungeon { background: linear-gradient(120deg, #4a90ff, #2a5aa0); }
+.lr-banner.bn-dispatch { background: linear-gradient(120deg, #3aa86a, #1f6a44); }
+.lr-banner.bn-event { background: linear-gradient(120deg, #ff8b4a, #c0502a); }
+.lr-ico { font-size: 22px; }
+.lr-text { display: flex; flex-direction: column; min-width: 0; }
+.lr-name { font-size: 13px; font-weight: 800; }
+.lr-tag { font-size: 10px; opacity: .9; }
+
+/* 左下音乐挂件 */
+.lobby-music { position: absolute; left: 10px; bottom: 92px; z-index: 2; display: flex; align-items: center; gap: 8px; background: rgba(20,14,28,.78); border: 1px solid rgba(255,255,255,.1); border-radius: 20px; padding: 6px 12px; backdrop-filter: blur(4px); }
+.lm-ico { font-size: 14px; } .lm-track { font-size: 11px; color: var(--text); }
+.lm-toggle { font-size: 13px; cursor: pointer; color: var(--accent); }
+
+/* 底部功能行 + 出战 + 缩略 */
+.lobby-bottombar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; align-items: flex-end; gap: 8px; padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(0deg, rgba(8,6,12,.92), transparent); }
+.lb-funcs { flex: 1; min-width: 0; display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.lb-funcs::-webkit-scrollbar { height: 0; }
+.lb-cta { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 1px; background: linear-gradient(135deg, var(--accent-2), #c0392b); border: none; border-radius: 14px; padding: 10px 22px; color: #fff; cursor: pointer; box-shadow: 0 4px 16px rgba(255,107,157,.4); }
+.lb-cta:active { transform: scale(.97); }
+.lb-cta .cta-go { font-size: 18px; font-weight: 800; letter-spacing: 3px; }
+.lb-cta .cta-sub { font-size: 10px; opacity: .9; }
+.lb-thumb { flex: 0 0 auto; width: 54px; height: 54px; border-radius: 12px; border: 2px solid var(--accent); background: var(--panel-2); cursor: pointer; display: grid; place-items: center; overflow: hidden; }
+.lt-art { font-size: 26px; } .lt-art img.char-img { width: 100%; height: 100%; object-fit: cover; }
+
+/* 折叠屏 / 宽屏放大 */
+@media (min-width: 820px) {
+  .lobby-left { grid-template-columns: repeat(2, 60px); gap: 8px; }
+  .ll-tile { width: 60px; height: 60px; } .ll-ico { font-size: 26px; } .ll-lab { font-size: 11px; }
+  .lobby-right { width: 200px; } .lr-name { font-size: 15px; } .lr-ico { font-size: 28px; }
+  .lb-cta { padding: 14px 40px; } .lb-cta .cta-go { font-size: 24px; }
+  .lb-thumb { width: 70px; height: 70px; }
+  .lobby-btn { min-width: 90px; } .lobby-btn .lb-icon { font-size: 28px; }
+  .lobby-art-ph { font-size: 96px; }
+}
+@media (max-width: 520px) {
+  .lobby-right { width: 120px; } .lr-name { font-size: 11px; } .lr-ico { font-size: 18px; }
+  .lobby-music { display: none; }
+}

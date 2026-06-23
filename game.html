@@ -1519,6 +1519,63 @@ body {
   .gacha-mileage { margin: 0; padding: 0; align-self: center; }
 }
 
+/* ============================================================
+   主页 hub v2 —— 按 BD2 分区：左集群 / 右活动横幅栈 / 音乐挂件 / 底部功能行+出战+缩略
+   ============================================================ */
+.lobby-art-ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: 56px; color: var(--text-dim); opacity: .35; pointer-events: none; }
+.lobby-art-ph .muted { font-size: 12px; }
+
+/* 左上集群 */
+.lobby-left { position: absolute; top: 10px; left: 10px; z-index: 2; display: grid; grid-template-columns: repeat(2, 46px); gap: 6px; }
+.ll-tile { width: 46px; height: 46px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; background: rgba(38,29,51,.78); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; cursor: pointer; color: var(--text); backdrop-filter: blur(4px); }
+.ll-tile:active { transform: scale(.93); }
+.ll-ico { font-size: 19px; line-height: 1; } .ll-lab { font-size: 9px; }
+
+/* 右侧活动横幅栈 */
+.lobby-right { position: absolute; top: 10px; right: 10px; bottom: 92px; z-index: 2; display: flex; flex-direction: column; gap: 8px; width: 150px; overflow-y: auto; }
+.lobby-right::-webkit-scrollbar { width: 0; }
+.lr-banner { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; text-align: left; padding: 9px 10px; border-radius: 12px; cursor: pointer; color: #fff; border: 1px solid rgba(255,255,255,.12); overflow: hidden; position: relative; }
+.lr-banner:active { transform: scale(.97); }
+.lr-banner.bn-arena { background: linear-gradient(120deg, #b06bff, #6a3aa0); }
+.lr-banner.bn-dungeon { background: linear-gradient(120deg, #4a90ff, #2a5aa0); }
+.lr-banner.bn-dispatch { background: linear-gradient(120deg, #3aa86a, #1f6a44); }
+.lr-banner.bn-event { background: linear-gradient(120deg, #ff8b4a, #c0502a); }
+.lr-ico { font-size: 22px; }
+.lr-text { display: flex; flex-direction: column; min-width: 0; }
+.lr-name { font-size: 13px; font-weight: 800; }
+.lr-tag { font-size: 10px; opacity: .9; }
+
+/* 左下音乐挂件 */
+.lobby-music { position: absolute; left: 10px; bottom: 92px; z-index: 2; display: flex; align-items: center; gap: 8px; background: rgba(20,14,28,.78); border: 1px solid rgba(255,255,255,.1); border-radius: 20px; padding: 6px 12px; backdrop-filter: blur(4px); }
+.lm-ico { font-size: 14px; } .lm-track { font-size: 11px; color: var(--text); }
+.lm-toggle { font-size: 13px; cursor: pointer; color: var(--accent); }
+
+/* 底部功能行 + 出战 + 缩略 */
+.lobby-bottombar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; align-items: flex-end; gap: 8px; padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(0deg, rgba(8,6,12,.92), transparent); }
+.lb-funcs { flex: 1; min-width: 0; display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.lb-funcs::-webkit-scrollbar { height: 0; }
+.lb-cta { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 1px; background: linear-gradient(135deg, var(--accent-2), #c0392b); border: none; border-radius: 14px; padding: 10px 22px; color: #fff; cursor: pointer; box-shadow: 0 4px 16px rgba(255,107,157,.4); }
+.lb-cta:active { transform: scale(.97); }
+.lb-cta .cta-go { font-size: 18px; font-weight: 800; letter-spacing: 3px; }
+.lb-cta .cta-sub { font-size: 10px; opacity: .9; }
+.lb-thumb { flex: 0 0 auto; width: 54px; height: 54px; border-radius: 12px; border: 2px solid var(--accent); background: var(--panel-2); cursor: pointer; display: grid; place-items: center; overflow: hidden; }
+.lt-art { font-size: 26px; } .lt-art img.char-img { width: 100%; height: 100%; object-fit: cover; }
+
+/* 折叠屏 / 宽屏放大 */
+@media (min-width: 820px) {
+  .lobby-left { grid-template-columns: repeat(2, 60px); gap: 8px; }
+  .ll-tile { width: 60px; height: 60px; } .ll-ico { font-size: 26px; } .ll-lab { font-size: 11px; }
+  .lobby-right { width: 200px; } .lr-name { font-size: 15px; } .lr-ico { font-size: 28px; }
+  .lb-cta { padding: 14px 40px; } .lb-cta .cta-go { font-size: 24px; }
+  .lb-thumb { width: 70px; height: 70px; }
+  .lobby-btn { min-width: 90px; } .lobby-btn .lb-icon { font-size: 28px; }
+  .lobby-art-ph { font-size: 96px; }
+}
+@media (max-width: 520px) {
+  .lobby-right { width: 120px; } .lr-name { font-size: 11px; } .lr-ico { font-size: 18px; }
+  .lobby-music { display: none; }
+}
+
 </style>
 </head>
 <body>
@@ -1539,6 +1596,7 @@ body {
         <div class="res" title="体力"><span class="res-icon">⚡</span><span id="res-stam">0</span></div>
       </div>
       <div class="topbar-sys">
+        <button id="btn-notice" class="ghost-btn" title="公告">📢</button>
         <button id="btn-mail" class="ghost-btn" title="邮件"><span class="dot-wrap">📧<span id="mail-dot" class="red-dot" style="display:none;"></span></span></button>
         <button id="btn-settings" class="ghost-btn" title="设置">⚙️</button>
         <button id="btn-mute" class="ghost-btn" title="音效开关">🔊</button>
@@ -1563,7 +1621,7 @@ body {
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '52';</script>
+  <script>window.ASSET_VER = '53';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -4499,54 +4557,63 @@ const UI = {
     const s = Game.state;
     Game.syncStamina();
     const cleared = s.cleared.length, total = window.GameData.STAGES.length;
-    const arenaName = Game.arenaRank((s.arena && s.arena.points) || 1000).name;
-    // 左栏：日常玩法入口（带角标）
-    const leftRail = [
-      { go: 'dungeon', icon: '⚡', label: '副本', tag: `${s.stamina}` },
-      { go: 'dispatch', icon: '🧭', label: '远征', tag: Game.dispatchHomeTag() },
-      { go: 'arena', icon: '🏆', label: '竞技场', tag: arenaName },
-      { go: 'event', icon: '🎏', label: '活动', tag: `🎟${(s.event && s.event.coin) || 0}` },
-    ];
-    // 右栏：信息/商店入口
-    const rightRail = [
-      { go: 'shop', icon: '🛒', label: '商店' },
+    const lead = s.team[0] && Game.getOwned(s.team[0]);
+    const leadAvatar = lead ? this.charAvatar(lead.charId) : '🗡️';
+    const leadName = lead ? window.GameData.CHARACTERS[lead.charId].name : '未编队';
+    // 左上集群（系统/养成小入口）
+    const leftCluster = [
       { go: 'codex', icon: '📚', label: '图鉴' },
+      { act: 'forge', icon: '🔨', label: '锻造' },
       { act: 'ach', icon: '🏅', label: '成就' },
-      { act: 'announce', icon: '📢', label: '公告' },
+      { act: 'story', icon: '🎬', label: '剧情' },
     ];
-    // 底部：核心养成功能
-    const bottom = [
+    // 右侧活动/模式 banner 卡（对应 BD2 右侧活动横幅栈）
+    const rightBanners = [
+      { go: 'arena', icon: '🏆', name: '竞技场', tag: Game.arenaRank((s.arena && s.arena.points) || 1000).name, cls: 'bn-arena' },
+      { go: 'dungeon', icon: '⚡', name: '资源副本', tag: `体力 ${s.stamina}`, cls: 'bn-dungeon' },
+      { go: 'dispatch', icon: '🧭', name: '远征派遣', tag: Game.dispatchHomeTag() || '挂机产出', cls: 'bn-dispatch' },
+      { go: 'event', icon: '🎏', name: '限时活动', tag: `🎟 ${(s.event && s.event.coin) || 0}`, cls: 'bn-event' },
+    ];
+    // 底部功能行
+    const bottomFuncs = [
       { go: 'gacha', icon: '🎴', label: '招募' },
       { go: 'roster', icon: '👥', label: '佣兵' },
       { act: 'team', icon: '⚔️', label: '编队' },
       { go: 'inventory', icon: '🎒', label: '背包' },
-      { act: 'forge', icon: '🔨', label: '锻造' },
-      { go: 'welfare', icon: '🎁', label: '福利', tag: Game.canCheckIn() ? '!' : '' },
-      { act: 'story', icon: '🎬', label: '剧情' },
+      { go: 'welfare', icon: '🎁', label: '福利', dot: Game.canCheckIn() ? '!' : '' },
+      { go: 'shop', icon: '🛒', label: '商店' },
     ];
-    const railBtn = a => `<button class="rail-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
-      <span class="rb-icon">${a.icon}</span><span class="rb-label">${a.label}</span>${a.tag ? `<span class="rb-tag">${a.tag}</span>` : ''}</button>`;
-    const bottomBtn = a => `<button class="lobby-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
-      <span class="lb-icon">${a.icon}</span><span class="lb-label">${a.label}</span>${a.tag ? `<span class="lb-dot">${a.tag}</span>` : ''}</button>`;
+    const clusterBtn = a => `<button class="ll-tile" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
+      <span class="ll-ico">${a.icon}</span><span class="ll-lab">${a.label}</span></button>`;
+    const bannerBtn = a => `<button class="lr-banner ${a.cls}" data-go="${a.go}">
+      <span class="lr-ico">${a.icon}</span>
+      <span class="lr-text"><span class="lr-name">${a.name}</span><span class="lr-tag">${a.tag}</span></span></button>`;
+    const funcBtn = a => `<button class="lobby-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
+      <span class="lb-icon">${a.icon}</span><span class="lb-label">${a.label}</span>${a.dot ? `<span class="lb-dot">${a.dot}</span>` : ''}</button>`;
     this.screenEl.innerHTML = `
       <div class="lobby">
-        <div class="lobby-bg"><div class="lobby-bg-grid"></div></div>
-        <div class="lobby-grid">
-          <div class="lobby-rail left">${leftRail.map(railBtn).join('')}</div>
-          <div class="lobby-center">
-            <div class="lobby-welcome">
-              <h1>棕色尘埃 <small>2</small></h1>
-              <p class="muted">欢迎回来，指挥官</p>
-            </div>
-            <div class="lobby-char-ph">🗡️<span class="muted">（主角立绘 / 动态背景位）</span></div>
-            <button class="lobby-cta" data-go="stages">
-              <span class="cta-go">出 战</span>
-              <span class="cta-sub">主线冒险 · 已通关 ${cleared}/${total}</span>
-            </button>
-          </div>
-          <div class="lobby-rail right">${rightRail.map(railBtn).join('')}</div>
+        <div class="lobby-bg"><div class="lobby-bg-grid"></div>
+          <div class="lobby-art-ph">🗡️<span class="muted">主角立绘 / 动态背景位</span></div>
         </div>
-        <div class="lobby-actions">${bottom.map(bottomBtn).join('')}</div>
+        <!-- 左上集群 -->
+        <div class="lobby-left">${leftCluster.map(clusterBtn).join('')}</div>
+        <!-- 右侧活动横幅栈 -->
+        <div class="lobby-right">${rightBanners.map(bannerBtn).join('')}</div>
+        <!-- 左下音乐挂件 -->
+        <div class="lobby-music" id="lobby-music">
+          <span class="lm-ico">🎵</span><span class="lm-track">棕色尘埃 · 序曲</span>
+          <span class="lm-toggle" id="lm-toggle">${(window.Sound && Sound.muted) ? '▶' : '⏸'}</span>
+        </div>
+        <!-- 底部功能行 + 出战 CTA + 角色缩略 -->
+        <div class="lobby-bottombar">
+          <div class="lb-funcs">${bottomFuncs.map(funcBtn).join('')}</div>
+          <button class="lb-cta" data-go="stages">
+            <span class="cta-go">出 战</span><span class="cta-sub">主线 ${cleared}/${total}</span>
+          </button>
+          <button class="lb-thumb" data-go="roster" title="${leadName}">
+            <span class="lt-art">${leadAvatar}</span>
+          </button>
+        </div>
       </div>`;
     this.screenEl.querySelectorAll('[data-go]').forEach(c =>
       c.addEventListener('click', () => Main.switchScreen(c.dataset.go)));
@@ -4559,6 +4626,8 @@ const UI = {
         else if (a === 'ach') this.showAchievements();
         else if (a === 'announce') this.showAnnounce();
       }));
+    const mt = this.screenEl.querySelector('#lm-toggle');
+    if (mt) mt.onclick = () => { if (window.Sound) Sound.toggleMute(); mt.textContent = (window.Sound && Sound.muted) ? '▶' : '⏸'; };
   },
 
   /** 队伍编辑器：从出战框直接编辑 */
@@ -8149,6 +8218,8 @@ const Main = {
     if (mailBtn) mailBtn.addEventListener('click', () => UI.showMailbox());
     const setBtn = document.getElementById('btn-settings');
     if (setBtn) setBtn.addEventListener('click', () => UI.showSettings());
+    const noticeBtn = document.getElementById('btn-notice');
+    if (noticeBtn) noticeBtn.addEventListener('click', () => UI.showAnnounce());
     const profBtn = document.getElementById('topbar-profile');
     if (profBtn) profBtn.addEventListener('click', () => UI.showProfile());
 

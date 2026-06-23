@@ -72,54 +72,63 @@ const UI = {
     const s = Game.state;
     Game.syncStamina();
     const cleared = s.cleared.length, total = window.GameData.STAGES.length;
-    const arenaName = Game.arenaRank((s.arena && s.arena.points) || 1000).name;
-    // 左栏：日常玩法入口（带角标）
-    const leftRail = [
-      { go: 'dungeon', icon: '⚡', label: '副本', tag: `${s.stamina}` },
-      { go: 'dispatch', icon: '🧭', label: '远征', tag: Game.dispatchHomeTag() },
-      { go: 'arena', icon: '🏆', label: '竞技场', tag: arenaName },
-      { go: 'event', icon: '🎏', label: '活动', tag: `🎟${(s.event && s.event.coin) || 0}` },
-    ];
-    // 右栏：信息/商店入口
-    const rightRail = [
-      { go: 'shop', icon: '🛒', label: '商店' },
+    const lead = s.team[0] && Game.getOwned(s.team[0]);
+    const leadAvatar = lead ? this.charAvatar(lead.charId) : '🗡️';
+    const leadName = lead ? window.GameData.CHARACTERS[lead.charId].name : '未编队';
+    // 左上集群（系统/养成小入口）
+    const leftCluster = [
       { go: 'codex', icon: '📚', label: '图鉴' },
+      { act: 'forge', icon: '🔨', label: '锻造' },
       { act: 'ach', icon: '🏅', label: '成就' },
-      { act: 'announce', icon: '📢', label: '公告' },
+      { act: 'story', icon: '🎬', label: '剧情' },
     ];
-    // 底部：核心养成功能
-    const bottom = [
+    // 右侧活动/模式 banner 卡（对应 BD2 右侧活动横幅栈）
+    const rightBanners = [
+      { go: 'arena', icon: '🏆', name: '竞技场', tag: Game.arenaRank((s.arena && s.arena.points) || 1000).name, cls: 'bn-arena' },
+      { go: 'dungeon', icon: '⚡', name: '资源副本', tag: `体力 ${s.stamina}`, cls: 'bn-dungeon' },
+      { go: 'dispatch', icon: '🧭', name: '远征派遣', tag: Game.dispatchHomeTag() || '挂机产出', cls: 'bn-dispatch' },
+      { go: 'event', icon: '🎏', name: '限时活动', tag: `🎟 ${(s.event && s.event.coin) || 0}`, cls: 'bn-event' },
+    ];
+    // 底部功能行
+    const bottomFuncs = [
       { go: 'gacha', icon: '🎴', label: '招募' },
       { go: 'roster', icon: '👥', label: '佣兵' },
       { act: 'team', icon: '⚔️', label: '编队' },
       { go: 'inventory', icon: '🎒', label: '背包' },
-      { act: 'forge', icon: '🔨', label: '锻造' },
-      { go: 'welfare', icon: '🎁', label: '福利', tag: Game.canCheckIn() ? '!' : '' },
-      { act: 'story', icon: '🎬', label: '剧情' },
+      { go: 'welfare', icon: '🎁', label: '福利', dot: Game.canCheckIn() ? '!' : '' },
+      { go: 'shop', icon: '🛒', label: '商店' },
     ];
-    const railBtn = a => `<button class="rail-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
-      <span class="rb-icon">${a.icon}</span><span class="rb-label">${a.label}</span>${a.tag ? `<span class="rb-tag">${a.tag}</span>` : ''}</button>`;
-    const bottomBtn = a => `<button class="lobby-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
-      <span class="lb-icon">${a.icon}</span><span class="lb-label">${a.label}</span>${a.tag ? `<span class="lb-dot">${a.tag}</span>` : ''}</button>`;
+    const clusterBtn = a => `<button class="ll-tile" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
+      <span class="ll-ico">${a.icon}</span><span class="ll-lab">${a.label}</span></button>`;
+    const bannerBtn = a => `<button class="lr-banner ${a.cls}" data-go="${a.go}">
+      <span class="lr-ico">${a.icon}</span>
+      <span class="lr-text"><span class="lr-name">${a.name}</span><span class="lr-tag">${a.tag}</span></span></button>`;
+    const funcBtn = a => `<button class="lobby-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
+      <span class="lb-icon">${a.icon}</span><span class="lb-label">${a.label}</span>${a.dot ? `<span class="lb-dot">${a.dot}</span>` : ''}</button>`;
     this.screenEl.innerHTML = `
       <div class="lobby">
-        <div class="lobby-bg"><div class="lobby-bg-grid"></div></div>
-        <div class="lobby-grid">
-          <div class="lobby-rail left">${leftRail.map(railBtn).join('')}</div>
-          <div class="lobby-center">
-            <div class="lobby-welcome">
-              <h1>棕色尘埃 <small>2</small></h1>
-              <p class="muted">欢迎回来，指挥官</p>
-            </div>
-            <div class="lobby-char-ph">🗡️<span class="muted">（主角立绘 / 动态背景位）</span></div>
-            <button class="lobby-cta" data-go="stages">
-              <span class="cta-go">出 战</span>
-              <span class="cta-sub">主线冒险 · 已通关 ${cleared}/${total}</span>
-            </button>
-          </div>
-          <div class="lobby-rail right">${rightRail.map(railBtn).join('')}</div>
+        <div class="lobby-bg"><div class="lobby-bg-grid"></div>
+          <div class="lobby-art-ph">🗡️<span class="muted">主角立绘 / 动态背景位</span></div>
         </div>
-        <div class="lobby-actions">${bottom.map(bottomBtn).join('')}</div>
+        <!-- 左上集群 -->
+        <div class="lobby-left">${leftCluster.map(clusterBtn).join('')}</div>
+        <!-- 右侧活动横幅栈 -->
+        <div class="lobby-right">${rightBanners.map(bannerBtn).join('')}</div>
+        <!-- 左下音乐挂件 -->
+        <div class="lobby-music" id="lobby-music">
+          <span class="lm-ico">🎵</span><span class="lm-track">棕色尘埃 · 序曲</span>
+          <span class="lm-toggle" id="lm-toggle">${(window.Sound && Sound.muted) ? '▶' : '⏸'}</span>
+        </div>
+        <!-- 底部功能行 + 出战 CTA + 角色缩略 -->
+        <div class="lobby-bottombar">
+          <div class="lb-funcs">${bottomFuncs.map(funcBtn).join('')}</div>
+          <button class="lb-cta" data-go="stages">
+            <span class="cta-go">出 战</span><span class="cta-sub">主线 ${cleared}/${total}</span>
+          </button>
+          <button class="lb-thumb" data-go="roster" title="${leadName}">
+            <span class="lt-art">${leadAvatar}</span>
+          </button>
+        </div>
       </div>`;
     this.screenEl.querySelectorAll('[data-go]').forEach(c =>
       c.addEventListener('click', () => Main.switchScreen(c.dataset.go)));
@@ -132,6 +141,8 @@ const UI = {
         else if (a === 'ach') this.showAchievements();
         else if (a === 'announce') this.showAnnounce();
       }));
+    const mt = this.screenEl.querySelector('#lm-toggle');
+    if (mt) mt.onclick = () => { if (window.Sound) Sound.toggleMute(); mt.textContent = (window.Sound && Sound.muted) ? '▶' : '⏸'; };
   },
 
   /** 队伍编辑器：从出战框直接编辑 */

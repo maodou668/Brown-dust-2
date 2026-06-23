@@ -711,6 +711,8 @@ const Main = {
     if (mailBtn) mailBtn.addEventListener('click', () => UI.showMailbox());
     const setBtn = document.getElementById('btn-settings');
     if (setBtn) setBtn.addEventListener('click', () => UI.showSettings());
+    const noticeBtn = document.getElementById('btn-notice');
+    if (noticeBtn) noticeBtn.addEventListener('click', () => UI.showAnnounce());
     const profBtn = document.getElementById('topbar-profile');
     if (profBtn) profBtn.addEventListener('click', () => UI.showProfile());
 
