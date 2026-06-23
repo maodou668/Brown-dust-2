@@ -749,6 +749,18 @@ const Main = {
     const profBtn = document.getElementById('topbar-profile');
     if (profBtn) profBtn.addEventListener('click', () => UI.showProfile());
 
+    // 全屏：按钮切换 + 首次交互自动请求（浏览器要求用户手势触发）
+    const fsBtn = document.getElementById('btn-fullscreen');
+    if (fsBtn) fsBtn.addEventListener('click', () => this.toggleFullscreen());
+    const syncFsIcon = () => { if (fsBtn) fsBtn.textContent = this.isFullscreen() ? '🗗' : '⛶'; };
+    document.addEventListener('fullscreenchange', syncFsIcon);
+    document.addEventListener('webkitfullscreenchange', syncFsIcon);
+    const autoFs = () => {
+      document.removeEventListener('pointerdown', autoFs);
+      if (!this.isFullscreen()) this.requestFullscreen();
+    };
+    document.addEventListener('pointerdown', autoFs, { once: true });
+
     // 重置存档
     document.getElementById('btn-reset').addEventListener('click', () => {
       const m = UI.openModal(`
@@ -774,6 +786,22 @@ const Main = {
     if (!Story.seen('prologue')) {
       Story.play('prologue');
     }
+  },
+
+  // ---------- 全屏 ----------
+  isFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
+  requestFullscreen() {
+    const el = document.documentElement;
+    const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitRequestFullScreen;
+    if (fn) { try { const p = fn.call(el); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+  },
+  exitFullscreen() {
+    const fn = document.exitFullscreen || document.webkitExitFullscreen;
+    if (fn) { try { fn.call(document); } catch (e) {} }
+  },
+  toggleFullscreen() {
+    if (this.isFullscreen()) this.exitFullscreen();
+    else this.requestFullscreen();
   },
 
   switchScreen(name) {

@@ -2103,6 +2103,7 @@ button.ac-circle:active { transform: scale(.92); }
         <button id="btn-notice" class="ghost-btn" title="公告">📢</button>
         <button id="btn-mail" class="ghost-btn" title="邮件"><span class="dot-wrap">📧<span id="mail-dot" class="red-dot" style="display:none;"></span></span></button>
         <button id="btn-settings" class="ghost-btn" title="设置">⚙️</button>
+        <button id="btn-fullscreen" class="ghost-btn" title="全屏">⛶</button>
         <button id="btn-mute" class="ghost-btn" title="音效开关">🔊</button>
         <button id="btn-reset" class="ghost-btn" title="重置存档" style="display:none;">↺</button>
       </div>
@@ -2125,7 +2126,7 @@ button.ac-circle:active { transform: scale(.92); }
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '64';</script>
+  <script>window.ASSET_VER = '65';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -10369,6 +10370,18 @@ const Main = {
     const profBtn = document.getElementById('topbar-profile');
     if (profBtn) profBtn.addEventListener('click', () => UI.showProfile());
 
+    // 全屏：按钮切换 + 首次交互自动请求（浏览器要求用户手势触发）
+    const fsBtn = document.getElementById('btn-fullscreen');
+    if (fsBtn) fsBtn.addEventListener('click', () => this.toggleFullscreen());
+    const syncFsIcon = () => { if (fsBtn) fsBtn.textContent = this.isFullscreen() ? '🗗' : '⛶'; };
+    document.addEventListener('fullscreenchange', syncFsIcon);
+    document.addEventListener('webkitfullscreenchange', syncFsIcon);
+    const autoFs = () => {
+      document.removeEventListener('pointerdown', autoFs);
+      if (!this.isFullscreen()) this.requestFullscreen();
+    };
+    document.addEventListener('pointerdown', autoFs, { once: true });
+
     // 重置存档
     document.getElementById('btn-reset').addEventListener('click', () => {
       const m = UI.openModal(`
@@ -10394,6 +10407,22 @@ const Main = {
     if (!Story.seen('prologue')) {
       Story.play('prologue');
     }
+  },
+
+  // ---------- 全屏 ----------
+  isFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
+  requestFullscreen() {
+    const el = document.documentElement;
+    const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitRequestFullScreen;
+    if (fn) { try { const p = fn.call(el); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+  },
+  exitFullscreen() {
+    const fn = document.exitFullscreen || document.webkitExitFullscreen;
+    if (fn) { try { fn.call(document); } catch (e) {} }
+  },
+  toggleFullscreen() {
+    if (this.isFullscreen()) this.exitFullscreen();
+    else this.requestFullscreen();
   },
 
   switchScreen(name) {
