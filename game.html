@@ -1213,7 +1213,7 @@ body {
   <!-- 弹窗容器 -->
   <div id="modal-root"></div>
 
-  <script>window.ASSET_VER = '37';</script>
+  <script>window.ASSET_VER = '38';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -5519,19 +5519,25 @@ window.COMIC = COMIC;
 
 const World = {
   root: null, canvas: null, ctx: null, raf: 0,
-  HW: 30, HH: 15,                 // 等距瓦片半宽/半高（菱形）
+  HW: 36, HH: 18,                 // 等距瓦片半宽/半高（菱形）—— 对应 72px 像素瓦片顶面
   chapter: null, grid: null, w: 0, h: 0, theme: null,
   cam: { x: 0, y: 0 }, vw: 0, vh: 0, dpr: 1,
   player: { x: 0, y: 0, dir: 'down', step: 0, color: '#b06bff' },
   input: { up: false, down: false, left: false, right: false },
   nodes: [], cur: null, busyTrigger: false, active: false,
 
-  // 地图小人精灵图（横向帧条，透明背景）。charId -> { walk, idle, frames }
-  MAP_SPRITES: {
-    lecliss: { walk: 'assets/map/lecliss_walk.png', idle: 'assets/map/lecliss_idle.png', frames: 8 },
+  // 像素美术资源（统一 16-bit 风格，透明 PNG，2× 存储保证高 DPR 清晰）。
+  // 资源源文件 144px 宽瓦片 / 96px 高小人，渲染按 CSS 尺寸缩放，统一比例。
+  ART: {
+    tiles: { grass: 'assets/world/tile_grass.png', dirt: 'assets/world/tile_dirt.png', water: 'assets/world/tile_water.png' },
+    props: { tree: 'assets/world/prop_tree.png', rock: 'assets/world/prop_rock.png' },
+    // charId -> { down, up, left, right }
+    chars: { lecliss: { down: 'assets/world/lecliss_down.png', up: 'assets/world/lecliss_up.png', left: 'assets/world/lecliss_left.png', right: 'assets/world/lecliss_right.png' } },
   },
-  spriteCache: {},   // path -> Image
-  curSprite: null,   // 当前主角的精灵集（已就绪才赋值）
+  TILE_W: 72,        // 瓦片顶面 CSS 宽度（= HW*2）
+  imgCache: {},      // path -> Image
+  artReady: false,   // 全部贴图就绪
+  curChar: null,     // 当前主角方向贴图集
 
   // 节点在地图中的预设槽位（从下往上推进，制造「前进」感）
   SLOTS: [
@@ -5699,28 +5705,34 @@ const World = {
     this.player.x = this.START.x; this.player.y = this.START.y; this.player.dir = 'up';
     const lead = Game.state.team[0] && Game.getOwned(Game.state.team[0]);
     this.player.color = lead ? window.GameData.CHARACTERS[lead.charId].color : '#b06bff';
-    this.loadSprite(lead && lead.charId);
+    this.loadArt(lead && lead.charId);
   },
 
-  // 加载主角地图精灵（异步，加载完成后才启用，期间用矢量占位）
-  loadSprite(charId) {
-    this.curSprite = null;
-    // 暂时：没有专属精灵的角色用现有的 lecliss 作占位，方便预览游戏内效果
-    let conf = charId && this.MAP_SPRITES[charId];
-    if (!conf) conf = this.MAP_SPRITES.lecliss;
-    if (!conf) return;
+  // 统一加载像素美术（瓦片/道具/主角四向）。异步，未就绪时回退矢量占位。
+  loadArt(charId) {
     const ver = (window.ASSET_VER || '');
     const get = (path) => {
-      if (this.spriteCache[path]) return this.spriteCache[path];
+      if (this.imgCache[path]) return this.imgCache[path];
       const img = new Image();
       img.src = path + (ver ? '?v=' + ver : '');
-      this.spriteCache[path] = img;
+      this.imgCache[path] = img;
       return img;
     };
-    const set = { walk: get(conf.walk), idle: get(conf.idle), frames: conf.frames || 8 };
-    const check = () => { if (set.walk.complete && set.idle.complete && set.walk.naturalWidth && set.idle.naturalWidth) this.curSprite = set; };
-    set.walk.onload = check; set.idle.onload = check; check();
+    // 主角方向贴图：没有专属的角色暂时统一用 lecliss 作占位
+    const cc = (charId && this.ART.chars[charId]) || this.ART.chars.lecliss;
+    this.curChar = { down: get(cc.down), up: get(cc.up), left: get(cc.left), right: get(cc.right) };
+    // 预加载瓦片与道具
+    const all = [
+      ...Object.values(this.ART.tiles).map(get),
+      ...Object.values(this.ART.props).map(get),
+      ...Object.values(this.curChar),
+    ];
+    const check = () => { this.artReady = all.every(i => i.complete && i.naturalWidth); };
+    all.forEach(i => { i.onload = check; });
+    check();
   },
+
+  img(path) { return this.imgCache[path]; },
 
   isSolid(t) { return t === 'tree' || t === 'rock' || t === 'water'; },
 
@@ -5881,25 +5893,31 @@ const World = {
   // ---------- 渲染（等距） ----------
   render() {
     const ctx = this.ctx, pal = this.palette();
+    ctx.imageSmoothingEnabled = false;   // 像素锐利
     ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, this.vw, this.vh);
-    // 地面菱形
+
+    const TW = this.TILE_W, TH = TW / 2;  // 瓦片顶面菱形 72×36
+    const tileImg = k => this.img(this.ART.tiles[k]);
+    const ready = this.artReady;
+
+    // 地面瓦片（像素等距）
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         const t = this.grid[y][x];
         const iso = this.worldToIso(x + 0.5, y + 0.5);
         const sx = iso.x - this.cam.x, sy = iso.y - this.cam.y;
         if (sx < -this.HW * 2 || sx > this.vw + this.HW * 2 || sy < -this.HH * 4 || sy > this.vh + this.HH * 4) continue;
-        const ground = (t === 'water') ? pal.water : ((x + y) % 2 === 0 ? pal.grass : pal.grass2);
-        this.diamond(sx, sy, ground);
-        if (t === 'water') { ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(sx - 8, sy); ctx.lineTo(sx + 8, sy); ctx.stroke(); }
+        if (ready) {
+          const im = (t === 'water') ? tileImg('water') : tileImg('grass');
+          const w = TW, h = im.naturalHeight * (TW / im.naturalWidth);
+          // 顶面菱形中心对齐格心：图顶 = 中心上方 TH/2
+          ctx.drawImage(im, Math.round(sx - w / 2), Math.round(sy - TH / 2), w, h);
+        } else {
+          const ground = (t === 'water') ? pal.water : ((x + y) % 2 === 0 ? pal.grass : pal.grass2);
+          this.diamond(sx, sy, ground);
+        }
       }
     }
-    // 花
-    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    this.flowers.forEach(([wx, wy, c]) => {
-      const iso = this.worldToIso(wx, wy); const sx = iso.x - this.cam.x, sy = iso.y - this.cam.y;
-      ctx.fillStyle = ['#ff8ad0', '#ffe07a', '#9bdcff'][c]; ctx.fillRect(sx - 2, sy - 2, 4, 4);
-    });
 
     // 立面物体（树/石/节点/主角）按深度排序
     const objs = [];
@@ -5913,15 +5931,26 @@ const World = {
     objs.forEach(o => {
       const iso = this.worldToIso(o.wx, o.wy);
       const sx = iso.x - this.cam.x, sy = iso.y - this.cam.y;
-      if (sx < -60 || sx > this.vw + 60 || sy < -80 || sy > this.vh + 80) return;
-      if (o.kind === 'tree') this.bill(sx, sy, '🌲', 30);
-      else if (o.kind === 'rock') this.bill(sx, sy, '🪨', 24);
+      if (sx < -80 || sx > this.vw + 80 || sy < -160 || sy > this.vh + 80) return;
+      if (o.kind === 'tree') this.drawProp(sx, sy, 'tree', 48);
+      else if (o.kind === 'rock') this.drawProp(sx, sy, 'rock', 52);
       else if (o.kind === 'node') this.drawNode(sx, sy, o.node);
       else this.drawPlayer(sx, sy);
     });
 
     // 离屏目标的边缘指引箭头
     this.drawGuideArrow();
+  },
+
+  // 像素道具（底部贴地，立绘式 billboard）
+  drawProp(sx, sy, kind, w) {
+    const ctx = this.ctx;
+    if (!this.artReady) { this.bill(sx, sy, kind === 'tree' ? '🌲' : '🪨', 26); return; }
+    const im = this.img(this.ART.props[kind]);
+    const h = im.naturalHeight * (w / im.naturalWidth);
+    // 软阴影
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(sx, sy + this.HH * 0.35, w * 0.32, w * 0.16, 0, 0, 7); ctx.fill();
+    ctx.drawImage(im, Math.round(sx - w / 2), Math.round(sy + this.HH * 0.4 - h), w, h);
   },
 
   diamond(cx, cy, color) {
@@ -5962,36 +5991,23 @@ const World = {
 
   drawPlayer(sx, sy) {
     const ctx = this.ctx, p = this.player;
+    const moving = p.step > 0;
+    const bob = moving ? Math.abs(Math.sin(p.step / 120)) * 3 : Math.sin(performance.now() / 420) * 1.2;
     // 地面阴影
-    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(sx, sy + 4, 13, 6, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(sx, sy + this.HH * 0.35, 14, 6, 0, 0, 7); ctx.fill();
 
-    if (this.curSprite) {
-      const s = this.curSprite, moving = p.step > 0;
-      const sheet = moving ? s.walk : s.idle;
-      const fw = sheet.naturalWidth / s.frames, fh = sheet.naturalHeight;
-      // 行走时按步幅推进帧；待机按时间缓慢循环
-      const fi = moving
-        ? Math.floor(p.step / 90) % s.frames
-        : Math.floor(performance.now() / 140) % s.frames;
-      const H = 64, W = H * (fw / fh);          // 屏上显示高度
-      const bob = moving ? Math.abs(Math.sin(p.step / 90)) * 2 : 0;
-      const flip = (p.dir === 'left');          // 仅有正面帧：向左时水平翻转
-      ctx.save();
-      ctx.imageSmoothingEnabled = true;
-      ctx.translate(sx, sy - bob);
-      if (flip) ctx.scale(-1, 1);
-      ctx.drawImage(sheet, fi * fw, 0, fw, fh, -W / 2, -H, W, H);
-      ctx.restore();
-      return;
+    if (this.curChar) {
+      const im = this.curChar[p.dir] || this.curChar.down;
+      if (im && im.complete && im.naturalWidth) {
+        const H = 52, W = H * (im.naturalWidth / im.naturalHeight);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(im, Math.round(sx - W / 2), Math.round(sy + this.HH * 0.4 - H - bob), W, H);
+        return;
+      }
     }
-
-    // 占位（精灵未就绪时）
-    const bob = Math.abs(Math.sin(p.step / 90)) * 3;
+    // 占位（贴图未就绪时）
     ctx.fillStyle = p.color; this.rr(sx - 8, sy - 18 - bob, 16, 18, 5); ctx.fill();
     ctx.fillStyle = '#ffe0c0'; ctx.beginPath(); ctx.arc(sx, sy - 22 - bob, 7, 0, 7); ctx.fill();
-    ctx.fillStyle = '#3a2a2a';
-    const off = { up: [0, -3], down: [0, 1], left: [-3, -1], right: [3, -1] }[p.dir] || [0, 1];
-    ctx.fillRect(sx + off[0] - 1, sy - 23 - bob + off[1], 2, 2);
   },
 
   rr(x, y, w, h, r) {
