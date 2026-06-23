@@ -1272,3 +1272,24 @@ body {
 
 /* 功能面板（非主页）顶部留出返回按钮空间 */
 #screen:not(.lobby-mode) { padding-top: 50px; }
+
+/* 编队：顶部 5 槽位选择条 */
+.te-slots { display: flex; gap: 6px; margin: 4px 0 12px; }
+.te-slot {
+  flex: 1; min-width: 0; background: var(--panel);
+  border: 2px solid rgba(255,255,255,.06); border-radius: 10px;
+  padding: 6px 4px 5px; text-align: center; cursor: pointer; transition: transform .1s;
+}
+.te-slot:active { transform: scale(.95); }
+.te-slot.sel { border-color: var(--accent); box-shadow: 0 0 12px rgba(176,107,255,.4); }
+.te-slot .ts-art {
+  width: 100%; aspect-ratio: 1/1; border-radius: 8px;
+  display: grid; place-items: center; font-size: 26px; overflow: hidden;
+  background: var(--panel-2);
+}
+.te-slot .ts-art.empty { color: var(--text-dim); font-size: 24px; }
+.te-slot .ts-art img.char-img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+.te-slot .ts-no {
+  font-size: 10px; color: var(--text-dim); margin-top: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}

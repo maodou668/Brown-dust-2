@@ -1280,6 +1280,27 @@ body {
 /* 功能面板（非主页）顶部留出返回按钮空间 */
 #screen:not(.lobby-mode) { padding-top: 50px; }
 
+/* 编队：顶部 5 槽位选择条 */
+.te-slots { display: flex; gap: 6px; margin: 4px 0 12px; }
+.te-slot {
+  flex: 1; min-width: 0; background: var(--panel);
+  border: 2px solid rgba(255,255,255,.06); border-radius: 10px;
+  padding: 6px 4px 5px; text-align: center; cursor: pointer; transition: transform .1s;
+}
+.te-slot:active { transform: scale(.95); }
+.te-slot.sel { border-color: var(--accent); box-shadow: 0 0 12px rgba(176,107,255,.4); }
+.te-slot .ts-art {
+  width: 100%; aspect-ratio: 1/1; border-radius: 8px;
+  display: grid; place-items: center; font-size: 26px; overflow: hidden;
+  background: var(--panel-2);
+}
+.te-slot .ts-art.empty { color: var(--text-dim); font-size: 24px; }
+.te-slot .ts-art img.char-img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+.te-slot .ts-no {
+  font-size: 10px; color: var(--text-dim); margin-top: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
 </style>
 </head>
 <body>
@@ -1315,7 +1336,7 @@ body {
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '43';</script>
+  <script>window.ASSET_VER = '44';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -3853,9 +3874,25 @@ const UI = {
 
   /** 队伍编辑器：从出战框直接编辑 */
   showTeamEditor(slotIdx) {
+    const TEAM_MAX = 5;
+    let sel = Math.max(0, Math.min(TEAM_MAX - 1, slotIdx || 0));
     const render = (m) => {
-      const currentUid = Game.state.team[slotIdx];
+      const currentUid = Game.state.team[sel];
       const current = currentUid ? Game.getOwned(currentUid) : null;
+      // 顶部：5 个出战槽位，点击切换正在编辑的位置
+      const slotsBar = Array.from({ length: TEAM_MAX }, (_, i) => {
+        const uid = Game.state.team[i];
+        const o = uid ? Game.getOwned(uid) : null;
+        const c = o ? window.GameData.CHARACTERS[o.charId] : null;
+        const art = o
+          ? `<div class="ts-art" style="background:radial-gradient(circle at 50% 35%, ${Game.activeColor(o)}55, transparent);">${this.charAvatar(o.charId)}</div>`
+          : `<div class="ts-art empty">+</div>`;
+        return `<div class="te-slot ${i === sel ? 'sel' : ''} ${o ? 'border-' + this.rarityClass(c.rarity) : 'empty'}" data-slot="${i}">
+          ${art}
+          <div class="ts-no">${o ? c.name : '第' + (i + 1) + '位'}</div>
+        </div>`;
+      }).join('');
+
       // 候选只展示「未出战」的角色，避免与已上阵角色混淆
       const avail = Game.state.roster.filter(o => Game.state.team.indexOf(o.uid) < 0)
         .sort((a, b) => {
@@ -3876,12 +3913,12 @@ const UI = {
             <div class="rc-info"><div class="rc-name">${cc.name}</div><div class="rc-lv">Lv.${current.level}</div></div>
           </div>
           <div class="te-current-info">
-            <div>当前出战：<b>${cc.name}</b></div>
+            <div>第 ${sel + 1} 位出战：<b>${cc.name}</b></div>
             <button class="btn secondary sm" id="te-remove">移出该位置</button>
           </div>
         </div>`;
       } else {
-        curHtml = `<div class="te-current empty muted">该位置为空，选择一名角色上阵 ›</div>`;
+        curHtml = `<div class="te-current empty muted">第 ${sel + 1} 位为空，从下方选择一名角色上阵 ›</div>`;
       }
 
       const grid = avail.length ? avail.map(o => {
@@ -3896,22 +3933,25 @@ const UI = {
         </div>`;
       }).join('') : '<div class="muted" style="padding:12px;grid-column:1/-1;">没有可上阵的角色了</div>';
 
+      m.querySelector('.te-slots').innerHTML = slotsBar;
       m.querySelector('.te-current-wrap').innerHTML = curHtml;
       m.querySelector('.te-body').innerHTML = grid;
-      m.querySelector('.te-count').textContent = `${Game.state.team.length}/5`;
+      m.querySelector('.te-count').textContent = `${Game.state.team.length}/${TEAM_MAX}`;
 
+      m.querySelectorAll('.te-slot').forEach(el => el.onclick = () => { sel = +el.dataset.slot; render(m); });
       const rm = m.querySelector('#te-remove');
-      if (rm) rm.onclick = () => { Game.clearTeamSlot(slotIdx); render(m); };
+      if (rm) rm.onclick = () => { Game.clearTeamSlot(sel); render(m); };
       m.querySelectorAll('[data-uid]').forEach(el => el.onclick = () => {
-        const r = Game.setTeamSlot(slotIdx, el.dataset.uid);
+        const r = Game.setTeamSlot(sel, el.dataset.uid);
         if (!r.ok) { this.toast(r.msg); return; }
         render(m);
       });
     };
     const m = this.openModal(`
-      <h2>编辑第 ${slotIdx + 1} 位 <span class="te-count" style="font-size:13px;color:var(--accent);"></span></h2>
+      <h2>编队 <span class="te-count" style="font-size:13px;color:var(--accent);"></span></h2>
+      <div class="te-slots"></div>
       <div class="te-current-wrap"></div>
-      <p class="muted" style="margin:10px 0 8px;">点击下方角色即可上阵 / 替换该位置（最多 5 人）。</p>
+      <p class="muted" style="margin:10px 0 8px;">先点上方选择位置，再点下方角色上阵 / 替换（最多 ${TEAM_MAX} 人）。</p>
       <div class="te-body roster-grid"></div>
       <div class="close-row"><button class="btn" id="te-done">完成</button></div>
     `);
