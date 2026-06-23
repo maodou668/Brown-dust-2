@@ -288,6 +288,7 @@ const BattleUI = {
     // 眩晕：跳过本回合
     if (Battle.isStunned(cur)) {
       Battle.consumeStun(cur);
+      if (cur.broken) cur.broken = false;   // 破防眩晕结束，解除受额外伤害状态
       this.clearSkillBar();
       this.setHint(`💫 <b>${cur.name}</b> 被眩晕，跳过回合`);
       this.knockFloat(cur, '💫 眩晕');
@@ -510,6 +511,11 @@ const BattleUI = {
       this.screenShake();
       if (S) S.sfx('enrage');
       this.updateUnitDom(e.target);
+    } else if (e.type === 'break') {
+      this.showSkillBanner('破防!');
+      this.screenShake();
+      if (S) S.sfx('crit');
+      this.updateUnitDom(e.target);
     } else if (e.type === 'end') {
       setTimeout(() => this.showResult(e.result), 700);
     }
@@ -601,6 +607,22 @@ const BattleUI = {
           <div class="result-title ${result === 'win' ? 'win' : 'lose'}">${result === 'win' ? '竞技胜利！' : '竞技失败'}</div>
           <p class="muted">${this.stage.name}</p>
           ${body}
+        </div>
+        <div class="close-row" style="justify-content:center;"><button class="btn" id="res-ok">${result === 'win' ? '领取' : '返回'}</button></div>
+      `, { noBackdropClose: true });
+      m.querySelector('#res-ok').onclick = () => { UI.closeModal(m); UI.updateResources(); this.exit(); };
+      return;
+    }
+    // 活动本结算
+    if (this.stage && this.stage.event) {
+      const r = Game.eventResolve(this.stage.eventId, result === 'win');
+      const body = result === 'win'
+        ? `<div class="reward-row"><div class="rw" style="color:var(--gold);">🪙 +${r.gold}</div><div class="rw" style="color:var(--accent);">🎟️ 活动币 +${r.coin}</div></div><p class="muted">队伍获得 ${r.exp} 经验</p>`
+        : `<p class="muted">挑战失败，未获得奖励。</p>`;
+      const m = UI.openModal(`
+        <div class="result-modal">
+          <div class="result-title ${result === 'win' ? 'win' : 'lose'}">${result === 'win' ? '活动胜利！' : '挑战失败'}</div>
+          <p class="muted">${this.stage.name}</p>${body}
         </div>
         <div class="close-row" style="justify-content:center;"><button class="btn" id="res-ok">${result === 'win' ? '领取' : '返回'}</button></div>
       `, { noBackdropClose: true });
@@ -735,6 +757,7 @@ const Main = {
       case 'dungeon': UI.renderDungeon(); break;
       case 'dispatch': UI.renderDispatch(); break;
       case 'arena': UI.renderArena(); break;
+      case 'event': UI.renderEvent(); break;
     }
   },
 };

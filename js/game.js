@@ -42,6 +42,9 @@ const Game = {
     if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
     if (this.state.stamina == null) { this.state.stamina = 120; this.state.staminaTs = Date.now(); }
     if (!this.state.dispatch) this.state.dispatch = { slots: [null, null, null] };
+    if (this.state.awakenStone == null) this.state.awakenStone = 0;
+    if (!this.state.event) this.state.event = { date: null, runs: {}, coin: 0, stock: {} };
+    this.state.roster.forEach(o => { if (o.aff == null) o.aff = 0; if (o.awaken == null) o.awaken = 0; });
     this.state.roster.forEach(o => {
       if (!o.equip) o.equip = { weapon: null, armor: null, accessory: null, ex: null };
       if (o.plus == null) o.plus = 0;
@@ -149,7 +152,9 @@ const Game = {
       quests: { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} },
       shop: { date: null, slots: [], bought: {} },
       stamina: 120, staminaTs: Date.now(),     // 体力（资源副本消耗，随时间回复）
+      awakenStone: 0,                          // 觉醒石（角色觉醒消耗）
       dispatch: { slots: [null, null, null] }, // 远征派遣槽（离线挂机）
+      event: { date: null, runs: {}, coin: 0, stock: {} },  // 限时活动（活动本+活动商店）
       _uidSeq: 1,
       _gearSeq: 1,
     };
@@ -275,19 +280,51 @@ const Game = {
     return 1 + (owned.plus || 0) * 0.08;
   },
 
-  /** 根据「当前服装属性」+ 等级 + 突破 + 装备计算最终属性 */
+  /** 好感等级（0~10，每 100 好感 1 级）+ 觉醒倍率 */
+  affLevel(owned) { return Math.min(10, Math.floor((owned.aff || 0) / 100)); },
+  affMult(owned) { return 1 + this.affLevel(owned) * 0.01; },     // 好感：+1%/级 攻击与生命
+  awakenMult(owned) { return 1 + (owned.awaken || 0) * 0.06; },   // 觉醒：+6%/级 全属性
+
+  /** 根据「当前服装属性」+ 等级 + 突破 + 觉醒 + 好感 + 装备计算最终属性 */
   computeStats(owned) {
     const cos = this.activeCostumeDef(owned);
     const lv = owned.level - 1;
     const pm = this.plusMult(owned);
+    const am = this.affMult(owned), wm = this.awakenMult(owned);
     const g = this.gearBonus(owned);
     return {
-      maxHp: Math.round((cos.stats.hp + cos.grow.hp * lv) * pm) + g.hp,
-      atk:   Math.round((cos.stats.atk + cos.grow.atk * lv) * pm) + g.atk,
-      def:   Math.round((cos.stats.def + cos.grow.def * lv) * pm) + g.def,
+      maxHp: Math.round((cos.stats.hp + cos.grow.hp * lv) * pm * am * wm) + g.hp,
+      atk:   Math.round((cos.stats.atk + cos.grow.atk * lv) * pm * am * wm) + g.atk,
+      def:   Math.round((cos.stats.def + cos.grow.def * lv) * pm * wm) + g.def,
       spd:   cos.stats.spd + g.spd,
       crit:  cos.stats.crit + g.crit,
     };
+  },
+
+  // 好感（赠礼提升）
+  GIFT_COST: 200, GIFT_AFF: 25, AFF_MAX: 1000,
+  giveGift(uid) {
+    const o = this.getOwned(uid); if (!o) return { ok: false };
+    if ((o.aff || 0) >= this.AFF_MAX) return { ok: false, msg: '好感已满' };
+    if (this.state.gold < this.GIFT_COST) return { ok: false, msg: '金币不足' };
+    this.state.gold -= this.GIFT_COST;
+    o.aff = Math.min(this.AFF_MAX, (o.aff || 0) + this.GIFT_AFF);
+    this.save();
+    return { ok: true, aff: o.aff, lv: this.affLevel(o) };
+  },
+  // 觉醒（消耗觉醒石 + 金币，提升星级与全属性）
+  awakenCost(lv) { return { stone: 2 + lv * 2, gold: 2000 + lv * 2000 }; },
+  awakenChar(uid) {
+    const o = this.getOwned(uid); if (!o) return { ok: false };
+    const lv = o.awaken || 0;
+    if (lv >= 5) return { ok: false, msg: '已达最高觉醒' };
+    const c = this.awakenCost(lv);
+    if ((this.state.awakenStone || 0) < c.stone) return { ok: false, msg: '觉醒石不足' };
+    if (this.state.gold < c.gold) return { ok: false, msg: '金币不足' };
+    this.state.awakenStone -= c.stone; this.state.gold -= c.gold;
+    o.awaken = lv + 1;
+    this.save();
+    return { ok: true, awaken: o.awaken };
   },
 
   // ---------- 装备 ----------
@@ -681,6 +718,7 @@ const Game = {
     if (r.powder) this.state.powder += r.powder;
     if (r.spark) this.state.spark += r.spark;
     if (r.gear) this.addGear(r.gear);
+    if (r.stone) this.state.awakenStone = (this.state.awakenStone || 0) + r.stone;
   },
 
   canCheckIn() { return this.state.daily.lastClaim !== this.today(); },
@@ -904,7 +942,7 @@ const Game = {
     { id: 't1', name: '近郊巡逻', hours: 0.5, icon: '🥾', reward: { gold: 600, exp: 200 } },
     { id: 't2', name: '商路护卫', hours: 2,   icon: '🛡️', reward: { gold: 2000, exp: 700 } },
     { id: 't3', name: '远方探索', hours: 4,   icon: '🧭', reward: { gold: 4200, exp: 1500, gem: 30 } },
-    { id: 't4', name: '秘境远征', hours: 8,   icon: '🗺️', reward: { gold: 9000, exp: 3200, gem: 80, gearScale: 6 } },
+    { id: 't4', name: '秘境远征', hours: 8,   icon: '🗺️', reward: { gold: 9000, exp: 3200, gem: 80, stone: 3, gearScale: 6 } },
   ],
   DISPATCH_SLOTS: 3,
   dispatchSlotUnlocked(i) { return i === 0 || this.state.cleared.length >= i * 2; }, // 第2/3槽位需通关进度
@@ -943,6 +981,7 @@ const Game = {
     if (r.gold) { const g = Math.round(r.gold * m); this.state.gold += g; got.gold = g; }
     if (r.gem) { const g = Math.round(r.gem * m); this.state.gem += g; got.gem = g; }
     if (r.exp) { const e = Math.round(r.exp * m); s.charUids.forEach(uid => { const o = this.getOwned(uid); if (o) this.addExp(o, e); }); got.exp = e; }
+    if (r.stone) { const st = Math.round(r.stone * m); this.state.awakenStone += st; got.stone = st; }
     if (r.gearScale && Math.random() < 0.7) got.gears.push(this.rollGear(r.gearScale));
     this.state.dispatch.slots[slotIdx] = null;
     this.save();
@@ -1038,6 +1077,7 @@ const Game = {
       a.points += pts;
       const gold = 600 + Math.round(Math.random() * 400), gem = 20;
       this.state.gold += gold; this.state.gem += gem;
+      this.state.awakenStone += 2;
       if (opp) opp.beaten = true;
       this.incQuest('win', 1);
       this.save();
@@ -1047,6 +1087,75 @@ const Game = {
     a.points = Math.max(0, a.points + pts);
     this.save();
     return { win: false, pts, points: a.points };
+  },
+
+  // ============================================================
+  //  限时活动（活动本 + 活动商店，活动币兑换）
+  // ============================================================
+  EVENT: {
+    name: '限时活动 · 褐尘的回响',
+    desc: '讨伐受褐尘侵蚀的魔物，赚取活动币，在活动商店兑换稀有资源。',
+    stages: [
+      { id: 'ev1', name: '回响 · 初级', icon: '🌫️', daily: 6, coin: 20, gold: 500, exp: 250,
+        enemies: [{ id: 'goblin', level: 8, pos: 'front' }, { id: 'wolf', level: 8, pos: 'front' }, { id: 'goblin_archer', level: 8, pos: 'back' }] },
+      { id: 'ev2', name: '回响 · 中级', icon: '🌪️', daily: 6, coin: 36, gold: 1000, exp: 480,
+        enemies: [{ id: 'ogre', level: 12, pos: 'front' }, { id: 'wolf', level: 12, pos: 'front' }, { id: 'dark_mage', level: 12, pos: 'back' }, { id: 'dark_mage', level: 12, pos: 'back' }] },
+      { id: 'ev3', name: '回响 · 精英 BOSS', icon: '👹', daily: 3, coin: 70, gold: 2000, exp: 1000,
+        enemies: [{ id: 'troll_king', level: 16, pos: 'front' }, { id: 'ogre', level: 15, pos: 'front' }, { id: 'dark_mage', level: 15, pos: 'back' }] },
+    ],
+    shop: [
+      { id: 's_gem', icon: '💎', name: '宝石 ×300', cost: 120, stock: 3, give: { gem: 300 } },
+      { id: 's_stone', icon: '🔮', name: '觉醒石 ×5', cost: 100, stock: 6, give: { stone: 5 } },
+      { id: 's_powder', icon: '✨', name: '希望之粉 ×100', cost: 80, stock: 5, give: { powder: 100 } },
+      { id: 's_gear', icon: '⚒️', name: 'UR 装备宝箱', cost: 150, stock: 2, give: { gearScale: 10 } },
+      { id: 's_gold', icon: '🪙', name: '金币 ×5000', cost: 40, stock: 8, give: { gold: 5000 } },
+    ],
+  },
+  ensureEvent() {
+    if (!this.state.event) this.state.event = { date: null, runs: {}, coin: 0, stock: {} };
+    const t = this.today();
+    if (this.state.event.date !== t) {
+      this.state.event.date = t;
+      this.state.event.runs = {};
+      this.state.event.stock = {};
+      this.EVENT.shop.forEach(s => { this.state.event.stock[s.id] = s.stock; });
+      this.save();
+    }
+  },
+  eventRunsLeft(stage) { this.ensureEvent(); return stage.daily - (this.state.event.runs[stage.id] || 0); },
+  eventStartRun(id) {
+    this.ensureEvent();
+    const s = this.EVENT.stages.find(x => x.id === id);
+    if (!s) return { ok: false, msg: '关卡不存在' };
+    if (this.eventRunsLeft(s) <= 0) return { ok: false, msg: '今日次数已用完' };
+    this.state.event.runs[id] = (this.state.event.runs[id] || 0) + 1;
+    this.save();
+    return { ok: true };
+  },
+  eventResolve(id, win) {
+    this.ensureEvent();
+    const s = this.EVENT.stages.find(x => x.id === id);
+    if (!s || !win) return { win: false };
+    this.state.event.coin += s.coin;
+    this.state.gold += s.gold;
+    this.state.team.forEach(uid => { const o = this.getOwned(uid); if (o) this.addExp(o, s.exp); });
+    this.incQuest('win', 1);
+    this.save();
+    return { win: true, coin: s.coin, gold: s.gold, exp: s.exp };
+  },
+  eventBuy(itemId) {
+    this.ensureEvent();
+    const it = this.EVENT.shop.find(x => x.id === itemId);
+    if (!it) return { ok: false, msg: '商品不存在' };
+    const left = this.state.event.stock[itemId] != null ? this.state.event.stock[itemId] : it.stock;
+    if (left <= 0) return { ok: false, msg: '已售罄' };
+    if (this.state.event.coin < it.cost) return { ok: false, msg: '活动币不足' };
+    this.state.event.coin -= it.cost;
+    this.state.event.stock[itemId] = left - 1;
+    if (it.give.gearScale) this.rollGear(it.give.gearScale);
+    else this.applyReward(it.give);
+    this.save();
+    return { ok: true };
   },
 
   // ---------- 成就系统 ----------
@@ -1086,6 +1195,7 @@ const Game = {
     if (r.powder) this.state.powder += r.powder;
     if (r.spark) this.state.spark += r.spark;
     if (r.gear) this.addGear(r.gear);
+    if (r.stone) this.state.awakenStone = (this.state.awakenStone || 0) + r.stone;
   },
 
   claimAch(id) {

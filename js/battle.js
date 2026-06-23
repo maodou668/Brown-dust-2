@@ -37,6 +37,11 @@ class Combatant {
     this.statuses = [];                // {type:'poison'|'burn'|'stun'|'silence', turns, dmg}
     this.enraged = false;              // BOSS 狂暴标记
     this.taunting = 0;                 // 嘲讽剩余回合
+    // BOSS 弱点破防机制
+    this.weak = opts.weak || null;     // 弱点元素（被克制属性命中可积累破防）
+    this.breakMax = opts.isBoss ? 100 : 0;
+    this.breakCur = 0;
+    this.broken = false;               // 当前是否处于破防（受额外伤害）
     this.alive = true;
   }
 
@@ -138,6 +143,7 @@ const Battle = {
         def: Math.round(def.base.def + grow.def * lv),
         spd: def.base.spd, crit: def.base.crit,
         skills: def.skills, isBoss: def.isBoss,
+        weak: def.isBoss ? (def.weak || this.counterElement(def.element)) : null,
       }));
     });
 
@@ -323,8 +329,16 @@ const Battle = {
     return [];
   },
 
-  /** 元素克制倍率 */
+  /** 克制某元素的元素（即「弱点」）：返回 X 使 ELEMENTS[X].strong === elem */
+  counterElement(elem) {
+    const E = window.GameData.ELEMENTS;
+    for (const k in E) if (E[k].strong === elem) return k;
+    return null;
+  },
+
+  /** 元素克制倍率（命中 BOSS 弱点更高，并积累破防） */
   elementMult(attacker, defender) {
+    if (defender.weak && attacker.element === defender.weak) return 1.5; // 弱点
     const E = window.GameData.ELEMENTS[attacker.element];
     if (E && E.strong === defender.element) return 1.3;
     return 1.0;
@@ -333,9 +347,11 @@ const Battle = {
   /** 计算并施加一次伤害 */
   dealDamage(attacker, defender, power) {
     const elem = this.elementMult(attacker, defender);
+    const isWeak = defender.weak && attacker.element === defender.weak;
     const isCrit = Math.random() < attacker.crit;
     const critMult = isCrit ? 1.6 : 1.0;
-    const raw = attacker.effAtk() * power * elem * critMult;
+    const brokenMult = defender.broken ? 1.4 : 1.0;   // 破防中受到额外伤害
+    const raw = attacker.effAtk() * power * elem * critMult * brokenMult;
     // 防御减伤公式
     const reduced = raw * (100 / (100 + defender.effDef()));
     let dmg = Math.max(1, Math.round(reduced));
@@ -348,8 +364,20 @@ const Battle = {
     }
     defender.hp -= dmg;
 
+    // BOSS 破防积累：弱点元素命中显著、其它命中少量；满槽→破防眩晕一回合
+    if (defender.breakMax > 0 && !defender.broken && attacker.side === 'ally' && defender.alive) {
+      defender.breakCur += isWeak ? 34 : 8;
+      if (defender.breakCur >= defender.breakMax) {
+        defender.breakCur = 0; defender.broken = true;
+        defender.statuses.push({ type: 'stun', turns: 1 });
+        this.pushLog(`💢 ${defender.name} 被【破防】！眩晕且受到额外伤害！`);
+        if (this.onEvent) this.onEvent({ type: 'break', target: defender });
+      }
+    }
+
     let tag = '';
-    if (elem > 1) tag += ' 🔥克制';
+    if (isWeak) tag += ' 💢弱点';
+    else if (elem > 1) tag += ' 🔥克制';
     if (isCrit) tag += ' ✨暴击';
 
     if (defender.hp <= 0) {

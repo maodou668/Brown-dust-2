@@ -1357,6 +1357,29 @@ body {
 .ar-done { font-size: 12px; }
 .ar-card .btn.sm { margin-top: 0; }
 
+/* 羁绊 / 觉醒 区块 */
+.aa-box { background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+.aa-row { display: flex; align-items: center; gap: 10px; }
+.aa-label { font-size: 12px; flex: 1; min-width: 0; }
+.aa-stars { color: var(--gold); letter-spacing: 1px; }
+.aa-bar { width: 70px; height: 7px; background: var(--panel-2); border-radius: 5px; overflow: hidden; }
+.aa-fill.aff { height: 100%; background: linear-gradient(90deg, #ff6b9d, #ff9bb5); }
+.aa-row .btn.sm { margin-top: 0; white-space: nowrap; }
+
+/* 限时活动 */
+.event-banner { border-radius: 14px; padding: 16px; margin-bottom: 14px; border: 1px solid rgba(255,155,61,.25);
+  background: linear-gradient(135deg, rgba(255,155,61,.22), rgba(176,107,255,.15)), var(--panel); }
+.eb-title { font-size: 17px; font-weight: 800; }
+.eb-desc { font-size: 12px; color: var(--text-dim); margin: 4px 0 8px; line-height: 1.5; }
+.eb-coin { font-size: 13px; } .eb-coin b { color: var(--accent); }
+.ev-shop { display: flex; flex-direction: column; gap: 8px; }
+.ev-shop-item { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 10px 12px; }
+.ev-shop-item.sold { opacity: .5; }
+.ev-si-ico { font-size: 26px; }
+.ev-si-main { flex: 1; min-width: 0; }
+.ev-si-name { font-weight: 700; font-size: 13px; }
+.ev-shop-item .btn.sm { margin-top: 0; white-space: nowrap; }
+
 </style>
 </head>
 <body>
@@ -1370,6 +1393,7 @@ body {
       <div class="resources">
         <div class="res" title="金币"><span class="res-icon">🪙</span><span id="res-gold">0</span></div>
         <div class="res" title="宝石"><span class="res-icon">💎</span><span id="res-gem">0</span></div>
+        <div class="res" title="觉醒石"><span class="res-icon">🔮</span><span id="res-stone">0</span></div>
         <button id="btn-mute" class="ghost-btn" title="音效开关">🔊</button>
         <button id="btn-reset" class="ghost-btn" title="重置存档">↺</button>
       </div>
@@ -1392,7 +1416,7 @@ body {
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '46';</script>
+  <script>window.ASSET_VER = '47';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -2504,6 +2528,9 @@ const Game = {
     if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
     if (this.state.stamina == null) { this.state.stamina = 120; this.state.staminaTs = Date.now(); }
     if (!this.state.dispatch) this.state.dispatch = { slots: [null, null, null] };
+    if (this.state.awakenStone == null) this.state.awakenStone = 0;
+    if (!this.state.event) this.state.event = { date: null, runs: {}, coin: 0, stock: {} };
+    this.state.roster.forEach(o => { if (o.aff == null) o.aff = 0; if (o.awaken == null) o.awaken = 0; });
     this.state.roster.forEach(o => {
       if (!o.equip) o.equip = { weapon: null, armor: null, accessory: null, ex: null };
       if (o.plus == null) o.plus = 0;
@@ -2611,7 +2638,9 @@ const Game = {
       quests: { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} },
       shop: { date: null, slots: [], bought: {} },
       stamina: 120, staminaTs: Date.now(),     // 体力（资源副本消耗，随时间回复）
+      awakenStone: 0,                          // 觉醒石（角色觉醒消耗）
       dispatch: { slots: [null, null, null] }, // 远征派遣槽（离线挂机）
+      event: { date: null, runs: {}, coin: 0, stock: {} },  // 限时活动（活动本+活动商店）
       _uidSeq: 1,
       _gearSeq: 1,
     };
@@ -2737,19 +2766,51 @@ const Game = {
     return 1 + (owned.plus || 0) * 0.08;
   },
 
-  /** 根据「当前服装属性」+ 等级 + 突破 + 装备计算最终属性 */
+  /** 好感等级（0~10，每 100 好感 1 级）+ 觉醒倍率 */
+  affLevel(owned) { return Math.min(10, Math.floor((owned.aff || 0) / 100)); },
+  affMult(owned) { return 1 + this.affLevel(owned) * 0.01; },     // 好感：+1%/级 攻击与生命
+  awakenMult(owned) { return 1 + (owned.awaken || 0) * 0.06; },   // 觉醒：+6%/级 全属性
+
+  /** 根据「当前服装属性」+ 等级 + 突破 + 觉醒 + 好感 + 装备计算最终属性 */
   computeStats(owned) {
     const cos = this.activeCostumeDef(owned);
     const lv = owned.level - 1;
     const pm = this.plusMult(owned);
+    const am = this.affMult(owned), wm = this.awakenMult(owned);
     const g = this.gearBonus(owned);
     return {
-      maxHp: Math.round((cos.stats.hp + cos.grow.hp * lv) * pm) + g.hp,
-      atk:   Math.round((cos.stats.atk + cos.grow.atk * lv) * pm) + g.atk,
-      def:   Math.round((cos.stats.def + cos.grow.def * lv) * pm) + g.def,
+      maxHp: Math.round((cos.stats.hp + cos.grow.hp * lv) * pm * am * wm) + g.hp,
+      atk:   Math.round((cos.stats.atk + cos.grow.atk * lv) * pm * am * wm) + g.atk,
+      def:   Math.round((cos.stats.def + cos.grow.def * lv) * pm * wm) + g.def,
       spd:   cos.stats.spd + g.spd,
       crit:  cos.stats.crit + g.crit,
     };
+  },
+
+  // 好感（赠礼提升）
+  GIFT_COST: 200, GIFT_AFF: 25, AFF_MAX: 1000,
+  giveGift(uid) {
+    const o = this.getOwned(uid); if (!o) return { ok: false };
+    if ((o.aff || 0) >= this.AFF_MAX) return { ok: false, msg: '好感已满' };
+    if (this.state.gold < this.GIFT_COST) return { ok: false, msg: '金币不足' };
+    this.state.gold -= this.GIFT_COST;
+    o.aff = Math.min(this.AFF_MAX, (o.aff || 0) + this.GIFT_AFF);
+    this.save();
+    return { ok: true, aff: o.aff, lv: this.affLevel(o) };
+  },
+  // 觉醒（消耗觉醒石 + 金币，提升星级与全属性）
+  awakenCost(lv) { return { stone: 2 + lv * 2, gold: 2000 + lv * 2000 }; },
+  awakenChar(uid) {
+    const o = this.getOwned(uid); if (!o) return { ok: false };
+    const lv = o.awaken || 0;
+    if (lv >= 5) return { ok: false, msg: '已达最高觉醒' };
+    const c = this.awakenCost(lv);
+    if ((this.state.awakenStone || 0) < c.stone) return { ok: false, msg: '觉醒石不足' };
+    if (this.state.gold < c.gold) return { ok: false, msg: '金币不足' };
+    this.state.awakenStone -= c.stone; this.state.gold -= c.gold;
+    o.awaken = lv + 1;
+    this.save();
+    return { ok: true, awaken: o.awaken };
   },
 
   // ---------- 装备 ----------
@@ -3143,6 +3204,7 @@ const Game = {
     if (r.powder) this.state.powder += r.powder;
     if (r.spark) this.state.spark += r.spark;
     if (r.gear) this.addGear(r.gear);
+    if (r.stone) this.state.awakenStone = (this.state.awakenStone || 0) + r.stone;
   },
 
   canCheckIn() { return this.state.daily.lastClaim !== this.today(); },
@@ -3366,7 +3428,7 @@ const Game = {
     { id: 't1', name: '近郊巡逻', hours: 0.5, icon: '🥾', reward: { gold: 600, exp: 200 } },
     { id: 't2', name: '商路护卫', hours: 2,   icon: '🛡️', reward: { gold: 2000, exp: 700 } },
     { id: 't3', name: '远方探索', hours: 4,   icon: '🧭', reward: { gold: 4200, exp: 1500, gem: 30 } },
-    { id: 't4', name: '秘境远征', hours: 8,   icon: '🗺️', reward: { gold: 9000, exp: 3200, gem: 80, gearScale: 6 } },
+    { id: 't4', name: '秘境远征', hours: 8,   icon: '🗺️', reward: { gold: 9000, exp: 3200, gem: 80, stone: 3, gearScale: 6 } },
   ],
   DISPATCH_SLOTS: 3,
   dispatchSlotUnlocked(i) { return i === 0 || this.state.cleared.length >= i * 2; }, // 第2/3槽位需通关进度
@@ -3405,6 +3467,7 @@ const Game = {
     if (r.gold) { const g = Math.round(r.gold * m); this.state.gold += g; got.gold = g; }
     if (r.gem) { const g = Math.round(r.gem * m); this.state.gem += g; got.gem = g; }
     if (r.exp) { const e = Math.round(r.exp * m); s.charUids.forEach(uid => { const o = this.getOwned(uid); if (o) this.addExp(o, e); }); got.exp = e; }
+    if (r.stone) { const st = Math.round(r.stone * m); this.state.awakenStone += st; got.stone = st; }
     if (r.gearScale && Math.random() < 0.7) got.gears.push(this.rollGear(r.gearScale));
     this.state.dispatch.slots[slotIdx] = null;
     this.save();
@@ -3500,6 +3563,7 @@ const Game = {
       a.points += pts;
       const gold = 600 + Math.round(Math.random() * 400), gem = 20;
       this.state.gold += gold; this.state.gem += gem;
+      this.state.awakenStone += 2;
       if (opp) opp.beaten = true;
       this.incQuest('win', 1);
       this.save();
@@ -3509,6 +3573,75 @@ const Game = {
     a.points = Math.max(0, a.points + pts);
     this.save();
     return { win: false, pts, points: a.points };
+  },
+
+  // ============================================================
+  //  限时活动（活动本 + 活动商店，活动币兑换）
+  // ============================================================
+  EVENT: {
+    name: '限时活动 · 褐尘的回响',
+    desc: '讨伐受褐尘侵蚀的魔物，赚取活动币，在活动商店兑换稀有资源。',
+    stages: [
+      { id: 'ev1', name: '回响 · 初级', icon: '🌫️', daily: 6, coin: 20, gold: 500, exp: 250,
+        enemies: [{ id: 'goblin', level: 8, pos: 'front' }, { id: 'wolf', level: 8, pos: 'front' }, { id: 'goblin_archer', level: 8, pos: 'back' }] },
+      { id: 'ev2', name: '回响 · 中级', icon: '🌪️', daily: 6, coin: 36, gold: 1000, exp: 480,
+        enemies: [{ id: 'ogre', level: 12, pos: 'front' }, { id: 'wolf', level: 12, pos: 'front' }, { id: 'dark_mage', level: 12, pos: 'back' }, { id: 'dark_mage', level: 12, pos: 'back' }] },
+      { id: 'ev3', name: '回响 · 精英 BOSS', icon: '👹', daily: 3, coin: 70, gold: 2000, exp: 1000,
+        enemies: [{ id: 'troll_king', level: 16, pos: 'front' }, { id: 'ogre', level: 15, pos: 'front' }, { id: 'dark_mage', level: 15, pos: 'back' }] },
+    ],
+    shop: [
+      { id: 's_gem', icon: '💎', name: '宝石 ×300', cost: 120, stock: 3, give: { gem: 300 } },
+      { id: 's_stone', icon: '🔮', name: '觉醒石 ×5', cost: 100, stock: 6, give: { stone: 5 } },
+      { id: 's_powder', icon: '✨', name: '希望之粉 ×100', cost: 80, stock: 5, give: { powder: 100 } },
+      { id: 's_gear', icon: '⚒️', name: 'UR 装备宝箱', cost: 150, stock: 2, give: { gearScale: 10 } },
+      { id: 's_gold', icon: '🪙', name: '金币 ×5000', cost: 40, stock: 8, give: { gold: 5000 } },
+    ],
+  },
+  ensureEvent() {
+    if (!this.state.event) this.state.event = { date: null, runs: {}, coin: 0, stock: {} };
+    const t = this.today();
+    if (this.state.event.date !== t) {
+      this.state.event.date = t;
+      this.state.event.runs = {};
+      this.state.event.stock = {};
+      this.EVENT.shop.forEach(s => { this.state.event.stock[s.id] = s.stock; });
+      this.save();
+    }
+  },
+  eventRunsLeft(stage) { this.ensureEvent(); return stage.daily - (this.state.event.runs[stage.id] || 0); },
+  eventStartRun(id) {
+    this.ensureEvent();
+    const s = this.EVENT.stages.find(x => x.id === id);
+    if (!s) return { ok: false, msg: '关卡不存在' };
+    if (this.eventRunsLeft(s) <= 0) return { ok: false, msg: '今日次数已用完' };
+    this.state.event.runs[id] = (this.state.event.runs[id] || 0) + 1;
+    this.save();
+    return { ok: true };
+  },
+  eventResolve(id, win) {
+    this.ensureEvent();
+    const s = this.EVENT.stages.find(x => x.id === id);
+    if (!s || !win) return { win: false };
+    this.state.event.coin += s.coin;
+    this.state.gold += s.gold;
+    this.state.team.forEach(uid => { const o = this.getOwned(uid); if (o) this.addExp(o, s.exp); });
+    this.incQuest('win', 1);
+    this.save();
+    return { win: true, coin: s.coin, gold: s.gold, exp: s.exp };
+  },
+  eventBuy(itemId) {
+    this.ensureEvent();
+    const it = this.EVENT.shop.find(x => x.id === itemId);
+    if (!it) return { ok: false, msg: '商品不存在' };
+    const left = this.state.event.stock[itemId] != null ? this.state.event.stock[itemId] : it.stock;
+    if (left <= 0) return { ok: false, msg: '已售罄' };
+    if (this.state.event.coin < it.cost) return { ok: false, msg: '活动币不足' };
+    this.state.event.coin -= it.cost;
+    this.state.event.stock[itemId] = left - 1;
+    if (it.give.gearScale) this.rollGear(it.give.gearScale);
+    else this.applyReward(it.give);
+    this.save();
+    return { ok: true };
   },
 
   // ---------- 成就系统 ----------
@@ -3548,6 +3681,7 @@ const Game = {
     if (r.powder) this.state.powder += r.powder;
     if (r.spark) this.state.spark += r.spark;
     if (r.gear) this.addGear(r.gear);
+    if (r.stone) this.state.awakenStone = (this.state.awakenStone || 0) + r.stone;
   },
 
   claimAch(id) {
@@ -3604,6 +3738,11 @@ class Combatant {
     this.statuses = [];                // {type:'poison'|'burn'|'stun'|'silence', turns, dmg}
     this.enraged = false;              // BOSS 狂暴标记
     this.taunting = 0;                 // 嘲讽剩余回合
+    // BOSS 弱点破防机制
+    this.weak = opts.weak || null;     // 弱点元素（被克制属性命中可积累破防）
+    this.breakMax = opts.isBoss ? 100 : 0;
+    this.breakCur = 0;
+    this.broken = false;               // 当前是否处于破防（受额外伤害）
     this.alive = true;
   }
 
@@ -3705,6 +3844,7 @@ const Battle = {
         def: Math.round(def.base.def + grow.def * lv),
         spd: def.base.spd, crit: def.base.crit,
         skills: def.skills, isBoss: def.isBoss,
+        weak: def.isBoss ? (def.weak || this.counterElement(def.element)) : null,
       }));
     });
 
@@ -3890,8 +4030,16 @@ const Battle = {
     return [];
   },
 
-  /** 元素克制倍率 */
+  /** 克制某元素的元素（即「弱点」）：返回 X 使 ELEMENTS[X].strong === elem */
+  counterElement(elem) {
+    const E = window.GameData.ELEMENTS;
+    for (const k in E) if (E[k].strong === elem) return k;
+    return null;
+  },
+
+  /** 元素克制倍率（命中 BOSS 弱点更高，并积累破防） */
   elementMult(attacker, defender) {
+    if (defender.weak && attacker.element === defender.weak) return 1.5; // 弱点
     const E = window.GameData.ELEMENTS[attacker.element];
     if (E && E.strong === defender.element) return 1.3;
     return 1.0;
@@ -3900,9 +4048,11 @@ const Battle = {
   /** 计算并施加一次伤害 */
   dealDamage(attacker, defender, power) {
     const elem = this.elementMult(attacker, defender);
+    const isWeak = defender.weak && attacker.element === defender.weak;
     const isCrit = Math.random() < attacker.crit;
     const critMult = isCrit ? 1.6 : 1.0;
-    const raw = attacker.effAtk() * power * elem * critMult;
+    const brokenMult = defender.broken ? 1.4 : 1.0;   // 破防中受到额外伤害
+    const raw = attacker.effAtk() * power * elem * critMult * brokenMult;
     // 防御减伤公式
     const reduced = raw * (100 / (100 + defender.effDef()));
     let dmg = Math.max(1, Math.round(reduced));
@@ -3915,8 +4065,20 @@ const Battle = {
     }
     defender.hp -= dmg;
 
+    // BOSS 破防积累：弱点元素命中显著、其它命中少量；满槽→破防眩晕一回合
+    if (defender.breakMax > 0 && !defender.broken && attacker.side === 'ally' && defender.alive) {
+      defender.breakCur += isWeak ? 34 : 8;
+      if (defender.breakCur >= defender.breakMax) {
+        defender.breakCur = 0; defender.broken = true;
+        defender.statuses.push({ type: 'stun', turns: 1 });
+        this.pushLog(`💢 ${defender.name} 被【破防】！眩晕且受到额外伤害！`);
+        if (this.onEvent) this.onEvent({ type: 'break', target: defender });
+      }
+    }
+
     let tag = '';
-    if (elem > 1) tag += ' 🔥克制';
+    if (isWeak) tag += ' 💢弱点';
+    else if (elem > 1) tag += ' 🔥克制';
     if (isCrit) tag += ' ✨暴击';
 
     if (defender.hp <= 0) {
@@ -4114,6 +4276,8 @@ const UI = {
   updateResources() {
     document.getElementById('res-gold').textContent = Game.state.gold;
     document.getElementById('res-gem').textContent = Game.state.gem;
+    const stone = document.getElementById('res-stone');
+    if (stone) stone.textContent = Game.state.awakenStone || 0;
   },
 
   // ---------- 弹窗 ----------
@@ -4145,6 +4309,7 @@ const UI = {
       { go: 'dungeon', icon: '⚡', label: '副本', sub: `体力${s.stamina}` },
       { go: 'dispatch', icon: '🧭', label: '远征', sub: '挂机产出' },
       { go: 'arena', icon: '🏆', label: '竞技场', sub: `${Game.arenaRank((s.arena && s.arena.points) || 1000).name}` },
+      { go: 'event', icon: '🎏', label: '活动', sub: `🎟️${(s.event && s.event.coin) || 0}` },
       { go: 'gacha', icon: '🎴', label: '招募', sub: `💎${s.gem}` },
       { go: 'roster', icon: '👥', label: '佣兵', sub: `${totalChars}名` },
       { act: 'team', icon: '⚔️', label: '编队', sub: `${s.team.length}/5` },
@@ -4600,6 +4765,28 @@ const UI = {
       card.addEventListener('click', () => this.showCharDetail(card.dataset.uid)));
   },
 
+  /** 好感 + 觉醒 区块 */
+  affAwakenHtml(o) {
+    const affLv = Game.affLevel(o), aff = o.aff || 0;
+    const awk = o.awaken || 0;
+    const stars = '★'.repeat(awk) + '☆'.repeat(5 - awk);
+    const ac = Game.awakenCost(awk);
+    const canAwk = awk < 5 && (Game.state.awakenStone || 0) >= ac.stone && Game.state.gold >= ac.gold;
+    return `
+      <div class="section-title" style="font-size:14px;">羁绊 · 觉醒</div>
+      <div class="aa-box">
+        <div class="aa-row">
+          <div class="aa-label">❤️ 好感 Lv.${affLv} <span class="muted">(攻击/生命 +${affLv}%)</span></div>
+          <div class="aa-bar"><div class="aa-fill aff" style="width:${(aff % 100) / 100 * 100 || (affLv >= 10 ? 100 : 0)}%;"></div></div>
+          <button class="btn sm" id="cd-gift" ${aff >= Game.AFF_MAX || Game.state.gold < Game.GIFT_COST ? 'disabled' : ''}>${aff >= Game.AFF_MAX ? '满' : `赠礼 🪙${Game.GIFT_COST}`}</button>
+        </div>
+        <div class="aa-row">
+          <div class="aa-label">🔮 觉醒 <span class="aa-stars">${stars}</span> <span class="muted">(全属性 +${awk * 6}%)</span></div>
+          <button class="btn sm" id="cd-awaken" ${canAwk ? '' : 'disabled'}>${awk >= 5 ? '已满' : `觉醒 🔮${ac.stone}+🪙${ac.gold}`}</button>
+        </div>
+      </div>`;
+  },
+
   /** 角色详情弹窗 */
   showCharDetail(uid) {
     const o = Game.getOwned(uid);
@@ -4698,6 +4885,8 @@ const UI = {
       <div class="section-title" style="font-size:14px;">战斗技能池 <span class="muted" style="font-weight:400;font-size:11px;">· 普攻 + 各服装招式</span></div>
       ${skillsHtml}
       ${loreHtml}
+      ${this.affAwakenHtml(o)}
+      ${loreHtml ? '' : ''}
       ${quotesHtml}
       ${sideHtml}
       <div class="close-row">
@@ -4725,6 +4914,22 @@ const UI = {
       this.toast(r.count ? `已自动装备 ${r.count} 件（含专属武器自动识别）` : '没有可装备的新装备');
       this.closeModal(m);
       this.showCharDetail(uid);
+    };
+    const giftBtn = m.querySelector('#cd-gift');
+    if (giftBtn) giftBtn.onclick = () => {
+      const r = Game.giveGift(uid);
+      if (!r.ok) { this.toast(r.msg); return; }
+      if (window.Sound) Sound.sfx('heal');
+      this.toast(`${c.name} 好感提升！`);
+      this.updateResources(); this.closeModal(m); this.showCharDetail(uid);
+    };
+    const awkBtn = m.querySelector('#cd-awaken');
+    if (awkBtn) awkBtn.onclick = () => {
+      const r = Game.awakenChar(uid);
+      if (!r.ok) { this.toast(r.msg); return; }
+      if (window.Sound) Sound.sfx('levelup');
+      this.toast(`${c.name} 觉醒至 ${r.awaken} 星！全属性提升`);
+      this.updateResources(); this.closeModal(m); this.showCharDetail(uid);
     };
     m.querySelectorAll('[data-slot]').forEach(el =>
       el.addEventListener('click', () => { this.closeModal(m); this.showGearPicker(uid, el.dataset.slot); }));
@@ -5419,6 +5624,68 @@ const UI = {
       reward: { gold: 0, gem: 0, exp: 0 },
     };
     BattleUI.start(stage, () => { if (Main.current === 'arena') this.renderArena(); });
+  },
+
+  // ============================================================
+  //  限时活动（活动本 + 活动商店）
+  // ============================================================
+  renderEvent() {
+    Game.ensureEvent();
+    const ev = Game.EVENT;
+    const coin = Game.state.event.coin;
+    const stageCards = ev.stages.map(s => {
+      const left = Game.eventRunsLeft(s);
+      return `<div class="farm-card">
+        <div class="farm-ico">${s.icon}</div>
+        <div class="farm-main">
+          <div class="farm-name">${s.name}</div>
+          <div class="farm-rew">🎟️${s.coin} · 🪙${s.gold} · 📘${s.exp}</div>
+          <div class="farm-sub muted">今日剩余 ${left}/${s.daily} 次</div>
+        </div>
+        <div class="farm-actions">
+          ${left > 0 ? `<button class="btn sm" data-ev="${s.id}">挑战</button>` : '<button class="btn sm" disabled>已尽</button>'}
+        </div>
+      </div>`;
+    }).join('');
+    const shopCards = ev.shop.map(it => {
+      const left = Game.state.event.stock[it.id] != null ? Game.state.event.stock[it.id] : it.stock;
+      const can = left > 0 && coin >= it.cost;
+      return `<div class="ev-shop-item ${left <= 0 ? 'sold' : ''}">
+        <div class="ev-si-ico">${it.icon}</div>
+        <div class="ev-si-main"><div class="ev-si-name">${it.name}</div><div class="muted" style="font-size:11px;">剩余 ${left}/${it.stock}</div></div>
+        <button class="btn sm" data-buy="${it.id}" ${can ? '' : 'disabled'}>🎟️${it.cost}</button>
+      </div>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="event-banner">
+        <div class="eb-title">🎏 ${ev.name}</div>
+        <div class="eb-desc">${ev.desc}</div>
+        <div class="eb-coin">🎟️ 活动币：<b>${coin}</b></div>
+      </div>
+      <div class="section-title" style="font-size:14px;">活动关卡</div>
+      <div class="farm-list">${stageCards}</div>
+      <div class="section-title" style="font-size:14px;margin-top:14px;">活动商店</div>
+      <div class="ev-shop">${shopCards}</div>`;
+    this.screenEl.querySelectorAll('[data-ev]').forEach(b => b.onclick = () => this.startEventFight(b.dataset.ev));
+    this.screenEl.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => {
+      const r = Game.eventBuy(b.dataset.buy);
+      if (!r.ok) { this.toast(r.msg); return; }
+      if (window.Sound) Sound.sfx('levelup');
+      this.toast('兑换成功'); this.updateResources(); this.renderEvent();
+    });
+  },
+  startEventFight(id) {
+    if (!Game.state.team.length) { this.toast('请先编队'); return; }
+    const s = Game.EVENT.stages.find(x => x.id === id);
+    if (!s) return;
+    const r = Game.eventStartRun(id);
+    if (!r.ok) { this.toast(r.msg); return; }
+    const stage = {
+      id: 'event_' + id, name: s.name, event: true, eventId: id,
+      enemies: s.enemies.map(e => ({ ...e })),
+      reward: { gold: 0, gem: 0, exp: 0 }, isBoss: id === 'ev3',
+    };
+    BattleUI.start(stage, () => { if (Main.current === 'event') this.renderEvent(); });
   },
 
   /** 存档管理：导出 / 导入 */
@@ -7025,6 +7292,7 @@ const BattleUI = {
     // 眩晕：跳过本回合
     if (Battle.isStunned(cur)) {
       Battle.consumeStun(cur);
+      if (cur.broken) cur.broken = false;   // 破防眩晕结束，解除受额外伤害状态
       this.clearSkillBar();
       this.setHint(`💫 <b>${cur.name}</b> 被眩晕，跳过回合`);
       this.knockFloat(cur, '💫 眩晕');
@@ -7247,6 +7515,11 @@ const BattleUI = {
       this.screenShake();
       if (S) S.sfx('enrage');
       this.updateUnitDom(e.target);
+    } else if (e.type === 'break') {
+      this.showSkillBanner('破防!');
+      this.screenShake();
+      if (S) S.sfx('crit');
+      this.updateUnitDom(e.target);
     } else if (e.type === 'end') {
       setTimeout(() => this.showResult(e.result), 700);
     }
@@ -7338,6 +7611,22 @@ const BattleUI = {
           <div class="result-title ${result === 'win' ? 'win' : 'lose'}">${result === 'win' ? '竞技胜利！' : '竞技失败'}</div>
           <p class="muted">${this.stage.name}</p>
           ${body}
+        </div>
+        <div class="close-row" style="justify-content:center;"><button class="btn" id="res-ok">${result === 'win' ? '领取' : '返回'}</button></div>
+      `, { noBackdropClose: true });
+      m.querySelector('#res-ok').onclick = () => { UI.closeModal(m); UI.updateResources(); this.exit(); };
+      return;
+    }
+    // 活动本结算
+    if (this.stage && this.stage.event) {
+      const r = Game.eventResolve(this.stage.eventId, result === 'win');
+      const body = result === 'win'
+        ? `<div class="reward-row"><div class="rw" style="color:var(--gold);">🪙 +${r.gold}</div><div class="rw" style="color:var(--accent);">🎟️ 活动币 +${r.coin}</div></div><p class="muted">队伍获得 ${r.exp} 经验</p>`
+        : `<p class="muted">挑战失败，未获得奖励。</p>`;
+      const m = UI.openModal(`
+        <div class="result-modal">
+          <div class="result-title ${result === 'win' ? 'win' : 'lose'}">${result === 'win' ? '活动胜利！' : '挑战失败'}</div>
+          <p class="muted">${this.stage.name}</p>${body}
         </div>
         <div class="close-row" style="justify-content:center;"><button class="btn" id="res-ok">${result === 'win' ? '领取' : '返回'}</button></div>
       `, { noBackdropClose: true });
@@ -7472,6 +7761,7 @@ const Main = {
       case 'dungeon': UI.renderDungeon(); break;
       case 'dispatch': UI.renderDispatch(); break;
       case 'arena': UI.renderArena(); break;
+      case 'event': UI.renderEvent(); break;
     }
   },
 };

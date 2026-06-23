@@ -40,6 +40,8 @@ const UI = {
   updateResources() {
     document.getElementById('res-gold').textContent = Game.state.gold;
     document.getElementById('res-gem').textContent = Game.state.gem;
+    const stone = document.getElementById('res-stone');
+    if (stone) stone.textContent = Game.state.awakenStone || 0;
   },
 
   // ---------- 弹窗 ----------
@@ -71,6 +73,7 @@ const UI = {
       { go: 'dungeon', icon: '⚡', label: '副本', sub: `体力${s.stamina}` },
       { go: 'dispatch', icon: '🧭', label: '远征', sub: '挂机产出' },
       { go: 'arena', icon: '🏆', label: '竞技场', sub: `${Game.arenaRank((s.arena && s.arena.points) || 1000).name}` },
+      { go: 'event', icon: '🎏', label: '活动', sub: `🎟️${(s.event && s.event.coin) || 0}` },
       { go: 'gacha', icon: '🎴', label: '招募', sub: `💎${s.gem}` },
       { go: 'roster', icon: '👥', label: '佣兵', sub: `${totalChars}名` },
       { act: 'team', icon: '⚔️', label: '编队', sub: `${s.team.length}/5` },
@@ -526,6 +529,28 @@ const UI = {
       card.addEventListener('click', () => this.showCharDetail(card.dataset.uid)));
   },
 
+  /** 好感 + 觉醒 区块 */
+  affAwakenHtml(o) {
+    const affLv = Game.affLevel(o), aff = o.aff || 0;
+    const awk = o.awaken || 0;
+    const stars = '★'.repeat(awk) + '☆'.repeat(5 - awk);
+    const ac = Game.awakenCost(awk);
+    const canAwk = awk < 5 && (Game.state.awakenStone || 0) >= ac.stone && Game.state.gold >= ac.gold;
+    return `
+      <div class="section-title" style="font-size:14px;">羁绊 · 觉醒</div>
+      <div class="aa-box">
+        <div class="aa-row">
+          <div class="aa-label">❤️ 好感 Lv.${affLv} <span class="muted">(攻击/生命 +${affLv}%)</span></div>
+          <div class="aa-bar"><div class="aa-fill aff" style="width:${(aff % 100) / 100 * 100 || (affLv >= 10 ? 100 : 0)}%;"></div></div>
+          <button class="btn sm" id="cd-gift" ${aff >= Game.AFF_MAX || Game.state.gold < Game.GIFT_COST ? 'disabled' : ''}>${aff >= Game.AFF_MAX ? '满' : `赠礼 🪙${Game.GIFT_COST}`}</button>
+        </div>
+        <div class="aa-row">
+          <div class="aa-label">🔮 觉醒 <span class="aa-stars">${stars}</span> <span class="muted">(全属性 +${awk * 6}%)</span></div>
+          <button class="btn sm" id="cd-awaken" ${canAwk ? '' : 'disabled'}>${awk >= 5 ? '已满' : `觉醒 🔮${ac.stone}+🪙${ac.gold}`}</button>
+        </div>
+      </div>`;
+  },
+
   /** 角色详情弹窗 */
   showCharDetail(uid) {
     const o = Game.getOwned(uid);
@@ -624,6 +649,8 @@ const UI = {
       <div class="section-title" style="font-size:14px;">战斗技能池 <span class="muted" style="font-weight:400;font-size:11px;">· 普攻 + 各服装招式</span></div>
       ${skillsHtml}
       ${loreHtml}
+      ${this.affAwakenHtml(o)}
+      ${loreHtml ? '' : ''}
       ${quotesHtml}
       ${sideHtml}
       <div class="close-row">
@@ -651,6 +678,22 @@ const UI = {
       this.toast(r.count ? `已自动装备 ${r.count} 件（含专属武器自动识别）` : '没有可装备的新装备');
       this.closeModal(m);
       this.showCharDetail(uid);
+    };
+    const giftBtn = m.querySelector('#cd-gift');
+    if (giftBtn) giftBtn.onclick = () => {
+      const r = Game.giveGift(uid);
+      if (!r.ok) { this.toast(r.msg); return; }
+      if (window.Sound) Sound.sfx('heal');
+      this.toast(`${c.name} 好感提升！`);
+      this.updateResources(); this.closeModal(m); this.showCharDetail(uid);
+    };
+    const awkBtn = m.querySelector('#cd-awaken');
+    if (awkBtn) awkBtn.onclick = () => {
+      const r = Game.awakenChar(uid);
+      if (!r.ok) { this.toast(r.msg); return; }
+      if (window.Sound) Sound.sfx('levelup');
+      this.toast(`${c.name} 觉醒至 ${r.awaken} 星！全属性提升`);
+      this.updateResources(); this.closeModal(m); this.showCharDetail(uid);
     };
     m.querySelectorAll('[data-slot]').forEach(el =>
       el.addEventListener('click', () => { this.closeModal(m); this.showGearPicker(uid, el.dataset.slot); }));
@@ -1345,6 +1388,68 @@ const UI = {
       reward: { gold: 0, gem: 0, exp: 0 },
     };
     BattleUI.start(stage, () => { if (Main.current === 'arena') this.renderArena(); });
+  },
+
+  // ============================================================
+  //  限时活动（活动本 + 活动商店）
+  // ============================================================
+  renderEvent() {
+    Game.ensureEvent();
+    const ev = Game.EVENT;
+    const coin = Game.state.event.coin;
+    const stageCards = ev.stages.map(s => {
+      const left = Game.eventRunsLeft(s);
+      return `<div class="farm-card">
+        <div class="farm-ico">${s.icon}</div>
+        <div class="farm-main">
+          <div class="farm-name">${s.name}</div>
+          <div class="farm-rew">🎟️${s.coin} · 🪙${s.gold} · 📘${s.exp}</div>
+          <div class="farm-sub muted">今日剩余 ${left}/${s.daily} 次</div>
+        </div>
+        <div class="farm-actions">
+          ${left > 0 ? `<button class="btn sm" data-ev="${s.id}">挑战</button>` : '<button class="btn sm" disabled>已尽</button>'}
+        </div>
+      </div>`;
+    }).join('');
+    const shopCards = ev.shop.map(it => {
+      const left = Game.state.event.stock[it.id] != null ? Game.state.event.stock[it.id] : it.stock;
+      const can = left > 0 && coin >= it.cost;
+      return `<div class="ev-shop-item ${left <= 0 ? 'sold' : ''}">
+        <div class="ev-si-ico">${it.icon}</div>
+        <div class="ev-si-main"><div class="ev-si-name">${it.name}</div><div class="muted" style="font-size:11px;">剩余 ${left}/${it.stock}</div></div>
+        <button class="btn sm" data-buy="${it.id}" ${can ? '' : 'disabled'}>🎟️${it.cost}</button>
+      </div>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="event-banner">
+        <div class="eb-title">🎏 ${ev.name}</div>
+        <div class="eb-desc">${ev.desc}</div>
+        <div class="eb-coin">🎟️ 活动币：<b>${coin}</b></div>
+      </div>
+      <div class="section-title" style="font-size:14px;">活动关卡</div>
+      <div class="farm-list">${stageCards}</div>
+      <div class="section-title" style="font-size:14px;margin-top:14px;">活动商店</div>
+      <div class="ev-shop">${shopCards}</div>`;
+    this.screenEl.querySelectorAll('[data-ev]').forEach(b => b.onclick = () => this.startEventFight(b.dataset.ev));
+    this.screenEl.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => {
+      const r = Game.eventBuy(b.dataset.buy);
+      if (!r.ok) { this.toast(r.msg); return; }
+      if (window.Sound) Sound.sfx('levelup');
+      this.toast('兑换成功'); this.updateResources(); this.renderEvent();
+    });
+  },
+  startEventFight(id) {
+    if (!Game.state.team.length) { this.toast('请先编队'); return; }
+    const s = Game.EVENT.stages.find(x => x.id === id);
+    if (!s) return;
+    const r = Game.eventStartRun(id);
+    if (!r.ok) { this.toast(r.msg); return; }
+    const stage = {
+      id: 'event_' + id, name: s.name, event: true, eventId: id,
+      enemies: s.enemies.map(e => ({ ...e })),
+      reward: { gold: 0, gem: 0, exp: 0 }, isBoss: id === 'ev3',
+    };
+    BattleUI.start(stage, () => { if (Main.current === 'event') this.renderEvent(); });
   },
 
   /** 存档管理：导出 / 导入 */
