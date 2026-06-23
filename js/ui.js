@@ -80,7 +80,7 @@ const UI = {
       { go: 'codex', icon: '📚', label: '图鉴' },
       { act: 'forge', icon: '🔨', label: '锻造' },
       { act: 'ach', icon: '🏅', label: '成就' },
-      { act: 'story', icon: '🎬', label: '剧情' },
+      { go: 'story', icon: '🎬', label: '剧情' },
     ];
     // 右侧活动/模式 banner 卡（对应 BD2 右侧活动横幅栈）
     const rightBanners = [
@@ -230,6 +230,102 @@ const UI = {
     `);
     render(m);
     m.querySelector('#te-done').onclick = () => { this.closeModal(m); this.renderHome(); };
+  },
+
+  /** 剧情板块（BD2 式：左分类侧栏 + 右剧集卡列表） */
+  renderStory() {
+    this.storyTab = this.storyTab || 'main';
+    const cats = [
+      { id: 'main', name: '主线剧情' },
+      { id: 'char', name: '角色剧情' },
+      { id: 'comic', name: '漫画剧场' },
+      { id: 'term', name: '术语' },
+    ];
+    // 各分类剧集
+    const mainEps = [
+      { id: 'prologue', title: '序章 · 启程', src: '主线剧情 · 序章', tags: ['烬火', '相遇'], icon: '🌅' },
+      { id: 'stage1', title: '第一章 · 艾尔玛森林入口', src: '主线剧情 · 第一章', tags: ['哥布林', '褐尘'], icon: '🌲' },
+      { id: 'stage2', title: '第二章 · 森林深处', src: '主线剧情 · 第二章', tags: ['暗影狼', '深林'], icon: '🌑' },
+      { id: 'stage3', title: '第三章 · 废弃矿洞', src: '主线剧情 · 第三章', tags: ['巨魔', '矿洞'], icon: '⛏️' },
+      { id: 'stage4', title: '第四章 · 诅咒山脊', src: '主线剧情 · 第四章', tags: ['BOSS', '山脊'], icon: '🏔️' },
+      { id: 'stage5', title: '第五章 · 魔王城', src: '主线剧情 · 第五章', tags: ['魔王', '决战'], icon: '🏰' },
+      { id: 'epilogue', title: '第一部终章 · 魔王陨落', src: '主线剧情 · 终章', tags: ['终章', '真相'], icon: '👑' },
+      { id: 'stage6', title: '第二部 · 破碎边境', src: '主线剧情 · 第二部', tags: ['边境', '永夜'], icon: '🌫️' },
+      { id: 'stage7', title: '第二部 · 永夜回廊', src: '主线剧情 · 第二部', tags: ['回廊', '女皇'], icon: '🌙' },
+      { id: 'epilogue2', title: '第二部终章 · 曙光', src: '主线剧情 · 终章', tags: ['曙光', '希望'], icon: '🌄' },
+    ];
+    const sideSeen = new Set(); const charEps = [];
+    Game.state.roster.forEach(o => {
+      const ch = window.GameData.CHARACTERS[o.charId];
+      if (ch.side && window.STORY && window.STORY[ch.side] && !sideSeen.has(ch.side)) {
+        sideSeen.add(ch.side);
+        charEps.push({ id: ch.side, title: ch.name, src: '角色剧情 · ' + ch.title, tags: [ch.title], avatar: o.charId });
+      }
+    });
+    const comicEps = [
+      { id: 'ep_prologue', title: '序章 · 烬火启程', src: '漫画剧场 · 分镜演出', tags: ['指挥官', '佣兵团'], icon: '🎬', kind: 'comic' },
+      { id: 'ep_twist', title: '终章 · 魔王的真相', src: '漫画剧场 · 分镜演出', tags: ['巴尔', '揭秘'], icon: '🎬', kind: 'comic' },
+      { id: 'ep_nightfall', title: '永夜将明 · 女皇的摇篮曲', src: '漫画剧场 · 分镜演出', tags: ['涅夫提斯', '第二卷'], icon: '🎬', kind: 'comic' },
+    ];
+    const terms = [
+      { id: 't_dust', title: '褐尘', src: '术语 · 世界观', tags: ['灾厄', '本源'], icon: '🌫️', kind: 'term', desc: '自天而降的褐色尘埃，侵蚀大地与生灵，是本作一切灾厄的根源。尘落之处，魔物滋生、人心异变。' },
+      { id: 't_merc', title: '佣兵团', src: '术语 · 阵营', tags: ['指挥官', '雇佣'], icon: '⚔️', kind: 'term', desc: '由指挥官统领的雇佣兵团，受雇清剿魔物、守护商路，是乱世中少数还在抵抗褐尘的力量。' },
+      { id: 't_baal', title: '魔王巴尔', src: '术语 · 人物', tags: ['第一部', 'BOSS'], icon: '👹', kind: 'term', desc: '第一部的最终敌人，盘踞魔王城，操纵被褐尘污染的魔物。其临终揭示的秘密，掀开了第二部的序幕。' },
+      { id: 't_night', title: '永夜', desc: '魔王陨落后仍未散去的黑暗，笼罩破碎边境。第二部的核心谜团，与女皇的传说交织。', src: '术语 · 谜团', tags: ['第二部', '黑暗'], icon: '🌙', kind: 'term' },
+    ];
+    const eps = { main: mainEps, char: charEps, comic: comicEps, term: terms }[this.storyTab] || [];
+
+    const card = (e) => {
+      const kind = e.kind || 'story';
+      const seen = kind === 'story' ? Story.seen(e.id) : (kind === 'comic' ? true : true);
+      const isNew = kind === 'story' && !seen;
+      const reward = isNew ? 20 : 0;
+      const thumb = e.avatar
+        ? `<div class="ep-thumb avatar">${this.charAvatar(e.avatar)}</div>`
+        : `<div class="ep-thumb">${e.icon || '📖'}</div>`;
+      return `<div class="ep-card">
+        <div class="ep-thumb-wrap">${thumb}${isNew ? '<span class="ep-new">NEW</span>' : ''}</div>
+        <div class="ep-main">
+          <div class="ep-title">${e.title}</div>
+          <div class="ep-src">${e.src}</div>
+          <div class="ep-tags">${(e.tags || []).map(t => `<span class="ep-tag">#${t}</span>`).join('')}</div>
+        </div>
+        <div class="ep-right">
+          ${reward ? `<div class="ep-reward">💎${reward}</div>` : ''}
+          <button class="btn sm ep-play" data-play="${e.id}" data-kind="${kind}">▶ ${kind === 'story' ? (seen ? '重看' : '播放') : (kind === 'term' ? '查看' : '播放')}</button>
+        </div>
+      </div>`;
+    };
+
+    const sortLabel = { main: '剧情顺序', char: '角色', comic: '分镜', term: '世界观' }[this.storyTab];
+    this.screenEl.innerHTML = `
+      <div class="story-board">
+        <div class="sb-side">
+          ${cats.map(c => `<button class="sb-cat ${this.storyTab === c.id ? 'on' : ''}" data-tab="${c.id}">${c.name}</button>`).join('')}
+        </div>
+        <div class="sb-main">
+          <div class="sb-head"><span>🎬 共 ${eps.length} 话</span><span class="muted" style="font-size:12px;">${sortLabel}</span></div>
+          <div class="ep-list">${eps.length ? eps.map(card).join('') : '<div class="muted" style="padding:30px;text-align:center;">该分类暂无内容</div>'}</div>
+        </div>
+      </div>`;
+
+    this.screenEl.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { this.storyTab = b.dataset.tab; this.renderStory(); });
+    this.screenEl.querySelectorAll('[data-play]').forEach(b => b.onclick = () => {
+      const id = b.dataset.play, kind = b.dataset.kind;
+      if (kind === 'comic') { if (window.Comic) Comic.open(id); return; }
+      if (kind === 'term') { const t = terms.find(x => x.id === id); if (t) this.showTermDetail(t); return; }
+      // story：首次观看给宝石奖励
+      if (!Story.seen(id)) { Game.state.gem += 20; Game.save(); this.updateResources(); this.toast('首次观看 · 💎+20'); }
+      Story.play(id);
+    });
+  },
+  showTermDetail(t) {
+    const m = this.openModal(`
+      <div class="gd-head"><div class="gd-art border-r5"><span class="gd-ico">${t.icon}</span></div>
+        <div class="gd-title"><div class="gd-name">${t.title}</div><div class="gd-meta muted">${t.src}</div></div></div>
+      <p style="line-height:1.8;font-size:13px;margin:10px 0;">${t.desc}</p>
+      <div class="close-row"><button class="btn" id="tm-ok">关闭</button></div>`);
+    m.querySelector('#tm-ok').onclick = () => this.closeModal(m);
   },
 
   /** 剧情回顾弹窗 */

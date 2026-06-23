@@ -769,6 +769,7 @@ const Main = {
       case 'arena': UI.renderArena(); break;
       case 'event': UI.renderEvent(); break;
       case 'inventory': UI.renderInventory(); break;
+      case 'story': UI.renderStory(); break;
       case 'codex': UI.renderCodex(); break;
       case 'shop': UI.renderShop(); break;
     }
