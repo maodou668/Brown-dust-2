@@ -1265,6 +1265,7 @@ const UI = {
       if (!r.ok) { this.toast(r.msg); return; }
       const p = [];
       if (r.got.gold) p.push(`🪙${r.got.gold}`); if (r.got.gem) p.push(`💎${r.got.gem}`);
+      if (r.got.stone) p.push(`🔮${r.got.stone}`);
       if (r.got.exp) p.push(`📘经验${r.got.exp}`); if (r.got.gears.length) p.push(`⚒️装备×${r.got.gears.length}`);
       this.toast(`远征归来：${p.join(' · ')}`); if (window.Sound) Sound.sfx('levelup');
       this.updateResources(); this.renderDispatch();
