@@ -894,8 +894,10 @@ const UI = {
     let feature;
     if (tab === 'costume') {
       const pity = 90 - s.pity;
-      const pickups = (pool[5] || []).slice(0, 8).map(cid =>
-        `<span class="gf-pick border-r5">${this.charAvatar(cid)}</span>`).join('');
+      const pickups = (pool[5] || []).slice(0, 8).map(cid => {
+        const cd = window.GameData.COSTUMES[cid];
+        return `<span class="gf-pick border-r5" title="${cd.charName} · ${cd.costumeName}" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">${window.GameData.CLASSES[cd.cls].icon}</span>`;
+      }).join('');
       feature = `
         <div class="gf-art b-costume">
           <span class="gf-badge">SPECIAL</span>
