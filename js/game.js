@@ -285,17 +285,18 @@ const Game = {
   affMult(owned) { return 1 + this.affLevel(owned) * 0.01; },     // 好感：+1%/级 攻击与生命
   awakenMult(owned) { return 1 + (owned.awaken || 0) * 0.06; },   // 觉醒：+6%/级 全属性
 
-  /** 根据「当前服装属性」+ 等级 + 突破 + 觉醒 + 好感 + 装备计算最终属性 */
+  /** 根据「当前服装属性」+ 等级 + 突破 + 觉醒 + 好感 + 装备 + 珍藏集计算最终属性 */
   computeStats(owned) {
     const cos = this.activeCostumeDef(owned);
     const lv = owned.level - 1;
     const pm = this.plusMult(owned);
     const am = this.affMult(owned), wm = this.awakenMult(owned);
+    const cm = this.collectionMult();           // 珍藏集增益（全队全属性）
     const g = this.gearBonus(owned);
     return {
-      maxHp: Math.round((cos.stats.hp + cos.grow.hp * lv) * pm * am * wm) + g.hp,
-      atk:   Math.round((cos.stats.atk + cos.grow.atk * lv) * pm * am * wm) + g.atk,
-      def:   Math.round((cos.stats.def + cos.grow.def * lv) * pm * wm) + g.def,
+      maxHp: Math.round((cos.stats.hp + cos.grow.hp * lv) * pm * am * wm * cm) + g.hp,
+      atk:   Math.round((cos.stats.atk + cos.grow.atk * lv) * pm * am * wm * cm) + g.atk,
+      def:   Math.round((cos.stats.def + cos.grow.def * lv) * pm * wm * cm) + g.def,
       spd:   cos.stats.spd + g.spd,
       crit:  cos.stats.crit + g.crit,
     };
@@ -325,6 +326,101 @@ const Game = {
     o.awaken = lv + 1;
     this.save();
     return { ok: true, awaken: o.awaken };
+  },
+
+  // ============================================================
+  //  珍藏集（Collection）——多门类收集进度 + 全队增益
+  //  每个门类满收集 → +2% 全队全属性，合计最高 +14%
+  // ============================================================
+  COLLECT_BONUS_PER_CAT: 0.02,
+  // 收集品 / 食谱 / 天赋 / 炼金 的具体藏品，解锁条件 req(s) 基于现有进度，% 随游玩真实变化
+  COLLECTIBLES: [
+    { id: 'rl_emblem', name: '佣兵团徽章', icon: '🎖️', req: s => s.roster.length >= 1 },
+    { id: 'rl_map',    name: '艾尔玛地图', icon: '🗺️', req: s => s.cleared.length >= 1 },
+    { id: 'rl_lamp',   name: '褐尘提灯',   icon: '🏮', req: s => s.cleared.length >= 3 },
+    { id: 'rl_horn',   name: '集结号角',   icon: '📯', req: s => s.roster.length >= 6 },
+    { id: 'rl_crown',  name: '魔王残冠',   icon: '👑', req: s => (s.seenStory || []).includes('epilogue') },
+    { id: 'rl_compass',name: '远征罗盘',   icon: '🧭', req: s => s.cleared.length >= 5 },
+    { id: 'rl_medal',  name: '竞技场奖章', icon: '🏆', req: s => (s.arena && s.arena.points || 1000) >= 1100 },
+    { id: 'rl_moon',   name: '永夜之钥',   icon: '🌙', req: s => (s.seenStory || []).includes('epilogue2') },
+  ],
+  RECIPES: [
+    { id: 'rc_bread',  name: '行军干粮',   icon: '🍞', req: s => s.cleared.length >= 1 },
+    { id: 'rc_soup',   name: '篝火浓汤',   icon: '🍲', req: s => s.cleared.length >= 2 },
+    { id: 'rc_skewer', name: '炭烤肉串',   icon: '🍢', req: s => s.cleared.length >= 4 },
+    { id: 'rc_tea',    name: '醒神药茶',   icon: '🍵', req: s => (s.farmRuns || 0) >= 5 },
+    { id: 'rc_cake',   name: '庆功蛋糕',   icon: '🍰', req: s => (s.seenStory || []).includes('epilogue') },
+    { id: 'rc_wine',   name: '边境烈酒',   icon: '🍷', req: s => s.cleared.length >= 6 },
+    { id: 'rc_honey',  name: '蜜渍野果',   icon: '🍯', req: s => s.roster.length >= 8 },
+    { id: 'rc_feast',  name: '凯旋盛宴',   icon: '🍱', req: s => s.cleared.length >= 7 },
+  ],
+  // 天赋技能：每名角色一项，角色等级达 20 即点亮
+  ALCHEMY: [
+    { id: 'al_whet',  name: '砺刃之术',  icon: '⚗️', req: (s, g) => g._gearSeen() >= 3 },
+    { id: 'al_temper',name: '淬火之术',  icon: '🔥', req: (s, g) => g._gearSeen() >= 6 },
+    { id: 'al_runic', name: '符文蚀刻',  icon: '🪄', req: (s, g) => g._gearSeen() >= 10 },
+    { id: 'al_refine',name: '词条精炼',  icon: '💠', req: s => s.inventory.some(x => (x.lvl || 0) >= 5) },
+    { id: 'al_master',name: '强化大师',  icon: '🛠️', req: s => s.inventory.some(x => (x.lvl || 0) >= 10) },
+    { id: 'al_ex',    name: '神兵铸造',  icon: '🗡️', req: (s, g) => s.inventory.some(x => { const t = g.getGearTpl(x.tpl); return t && t.type === 'ex'; }) },
+  ],
+  _gearSeen() {
+    return new Set(this.state.inventory.map(g => g.tpl)).size;
+  },
+  /** 计算全部珍藏门类的收集进度（owned/total/pct + items） */
+  collectionCats() {
+    const s = this.state, G = window.GameData;
+    const charIds = Object.keys(G.CHARACTERS);
+    const ownedChars = new Set(s.roster.map(o => o.charId));
+    // 角色
+    const charItems = charIds.map(id => ({ name: G.CHARACTERS[id].name, icon: G.CLASSES[G.CHARACTERS[id].cls].icon, owned: ownedChars.has(id) }));
+    // 服装（非基础装）
+    const ownedCos = new Set(); s.roster.forEach(o => (o.costumes || []).forEach(c => { if (!c.startsWith('base_')) ownedCos.add(c); }));
+    const cosIds = Object.keys(G.COSTUMES);
+    const cosItems = cosIds.map(id => ({ name: G.COSTUMES[id].name, icon: '👗', owned: ownedCos.has(id) }));
+    // 装备（图鉴：见过的模板）
+    const seenGear = new Set(s.inventory.map(g => g.tpl));
+    const gearAll = [...Object.keys(G.GEAR.common), ...Object.keys(G.GEAR.ex)];
+    const gearItems = gearAll.map(id => { const t = this.getGearTpl(id); return { name: t ? t.name : id, icon: t ? (t.icon || '⚔️') : '⚔️', owned: seenGear.has(id) }; });
+    // 天赋技能：角色等级 ≥20 点亮
+    const talentItems = s.roster.length
+      ? charIds.map(id => { const o = s.roster.find(x => x.charId === id); return { name: G.CHARACTERS[id].name + ' · 天赋', icon: '✨', owned: !!(o && o.level >= 20) }; })
+      : charIds.map(id => ({ name: G.CHARACTERS[id].name + ' · 天赋', icon: '✨', owned: false }));
+    // 谓词类门类
+    const mapItems = arr => arr.map(it => ({ name: it.name, icon: it.icon, owned: !!it.req(s, this) }));
+    const cats = [
+      { id: 'char',    name: '角色',     icon: '🦸', items: charItems },
+      { id: 'costume', name: '服装',     icon: '👗', items: cosItems },
+      { id: 'gear',    name: '装备',     icon: '🛡️', items: gearItems },
+      { id: 'collect', name: '收集品',   icon: '🧰', items: mapItems(this.COLLECTIBLES) },
+      { id: 'recipe',  name: '食谱',     icon: '🍴', items: mapItems(this.RECIPES) },
+      { id: 'talent',  name: '天赋技能', icon: '🌟', items: talentItems },
+      { id: 'alchemy', name: '炼金术',   icon: '⚗️', items: mapItems(this.ALCHEMY) },
+    ];
+    cats.forEach(c => {
+      c.total = c.items.length;
+      c.owned = c.items.filter(i => i.owned).length;
+      c.pct = c.total ? c.owned / c.total : 0;
+    });
+    return cats;
+  },
+  /** 珍藏集全队属性倍率：每门类完成度 × 2%，最高 +14% */
+  collectionMult() {
+    const cats = this.collectionCats();
+    const sum = cats.reduce((n, c) => n + c.pct, 0);
+    return 1 + sum * this.COLLECT_BONUS_PER_CAT;
+  },
+  /** 珍藏集增益概览（用于页面头部展示） */
+  collectionBonus() {
+    const cats = this.collectionCats();
+    const sum = cats.reduce((n, c) => n + c.pct, 0);          // 0~7
+    const totalOwned = cats.reduce((n, c) => n + c.owned, 0);
+    const totalAll = cats.reduce((n, c) => n + c.total, 0);
+    const bonus = sum * this.COLLECT_BONUS_PER_CAT;            // 0~0.14
+    return {
+      bonusPct: bonus * 100,                                  // 全属性增益百分比
+      overallPct: totalAll ? totalOwned / totalAll * 100 : 0, // 总收集进度
+      max: cats.every(c => c.pct >= 1),
+    };
   },
 
   // ---------- 装备 ----------
@@ -946,6 +1042,7 @@ const Game = {
     const cost = d.stam * times;
     if (this.state.stamina < cost) return { ok: false, msg: '体力不足' };
     this.spendStamina(cost);
+    this.state.farmRuns = (this.state.farmRuns || 0) + times;
     const tot = { gold: 0, exp: 0, gears: [] };
     for (let i = 0; i < times; i++) {
       const r = d.reward;

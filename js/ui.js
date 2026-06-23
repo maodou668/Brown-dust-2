@@ -52,7 +52,7 @@ const UI = {
 
   // ---------- 弹窗 ----------
   openModal(innerHtml, opts = {}) {
-    const overlay = this.el(`<div class="modal-overlay"><div class="modal">${innerHtml}</div></div>`);
+    const overlay = this.el(`<div class="modal-overlay"><div class="modal${opts.wide ? ' wide' : ''}">${innerHtml}</div></div>`);
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay && !opts.noBackdropClose) this.closeModal(overlay);
     });
@@ -77,7 +77,7 @@ const UI = {
     const leadName = lead ? window.GameData.CHARACTERS[lead.charId].name : '未编队';
     // 左上集群（系统/养成小入口）
     const leftCluster = [
-      { go: 'codex', icon: '📚', label: '图鉴' },
+      { go: 'codex', icon: '📖', label: '珍藏集' },
       { act: 'forge', icon: '🔨', label: '锻造' },
       { act: 'ach', icon: '🏅', label: '成就' },
       { go: 'story', icon: '🎬', label: '剧情' },
@@ -1837,6 +1837,91 @@ const UI = {
   // ============================================================
   //  图鉴（角色档案：已拥有 + 未解锁）
   // ============================================================
+  // ============================================================
+  //  珍藏集（Collection）—— 多门类收集进度 + 全队增益（对照 BD2 珍藏集）
+  // ============================================================
+  renderCollection() {
+    const cats = Game.collectionCats();
+    const b = Game.collectionBonus();
+    // 左侧立绘：取战力最高的已拥有角色
+    const C = window.GameData.CHARACTERS, CL = window.GameData.CLASSES;
+    let lead = null;
+    Game.state.roster.forEach(o => {
+      const p = (C[o.charId].rarity * 1000) + o.level + (o.awaken || 0) * 50;
+      if (!lead || p > lead._p) lead = Object.assign({ _p: p }, o);
+    });
+    const lc = lead && C[lead.charId];
+    const lcos = lead && Game.activeCostumeDef(lead);
+    const splash = lead
+      ? `<div class="col-splash border-${this.rarityClass(lc.rarity)}" style="background:linear-gradient(180deg, ${lcos.color}66 0%, ${lcos.color}22 50%, var(--bg) 92%);">
+          <div class="col-splash-avatar">${this.charAvatar(lead.charId)}</div>
+          <div class="col-splash-info">
+            <div class="col-splash-name">${lc.name}</div>
+            <div class="col-splash-meta">${lc.title} · ${CL[lc.cls].icon}${CL[lc.cls].name}</div>
+          </div>
+        </div>`
+      : `<div class="col-splash empty"><div class="muted">📖 珍藏室</div></div>`;
+
+    const catCard = (c) => {
+      const pct = Math.round(c.pct * 100);
+      const done = c.pct >= 1;
+      return `<button class="col-cat ${done ? 'done' : ''}" data-cat="${c.id}">
+        <span class="col-cat-ico">${c.icon}</span>
+        <span class="col-cat-name">${c.name}</span>
+        <span class="col-cat-pct">${done ? '<b>MAX</b>' : pct + '%'}</span>
+        <span class="col-cat-bar"><span style="width:${pct}%;"></span></span>
+      </button>`;
+    };
+
+    this.screenEl.innerHTML = `
+      <div class="collection">
+        <div class="col-left">${splash}</div>
+        <div class="col-right">
+          <div class="col-head">
+            <div class="col-head-title">🏛️ 珍藏集增益 <span class="col-q" title="收集藏品可永久提升全队属性">ⓘ</span></div>
+            <div class="col-head-bonus">
+              ${b.max ? '<span class="col-bn max">⚔ MAX</span>' : ''}
+              <span class="col-bn">全属性 +${b.bonusPct.toFixed(1)}%</span>
+              <span class="col-bn alt">总收集 ${b.overallPct.toFixed(1)}%</span>
+            </div>
+          </div>
+          <div class="col-grid">${cats.map(catCard).join('')}</div>
+        </div>
+      </div>`;
+    this.screenEl.querySelectorAll('[data-cat]').forEach(b =>
+      b.onclick = () => this.showCollectionCat(b.dataset.cat));
+  },
+
+  /** 某门类的藏品清单弹窗 */
+  showCollectionCat(catId) {
+    const cats = Game.collectionCats();
+    const cat = cats.find(c => c.id === catId);
+    if (!cat) return;
+    const cells = cat.items.map((it, i) => it.owned
+      ? `<div class="col-item owned" ${catId === 'char' ? `data-ci="${i}"` : ''}>
+          <span class="ci-ico">${it.icon}</span><span class="ci-name">${it.name}</span></div>`
+      : `<div class="col-item locked"><span class="ci-ico">🔒</span><span class="ci-name muted">？？？</span></div>`
+    ).join('');
+    const m = this.openModal(`
+      <div class="gd-head"><div class="gd-art border-r5"><span class="gd-ico">${cat.icon}</span></div>
+        <div class="gd-title"><div class="gd-name">${cat.name}</div>
+          <div class="gd-meta muted">已收集 ${cat.owned}/${cat.total} · ${Math.round(cat.pct * 100)}%</div></div></div>
+      <div class="col-item-grid">${cells}</div>
+      <div class="close-row"><button class="btn" id="cc-ok">关闭</button></div>`, { wide: true });
+    m.querySelector('#cc-ok').onclick = () => this.closeModal(m);
+    // 角色门类：点击已拥有角色查看详情
+    if (catId === 'char') {
+      const ownedChars = Game.state.roster;
+      m.querySelectorAll('[data-ci]').forEach(el => {
+        const idx = parseInt(el.dataset.ci, 10);
+        const charIds = Object.keys(window.GameData.CHARACTERS);
+        const cid = charIds[idx];
+        const o = ownedChars.find(x => x.charId === cid);
+        if (o) el.onclick = () => { this.closeModal(m); this.showCharDetail(o.uid); };
+      });
+    }
+  },
+
   renderCodex() {
     const all = Object.keys(window.GameData.CHARACTERS);
     const ownedIds = new Set(Game.state.roster.map(o => o.charId));

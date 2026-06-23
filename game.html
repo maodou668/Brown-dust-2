@@ -1716,6 +1716,83 @@ body {
   .ep-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
 }
 
+/* ===== 珍藏集（Collection） ===== */
+.collection { display: flex; gap: 14px; height: 100%; padding: 12px; box-sizing: border-box; }
+.col-left { flex: 0 0 38%; max-width: 420px; min-width: 0; }
+.col-splash {
+  position: relative; height: 100%; border-radius: 14px; overflow: hidden;
+  border: 2px solid rgba(255,255,255,.1); display: flex; align-items: flex-end; justify-content: center;
+}
+.col-splash.empty { display: grid; place-items: center; background: var(--panel); }
+.col-splash-avatar {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-52%);
+  font-size: clamp(80px, 22vh, 200px); filter: drop-shadow(0 10px 24px rgba(0,0,0,.5));
+}
+.col-splash-avatar .char-img { width: clamp(150px, 40vh, 360px); height: auto; }
+.col-splash-info {
+  position: relative; z-index: 2; width: 100%; padding: 14px 16px;
+  background: linear-gradient(0deg, rgba(0,0,0,.72), transparent);
+}
+.col-splash-name { font-size: clamp(18px, 3vh, 26px); font-weight: 900; }
+.col-splash-meta { font-size: 12px; color: #d8cfe6; margin-top: 3px; }
+
+.col-right { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.col-head {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center;
+  padding: 6px 4px 12px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 12px;
+}
+.col-head-title { font-size: 16px; font-weight: 900; display: flex; align-items: center; gap: 6px; }
+.col-q { font-size: 12px; color: var(--text-dim); cursor: help; }
+.col-head-bonus { display: flex; flex-wrap: wrap; gap: 6px; }
+.col-bn {
+  font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+  background: var(--panel-2); color: var(--gold); border: 1px solid rgba(240,198,116,.25);
+}
+.col-bn.alt { color: #7fd0ff; border-color: rgba(127,208,255,.25); }
+.col-bn.max { color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: none; }
+
+.col-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px; align-content: start; overflow-y: auto; padding-right: 4px;
+}
+.col-cat {
+  position: relative; background: var(--panel); border: 1px solid rgba(255,255,255,.07);
+  border-radius: 12px; padding: 14px 12px 16px; text-align: center; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  transition: transform .12s, border-color .15s;
+}
+.col-cat:active { transform: scale(.96); }
+.col-cat.done { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(240,198,116,.25) inset; }
+.col-cat-ico { font-size: 32px; }
+.col-cat-name { font-size: 14px; font-weight: 700; }
+.col-cat-pct { font-size: 13px; color: var(--text-dim); }
+.col-cat-pct b { color: var(--gold); }
+.col-cat-bar { width: 78%; height: 5px; border-radius: 3px; background: var(--panel-2); overflow: hidden; }
+.col-cat-bar > span { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.col-cat.done .col-cat-bar > span { background: var(--gold); }
+
+/* 门类藏品弹窗 */
+.modal.wide { max-width: 560px; width: 92vw; }
+.col-item-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px; max-height: 52vh; overflow-y: auto; margin: 10px 0;
+}
+.col-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: var(--panel); border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px; padding: 10px 6px;
+}
+.col-item.owned { cursor: default; }
+.col-item.owned[data-ci] { cursor: pointer; }
+.col-item.locked { opacity: .5; }
+.ci-ico { font-size: 26px; }
+.ci-name { font-size: 12px; text-align: center; line-height: 1.2; }
+
+@media (max-width: 720px) {
+  .col-left { flex: 0 0 32%; }
+  .col-cat-ico { font-size: 26px; }
+}
+
 </style>
 </head>
 <body>
@@ -1761,7 +1838,7 @@ body {
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '58';</script>
+  <script>window.ASSET_VER = '59';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -3116,17 +3193,18 @@ const Game = {
   affMult(owned) { return 1 + this.affLevel(owned) * 0.01; },     // 好感：+1%/级 攻击与生命
   awakenMult(owned) { return 1 + (owned.awaken || 0) * 0.06; },   // 觉醒：+6%/级 全属性
 
-  /** 根据「当前服装属性」+ 等级 + 突破 + 觉醒 + 好感 + 装备计算最终属性 */
+  /** 根据「当前服装属性」+ 等级 + 突破 + 觉醒 + 好感 + 装备 + 珍藏集计算最终属性 */
   computeStats(owned) {
     const cos = this.activeCostumeDef(owned);
     const lv = owned.level - 1;
     const pm = this.plusMult(owned);
     const am = this.affMult(owned), wm = this.awakenMult(owned);
+    const cm = this.collectionMult();           // 珍藏集增益（全队全属性）
     const g = this.gearBonus(owned);
     return {
-      maxHp: Math.round((cos.stats.hp + cos.grow.hp * lv) * pm * am * wm) + g.hp,
-      atk:   Math.round((cos.stats.atk + cos.grow.atk * lv) * pm * am * wm) + g.atk,
-      def:   Math.round((cos.stats.def + cos.grow.def * lv) * pm * wm) + g.def,
+      maxHp: Math.round((cos.stats.hp + cos.grow.hp * lv) * pm * am * wm * cm) + g.hp,
+      atk:   Math.round((cos.stats.atk + cos.grow.atk * lv) * pm * am * wm * cm) + g.atk,
+      def:   Math.round((cos.stats.def + cos.grow.def * lv) * pm * wm * cm) + g.def,
       spd:   cos.stats.spd + g.spd,
       crit:  cos.stats.crit + g.crit,
     };
@@ -3156,6 +3234,101 @@ const Game = {
     o.awaken = lv + 1;
     this.save();
     return { ok: true, awaken: o.awaken };
+  },
+
+  // ============================================================
+  //  珍藏集（Collection）——多门类收集进度 + 全队增益
+  //  每个门类满收集 → +2% 全队全属性，合计最高 +14%
+  // ============================================================
+  COLLECT_BONUS_PER_CAT: 0.02,
+  // 收集品 / 食谱 / 天赋 / 炼金 的具体藏品，解锁条件 req(s) 基于现有进度，% 随游玩真实变化
+  COLLECTIBLES: [
+    { id: 'rl_emblem', name: '佣兵团徽章', icon: '🎖️', req: s => s.roster.length >= 1 },
+    { id: 'rl_map',    name: '艾尔玛地图', icon: '🗺️', req: s => s.cleared.length >= 1 },
+    { id: 'rl_lamp',   name: '褐尘提灯',   icon: '🏮', req: s => s.cleared.length >= 3 },
+    { id: 'rl_horn',   name: '集结号角',   icon: '📯', req: s => s.roster.length >= 6 },
+    { id: 'rl_crown',  name: '魔王残冠',   icon: '👑', req: s => (s.seenStory || []).includes('epilogue') },
+    { id: 'rl_compass',name: '远征罗盘',   icon: '🧭', req: s => s.cleared.length >= 5 },
+    { id: 'rl_medal',  name: '竞技场奖章', icon: '🏆', req: s => (s.arena && s.arena.points || 1000) >= 1100 },
+    { id: 'rl_moon',   name: '永夜之钥',   icon: '🌙', req: s => (s.seenStory || []).includes('epilogue2') },
+  ],
+  RECIPES: [
+    { id: 'rc_bread',  name: '行军干粮',   icon: '🍞', req: s => s.cleared.length >= 1 },
+    { id: 'rc_soup',   name: '篝火浓汤',   icon: '🍲', req: s => s.cleared.length >= 2 },
+    { id: 'rc_skewer', name: '炭烤肉串',   icon: '🍢', req: s => s.cleared.length >= 4 },
+    { id: 'rc_tea',    name: '醒神药茶',   icon: '🍵', req: s => (s.farmRuns || 0) >= 5 },
+    { id: 'rc_cake',   name: '庆功蛋糕',   icon: '🍰', req: s => (s.seenStory || []).includes('epilogue') },
+    { id: 'rc_wine',   name: '边境烈酒',   icon: '🍷', req: s => s.cleared.length >= 6 },
+    { id: 'rc_honey',  name: '蜜渍野果',   icon: '🍯', req: s => s.roster.length >= 8 },
+    { id: 'rc_feast',  name: '凯旋盛宴',   icon: '🍱', req: s => s.cleared.length >= 7 },
+  ],
+  // 天赋技能：每名角色一项，角色等级达 20 即点亮
+  ALCHEMY: [
+    { id: 'al_whet',  name: '砺刃之术',  icon: '⚗️', req: (s, g) => g._gearSeen() >= 3 },
+    { id: 'al_temper',name: '淬火之术',  icon: '🔥', req: (s, g) => g._gearSeen() >= 6 },
+    { id: 'al_runic', name: '符文蚀刻',  icon: '🪄', req: (s, g) => g._gearSeen() >= 10 },
+    { id: 'al_refine',name: '词条精炼',  icon: '💠', req: s => s.inventory.some(x => (x.lvl || 0) >= 5) },
+    { id: 'al_master',name: '强化大师',  icon: '🛠️', req: s => s.inventory.some(x => (x.lvl || 0) >= 10) },
+    { id: 'al_ex',    name: '神兵铸造',  icon: '🗡️', req: (s, g) => s.inventory.some(x => { const t = g.getGearTpl(x.tpl); return t && t.type === 'ex'; }) },
+  ],
+  _gearSeen() {
+    return new Set(this.state.inventory.map(g => g.tpl)).size;
+  },
+  /** 计算全部珍藏门类的收集进度（owned/total/pct + items） */
+  collectionCats() {
+    const s = this.state, G = window.GameData;
+    const charIds = Object.keys(G.CHARACTERS);
+    const ownedChars = new Set(s.roster.map(o => o.charId));
+    // 角色
+    const charItems = charIds.map(id => ({ name: G.CHARACTERS[id].name, icon: G.CLASSES[G.CHARACTERS[id].cls].icon, owned: ownedChars.has(id) }));
+    // 服装（非基础装）
+    const ownedCos = new Set(); s.roster.forEach(o => (o.costumes || []).forEach(c => { if (!c.startsWith('base_')) ownedCos.add(c); }));
+    const cosIds = Object.keys(G.COSTUMES);
+    const cosItems = cosIds.map(id => ({ name: G.COSTUMES[id].name, icon: '👗', owned: ownedCos.has(id) }));
+    // 装备（图鉴：见过的模板）
+    const seenGear = new Set(s.inventory.map(g => g.tpl));
+    const gearAll = [...Object.keys(G.GEAR.common), ...Object.keys(G.GEAR.ex)];
+    const gearItems = gearAll.map(id => { const t = this.getGearTpl(id); return { name: t ? t.name : id, icon: t ? (t.icon || '⚔️') : '⚔️', owned: seenGear.has(id) }; });
+    // 天赋技能：角色等级 ≥20 点亮
+    const talentItems = s.roster.length
+      ? charIds.map(id => { const o = s.roster.find(x => x.charId === id); return { name: G.CHARACTERS[id].name + ' · 天赋', icon: '✨', owned: !!(o && o.level >= 20) }; })
+      : charIds.map(id => ({ name: G.CHARACTERS[id].name + ' · 天赋', icon: '✨', owned: false }));
+    // 谓词类门类
+    const mapItems = arr => arr.map(it => ({ name: it.name, icon: it.icon, owned: !!it.req(s, this) }));
+    const cats = [
+      { id: 'char',    name: '角色',     icon: '🦸', items: charItems },
+      { id: 'costume', name: '服装',     icon: '👗', items: cosItems },
+      { id: 'gear',    name: '装备',     icon: '🛡️', items: gearItems },
+      { id: 'collect', name: '收集品',   icon: '🧰', items: mapItems(this.COLLECTIBLES) },
+      { id: 'recipe',  name: '食谱',     icon: '🍴', items: mapItems(this.RECIPES) },
+      { id: 'talent',  name: '天赋技能', icon: '🌟', items: talentItems },
+      { id: 'alchemy', name: '炼金术',   icon: '⚗️', items: mapItems(this.ALCHEMY) },
+    ];
+    cats.forEach(c => {
+      c.total = c.items.length;
+      c.owned = c.items.filter(i => i.owned).length;
+      c.pct = c.total ? c.owned / c.total : 0;
+    });
+    return cats;
+  },
+  /** 珍藏集全队属性倍率：每门类完成度 × 2%，最高 +14% */
+  collectionMult() {
+    const cats = this.collectionCats();
+    const sum = cats.reduce((n, c) => n + c.pct, 0);
+    return 1 + sum * this.COLLECT_BONUS_PER_CAT;
+  },
+  /** 珍藏集增益概览（用于页面头部展示） */
+  collectionBonus() {
+    const cats = this.collectionCats();
+    const sum = cats.reduce((n, c) => n + c.pct, 0);          // 0~7
+    const totalOwned = cats.reduce((n, c) => n + c.owned, 0);
+    const totalAll = cats.reduce((n, c) => n + c.total, 0);
+    const bonus = sum * this.COLLECT_BONUS_PER_CAT;            // 0~0.14
+    return {
+      bonusPct: bonus * 100,                                  // 全属性增益百分比
+      overallPct: totalAll ? totalOwned / totalAll * 100 : 0, // 总收集进度
+      max: cats.every(c => c.pct >= 1),
+    };
   },
 
   // ---------- 装备 ----------
@@ -3777,6 +3950,7 @@ const Game = {
     const cost = d.stam * times;
     if (this.state.stamina < cost) return { ok: false, msg: '体力不足' };
     this.spendStamina(cost);
+    this.state.farmRuns = (this.state.farmRuns || 0) + times;
     const tot = { gold: 0, exp: 0, gears: [] };
     for (let i = 0; i < times; i++) {
       const r = d.reward;
@@ -4700,7 +4874,7 @@ const UI = {
 
   // ---------- 弹窗 ----------
   openModal(innerHtml, opts = {}) {
-    const overlay = this.el(`<div class="modal-overlay"><div class="modal">${innerHtml}</div></div>`);
+    const overlay = this.el(`<div class="modal-overlay"><div class="modal${opts.wide ? ' wide' : ''}">${innerHtml}</div></div>`);
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay && !opts.noBackdropClose) this.closeModal(overlay);
     });
@@ -4725,7 +4899,7 @@ const UI = {
     const leadName = lead ? window.GameData.CHARACTERS[lead.charId].name : '未编队';
     // 左上集群（系统/养成小入口）
     const leftCluster = [
-      { go: 'codex', icon: '📚', label: '图鉴' },
+      { go: 'codex', icon: '📖', label: '珍藏集' },
       { act: 'forge', icon: '🔨', label: '锻造' },
       { act: 'ach', icon: '🏅', label: '成就' },
       { go: 'story', icon: '🎬', label: '剧情' },
@@ -6485,6 +6659,91 @@ const UI = {
   // ============================================================
   //  图鉴（角色档案：已拥有 + 未解锁）
   // ============================================================
+  // ============================================================
+  //  珍藏集（Collection）—— 多门类收集进度 + 全队增益（对照 BD2 珍藏集）
+  // ============================================================
+  renderCollection() {
+    const cats = Game.collectionCats();
+    const b = Game.collectionBonus();
+    // 左侧立绘：取战力最高的已拥有角色
+    const C = window.GameData.CHARACTERS, CL = window.GameData.CLASSES;
+    let lead = null;
+    Game.state.roster.forEach(o => {
+      const p = (C[o.charId].rarity * 1000) + o.level + (o.awaken || 0) * 50;
+      if (!lead || p > lead._p) lead = Object.assign({ _p: p }, o);
+    });
+    const lc = lead && C[lead.charId];
+    const lcos = lead && Game.activeCostumeDef(lead);
+    const splash = lead
+      ? `<div class="col-splash border-${this.rarityClass(lc.rarity)}" style="background:linear-gradient(180deg, ${lcos.color}66 0%, ${lcos.color}22 50%, var(--bg) 92%);">
+          <div class="col-splash-avatar">${this.charAvatar(lead.charId)}</div>
+          <div class="col-splash-info">
+            <div class="col-splash-name">${lc.name}</div>
+            <div class="col-splash-meta">${lc.title} · ${CL[lc.cls].icon}${CL[lc.cls].name}</div>
+          </div>
+        </div>`
+      : `<div class="col-splash empty"><div class="muted">📖 珍藏室</div></div>`;
+
+    const catCard = (c) => {
+      const pct = Math.round(c.pct * 100);
+      const done = c.pct >= 1;
+      return `<button class="col-cat ${done ? 'done' : ''}" data-cat="${c.id}">
+        <span class="col-cat-ico">${c.icon}</span>
+        <span class="col-cat-name">${c.name}</span>
+        <span class="col-cat-pct">${done ? '<b>MAX</b>' : pct + '%'}</span>
+        <span class="col-cat-bar"><span style="width:${pct}%;"></span></span>
+      </button>`;
+    };
+
+    this.screenEl.innerHTML = `
+      <div class="collection">
+        <div class="col-left">${splash}</div>
+        <div class="col-right">
+          <div class="col-head">
+            <div class="col-head-title">🏛️ 珍藏集增益 <span class="col-q" title="收集藏品可永久提升全队属性">ⓘ</span></div>
+            <div class="col-head-bonus">
+              ${b.max ? '<span class="col-bn max">⚔ MAX</span>' : ''}
+              <span class="col-bn">全属性 +${b.bonusPct.toFixed(1)}%</span>
+              <span class="col-bn alt">总收集 ${b.overallPct.toFixed(1)}%</span>
+            </div>
+          </div>
+          <div class="col-grid">${cats.map(catCard).join('')}</div>
+        </div>
+      </div>`;
+    this.screenEl.querySelectorAll('[data-cat]').forEach(b =>
+      b.onclick = () => this.showCollectionCat(b.dataset.cat));
+  },
+
+  /** 某门类的藏品清单弹窗 */
+  showCollectionCat(catId) {
+    const cats = Game.collectionCats();
+    const cat = cats.find(c => c.id === catId);
+    if (!cat) return;
+    const cells = cat.items.map((it, i) => it.owned
+      ? `<div class="col-item owned" ${catId === 'char' ? `data-ci="${i}"` : ''}>
+          <span class="ci-ico">${it.icon}</span><span class="ci-name">${it.name}</span></div>`
+      : `<div class="col-item locked"><span class="ci-ico">🔒</span><span class="ci-name muted">？？？</span></div>`
+    ).join('');
+    const m = this.openModal(`
+      <div class="gd-head"><div class="gd-art border-r5"><span class="gd-ico">${cat.icon}</span></div>
+        <div class="gd-title"><div class="gd-name">${cat.name}</div>
+          <div class="gd-meta muted">已收集 ${cat.owned}/${cat.total} · ${Math.round(cat.pct * 100)}%</div></div></div>
+      <div class="col-item-grid">${cells}</div>
+      <div class="close-row"><button class="btn" id="cc-ok">关闭</button></div>`, { wide: true });
+    m.querySelector('#cc-ok').onclick = () => this.closeModal(m);
+    // 角色门类：点击已拥有角色查看详情
+    if (catId === 'char') {
+      const ownedChars = Game.state.roster;
+      m.querySelectorAll('[data-ci]').forEach(el => {
+        const idx = parseInt(el.dataset.ci, 10);
+        const charIds = Object.keys(window.GameData.CHARACTERS);
+        const cid = charIds[idx];
+        const o = ownedChars.find(x => x.charId === cid);
+        if (o) el.onclick = () => { this.closeModal(m); this.showCharDetail(o.uid); };
+      });
+    }
+  },
+
   renderCodex() {
     const all = Object.keys(window.GameData.CHARACTERS);
     const ownedIds = new Set(Game.state.roster.map(o => o.charId));
@@ -8712,7 +8971,7 @@ const Main = {
       case 'event': UI.renderEvent(); break;
       case 'inventory': UI.renderInventory(); break;
       case 'story': UI.renderStory(); break;
-      case 'codex': UI.renderCodex(); break;
+      case 'codex': UI.renderCollection(); break;
       case 'shop': UI.renderShop(); break;
     }
   },
