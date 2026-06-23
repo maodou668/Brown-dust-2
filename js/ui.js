@@ -880,60 +880,80 @@ const UI = {
     const pool = window.GameData.COSTUME_POOL;
     const exPool = window.GameData.GEAR.exPool;
     const tab = this.gachaTab || 'costume';
-    const firstTip = !s.firstTen ? `<div class="pity-bar" style="color:var(--gold);">首次十连必出 1 个五星 ★</div>` : '';
+    // 卡池（左侧 banner 列表）
+    const banners = [
+      { id: 'costume', name: '服装招募', tag: '常驻 · PICK UP', icon: '🎴', cls: 'b-costume' },
+      { id: 'ex', name: '专属武器', tag: '武器军械库', icon: '🗡️', cls: 'b-ex' },
+    ];
+    const listHtml = banners.map(b => `
+      <button class="gacha-banner-card ${b.cls} ${tab === b.id ? 'active' : ''}" data-tab="${b.id}">
+        <span class="gbc-icon">${b.icon}</span>
+        <span class="gbc-text"><span class="gbc-name">${b.name}</span><span class="gbc-tag">${b.tag}</span></span>
+      </button>`).join('');
 
-    const tabsHtml = `
-      <div class="gacha-tabs">
-        <button class="gacha-tab ${tab==='costume'?'active':''}" data-tab="costume">🎴 服装招募</button>
-        <button class="gacha-tab ${tab==='ex'?'active':''}" data-tab="ex">🗡️ 专属武器</button>
-      </div>`;
-
-    let body;
+    let feature;
     if (tab === 'costume') {
-      body = `
-      <div class="gacha-banner">
-        <h2>服装招募</h2>
-        <div class="sub">抽取服装即获得对应角色 · 同角色可多套服装</div>
-        <div class="gacha-rates">
-          <b>5★ ${(g.rates[5]*100).toFixed(0)}%</b> · 4★ ${(g.rates[4]*100).toFixed(0)}% · 3★ ${(g.rates[3]*100).toFixed(0)}%
-          <div class="pity-bar">距离保底 5★ 还有 ${90 - s.pity} 抽</div>
-          ${firstTip}
+      const pity = 90 - s.pity;
+      const pickups = (pool[5] || []).slice(0, 8).map(cid =>
+        `<span class="gf-pick border-r5">${this.charAvatar(cid)}</span>`).join('');
+      feature = `
+        <div class="gf-art b-costume">
+          <span class="gf-badge">SPECIAL</span>
+          <h2>服装招募</h2>
+          <div class="gf-sub">抽取服装即获得对应角色 · 同角色可叠多套服装</div>
         </div>
-        <div class="gacha-actions">
-          <button class="btn gold" id="pull1">单次招募 💎${g.cost}</button>
-          <button class="btn" id="pull10">十连招募 💎${g.cost*10}</button>
+        <div class="gf-meta">
+          <div class="gf-rate"><b class="r5">5★ ${(g.rates[5] * 100).toFixed(1)}%</b><span class="muted"> · 4★ ${(g.rates[4] * 100).toFixed(0)}% · 3★ ${(g.rates[3] * 100).toFixed(0)}%</span></div>
+          <div class="gf-pity">
+            <div class="gf-pity-bar"><div class="gf-pity-fill" style="width:${s.pity / 90 * 100}%;"></div></div>
+            <span class="muted">距保底 5★ 还有 <b style="color:var(--gold);">${pity}</b> 抽</span>
+          </div>
+          ${!s.firstTen ? '<div class="gf-guar">🎁 首次十连必出 5★</div>' : ''}
         </div>
-      </div>
-      <div class="section-title" style="font-size:14px;">传说服装（5★）</div>
-      <div class="roster-grid">${pool[5].map(cid => this.costumePoolCard(cid)).join('')}</div>
-      <div class="section-title" style="font-size:14px;margin-top:16px;">稀有服装（4★）</div>
-      <div class="roster-grid">${pool[4].map(cid => this.costumePoolCard(cid)).join('')}</div>`;
+        <div class="gf-pool">
+          <div class="gf-pool-label">本期上架 5★</div>
+          <div class="gf-pick-row">${pickups}</div>
+        </div>
+        <div class="gf-pull">
+          <button class="btn secondary sm" id="gacha-rates">概率公示</button>
+          <button class="btn gold gf-pull-btn" id="pull1"><b>抽 1 次</b><span>💎${g.cost}</span></button>
+          <button class="btn gf-pull-btn" id="pull10"><span class="gf-guar-badge">5★保底</span><b>抽 10 次</b><span>💎${g.cost * 10}</span></button>
+        </div>`;
     } else {
-      body = `
-      <div class="gacha-banner" style="background:radial-gradient(circle at 50% 30%, rgba(255,155,61,.22), transparent 60%), linear-gradient(160deg,#3a2a1a,#241a10);border-color:rgba(255,155,61,.35);">
-        <h2 style="background:linear-gradient(90deg,#ffd35a,#ff9b3d);-webkit-background-clip:text;background-clip:text;color:transparent;">专属武器招募</h2>
-        <div class="sub">专属武器仅从此处产出 · 装备对应角色大幅强化</div>
-        <div class="gacha-rates">
-          <b>UR ${(eg.rates[5]*100).toFixed(0)}%</b> · SR ${(eg.rates[4]*100).toFixed(0)}% · R ${(eg.rates[3]*100).toFixed(0)}%
+      const pickups = (exPool[5] || []).slice(0, 8).map(id => `<span class="gf-pick border-r5">${this.exPoolCard ? '🗡️' : '🗡️'}</span>`).join('') || '<span class="muted">暂无上架</span>';
+      feature = `
+        <div class="gf-art b-ex">
+          <span class="gf-badge">WEAPON</span>
+          <h2>专属武器招募</h2>
+          <div class="gf-sub">专属武器仅此处产出 · 装备对应角色大幅强化</div>
         </div>
-        <div class="gacha-actions">
-          <button class="btn" id="ex-pull1" style="background:linear-gradient(135deg,#ffb84a,#ff7a3a);color:#241a08;">武器招募 💎${eg.cost}</button>
-          <button class="btn secondary" id="ex-pull10">十连 💎${eg.cost*10}</button>
+        <div class="gf-meta">
+          <div class="gf-rate"><b class="r5">UR ${(eg.rates[5] * 100).toFixed(1)}%</b><span class="muted"> · SR ${(eg.rates[4] * 100).toFixed(0)}% · R ${(eg.rates[3] * 100).toFixed(0)}%</span></div>
         </div>
-      </div>
-      <div class="section-title" style="font-size:14px;">传说武器（UR）</div>
-      <div class="roster-grid">${(exPool[5]||[]).map(id => this.exPoolCard(id)).join('') || '<div class="muted" style="padding:8px;">暂无</div>'}</div>
-      <div class="section-title" style="font-size:14px;margin-top:16px;">稀有武器（SR）</div>
-      <div class="roster-grid">${(exPool[4]||[]).map(id => this.exPoolCard(id)).join('') || '<div class="muted" style="padding:8px;">暂无</div>'}</div>
-      <div class="section-title" style="font-size:14px;margin-top:16px;">普通武器（R）</div>
-      <div class="roster-grid">${(exPool[3]||[]).map(id => this.exPoolCard(id)).join('') || '<div class="muted" style="padding:8px;">暂无</div>'}</div>`;
+        <div class="gf-pool"><div class="gf-pool-label">传说武器 UR</div><div class="gf-pick-row">${pickups}</div></div>
+        <div class="gf-pull">
+          <button class="btn secondary sm" id="gacha-rates">概率公示</button>
+          <button class="btn gold gf-pull-btn" id="ex-pull1"><b>抽 1 次</b><span>💎${eg.cost}</span></button>
+          <button class="btn gf-pull-btn" id="ex-pull10"><b>抽 10 次</b><span>💎${eg.cost * 10}</span></button>
+        </div>`;
     }
 
-    this.screenEl.innerHTML = tabsHtml + body;
+    this.screenEl.innerHTML = `
+      <div class="gacha-page">
+        <div class="gacha-list">
+          <div class="gacha-list-title">卡池</div>
+          ${listHtml}
+          <div class="gacha-mileage muted">⭐${s.spark}/${Game.SPARK_COST} · ✨${s.powder}/${Game.POWDER_COST}</div>
+        </div>
+        <div class="gacha-feature">${feature}</div>
+      </div>
+      <p class="gacha-disclaimer">※ 概率为公示值；保底与首抽规则见「概率公示」。抽取服装即解锁角色，重复获得提升突破等级。</p>`;
 
-    this.screenEl.querySelectorAll('.gacha-tab').forEach(b => {
+    this.screenEl.querySelectorAll('.gacha-banner-card').forEach(b => {
       b.onclick = () => { this.gachaTab = b.dataset.tab; this.renderGacha(); };
     });
+    const rb = this.screenEl.querySelector('#gacha-rates');
+    if (rb) rb.onclick = () => this.showGachaRates(tab);
     if (tab === 'costume') {
       document.getElementById('pull1').onclick = () => this.doPull(1);
       document.getElementById('pull10').onclick = () => this.doPull(10);
@@ -941,6 +961,27 @@ const UI = {
       document.getElementById('ex-pull1').onclick = () => this.doExPull(1);
       document.getElementById('ex-pull10').onclick = () => this.doExPull(10);
     }
+  },
+
+  /** 概率公示弹窗 */
+  showGachaRates(tab) {
+    const g = window.GameData.GACHA, eg = window.GameData.GEAR.exGacha;
+    const pool = window.GameData.COSTUME_POOL, exPool = window.GameData.GEAR.exPool;
+    let body;
+    if (tab === 'ex') {
+      body = `<p><b class="r5">UR ${(eg.rates[5] * 100).toFixed(2)}%</b> · <b class="r4">SR ${(eg.rates[4] * 100).toFixed(2)}%</b> · R ${(eg.rates[3] * 100).toFixed(2)}%</p>
+        <p class="muted" style="margin-top:8px;">专属武器无保底，按公示概率独立产出。</p>`;
+    } else {
+      const list5 = (pool[5] || []).map(c => window.GameData.CHARACTERS[c].name).join('、');
+      const list4 = (pool[4] || []).map(c => window.GameData.CHARACTERS[c].name).join('、');
+      body = `<p><b class="r5">5★ ${(g.rates[5] * 100).toFixed(2)}%</b> · <b class="r4">4★ ${(g.rates[4] * 100).toFixed(2)}%</b> · 3★ ${(g.rates[3] * 100).toFixed(2)}%</p>
+        <p class="muted" style="margin-top:8px;">· 累计 90 抽未出 5★，第 90 抽必出 5★（保底后计数重置）<br>· 首次十连必定包含至少 1 个 5★<br>· 每抽 +1 ⭐闪耀之星（${Game.SPARK_COST} 自选 5★ 服装）、+10 ✨希望之粉</p>
+        <div class="section-title" style="font-size:13px;margin-top:12px;">5★ 服装池</div><p class="muted" style="font-size:12px;">${list5 || '—'}</p>
+        <div class="section-title" style="font-size:13px;margin-top:8px;">4★ 服装池</div><p class="muted" style="font-size:12px;">${list4 || '—'}</p>`;
+    }
+    const m = this.openModal(`<h2>概率公示</h2><div style="max-height:56vh;overflow-y:auto;font-size:13px;line-height:1.7;">${body}</div>
+      <div class="close-row"><button class="btn" id="gr-ok">关闭</button></div>`);
+    m.querySelector('#gr-ok').onclick = () => this.closeModal(m);
   },
 
   exPoolCard(id) {
