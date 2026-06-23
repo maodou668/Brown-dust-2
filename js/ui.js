@@ -38,10 +38,16 @@ const UI = {
   },
 
   updateResources() {
-    document.getElementById('res-gold').textContent = Game.state.gold;
-    document.getElementById('res-gem').textContent = Game.state.gem;
-    const stone = document.getElementById('res-stone');
-    if (stone) stone.textContent = Game.state.awakenStone || 0;
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('res-gold', Game.state.gold);
+    set('res-gem', Game.state.gem);
+    set('res-stone', Game.state.awakenStone || 0);
+    Game.syncStamina();
+    set('res-stam', Game.state.stamina);
+    set('pc-lv', Game.accountLevel());
+    set('pc-pow', Game.playerPower());
+    const dot = document.getElementById('mail-dot');
+    if (dot) dot.style.display = Game.mailUnclaimed() > 0 ? '' : 'none';
   },
 
   // ---------- 弹窗 ----------
@@ -64,43 +70,57 @@ const UI = {
   // ============================================================
   renderHome() {
     const s = Game.state;
-    const totalChars = s.roster.length;
-    const cleared = s.cleared.length;
-    // 单一主界面（大厅）：满屏背景（未来放动态背景图）+ 底部横向功能按钮（含编队）
     Game.syncStamina();
-    const actions = [
-      { go: 'stages', icon: '🗺️', label: '冒险', sub: `${cleared}/${window.GameData.STAGES.length}` },
-      { go: 'dungeon', icon: '⚡', label: '副本', sub: `体力${s.stamina}` },
-      { go: 'dispatch', icon: '🧭', label: '远征', sub: '挂机产出' },
-      { go: 'arena', icon: '🏆', label: '竞技场', sub: `${Game.arenaRank((s.arena && s.arena.points) || 1000).name}` },
-      { go: 'event', icon: '🎏', label: '活动', sub: `🎟️${(s.event && s.event.coin) || 0}` },
-      { go: 'gacha', icon: '🎴', label: '招募', sub: `💎${s.gem}` },
-      { go: 'roster', icon: '👥', label: '佣兵', sub: `${totalChars}名` },
-      { act: 'team', icon: '⚔️', label: '编队', sub: `${s.team.length}/5` },
-      { act: 'forge', icon: '🔨', label: '锻造', sub: `${s.inventory.length}件` },
-      { go: 'welfare', icon: '🎁', label: '福利', sub: '签到/任务' },
-      { act: 'story', icon: '📖', label: '剧情', sub: '回顾' },
+    const cleared = s.cleared.length, total = window.GameData.STAGES.length;
+    const arenaName = Game.arenaRank((s.arena && s.arena.points) || 1000).name;
+    // 左栏：日常玩法入口（带角标）
+    const leftRail = [
+      { go: 'dungeon', icon: '⚡', label: '副本', tag: `${s.stamina}` },
+      { go: 'dispatch', icon: '🧭', label: '远征', tag: Game.dispatchHomeTag() },
+      { go: 'arena', icon: '🏆', label: '竞技场', tag: arenaName },
+      { go: 'event', icon: '🎏', label: '活动', tag: `🎟${(s.event && s.event.coin) || 0}` },
     ];
-    const btns = actions.map(a =>
-      `<button class="lobby-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
-        <span class="lb-icon">${a.icon}</span>
-        <span class="lb-label">${a.label}</span>
-        <span class="lb-sub">${a.sub}</span>
-      </button>`).join('');
+    // 右栏：信息/商店入口
+    const rightRail = [
+      { go: 'shop', icon: '🛒', label: '商店' },
+      { go: 'codex', icon: '📚', label: '图鉴' },
+      { act: 'ach', icon: '🏅', label: '成就' },
+      { act: 'announce', icon: '📢', label: '公告' },
+    ];
+    // 底部：核心养成功能
+    const bottom = [
+      { go: 'gacha', icon: '🎴', label: '招募' },
+      { go: 'roster', icon: '👥', label: '佣兵' },
+      { act: 'team', icon: '⚔️', label: '编队' },
+      { go: 'inventory', icon: '🎒', label: '背包' },
+      { act: 'forge', icon: '🔨', label: '锻造' },
+      { go: 'welfare', icon: '🎁', label: '福利', tag: Game.canCheckIn() ? '!' : '' },
+      { act: 'story', icon: '🎬', label: '剧情' },
+    ];
+    const railBtn = a => `<button class="rail-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
+      <span class="rb-icon">${a.icon}</span><span class="rb-label">${a.label}</span>${a.tag ? `<span class="rb-tag">${a.tag}</span>` : ''}</button>`;
+    const bottomBtn = a => `<button class="lobby-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
+      <span class="lb-icon">${a.icon}</span><span class="lb-label">${a.label}</span>${a.tag ? `<span class="lb-dot">${a.tag}</span>` : ''}</button>`;
     this.screenEl.innerHTML = `
       <div class="lobby">
         <div class="lobby-bg"><div class="lobby-bg-grid"></div></div>
-        <div class="lobby-content">
-          <div class="lobby-hero">
+        <div class="lobby-grid">
+          <div class="lobby-rail left">${leftRail.map(railBtn).join('')}</div>
+          <div class="lobby-center">
             <div class="lobby-welcome">
               <h1>棕色尘埃 <small>2</small></h1>
-              <p class="muted">欢迎回来，指挥官 · 已通关 ${cleared}/${window.GameData.STAGES.length} 关</p>
+              <p class="muted">欢迎回来，指挥官</p>
             </div>
+            <div class="lobby-char-ph">🗡️<span class="muted">（主角立绘 / 动态背景位）</span></div>
+            <button class="lobby-cta" data-go="stages">
+              <span class="cta-go">出 战</span>
+              <span class="cta-sub">主线冒险 · 已通关 ${cleared}/${total}</span>
+            </button>
           </div>
-          <div class="lobby-actions">${btns}</div>
+          <div class="lobby-rail right">${rightRail.map(railBtn).join('')}</div>
         </div>
-      </div>
-    `;
+        <div class="lobby-actions">${bottom.map(bottomBtn).join('')}</div>
+      </div>`;
     this.screenEl.querySelectorAll('[data-go]').forEach(c =>
       c.addEventListener('click', () => Main.switchScreen(c.dataset.go)));
     this.screenEl.querySelectorAll('[data-act]').forEach(c =>
@@ -109,6 +129,8 @@ const UI = {
         if (a === 'team') this.showTeamEditor(0);
         else if (a === 'forge') this.showForge();
         else if (a === 'story') this.showStoryReplay();
+        else if (a === 'ach') this.showAchievements();
+        else if (a === 'announce') this.showAnnounce();
       }));
   },
 
@@ -1451,6 +1473,183 @@ const UI = {
       reward: { gold: 0, gem: 0, exp: 0 }, isBoss: id === 'ev3',
     };
     BattleUI.start(stage, () => { if (Main.current === 'event') this.renderEvent(); });
+  },
+
+  // ============================================================
+  //  背包（装备一览）
+  // ============================================================
+  renderInventory() {
+    const inv = Game.state.inventory;
+    if (!this._invSort) this._invSort = 'rarity';
+    const equippedSet = new Set();
+    Game.state.roster.forEach(o => Object.values(o.equip || {}).forEach(iid => iid && equippedSet.add(iid)));
+    const items = inv.slice().sort((a, b) => {
+      const ta = Game.getGearTpl(a.tpl), tb = Game.getGearTpl(b.tpl);
+      if (this._invSort === 'rarity') return (tb.rarity - ta.rarity) || (b.lvl - a.lvl);
+      return (b.lvl || 0) - (a.lvl || 0);
+    });
+    const cards = items.length ? items.map(g => {
+      const tpl = Game.getGearTpl(g.tpl);
+      const eq = equippedSet.has(g.iid);
+      return `<div class="inv-item border-${this.rarityClass(tpl.rarity)}">
+        <div class="inv-ico">${tpl.icon}</div>
+        <div class="inv-main"><div class="inv-name">${tpl.name}${g.lvl ? ` +${g.lvl}` : ''}</div>
+          <div class="muted" style="font-size:11px;">${window.GameData.GEAR.RLABEL[tpl.rarity]} · ${({ weapon: '武器', armor: '防具', accessory: '饰品', ex: '专属' }[tpl.type] || '')}${eq ? ' · <span style="color:var(--accent);">已装备</span>' : ''}</div></div>
+      </div>`;
+    }).join('') : '<div class="muted" style="padding:24px;text-align:center;grid-column:1/-1;">背包空空如也，去锻造或副本获取装备吧。</div>';
+    this.screenEl.innerHTML = `
+      <div class="section-title">背包 <span class="muted" style="font-weight:400;font-size:12px;">· 共 ${inv.length} 件装备</span></div>
+      <div class="inv-tools">
+        <button class="btn secondary sm" id="inv-sort">排序：${this._invSort === 'rarity' ? '稀有度' : '强化等级'}</button>
+        <button class="btn secondary sm" id="inv-forge">🔨 前往锻造</button>
+      </div>
+      <div class="inv-grid">${cards}</div>`;
+    this.screenEl.querySelector('#inv-sort').onclick = () => { this._invSort = this._invSort === 'rarity' ? 'lvl' : 'rarity'; this.renderInventory(); };
+    this.screenEl.querySelector('#inv-forge').onclick = () => this.showForge();
+  },
+
+  // ============================================================
+  //  图鉴（角色档案：已拥有 + 未解锁）
+  // ============================================================
+  renderCodex() {
+    const all = Object.keys(window.GameData.CHARACTERS);
+    const ownedIds = new Set(Game.state.roster.map(o => o.charId));
+    const cards = all.sort((a, b) => window.GameData.CHARACTERS[b].rarity - window.GameData.CHARACTERS[a].rarity).map(id => {
+      const c = window.GameData.CHARACTERS[id];
+      const owned = ownedIds.has(id);
+      const el = window.GameData.ELEMENTS[c.element], cl = window.GameData.CLASSES[c.cls];
+      if (!owned) return `<div class="codex-card locked"><div class="cx-art">❔</div><div class="cx-name muted">？？？</div><div class="cx-meta muted">${c.rarity}★</div></div>`;
+      const o = Game.state.roster.find(x => x.charId === id);
+      return `<div class="codex-card border-${this.rarityClass(c.rarity)}" data-uid="${o.uid}">
+        <div class="cx-art" style="background:radial-gradient(circle at 50% 35%, ${c.color}44, transparent);">${this.charAvatar(id)}</div>
+        <div class="cx-name">${c.name}</div>
+        <div class="cx-meta">${el.icon}${cl.icon} ${c.rarity}★ Lv.${o.level}</div>
+      </div>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="section-title">图鉴 <span class="muted" style="font-weight:400;font-size:12px;">· 已收集 ${ownedIds.size}/${all.length}</span></div>
+      <div class="codex-grid">${cards}</div>`;
+    this.screenEl.querySelectorAll('[data-uid]').forEach(c => c.onclick = () => this.showCharDetail(c.dataset.uid));
+  },
+
+  // ============================================================
+  //  商店（每日装备商店 + 保底兑换）
+  // ============================================================
+  renderShop() {
+    Game.ensureDaily();
+    const s = Game.state;
+    const slots = s.shop.slots.map((slot, i) => {
+      const tpl = Game.getGearTpl(slot.tpl);
+      const sold = s.shop.bought[i];
+      return `<div class="shop-card border-${this.rarityClass(tpl.rarity)} ${sold ? 'sold' : ''}">
+        <div class="shop-ico">${tpl.icon}</div>
+        <div class="shop-name">${tpl.name}</div>
+        <div class="muted" style="font-size:11px;">${window.GameData.GEAR.RLABEL[tpl.rarity]}</div>
+        <button class="btn sm ${sold ? 'secondary' : 'gold'}" data-buy="${i}" ${sold || s.gold < slot.price ? 'disabled' : ''}>${sold ? '已售出' : `🪙${slot.price}`}</button>
+      </div>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="section-title">商店 <span class="muted" style="font-weight:400;font-size:12px;">· 每日刷新</span></div>
+      <div class="shop-grid">${slots}</div>
+      <div class="section-title" style="margin-top:16px;">保底兑换</div>
+      <div class="exchange-card">
+        <div><b>✨ 希望之粉</b> <span class="muted">${s.powder}/${Game.POWDER_COST}</span><div class="muted" style="font-size:11px;">兑换必出 5★ 招募</div></div>
+        <button class="btn sm ${s.powder >= Game.POWDER_COST ? 'gold' : 'secondary'}" id="sh-powder" ${s.powder >= Game.POWDER_COST ? '' : 'disabled'}>兑换</button>
+      </div>
+      <div class="exchange-card">
+        <div><b>⭐ 闪耀之星</b> <span class="muted">${s.spark}/${Game.SPARK_COST}</span><div class="muted" style="font-size:11px;">自选一套 5★ 服装</div></div>
+        <button class="btn sm ${s.spark >= Game.SPARK_COST ? '' : 'secondary'}" id="sh-spark" ${s.spark >= Game.SPARK_COST ? '' : 'disabled'}>自选</button>
+      </div>`;
+    this.screenEl.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => {
+      const r = Game.buyShopItem(parseInt(b.dataset.buy, 10));
+      if (!r.ok) { this.toast(r.msg); return; }
+      const tpl = Game.getGearTpl(r.tpl);
+      this.toast(`购买成功：${tpl.name}`); this.updateResources(); this.renderShop();
+    });
+    const pw = this.screenEl.querySelector('#sh-powder');
+    if (pw) pw.onclick = () => { const r = Game.powderBox(); if (!r.ok) { this.toast(r.msg); return; } this.closeModal && 0; this.toast('已兑换必出 5★ 招募券，请在招募使用'); this.updateResources(); this.renderShop(); };
+    const sp = this.screenEl.querySelector('#sh-spark');
+    if (sp) sp.onclick = () => this.showSparkPicker();
+  },
+
+  // ============================================================
+  //  邮件 / 设置 / 资料 / 公告（弹窗）
+  // ============================================================
+  showMailbox() {
+    Game.ensureMail();
+    const render = (m) => {
+      const list = Game.state.mail.map(ml => {
+        const rw = ml.reward && Object.keys(ml.reward).length
+          ? Object.entries(ml.reward).map(([k, v]) => ({ gold: '🪙', gem: '💎', stone: '🔮', powder: '✨', spark: '⭐' }[k] + v)).join(' ') : '';
+        return `<div class="mail-item ${ml.claimed ? 'claimed' : ''}">
+          <div class="mail-main"><div class="mail-title">${ml.title}</div><div class="mail-body muted">${ml.body}</div>${rw ? `<div class="mail-rew">${rw}</div>` : ''}</div>
+          ${rw ? (ml.claimed ? '<span class="muted" style="font-size:12px;">已领</span>' : `<button class="btn sm" data-claim="${ml.id}">领取</button>`) : ''}
+        </div>`;
+      }).join('');
+      m.querySelector('.mb-list').innerHTML = list;
+      m.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => {
+        Game.claimMail(b.dataset.claim); this.updateResources(); render(m);
+      });
+    };
+    const m = this.openModal(`
+      <h2>📧 邮件</h2>
+      <div class="mb-list" style="max-height:50vh;overflow-y:auto;margin:8px 0;"></div>
+      <div class="close-row"><button class="btn secondary" id="mb-close">关闭</button><button class="btn" id="mb-all">一键领取</button></div>`);
+    render(m);
+    m.querySelector('#mb-close').onclick = () => this.closeModal(m);
+    m.querySelector('#mb-all').onclick = () => {
+      const r = Game.claimAllMail();
+      if (!r.n) { this.toast('没有可领取的邮件'); return; }
+      this.toast(`已领取 ${r.n} 封邮件奖励`); this.updateResources(); render(m);
+    };
+  },
+  showProfile() {
+    const s = Game.state;
+    const costumes = s.roster.reduce((n, o) => n + (o.costumes ? o.costumes.length : 0), 0);
+    this.openModal(`
+      <div class="detail-head">
+        <div class="detail-art" style="background:radial-gradient(circle at 50% 35%, #b06bff55, var(--panel));font-size:40px;display:grid;place-items:center;">🎖️</div>
+        <div class="detail-title"><h2>指挥官</h2><div class="subt">账号等级 Lv.${Game.accountLevel()}</div><div class="meta">出战战力 ⚔ ${Game.playerPower()}</div></div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-item"><span>👥 佣兵</span><span class="sv">${s.roster.length}/${Object.keys(window.GameData.CHARACTERS).length}</span></div>
+        <div class="stat-item"><span>👗 服装</span><span class="sv">${costumes}</span></div>
+        <div class="stat-item"><span>🗺️ 通关</span><span class="sv">${s.cleared.length}/${window.GameData.STAGES.length}</span></div>
+        <div class="stat-item"><span>🏆 竞技</span><span class="sv">${Game.arenaRank((s.arena && s.arena.points) || 1000).name}</span></div>
+        <div class="stat-item"><span>🎴 招募</span><span class="sv">${s.stats.pulls}</span></div>
+        <div class="stat-item"><span>⚔️ 胜场</span><span class="sv">${s.stats.wins}</span></div>
+      </div>
+      <div class="close-row"><button class="btn" id="pf-ok">关闭</button></div>`).querySelector('#pf-ok').onclick = function () { UI.closeModal(this.closest('.modal-overlay') || this.closest('.modal')); };
+  },
+  showAnnounce() {
+    this.openModal(`
+      <h2>📢 公告</h2>
+      <div style="max-height:54vh;overflow-y:auto;font-size:13px;line-height:1.7;">
+        <p><b>【新版本】单机玩法大更新</b></p>
+        <p class="muted">新增竞技场、资源副本、远征派遣、限时活动，以及好感、觉醒系统。横屏游玩体验最佳。</p>
+        <p style="margin-top:10px;"><b>【玩法指引】</b></p>
+        <p class="muted">· 副本消耗体力换取金币/经验/装备，可扫荡<br>· 远征按真实时间挂机产出，可离线<br>· 竞技场每日 5 次挑战 AI 防守队涨分<br>· 弱点元素命中 BOSS 可触发破防<br>· 角色详情可赠礼(好感)与觉醒(全属性)</p>
+      </div>
+      <div class="close-row"><button class="btn" id="an-ok">知道了</button></div>`).querySelector('#an-ok').onclick = function () { UI.closeModal(this.closest('.modal-overlay') || this.closest('.modal')); };
+  },
+  showSettings() {
+    const speed = (() => { try { return parseInt(localStorage.getItem('bd2_battle_speed'), 10) || 1; } catch (e) { return 1; } })();
+    const m = this.openModal(`
+      <h2>⚙️ 设置</h2>
+      <div class="set-row"><span>音效 / 音乐</span><button class="btn secondary sm" id="set-mute">${(window.Sound && Sound.muted) ? '🔇 已静音' : '🔊 开启'}</button></div>
+      <div class="set-row"><span>默认战斗倍速</span><button class="btn secondary sm" id="set-speed">${speed}x</button></div>
+      <div class="set-row"><span>存档管理</span><button class="btn secondary sm" id="set-save">导出 / 导入</button></div>
+      <div class="set-row"><span>重置存档</span><button class="btn sm" id="set-reset" style="background:linear-gradient(135deg,#ff5a6a,#b02a3a);">重置</button></div>
+      <div class="close-row"><button class="btn" id="set-close">关闭</button></div>`);
+    m.querySelector('#set-close').onclick = () => this.closeModal(m);
+    m.querySelector('#set-mute').onclick = (e) => { const b = document.getElementById('btn-mute'); if (b) b.click(); e.target.textContent = (window.Sound && Sound.muted) ? '🔇 已静音' : '🔊 开启'; };
+    m.querySelector('#set-speed').onclick = (e) => {
+      let sp = (parseInt(e.target.textContent, 10) || 1) + 1; if (sp > 3) sp = 1;
+      try { localStorage.setItem('bd2_battle_speed', String(sp)); } catch (er) {}
+      e.target.textContent = sp + 'x';
+    };
+    m.querySelector('#set-save').onclick = () => { this.closeModal(m); this.showSaveManager(); };
+    m.querySelector('#set-reset').onclick = () => { this.closeModal(m); const b = document.getElementById('btn-reset'); if (b) b.click(); };
   },
 
   /** 存档管理：导出 / 导入 */

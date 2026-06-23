@@ -971,6 +971,10 @@ const Game = {
     const s = this.state.dispatch.slots[slotIdx];
     return s && Date.now() >= s.endTs;
   },
+  dispatchHomeTag() {
+    const ready = this.state.dispatch.slots.filter((_, i) => this.dispatchDone(i)).length;
+    return ready ? '✓' + ready : '';
+  },
   claimDispatch(slotIdx) {
     const s = this.state.dispatch.slots[slotIdx];
     if (!s) return { ok: false, msg: '该位无派遣' };
@@ -1027,6 +1031,46 @@ const Game = {
   playerPower() {
     return this.teamPowerOf(this.state.team.map(uid => this.getOwned(uid)).filter(Boolean));
   },
+  // 账号等级（由进度估算：通关 + 角色数 + 角色等级 + 竞技积分）
+  accountLevel() {
+    const s = this.state;
+    const lvSum = s.roster.reduce((a, o) => a + (o.level || 1), 0);
+    return Math.max(1, Math.floor(s.cleared.length * 2 + s.roster.length + lvSum / 25 + ((s.arena && s.arena.points || 1000) - 1000) / 200));
+  },
+
+  // ---------- 邮箱（系统邮件 + 一键领取） ----------
+  ensureMail() {
+    if (!this.state.mail) {
+      this.state.mail = [
+        { id: 'welcome', title: '欢迎来到棕色尘埃 2', body: '指挥官，欢迎加入！这份新手礼包助你启程。', reward: { gem: 600, gold: 5000 }, claimed: false, ts: Date.now() },
+        { id: 'starter_stam', title: '体力补给', body: '冒险离不开体力，先送你一些觉醒石与希望之粉。', reward: { stone: 5, powder: 50 }, claimed: false, ts: Date.now() },
+        { id: 'maint', title: '版本更新公告', body: '新增：竞技场、资源副本、远征派遣、限时活动、好感与觉醒系统。祝游玩愉快！', reward: {}, claimed: false, ts: Date.now() },
+      ];
+      this.save();
+    }
+  },
+  mailUnclaimed() { this.ensureMail(); return this.state.mail.filter(m => !m.claimed && m.reward && Object.keys(m.reward).length).length; },
+  claimMail(id) {
+    this.ensureMail();
+    const m = this.state.mail.find(x => x.id === id);
+    if (!m || m.claimed) return { ok: false };
+    if (m.reward) this.applyReward(m.reward);
+    m.claimed = true; this.save();
+    return { ok: true, reward: m.reward };
+  },
+  claimAllMail() {
+    this.ensureMail();
+    const got = { gold: 0, gem: 0, stone: 0, powder: 0 };
+    let n = 0;
+    this.state.mail.forEach(m => {
+      if (m.claimed || !m.reward || !Object.keys(m.reward).length) return;
+      this.applyReward(m.reward); m.claimed = true; n++;
+      for (const k in m.reward) if (got[k] != null) got[k] += m.reward[k];
+    });
+    this.save();
+    return { n, got };
+  },
+
   arenaTeamLevel() {
     const lv = this.state.team.map(uid => { const o = this.getOwned(uid); return o ? o.level : 0; }).filter(Boolean);
     return Math.max(5, Math.round(lv.length ? lv.reduce((a, b) => a + b, 0) / lv.length : 8));

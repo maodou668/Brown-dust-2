@@ -1380,22 +1380,115 @@ body {
 .ev-si-name { font-weight: 700; font-size: 13px; }
 .ev-shop-item .btn.sm { margin-top: 0; white-space: nowrap; }
 
+/* ============================================================
+   BD2 风格主页 hub + 顶栏 + 新功能板块 + 折叠屏自适应
+   ============================================================ */
+/* 顶栏：玩家信息 + 资源 + 系统 */
+.profile-chip { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid rgba(255,255,255,.08); border-radius: 22px; padding: 4px 12px 4px 5px; cursor: pointer; color: var(--text); }
+.profile-chip:active { transform: scale(.97); }
+.pc-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: grid; place-items: center; font-size: 16px; }
+.pc-info { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
+.pc-name { font-size: 13px; font-weight: 700; }
+.pc-sub { font-size: 10px; color: var(--text-dim); }
+.topbar-sys { display: flex; align-items: center; gap: 6px; }
+.dot-wrap { position: relative; }
+.red-dot { position: absolute; top: -3px; right: -4px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; border: 1px solid var(--bg2); }
+
+/* 大厅 hub 布局 */
+.lobby { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.lobby-grid { position: relative; z-index: 1; flex: 1; display: flex; align-items: stretch; gap: 10px; padding: 12px; min-height: 0; }
+.lobby-rail { display: flex; flex-direction: column; gap: 8px; justify-content: center; width: 82px; flex: 0 0 auto; overflow-y: auto; }
+.lobby-rail::-webkit-scrollbar { width: 0; }
+.lobby-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; min-width: 0; }
+.lobby-char-ph { font-size: 42px; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 6px; opacity: .45; }
+.lobby-char-ph .muted { font-size: 11px; }
+.rail-btn { position: relative; background: rgba(38,29,51,.74); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 10px 6px; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; backdrop-filter: blur(4px); color: var(--text); }
+.rail-btn:active { transform: scale(.95); }
+.rail-btn .rb-icon { font-size: 23px; line-height: 1; }
+.rail-btn .rb-label { font-size: 11px; font-weight: 700; }
+.rail-btn .rb-tag { position: absolute; top: -6px; right: -4px; background: var(--accent); color: #fff; font-size: 9px; padding: 1px 5px; border-radius: 8px; max-width: 54px; overflow: hidden; }
+.lobby-cta { position: relative; background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: none; border-radius: 16px; padding: 14px 44px; color: #fff; cursor: pointer; display: flex; flex-direction: column; gap: 2px; box-shadow: 0 6px 22px rgba(176,107,255,.45); }
+.lobby-cta:active { transform: scale(.97); }
+.lobby-cta .cta-go { font-size: 22px; font-weight: 800; letter-spacing: 5px; }
+.lobby-cta .cta-sub { font-size: 11px; opacity: .92; }
+.lobby-btn { position: relative; }
+.lb-dot { position: absolute; top: -4px; right: -2px; background: var(--danger); color: #fff; font-size: 9px; min-width: 14px; height: 14px; line-height: 14px; text-align: center; border-radius: 7px; padding: 0 3px; }
+
+/* 折叠屏 / 宽屏放大；窄屏收紧 */
+@media (min-width: 760px) {
+  .lobby-rail { width: 104px; }
+  .rail-btn .rb-icon { font-size: 28px; } .rail-btn .rb-label { font-size: 13px; }
+  .lobby-welcome h1 { font-size: 38px; }
+  .lobby-cta { padding: 18px 64px; } .lobby-cta .cta-go { font-size: 28px; }
+  .lobby-char-ph { font-size: 64px; }
+  .lobby-btn .lb-icon { font-size: 30px; } .lobby-btn { min-width: 92px; }
+}
+@media (max-height: 360px) {
+  .lobby-char-ph { display: none; }
+  .lobby-grid { padding: 6px; }
+  .lobby-cta { padding: 10px 30px; } .lobby-cta .cta-go { font-size: 18px; }
+}
+
+/* 背包 */
+.inv-tools { display: flex; gap: 8px; margin-bottom: 10px; }
+.inv-tools .btn.sm { margin-top: 0; }
+.inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.inv-item { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 8px 10px; }
+.inv-ico { font-size: 24px; }
+.inv-main { min-width: 0; } .inv-name { font-weight: 700; font-size: 13px; }
+
+/* 图鉴 */
+.codex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+.codex-card { background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 8px; text-align: center; cursor: pointer; }
+.codex-card.locked { opacity: .5; cursor: default; }
+.cx-art { aspect-ratio: 1/1; border-radius: 10px; display: grid; place-items: center; font-size: 34px; overflow: hidden; background: var(--panel-2); }
+.cx-art img.char-img { width: 100%; height: 100%; object-fit: cover; }
+.cx-name { font-size: 12px; font-weight: 700; margin-top: 4px; }
+.cx-meta { font-size: 10px; color: var(--text-dim); }
+
+/* 商店 / 兑换 */
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+.shop-card { background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 10px; text-align: center; }
+.shop-card.sold { opacity: .5; }
+.shop-ico { font-size: 30px; } .shop-name { font-size: 12px; font-weight: 700; margin: 4px 0; }
+.shop-card .btn.sm { margin-top: 4px; width: 100%; }
+.exchange-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+.exchange-card .btn.sm { margin-top: 0; }
+
+/* 邮件 / 设置 */
+.mail-item { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+.mail-item.claimed { opacity: .55; }
+.mail-main { flex: 1; min-width: 0; } .mail-title { font-weight: 700; font-size: 13px; }
+.mail-body { font-size: 11px; line-height: 1.4; margin: 2px 0; }
+.mail-rew { font-size: 12px; color: var(--gold); }
+.mail-item .btn.sm { margin-top: 0; }
+.set-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 14px; }
+.set-row .btn.sm { margin-top: 0; }
+
 </style>
 </head>
 <body>
   <div id="app">
-    <!-- 顶部资源栏 -->
+    <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
-      <div class="logo">
-        <span class="logo-mark">BD</span>
-        <span class="logo-text">棕色尘埃<small>2</small></span>
-      </div>
+      <button id="topbar-profile" class="profile-chip" title="玩家资料">
+        <span class="pc-avatar">🎖️</span>
+        <span class="pc-info">
+          <span class="pc-name">指挥官</span>
+          <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
+        </span>
+      </button>
       <div class="resources">
         <div class="res" title="金币"><span class="res-icon">🪙</span><span id="res-gold">0</span></div>
         <div class="res" title="宝石"><span class="res-icon">💎</span><span id="res-gem">0</span></div>
         <div class="res" title="觉醒石"><span class="res-icon">🔮</span><span id="res-stone">0</span></div>
+        <div class="res" title="体力"><span class="res-icon">⚡</span><span id="res-stam">0</span></div>
+      </div>
+      <div class="topbar-sys">
+        <button id="btn-mail" class="ghost-btn" title="邮件"><span class="dot-wrap">📧<span id="mail-dot" class="red-dot" style="display:none;"></span></span></button>
+        <button id="btn-settings" class="ghost-btn" title="设置">⚙️</button>
         <button id="btn-mute" class="ghost-btn" title="音效开关">🔊</button>
-        <button id="btn-reset" class="ghost-btn" title="重置存档">↺</button>
+        <button id="btn-reset" class="ghost-btn" title="重置存档" style="display:none;">↺</button>
       </div>
     </header>
 
@@ -1416,7 +1509,7 @@ body {
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '48';</script>
+  <script>window.ASSET_VER = '49';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -3457,6 +3550,10 @@ const Game = {
     const s = this.state.dispatch.slots[slotIdx];
     return s && Date.now() >= s.endTs;
   },
+  dispatchHomeTag() {
+    const ready = this.state.dispatch.slots.filter((_, i) => this.dispatchDone(i)).length;
+    return ready ? '✓' + ready : '';
+  },
   claimDispatch(slotIdx) {
     const s = this.state.dispatch.slots[slotIdx];
     if (!s) return { ok: false, msg: '该位无派遣' };
@@ -3513,6 +3610,46 @@ const Game = {
   playerPower() {
     return this.teamPowerOf(this.state.team.map(uid => this.getOwned(uid)).filter(Boolean));
   },
+  // 账号等级（由进度估算：通关 + 角色数 + 角色等级 + 竞技积分）
+  accountLevel() {
+    const s = this.state;
+    const lvSum = s.roster.reduce((a, o) => a + (o.level || 1), 0);
+    return Math.max(1, Math.floor(s.cleared.length * 2 + s.roster.length + lvSum / 25 + ((s.arena && s.arena.points || 1000) - 1000) / 200));
+  },
+
+  // ---------- 邮箱（系统邮件 + 一键领取） ----------
+  ensureMail() {
+    if (!this.state.mail) {
+      this.state.mail = [
+        { id: 'welcome', title: '欢迎来到棕色尘埃 2', body: '指挥官，欢迎加入！这份新手礼包助你启程。', reward: { gem: 600, gold: 5000 }, claimed: false, ts: Date.now() },
+        { id: 'starter_stam', title: '体力补给', body: '冒险离不开体力，先送你一些觉醒石与希望之粉。', reward: { stone: 5, powder: 50 }, claimed: false, ts: Date.now() },
+        { id: 'maint', title: '版本更新公告', body: '新增：竞技场、资源副本、远征派遣、限时活动、好感与觉醒系统。祝游玩愉快！', reward: {}, claimed: false, ts: Date.now() },
+      ];
+      this.save();
+    }
+  },
+  mailUnclaimed() { this.ensureMail(); return this.state.mail.filter(m => !m.claimed && m.reward && Object.keys(m.reward).length).length; },
+  claimMail(id) {
+    this.ensureMail();
+    const m = this.state.mail.find(x => x.id === id);
+    if (!m || m.claimed) return { ok: false };
+    if (m.reward) this.applyReward(m.reward);
+    m.claimed = true; this.save();
+    return { ok: true, reward: m.reward };
+  },
+  claimAllMail() {
+    this.ensureMail();
+    const got = { gold: 0, gem: 0, stone: 0, powder: 0 };
+    let n = 0;
+    this.state.mail.forEach(m => {
+      if (m.claimed || !m.reward || !Object.keys(m.reward).length) return;
+      this.applyReward(m.reward); m.claimed = true; n++;
+      for (const k in m.reward) if (got[k] != null) got[k] += m.reward[k];
+    });
+    this.save();
+    return { n, got };
+  },
+
   arenaTeamLevel() {
     const lv = this.state.team.map(uid => { const o = this.getOwned(uid); return o ? o.level : 0; }).filter(Boolean);
     return Math.max(5, Math.round(lv.length ? lv.reduce((a, b) => a + b, 0) / lv.length : 8));
@@ -4274,10 +4411,16 @@ const UI = {
   },
 
   updateResources() {
-    document.getElementById('res-gold').textContent = Game.state.gold;
-    document.getElementById('res-gem').textContent = Game.state.gem;
-    const stone = document.getElementById('res-stone');
-    if (stone) stone.textContent = Game.state.awakenStone || 0;
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('res-gold', Game.state.gold);
+    set('res-gem', Game.state.gem);
+    set('res-stone', Game.state.awakenStone || 0);
+    Game.syncStamina();
+    set('res-stam', Game.state.stamina);
+    set('pc-lv', Game.accountLevel());
+    set('pc-pow', Game.playerPower());
+    const dot = document.getElementById('mail-dot');
+    if (dot) dot.style.display = Game.mailUnclaimed() > 0 ? '' : 'none';
   },
 
   // ---------- 弹窗 ----------
@@ -4300,43 +4443,57 @@ const UI = {
   // ============================================================
   renderHome() {
     const s = Game.state;
-    const totalChars = s.roster.length;
-    const cleared = s.cleared.length;
-    // 单一主界面（大厅）：满屏背景（未来放动态背景图）+ 底部横向功能按钮（含编队）
     Game.syncStamina();
-    const actions = [
-      { go: 'stages', icon: '🗺️', label: '冒险', sub: `${cleared}/${window.GameData.STAGES.length}` },
-      { go: 'dungeon', icon: '⚡', label: '副本', sub: `体力${s.stamina}` },
-      { go: 'dispatch', icon: '🧭', label: '远征', sub: '挂机产出' },
-      { go: 'arena', icon: '🏆', label: '竞技场', sub: `${Game.arenaRank((s.arena && s.arena.points) || 1000).name}` },
-      { go: 'event', icon: '🎏', label: '活动', sub: `🎟️${(s.event && s.event.coin) || 0}` },
-      { go: 'gacha', icon: '🎴', label: '招募', sub: `💎${s.gem}` },
-      { go: 'roster', icon: '👥', label: '佣兵', sub: `${totalChars}名` },
-      { act: 'team', icon: '⚔️', label: '编队', sub: `${s.team.length}/5` },
-      { act: 'forge', icon: '🔨', label: '锻造', sub: `${s.inventory.length}件` },
-      { go: 'welfare', icon: '🎁', label: '福利', sub: '签到/任务' },
-      { act: 'story', icon: '📖', label: '剧情', sub: '回顾' },
+    const cleared = s.cleared.length, total = window.GameData.STAGES.length;
+    const arenaName = Game.arenaRank((s.arena && s.arena.points) || 1000).name;
+    // 左栏：日常玩法入口（带角标）
+    const leftRail = [
+      { go: 'dungeon', icon: '⚡', label: '副本', tag: `${s.stamina}` },
+      { go: 'dispatch', icon: '🧭', label: '远征', tag: Game.dispatchHomeTag() },
+      { go: 'arena', icon: '🏆', label: '竞技场', tag: arenaName },
+      { go: 'event', icon: '🎏', label: '活动', tag: `🎟${(s.event && s.event.coin) || 0}` },
     ];
-    const btns = actions.map(a =>
-      `<button class="lobby-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
-        <span class="lb-icon">${a.icon}</span>
-        <span class="lb-label">${a.label}</span>
-        <span class="lb-sub">${a.sub}</span>
-      </button>`).join('');
+    // 右栏：信息/商店入口
+    const rightRail = [
+      { go: 'shop', icon: '🛒', label: '商店' },
+      { go: 'codex', icon: '📚', label: '图鉴' },
+      { act: 'ach', icon: '🏅', label: '成就' },
+      { act: 'announce', icon: '📢', label: '公告' },
+    ];
+    // 底部：核心养成功能
+    const bottom = [
+      { go: 'gacha', icon: '🎴', label: '招募' },
+      { go: 'roster', icon: '👥', label: '佣兵' },
+      { act: 'team', icon: '⚔️', label: '编队' },
+      { go: 'inventory', icon: '🎒', label: '背包' },
+      { act: 'forge', icon: '🔨', label: '锻造' },
+      { go: 'welfare', icon: '🎁', label: '福利', tag: Game.canCheckIn() ? '!' : '' },
+      { act: 'story', icon: '🎬', label: '剧情' },
+    ];
+    const railBtn = a => `<button class="rail-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
+      <span class="rb-icon">${a.icon}</span><span class="rb-label">${a.label}</span>${a.tag ? `<span class="rb-tag">${a.tag}</span>` : ''}</button>`;
+    const bottomBtn = a => `<button class="lobby-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
+      <span class="lb-icon">${a.icon}</span><span class="lb-label">${a.label}</span>${a.tag ? `<span class="lb-dot">${a.tag}</span>` : ''}</button>`;
     this.screenEl.innerHTML = `
       <div class="lobby">
         <div class="lobby-bg"><div class="lobby-bg-grid"></div></div>
-        <div class="lobby-content">
-          <div class="lobby-hero">
+        <div class="lobby-grid">
+          <div class="lobby-rail left">${leftRail.map(railBtn).join('')}</div>
+          <div class="lobby-center">
             <div class="lobby-welcome">
               <h1>棕色尘埃 <small>2</small></h1>
-              <p class="muted">欢迎回来，指挥官 · 已通关 ${cleared}/${window.GameData.STAGES.length} 关</p>
+              <p class="muted">欢迎回来，指挥官</p>
             </div>
+            <div class="lobby-char-ph">🗡️<span class="muted">（主角立绘 / 动态背景位）</span></div>
+            <button class="lobby-cta" data-go="stages">
+              <span class="cta-go">出 战</span>
+              <span class="cta-sub">主线冒险 · 已通关 ${cleared}/${total}</span>
+            </button>
           </div>
-          <div class="lobby-actions">${btns}</div>
+          <div class="lobby-rail right">${rightRail.map(railBtn).join('')}</div>
         </div>
-      </div>
-    `;
+        <div class="lobby-actions">${bottom.map(bottomBtn).join('')}</div>
+      </div>`;
     this.screenEl.querySelectorAll('[data-go]').forEach(c =>
       c.addEventListener('click', () => Main.switchScreen(c.dataset.go)));
     this.screenEl.querySelectorAll('[data-act]').forEach(c =>
@@ -4345,6 +4502,8 @@ const UI = {
         if (a === 'team') this.showTeamEditor(0);
         else if (a === 'forge') this.showForge();
         else if (a === 'story') this.showStoryReplay();
+        else if (a === 'ach') this.showAchievements();
+        else if (a === 'announce') this.showAnnounce();
       }));
   },
 
@@ -5687,6 +5846,183 @@ const UI = {
       reward: { gold: 0, gem: 0, exp: 0 }, isBoss: id === 'ev3',
     };
     BattleUI.start(stage, () => { if (Main.current === 'event') this.renderEvent(); });
+  },
+
+  // ============================================================
+  //  背包（装备一览）
+  // ============================================================
+  renderInventory() {
+    const inv = Game.state.inventory;
+    if (!this._invSort) this._invSort = 'rarity';
+    const equippedSet = new Set();
+    Game.state.roster.forEach(o => Object.values(o.equip || {}).forEach(iid => iid && equippedSet.add(iid)));
+    const items = inv.slice().sort((a, b) => {
+      const ta = Game.getGearTpl(a.tpl), tb = Game.getGearTpl(b.tpl);
+      if (this._invSort === 'rarity') return (tb.rarity - ta.rarity) || (b.lvl - a.lvl);
+      return (b.lvl || 0) - (a.lvl || 0);
+    });
+    const cards = items.length ? items.map(g => {
+      const tpl = Game.getGearTpl(g.tpl);
+      const eq = equippedSet.has(g.iid);
+      return `<div class="inv-item border-${this.rarityClass(tpl.rarity)}">
+        <div class="inv-ico">${tpl.icon}</div>
+        <div class="inv-main"><div class="inv-name">${tpl.name}${g.lvl ? ` +${g.lvl}` : ''}</div>
+          <div class="muted" style="font-size:11px;">${window.GameData.GEAR.RLABEL[tpl.rarity]} · ${({ weapon: '武器', armor: '防具', accessory: '饰品', ex: '专属' }[tpl.type] || '')}${eq ? ' · <span style="color:var(--accent);">已装备</span>' : ''}</div></div>
+      </div>`;
+    }).join('') : '<div class="muted" style="padding:24px;text-align:center;grid-column:1/-1;">背包空空如也，去锻造或副本获取装备吧。</div>';
+    this.screenEl.innerHTML = `
+      <div class="section-title">背包 <span class="muted" style="font-weight:400;font-size:12px;">· 共 ${inv.length} 件装备</span></div>
+      <div class="inv-tools">
+        <button class="btn secondary sm" id="inv-sort">排序：${this._invSort === 'rarity' ? '稀有度' : '强化等级'}</button>
+        <button class="btn secondary sm" id="inv-forge">🔨 前往锻造</button>
+      </div>
+      <div class="inv-grid">${cards}</div>`;
+    this.screenEl.querySelector('#inv-sort').onclick = () => { this._invSort = this._invSort === 'rarity' ? 'lvl' : 'rarity'; this.renderInventory(); };
+    this.screenEl.querySelector('#inv-forge').onclick = () => this.showForge();
+  },
+
+  // ============================================================
+  //  图鉴（角色档案：已拥有 + 未解锁）
+  // ============================================================
+  renderCodex() {
+    const all = Object.keys(window.GameData.CHARACTERS);
+    const ownedIds = new Set(Game.state.roster.map(o => o.charId));
+    const cards = all.sort((a, b) => window.GameData.CHARACTERS[b].rarity - window.GameData.CHARACTERS[a].rarity).map(id => {
+      const c = window.GameData.CHARACTERS[id];
+      const owned = ownedIds.has(id);
+      const el = window.GameData.ELEMENTS[c.element], cl = window.GameData.CLASSES[c.cls];
+      if (!owned) return `<div class="codex-card locked"><div class="cx-art">❔</div><div class="cx-name muted">？？？</div><div class="cx-meta muted">${c.rarity}★</div></div>`;
+      const o = Game.state.roster.find(x => x.charId === id);
+      return `<div class="codex-card border-${this.rarityClass(c.rarity)}" data-uid="${o.uid}">
+        <div class="cx-art" style="background:radial-gradient(circle at 50% 35%, ${c.color}44, transparent);">${this.charAvatar(id)}</div>
+        <div class="cx-name">${c.name}</div>
+        <div class="cx-meta">${el.icon}${cl.icon} ${c.rarity}★ Lv.${o.level}</div>
+      </div>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="section-title">图鉴 <span class="muted" style="font-weight:400;font-size:12px;">· 已收集 ${ownedIds.size}/${all.length}</span></div>
+      <div class="codex-grid">${cards}</div>`;
+    this.screenEl.querySelectorAll('[data-uid]').forEach(c => c.onclick = () => this.showCharDetail(c.dataset.uid));
+  },
+
+  // ============================================================
+  //  商店（每日装备商店 + 保底兑换）
+  // ============================================================
+  renderShop() {
+    Game.ensureDaily();
+    const s = Game.state;
+    const slots = s.shop.slots.map((slot, i) => {
+      const tpl = Game.getGearTpl(slot.tpl);
+      const sold = s.shop.bought[i];
+      return `<div class="shop-card border-${this.rarityClass(tpl.rarity)} ${sold ? 'sold' : ''}">
+        <div class="shop-ico">${tpl.icon}</div>
+        <div class="shop-name">${tpl.name}</div>
+        <div class="muted" style="font-size:11px;">${window.GameData.GEAR.RLABEL[tpl.rarity]}</div>
+        <button class="btn sm ${sold ? 'secondary' : 'gold'}" data-buy="${i}" ${sold || s.gold < slot.price ? 'disabled' : ''}>${sold ? '已售出' : `🪙${slot.price}`}</button>
+      </div>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="section-title">商店 <span class="muted" style="font-weight:400;font-size:12px;">· 每日刷新</span></div>
+      <div class="shop-grid">${slots}</div>
+      <div class="section-title" style="margin-top:16px;">保底兑换</div>
+      <div class="exchange-card">
+        <div><b>✨ 希望之粉</b> <span class="muted">${s.powder}/${Game.POWDER_COST}</span><div class="muted" style="font-size:11px;">兑换必出 5★ 招募</div></div>
+        <button class="btn sm ${s.powder >= Game.POWDER_COST ? 'gold' : 'secondary'}" id="sh-powder" ${s.powder >= Game.POWDER_COST ? '' : 'disabled'}>兑换</button>
+      </div>
+      <div class="exchange-card">
+        <div><b>⭐ 闪耀之星</b> <span class="muted">${s.spark}/${Game.SPARK_COST}</span><div class="muted" style="font-size:11px;">自选一套 5★ 服装</div></div>
+        <button class="btn sm ${s.spark >= Game.SPARK_COST ? '' : 'secondary'}" id="sh-spark" ${s.spark >= Game.SPARK_COST ? '' : 'disabled'}>自选</button>
+      </div>`;
+    this.screenEl.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => {
+      const r = Game.buyShopItem(parseInt(b.dataset.buy, 10));
+      if (!r.ok) { this.toast(r.msg); return; }
+      const tpl = Game.getGearTpl(r.tpl);
+      this.toast(`购买成功：${tpl.name}`); this.updateResources(); this.renderShop();
+    });
+    const pw = this.screenEl.querySelector('#sh-powder');
+    if (pw) pw.onclick = () => { const r = Game.powderBox(); if (!r.ok) { this.toast(r.msg); return; } this.closeModal && 0; this.toast('已兑换必出 5★ 招募券，请在招募使用'); this.updateResources(); this.renderShop(); };
+    const sp = this.screenEl.querySelector('#sh-spark');
+    if (sp) sp.onclick = () => this.showSparkPicker();
+  },
+
+  // ============================================================
+  //  邮件 / 设置 / 资料 / 公告（弹窗）
+  // ============================================================
+  showMailbox() {
+    Game.ensureMail();
+    const render = (m) => {
+      const list = Game.state.mail.map(ml => {
+        const rw = ml.reward && Object.keys(ml.reward).length
+          ? Object.entries(ml.reward).map(([k, v]) => ({ gold: '🪙', gem: '💎', stone: '🔮', powder: '✨', spark: '⭐' }[k] + v)).join(' ') : '';
+        return `<div class="mail-item ${ml.claimed ? 'claimed' : ''}">
+          <div class="mail-main"><div class="mail-title">${ml.title}</div><div class="mail-body muted">${ml.body}</div>${rw ? `<div class="mail-rew">${rw}</div>` : ''}</div>
+          ${rw ? (ml.claimed ? '<span class="muted" style="font-size:12px;">已领</span>' : `<button class="btn sm" data-claim="${ml.id}">领取</button>`) : ''}
+        </div>`;
+      }).join('');
+      m.querySelector('.mb-list').innerHTML = list;
+      m.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => {
+        Game.claimMail(b.dataset.claim); this.updateResources(); render(m);
+      });
+    };
+    const m = this.openModal(`
+      <h2>📧 邮件</h2>
+      <div class="mb-list" style="max-height:50vh;overflow-y:auto;margin:8px 0;"></div>
+      <div class="close-row"><button class="btn secondary" id="mb-close">关闭</button><button class="btn" id="mb-all">一键领取</button></div>`);
+    render(m);
+    m.querySelector('#mb-close').onclick = () => this.closeModal(m);
+    m.querySelector('#mb-all').onclick = () => {
+      const r = Game.claimAllMail();
+      if (!r.n) { this.toast('没有可领取的邮件'); return; }
+      this.toast(`已领取 ${r.n} 封邮件奖励`); this.updateResources(); render(m);
+    };
+  },
+  showProfile() {
+    const s = Game.state;
+    const costumes = s.roster.reduce((n, o) => n + (o.costumes ? o.costumes.length : 0), 0);
+    this.openModal(`
+      <div class="detail-head">
+        <div class="detail-art" style="background:radial-gradient(circle at 50% 35%, #b06bff55, var(--panel));font-size:40px;display:grid;place-items:center;">🎖️</div>
+        <div class="detail-title"><h2>指挥官</h2><div class="subt">账号等级 Lv.${Game.accountLevel()}</div><div class="meta">出战战力 ⚔ ${Game.playerPower()}</div></div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-item"><span>👥 佣兵</span><span class="sv">${s.roster.length}/${Object.keys(window.GameData.CHARACTERS).length}</span></div>
+        <div class="stat-item"><span>👗 服装</span><span class="sv">${costumes}</span></div>
+        <div class="stat-item"><span>🗺️ 通关</span><span class="sv">${s.cleared.length}/${window.GameData.STAGES.length}</span></div>
+        <div class="stat-item"><span>🏆 竞技</span><span class="sv">${Game.arenaRank((s.arena && s.arena.points) || 1000).name}</span></div>
+        <div class="stat-item"><span>🎴 招募</span><span class="sv">${s.stats.pulls}</span></div>
+        <div class="stat-item"><span>⚔️ 胜场</span><span class="sv">${s.stats.wins}</span></div>
+      </div>
+      <div class="close-row"><button class="btn" id="pf-ok">关闭</button></div>`).querySelector('#pf-ok').onclick = function () { UI.closeModal(this.closest('.modal-overlay') || this.closest('.modal')); };
+  },
+  showAnnounce() {
+    this.openModal(`
+      <h2>📢 公告</h2>
+      <div style="max-height:54vh;overflow-y:auto;font-size:13px;line-height:1.7;">
+        <p><b>【新版本】单机玩法大更新</b></p>
+        <p class="muted">新增竞技场、资源副本、远征派遣、限时活动，以及好感、觉醒系统。横屏游玩体验最佳。</p>
+        <p style="margin-top:10px;"><b>【玩法指引】</b></p>
+        <p class="muted">· 副本消耗体力换取金币/经验/装备，可扫荡<br>· 远征按真实时间挂机产出，可离线<br>· 竞技场每日 5 次挑战 AI 防守队涨分<br>· 弱点元素命中 BOSS 可触发破防<br>· 角色详情可赠礼(好感)与觉醒(全属性)</p>
+      </div>
+      <div class="close-row"><button class="btn" id="an-ok">知道了</button></div>`).querySelector('#an-ok').onclick = function () { UI.closeModal(this.closest('.modal-overlay') || this.closest('.modal')); };
+  },
+  showSettings() {
+    const speed = (() => { try { return parseInt(localStorage.getItem('bd2_battle_speed'), 10) || 1; } catch (e) { return 1; } })();
+    const m = this.openModal(`
+      <h2>⚙️ 设置</h2>
+      <div class="set-row"><span>音效 / 音乐</span><button class="btn secondary sm" id="set-mute">${(window.Sound && Sound.muted) ? '🔇 已静音' : '🔊 开启'}</button></div>
+      <div class="set-row"><span>默认战斗倍速</span><button class="btn secondary sm" id="set-speed">${speed}x</button></div>
+      <div class="set-row"><span>存档管理</span><button class="btn secondary sm" id="set-save">导出 / 导入</button></div>
+      <div class="set-row"><span>重置存档</span><button class="btn sm" id="set-reset" style="background:linear-gradient(135deg,#ff5a6a,#b02a3a);">重置</button></div>
+      <div class="close-row"><button class="btn" id="set-close">关闭</button></div>`);
+    m.querySelector('#set-close').onclick = () => this.closeModal(m);
+    m.querySelector('#set-mute').onclick = (e) => { const b = document.getElementById('btn-mute'); if (b) b.click(); e.target.textContent = (window.Sound && Sound.muted) ? '🔇 已静音' : '🔊 开启'; };
+    m.querySelector('#set-speed').onclick = (e) => {
+      let sp = (parseInt(e.target.textContent, 10) || 1) + 1; if (sp > 3) sp = 1;
+      try { localStorage.setItem('bd2_battle_speed', String(sp)); } catch (er) {}
+      e.target.textContent = sp + 'x';
+    };
+    m.querySelector('#set-save').onclick = () => { this.closeModal(m); this.showSaveManager(); };
+    m.querySelector('#set-reset').onclick = () => { this.closeModal(m); const b = document.getElementById('btn-reset'); if (b) b.click(); };
   },
 
   /** 存档管理：导出 / 导入 */
@@ -7711,6 +8047,14 @@ const Main = {
     const backBtn = document.getElementById('btn-back');
     if (backBtn) backBtn.addEventListener('click', () => this.switchScreen('home'));
 
+    // 顶栏：邮件 / 设置 / 玩家资料
+    const mailBtn = document.getElementById('btn-mail');
+    if (mailBtn) mailBtn.addEventListener('click', () => UI.showMailbox());
+    const setBtn = document.getElementById('btn-settings');
+    if (setBtn) setBtn.addEventListener('click', () => UI.showSettings());
+    const profBtn = document.getElementById('topbar-profile');
+    if (profBtn) profBtn.addEventListener('click', () => UI.showProfile());
+
     // 重置存档
     document.getElementById('btn-reset').addEventListener('click', () => {
       const m = UI.openModal(`
@@ -7763,6 +8107,9 @@ const Main = {
       case 'dispatch': UI.renderDispatch(); break;
       case 'arena': UI.renderArena(); break;
       case 'event': UI.renderEvent(); break;
+      case 'inventory': UI.renderInventory(); break;
+      case 'codex': UI.renderCodex(); break;
+      case 'shop': UI.renderShop(); break;
     }
   },
 };

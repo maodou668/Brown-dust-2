@@ -706,6 +706,14 @@ const Main = {
     const backBtn = document.getElementById('btn-back');
     if (backBtn) backBtn.addEventListener('click', () => this.switchScreen('home'));
 
+    // 顶栏：邮件 / 设置 / 玩家资料
+    const mailBtn = document.getElementById('btn-mail');
+    if (mailBtn) mailBtn.addEventListener('click', () => UI.showMailbox());
+    const setBtn = document.getElementById('btn-settings');
+    if (setBtn) setBtn.addEventListener('click', () => UI.showSettings());
+    const profBtn = document.getElementById('topbar-profile');
+    if (profBtn) profBtn.addEventListener('click', () => UI.showProfile());
+
     // 重置存档
     document.getElementById('btn-reset').addEventListener('click', () => {
       const m = UI.openModal(`
@@ -758,6 +766,9 @@ const Main = {
       case 'dispatch': UI.renderDispatch(); break;
       case 'arena': UI.renderArena(); break;
       case 'event': UI.renderEvent(); break;
+      case 'inventory': UI.renderInventory(); break;
+      case 'codex': UI.renderCodex(); break;
+      case 'shop': UI.renderShop(); break;
     }
   },
 };
