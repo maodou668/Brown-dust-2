@@ -1605,7 +1605,7 @@ const UI = {
       capLabel = `${count}/200`;
       cells = items.length ? items.map(g => {
         const tpl = Game.getGearTpl(g.tpl); const eq = equipped.has(g.iid);
-        return `<div class="bag-cell border-${this.rarityClass(tpl.rarity)}" title="${tpl.name}${eq ? '（已装备）' : ''}">
+        return `<div class="bag-cell clickable border-${this.rarityClass(tpl.rarity)}" data-iid="${g.iid}" title="${tpl.name}${eq ? '（已装备）' : ''}">
           ${dots(tpl.rarity)}
           <div class="bag-ico">${tpl.icon}</div>
           ${g.lvl ? `<span class="bag-lv">+${g.lvl}</span>` : ''}
@@ -1623,7 +1623,7 @@ const UI = {
         { icon: '⚡', name: '体力', qty: s.stamina, r: 3 },
       ];
       count = mats.length; capLabel = '材料';
-      cells = mats.map(m => `<div class="bag-cell border-${this.rarityClass(m.r)} mat" title="${m.name}">
+      cells = mats.map(m => `<div class="bag-cell clickable border-${this.rarityClass(m.r)} mat" data-mat="${m.name}" title="${m.name}">
         ${dots(m.r)}<div class="bag-ico">${m.icon}</div><span class="bag-qty">${fmt(m.qty)}</span><div class="bag-cell-name">${m.name}</div>
       </div>`).join('');
     }
@@ -1659,6 +1659,83 @@ const UI = {
       this.toast(r.n ? `分解 ${r.n} 件，获得 🪙${r.gold}` : '没有可分解的 R/SR 装备');
       this.updateResources(); this.renderInventory();
     };
+    // 点击物品 → 详情
+    this.screenEl.querySelectorAll('.bag-cell[data-iid]').forEach(c => c.onclick = () => this.showGearDetail(c.dataset.iid));
+    this.screenEl.querySelectorAll('.bag-cell[data-mat]').forEach(c => c.onclick = () => this.showMaterialDetail(c.dataset.mat));
+  },
+
+  STAT_LAB: { atk: '⚔️ 攻击', def: '🛡️ 防御', hp: '❤️ 生命', crit: '💥 暴击', spd: '⚡ 速度' },
+  fmtStat(k, v) { return k === 'crit' ? '+' + (v * 100).toFixed(1) + '%' : '+' + Math.round(v); },
+
+  /** 装备详情（点击背包装备格） */
+  showGearDetail(iid) {
+    const render = (m) => {
+      const inst = Game.getGearInst(iid);
+      if (!inst) { this.closeModal(m); return; }
+      const tpl = Game.getGearTpl(inst.tpl);
+      const em = Game.enhanceMult(inst.lvl);
+      const typeLab = { weapon: '武器', armor: '防具', accessory: '饰品', ex: '专属武器' }[tpl.type] || '装备';
+      const mainHtml = Object.entries(tpl.stats).map(([k, v]) =>
+        `<div class="gd-stat"><span>${this.STAT_LAB[k] || k}</span><b>${this.fmtStat(k, v * em)}</b></div>`).join('');
+      const subHtml = (inst.subs || []).length
+        ? inst.subs.map(sub => `<div class="gd-stat sub"><span>${this.STAT_LAB[sub.k] || sub.k}</span><b>${this.fmtStat(sub.k, sub.v)}</b></div>`).join('')
+        : '<div class="muted" style="font-size:11px;padding:4px 0;">该装备无副词条</div>';
+      const owner = Game.gearEquippedBy(iid);
+      const ownerName = owner ? window.GameData.CHARACTERS[owner.charId].name : null;
+      const lvl = inst.lvl || 0, max = Game.GEAR_MAX_LVL;
+      const cost = Game.enhanceCost(inst);
+      const canEnh = lvl < max && Game.state.gold >= cost;
+      m.querySelector('.gd-body').innerHTML = `
+        <div class="gd-head">
+          <div class="gd-art border-${this.rarityClass(tpl.rarity)}"><span class="gd-ico">${tpl.icon}</span></div>
+          <div class="gd-title">
+            <div class="gd-name">${tpl.name} ${lvl ? `<span style="color:var(--gold);">+${lvl}</span>` : ''}</div>
+            <div class="gd-meta"><span class="rw ${this.rarityClass(tpl.rarity)}" style="font-size:10px;padding:1px 6px;">${window.GameData.GEAR.RLABEL[tpl.rarity]}</span> · ${typeLab}${ownerName ? ` · <span style="color:var(--accent);">${ownerName} 装备中</span>` : ' · 未装备'}</div>
+          </div>
+        </div>
+        <div class="gd-section">主属性（含强化 +${Math.round((em - 1) * 100)}%）</div>
+        <div class="gd-stats">${mainHtml}</div>
+        <div class="gd-section">副词条（${(inst.subs || []).length}）</div>
+        <div class="gd-stats">${subHtml}</div>
+        <p class="muted" style="font-size:11px;margin-top:8px;">${tpl.type === 'ex' ? '专属武器：仅对应角色可装备，效果远强于通用装备。' : '通用装备：在「佣兵→详情养成」中为角色装备；三件同稀有度触发套装加成。'}</p>`;
+      const eb = m.querySelector('#gd-enhance');
+      eb.textContent = lvl >= max ? '已满强化' : `强化 +${lvl + 1}　🪙${cost}`;
+      eb.disabled = !canEnh;
+      eb.onclick = () => {
+        const r = Game.enhanceGear(iid);
+        if (!r.ok) { this.toast(r.msg); return; }
+        if (window.Sound) Sound.sfx('levelup');
+        this.toast(`强化成功 → +${r.lvl}`); this.updateResources(); render(m);
+      };
+    };
+    const m = this.openModal(`<h2>装备详情</h2><div class="gd-body"></div>
+      <div class="close-row"><button class="btn secondary" id="gd-close">关闭</button><button class="btn gold" id="gd-enhance">强化</button></div>`);
+    render(m);
+    m.querySelector('#gd-close').onclick = () => { this.closeModal(m); this.renderInventory(); };
+  },
+
+  MAT_DESC: {
+    '金币': { icon: '🪙', desc: '最基础的货币。用于佣兵升级、装备强化、商店购买、阵容养成。', from: '关卡 / 资源副本 / 远征 / 分解装备' },
+    '宝石': { icon: '💎', desc: '高级货币。用于招募、购买体力、商店兑换。', from: '通关 / 成就 / 任务 / 活动' },
+    '觉醒石': { icon: '🔮', desc: '角色觉醒材料。在「佣兵→详情养成」中消耗，提升全属性（最高 5 星觉醒）。', from: '竞技场胜利 / 秘境远征 / 活动商店' },
+    '闪耀之星': { icon: '⭐', desc: '招募里程碑货币。每次招募 +1，集满 200 可自选一套 5★ 服装。', from: '招募' },
+    '希望之粉': { icon: '✨', desc: '保底货币。每次招募 +10，集满 200 在商店兑换「必出 5★」。', from: '招募' },
+    '活动币': { icon: '🎟️', desc: '限时活动专用货币，在活动商店兑换稀有资源。', from: '限时活动关卡' },
+    '体力': { icon: '⚡', desc: '资源副本的行动力，每 5 分钟回复 1 点，上限 120，可用宝石购买。', from: '随时间回复 / 宝石购买' },
+  },
+  /** 材料详情（点击背包材料格） */
+  showMaterialDetail(name) {
+    const d = this.MAT_DESC[name]; if (!d) return;
+    const m = this.openModal(`
+      <div class="gd-head">
+        <div class="gd-art border-r5"><span class="gd-ico">${d.icon}</span></div>
+        <div class="gd-title"><div class="gd-name">${name}</div><div class="gd-meta muted">材料 · 道具</div></div>
+      </div>
+      <p style="line-height:1.7;font-size:13px;margin:10px 0;">${d.desc}</p>
+      <div class="gd-section">获取途径</div>
+      <p class="muted" style="font-size:12px;">${d.from}</p>
+      <div class="close-row"><button class="btn" id="md-ok">关闭</button></div>`);
+    m.querySelector('#md-ok').onclick = () => this.closeModal(m);
   },
 
   // ============================================================

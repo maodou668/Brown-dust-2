@@ -1643,3 +1643,17 @@ body {
   .r2-splash-name { font-size: 24px; }
   .r2-grid { grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); }
 }
+
+/* 装备 / 材料 详情弹窗 */
+.bag-cell.clickable { cursor: pointer; }
+.bag-cell.clickable:active { transform: scale(.94); }
+.gd-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.gd-art { width: 64px; height: 64px; border-radius: 12px; border-width: 2px; display: grid; place-items: center; background: var(--panel-2); }
+.gd-ico { font-size: 34px; }
+.gd-name { font-size: 17px; font-weight: 800; }
+.gd-meta { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+.gd-section { font-size: 12px; color: var(--text-dim); font-weight: 700; margin: 10px 0 5px; }
+.gd-stats { display: flex; flex-direction: column; gap: 4px; }
+.gd-stat { display: flex; justify-content: space-between; background: var(--panel); border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+.gd-stat.sub { background: var(--panel-2); font-size: 12px; }
+.gd-stat b { color: var(--hp); }
