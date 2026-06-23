@@ -1217,7 +1217,7 @@ body {
 .lobby { position: absolute; inset: 0; }
 /* 满屏背景层：当前为占位渐变，未来可替换为动态背景图/视频 */
 .lobby-bg {
-  position: absolute; inset: 0; z-index: 0; overflow: hidden;
+  position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
   background:
     radial-gradient(120% 80% at 50% -10%, rgba(176,107,255,.30), transparent 60%),
     radial-gradient(100% 70% at 80% 110%, rgba(255,107,157,.22), transparent 60%),
@@ -1248,6 +1248,7 @@ body {
 
 /* 底部横向功能按钮（从左到右），过窄时横向滚动而非换行 */
 .lobby-actions {
+  position: relative; z-index: 2;
   display: flex; gap: 8px; padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px));
   justify-content: center; align-items: flex-end;
   overflow-x: auto; -webkit-overflow-scrolling: touch;
@@ -1562,7 +1563,7 @@ body {
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '50';</script>
+  <script>window.ASSET_VER = '51';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
