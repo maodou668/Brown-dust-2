@@ -1293,3 +1293,41 @@ body {
   font-size: 10px; color: var(--text-dim); margin-top: 3px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+
+/* ============================================================
+   资源副本 / 远征派遣
+   ============================================================ */
+.stam-bar { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 8px 12px; }
+.stam-ico { font-size: 16px; }
+.stam-track { flex: 1; height: 8px; background: var(--panel-2); border-radius: 6px; overflow: hidden; }
+.stam-fill { height: 100%; background: linear-gradient(90deg, #6cc6ff, #4a90ff); }
+.stam-num { font-size: 13px; font-weight: 700; color: var(--sp); }
+.stam-bar .btn.sm { margin-top: 0; }
+
+.farm-list { display: flex; flex-direction: column; gap: 10px; }
+.farm-card { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 12px; }
+.farm-card.locked { opacity: .55; }
+.farm-ico { font-size: 34px; width: 48px; text-align: center; }
+.farm-main { flex: 1; min-width: 0; }
+.farm-name { font-weight: 700; font-size: 14px; }
+.farm-sub { font-size: 11px; margin: 2px 0; }
+.farm-rew { font-size: 12px; color: var(--gold); }
+.farm-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.farm-cost { font-size: 12px; color: var(--sp); font-weight: 700; }
+.farm-actions .btn.sm { margin-top: 0; }
+
+.disp-list { display: flex; flex-direction: column; gap: 10px; }
+.disp-slot { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 12px; min-height: 64px; }
+.disp-slot.locked { opacity: .5; }
+.disp-slot.done { border-color: rgba(74,214,109,.5); box-shadow: 0 0 12px rgba(74,214,109,.18); }
+.disp-empty { flex: 1; color: var(--text-dim); font-size: 13px; }
+.disp-info { flex: 1; min-width: 0; }
+.disp-name { font-weight: 700; font-size: 14px; }
+.disp-team { font-size: 11px; margin: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.disp-timer { font-size: 13px; color: var(--sp); font-weight: 700; }
+.disp-slot .btn.sm { margin-top: 0; }
+
+.disp-tiers { display: flex; gap: 8px; flex-wrap: wrap; }
+.disp-tier { flex: 1; min-width: 120px; background: var(--panel); border: 2px solid rgba(255,255,255,.06); border-radius: 10px; padding: 8px 10px; text-align: left; cursor: pointer; color: var(--text); }
+.disp-tier.sel { border-color: var(--accent); box-shadow: 0 0 10px rgba(176,107,255,.35); }
+.roster-card.sel-pick { outline: 2px solid var(--accent); outline-offset: 1px; box-shadow: 0 0 12px rgba(176,107,255,.45); }

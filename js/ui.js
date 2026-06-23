@@ -65,8 +65,11 @@ const UI = {
     const totalChars = s.roster.length;
     const cleared = s.cleared.length;
     // 单一主界面（大厅）：满屏背景（未来放动态背景图）+ 底部横向功能按钮（含编队）
+    Game.syncStamina();
     const actions = [
       { go: 'stages', icon: '🗺️', label: '冒险', sub: `${cleared}/${window.GameData.STAGES.length}` },
+      { go: 'dungeon', icon: '⚡', label: '副本', sub: `体力${s.stamina}` },
+      { go: 'dispatch', icon: '🧭', label: '远征', sub: '挂机产出' },
       { go: 'gacha', icon: '🎴', label: '招募', sub: `💎${s.gem}` },
       { go: 'roster', icon: '👥', label: '佣兵', sub: `${totalChars}名` },
       { act: 'team', icon: '⚔️', label: '编队', sub: `${s.team.length}/5` },
@@ -1120,6 +1123,173 @@ const UI = {
     if (oa) oa.onclick = () => this.showAchievements();
     const os = this.screenEl.querySelector('#open-save');
     if (os) os.onclick = () => this.showSaveManager();
+  },
+
+  // ============================================================
+  //  资源副本（farm）
+  // ============================================================
+  staminaBarHtml() {
+    Game.syncStamina();
+    const st = Game.state.stamina, mx = Game.STAMINA_MAX;
+    let eta = '';
+    if (st < mx) { const ms = Game.staminaEtaMs(); const min = Math.ceil(ms / 60000); eta = `· 下一点 ${min} 分钟`; }
+    else eta = '· 已满';
+    return `<div class="stam-bar">
+      <span class="stam-ico">⚡</span>
+      <div class="stam-track"><div class="stam-fill" style="width:${Math.min(100, st / mx * 100)}%;"></div></div>
+      <span class="stam-num">${st}/${mx}</span>
+      <span class="muted" style="font-size:11px;">${eta}</span>
+      <button class="btn secondary sm" id="stam-buy">💎50 +60</button>
+    </div>`;
+  },
+  renderDungeon() {
+    Game.syncStamina();
+    const cards = Game.FARM.map(d => {
+      const open = Game.farmUnlocked(d);
+      const r = d.reward;
+      const rew = [r.gold ? `🪙${r.gold}` : '', r.exp ? `📘${r.exp}` : '', r.gearScale ? '⚒️装备' : ''].filter(Boolean).join(' · ');
+      return `<div class="farm-card ${open ? '' : 'locked'}">
+        <div class="farm-ico">${d.icon}</div>
+        <div class="farm-main">
+          <div class="farm-name">${d.name} ${open ? '' : `<span class="muted">· 通关${d.unlock}关解锁</span>`}</div>
+          <div class="farm-sub muted">${d.desc}</div>
+          <div class="farm-rew">${rew}</div>
+        </div>
+        <div class="farm-actions">
+          <div class="farm-cost">⚡${d.stam}</div>
+          ${open ? `<button class="btn sm" data-run="${d.id}" data-x="1">挑战</button>
+                    <button class="btn secondary sm" data-run="${d.id}" data-x="5">扫荡×5</button>` : '<button class="btn sm" disabled>🔒</button>'}
+        </div>
+      </div>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="section-title">资源副本</div>
+      ${this.staminaBarHtml()}
+      <p class="muted" style="margin:6px 0 12px;">消耗体力快速获取金币 / 经验 / 装备，可一键扫荡多次。</p>
+      <div class="farm-list">${cards}</div>`;
+    const buy = this.screenEl.querySelector('#stam-buy');
+    if (buy) buy.onclick = () => { const r = Game.buyStamina(); this.toast(r.ok ? '体力 +60' : r.msg); this.updateResources(); this.renderDungeon(); };
+    this.screenEl.querySelectorAll('[data-run]').forEach(b => b.onclick = () => {
+      const r = Game.runFarm(b.dataset.run, parseInt(b.dataset.x, 10));
+      if (!r.ok) { this.toast(r.msg); return; }
+      const parts = [];
+      if (r.tot.gold) parts.push(`🪙${r.tot.gold}`);
+      if (r.tot.exp) parts.push(`📘经验${r.tot.exp}`);
+      if (r.tot.gears.length) parts.push(`⚒️装备×${r.tot.gears.length}`);
+      this.toast(`获得 ${parts.join(' · ') || '奖励'}（-⚡${r.cost}）`);
+      if (window.Sound) Sound.sfx('levelup');
+      this.updateResources(); this.renderDungeon();
+    });
+  },
+
+  // ============================================================
+  //  远征派遣（dispatch）—— 离线挂机
+  // ============================================================
+  renderDispatch() {
+    const slots = Game.DISPATCH_SLOTS;
+    let html = `<div class="section-title">远征派遣</div>
+      <p class="muted" style="margin:0 0 12px;">派遣闲置佣兵外出，按真实时间产出资源（可离线）。参与人数与稀有度越高奖励越多。</p>
+      <div class="disp-list">`;
+    for (let i = 0; i < slots; i++) {
+      const s = Game.state.dispatch.slots[i];
+      const unlocked = Game.dispatchSlotUnlocked(i);
+      if (!unlocked) {
+        html += `<div class="disp-slot locked"><div class="disp-empty">🔒 第 ${i + 1} 派遣位 · 通关 ${i * 2} 关解锁</div></div>`;
+      } else if (!s) {
+        html += `<div class="disp-slot"><div class="disp-empty">＋ 空闲派遣位</div>
+          <button class="btn sm" data-disp-new="${i}">派遣出发</button></div>`;
+      } else {
+        const tier = Game.DISPATCH_TIERS.find(t => t.id === s.tierId);
+        const done = Game.dispatchDone(i);
+        const names = s.charUids.map(u => { const o = Game.getOwned(u); return o ? window.GameData.CHARACTERS[o.charId].name : '?'; }).join('、');
+        html += `<div class="disp-slot ${done ? 'done' : 'running'}">
+          <div class="disp-info">
+            <div class="disp-name">${tier.icon} ${tier.name} <span class="muted">×${s.mult.toFixed(2)}</span></div>
+            <div class="disp-team muted">${names}</div>
+            <div class="disp-timer" data-end="${s.endTs}">${done ? '✅ 已完成' : '⏳ ' + this.fmtRemain(s.endTs - Date.now())}</div>
+          </div>
+          ${done ? `<button class="btn sm" data-disp-claim="${i}">领取</button>`
+                 : `<button class="btn secondary sm" data-disp-cancel="${i}">召回</button>`}
+        </div>`;
+      }
+    }
+    html += `</div>`;
+    this.screenEl.innerHTML = html;
+    this.screenEl.querySelectorAll('[data-disp-new]').forEach(b => b.onclick = () => this.showDispatchSetup(parseInt(b.dataset.dispNew, 10)));
+    this.screenEl.querySelectorAll('[data-disp-claim]').forEach(b => b.onclick = () => {
+      const r = Game.claimDispatch(parseInt(b.dataset.dispClaim, 10));
+      if (!r.ok) { this.toast(r.msg); return; }
+      const p = [];
+      if (r.got.gold) p.push(`🪙${r.got.gold}`); if (r.got.gem) p.push(`💎${r.got.gem}`);
+      if (r.got.exp) p.push(`📘经验${r.got.exp}`); if (r.got.gears.length) p.push(`⚒️装备×${r.got.gears.length}`);
+      this.toast(`远征归来：${p.join(' · ')}`); if (window.Sound) Sound.sfx('levelup');
+      this.updateResources(); this.renderDispatch();
+    });
+    this.screenEl.querySelectorAll('[data-disp-cancel]').forEach(b => b.onclick = () => {
+      Game.cancelDispatch(parseInt(b.dataset.dispCancel, 10)); this.toast('已召回佣兵'); this.renderDispatch();
+    });
+    // 定时刷新倒计时
+    clearInterval(this._dispTimer);
+    this._dispTimer = setInterval(() => {
+      if (Main.current !== 'dispatch') { clearInterval(this._dispTimer); return; }
+      this.screenEl.querySelectorAll('.disp-timer[data-end]').forEach(el => {
+        const left = parseInt(el.dataset.end, 10) - Date.now();
+        if (left <= 0) { this.renderDispatch(); } else { el.textContent = '⏳ ' + this.fmtRemain(left); }
+      });
+    }, 1000);
+  },
+  fmtRemain(ms) {
+    if (ms < 0) ms = 0;
+    const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
+    return (h ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
+  },
+  showDispatchSetup(slotIdx) {
+    let picked = [];
+    const busy = new Set();
+    Game.state.dispatch.slots.forEach(s => s && s.charUids.forEach(u => busy.add(u)));
+    let tierId = Game.DISPATCH_TIERS[0].id;
+    const render = (m) => {
+      const tiers = Game.DISPATCH_TIERS.map(t => {
+        const r = t.reward;
+        const rew = [r.gold ? `🪙${r.gold}` : '', r.gem ? `💎${r.gem}` : '', r.exp ? `📘${r.exp}` : '', r.gearScale ? '⚒️' : ''].filter(Boolean).join(' ');
+        return `<button class="disp-tier ${t.id === tierId ? 'sel' : ''}" data-tier="${t.id}">
+          <div>${t.icon} ${t.name}</div><div class="muted" style="font-size:11px;">${t.hours}小时 · ${rew}</div></button>`;
+      }).join('');
+      const avail = Game.state.roster.filter(o => !busy.has(o.uid));
+      const grid = avail.map(o => {
+        const c = window.GameData.CHARACTERS[o.charId];
+        const on = picked.includes(o.uid);
+        return `<div class="roster-card border-${this.rarityClass(c.rarity)} ${on ? 'sel-pick' : ''}" data-pick="${o.uid}">
+          <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${Game.activeColor(o)}44, transparent);">
+            <span class="rarity-badge ${this.rarityClass(c.rarity)}">${c.rarity}★</span>${this.charAvatar(o.charId)}</div>
+          <div class="rc-info"><div class="rc-name">${c.name}</div><div class="rc-lv">Lv.${o.level}</div></div></div>`;
+      }).join('') || '<div class="muted" style="grid-column:1/-1;padding:12px;">没有空闲佣兵</div>';
+      const mult = Game.dispatchMult(picked);
+      m.querySelector('.ds-tiers').innerHTML = tiers;
+      m.querySelector('.ds-grid').innerHTML = grid;
+      m.querySelector('.ds-mult').textContent = `已选 ${picked.length} 人 · 奖励 ×${mult.toFixed(2)}`;
+      m.querySelectorAll('[data-tier]').forEach(b => b.onclick = () => { tierId = b.dataset.tier; render(m); });
+      m.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => {
+        const u = el.dataset.pick;
+        if (picked.includes(u)) picked = picked.filter(x => x !== u);
+        else if (picked.length < 3) picked.push(u);
+        else { this.toast('最多派遣 3 人'); return; }
+        render(m);
+      });
+    };
+    const m = this.openModal(`
+      <h2>派遣出发</h2>
+      <div class="ds-tiers disp-tiers"></div>
+      <p class="muted" style="margin:10px 0 6px;">选择佣兵（最多 3 人，<span class="ds-mult"></span>）</p>
+      <div class="ds-grid roster-grid"></div>
+      <div class="close-row"><button class="btn secondary" id="ds-cancel">取消</button><button class="btn" id="ds-go">出发</button></div>`);
+    render(m);
+    m.querySelector('#ds-cancel').onclick = () => this.closeModal(m);
+    m.querySelector('#ds-go').onclick = () => {
+      const r = Game.startDispatch(slotIdx, tierId, picked);
+      if (!r.ok) { this.toast(r.msg); return; }
+      this.closeModal(m); this.toast('佣兵已派遣出发'); this.renderDispatch();
+    };
   },
 
   /** 存档管理：导出 / 导入 */

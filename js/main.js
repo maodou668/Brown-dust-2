@@ -713,6 +713,8 @@ const Main = {
       case 'roster': UI.renderRoster(); break;
       case 'gacha': UI.renderGacha(); break;
       case 'welfare': UI.renderWelfare(); break;
+      case 'dungeon': UI.renderDungeon(); break;
+      case 'dispatch': UI.renderDispatch(); break;
     }
   },
 };

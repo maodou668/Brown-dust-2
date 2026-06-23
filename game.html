@@ -1301,6 +1301,44 @@ body {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
+/* ============================================================
+   资源副本 / 远征派遣
+   ============================================================ */
+.stam-bar { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 8px 12px; }
+.stam-ico { font-size: 16px; }
+.stam-track { flex: 1; height: 8px; background: var(--panel-2); border-radius: 6px; overflow: hidden; }
+.stam-fill { height: 100%; background: linear-gradient(90deg, #6cc6ff, #4a90ff); }
+.stam-num { font-size: 13px; font-weight: 700; color: var(--sp); }
+.stam-bar .btn.sm { margin-top: 0; }
+
+.farm-list { display: flex; flex-direction: column; gap: 10px; }
+.farm-card { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 12px; }
+.farm-card.locked { opacity: .55; }
+.farm-ico { font-size: 34px; width: 48px; text-align: center; }
+.farm-main { flex: 1; min-width: 0; }
+.farm-name { font-weight: 700; font-size: 14px; }
+.farm-sub { font-size: 11px; margin: 2px 0; }
+.farm-rew { font-size: 12px; color: var(--gold); }
+.farm-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.farm-cost { font-size: 12px; color: var(--sp); font-weight: 700; }
+.farm-actions .btn.sm { margin-top: 0; }
+
+.disp-list { display: flex; flex-direction: column; gap: 10px; }
+.disp-slot { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 12px; min-height: 64px; }
+.disp-slot.locked { opacity: .5; }
+.disp-slot.done { border-color: rgba(74,214,109,.5); box-shadow: 0 0 12px rgba(74,214,109,.18); }
+.disp-empty { flex: 1; color: var(--text-dim); font-size: 13px; }
+.disp-info { flex: 1; min-width: 0; }
+.disp-name { font-weight: 700; font-size: 14px; }
+.disp-team { font-size: 11px; margin: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.disp-timer { font-size: 13px; color: var(--sp); font-weight: 700; }
+.disp-slot .btn.sm { margin-top: 0; }
+
+.disp-tiers { display: flex; gap: 8px; flex-wrap: wrap; }
+.disp-tier { flex: 1; min-width: 120px; background: var(--panel); border: 2px solid rgba(255,255,255,.06); border-radius: 10px; padding: 8px 10px; text-align: left; cursor: pointer; color: var(--text); }
+.disp-tier.sel { border-color: var(--accent); box-shadow: 0 0 10px rgba(176,107,255,.35); }
+.roster-card.sel-pick { outline: 2px solid var(--accent); outline-offset: 1px; box-shadow: 0 0 12px rgba(176,107,255,.45); }
+
 </style>
 </head>
 <body>
@@ -1336,7 +1374,7 @@ body {
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '44';</script>
+  <script>window.ASSET_VER = '45';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -2446,6 +2484,8 @@ const Game = {
     if (!this.state.daily) this.state.daily = { lastClaim: null, streak: 0 };
     if (!this.state.quests) this.state.quests = { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} };
     if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
+    if (this.state.stamina == null) { this.state.stamina = 120; this.state.staminaTs = Date.now(); }
+    if (!this.state.dispatch) this.state.dispatch = { slots: [null, null, null] };
     this.state.roster.forEach(o => {
       if (!o.equip) o.equip = { weapon: null, armor: null, accessory: null, ex: null };
       if (o.plus == null) o.plus = 0;
@@ -2552,6 +2592,8 @@ const Game = {
       daily: { lastClaim: null, streak: 0 },
       quests: { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} },
       shop: { date: null, slots: [], bought: {} },
+      stamina: 120, staminaTs: Date.now(),     // 体力（资源副本消耗，随时间回复）
+      dispatch: { slots: [null, null, null] }, // 远征派遣槽（离线挂机）
       _uidSeq: 1,
       _gearSeq: 1,
     };
@@ -3220,6 +3262,141 @@ const Game = {
     return { ok: true, gold, gem, exp: r.exp, drop };
   },
 
+  // ============================================================
+  //  体力（行动力）—— 随时间回复，资源副本消耗
+  // ============================================================
+  STAMINA_MAX: 120,
+  STAMINA_PER_MS: 5 * 60 * 1000,   // 每 5 分钟回 1 点
+
+  syncStamina() {
+    const now = Date.now();
+    if (this.state.stamina == null) { this.state.stamina = this.STAMINA_MAX; this.state.staminaTs = now; }
+    if (this.state.stamina >= this.STAMINA_MAX) { this.state.staminaTs = now; return; }
+    const gained = Math.floor((now - this.state.staminaTs) / this.STAMINA_PER_MS);
+    if (gained > 0) {
+      this.state.stamina = Math.min(this.STAMINA_MAX, this.state.stamina + gained);
+      this.state.staminaTs = this.state.stamina >= this.STAMINA_MAX ? now : this.state.staminaTs + gained * this.STAMINA_PER_MS;
+    }
+  },
+  staminaEtaMs() { // 距下一点回复的毫秒
+    this.syncStamina();
+    if (this.state.stamina >= this.STAMINA_MAX) return 0;
+    return this.STAMINA_PER_MS - (Date.now() - this.state.staminaTs);
+  },
+  spendStamina(n) {
+    this.syncStamina();
+    if (this.state.stamina < n) return false;
+    if (this.state.stamina >= this.STAMINA_MAX) this.state.staminaTs = Date.now();
+    this.state.stamina -= n;
+    return true;
+  },
+  buyStamina() { // 宝石买体力
+    if (this.state.gem < 50) return { ok: false, msg: '宝石不足（需 50）' };
+    this.state.gem -= 50; this.state.stamina += 60; this.save();
+    return { ok: true };
+  },
+
+  // 通用装备掉落（scale 越大越易出高稀有）
+  rollGear(scale) {
+    const C = window.GameData.GEAR.CRAFT;
+    const type = C.types[Math.floor(Math.random() * C.types.length)];
+    const bonus = Math.min(0.30, (scale || 0) * 0.04);
+    const rr = Math.random();
+    let rarity = 3;
+    if (rr < C.rarityWeight[5] + bonus) rarity = 5;
+    else if (rr < C.rarityWeight[5] + C.rarityWeight[4] + bonus) rarity = 4;
+    const id = { weapon: 'wpn', armor: 'arm', accessory: 'acc' }[type] + '_' + { 3: 'r', 4: 'sr', 5: 'ur' }[rarity];
+    this.addGear(id);
+    return id;
+  },
+
+  // ============================================================
+  //  资源副本（farm）—— 体力换金币/经验/装备，可多倍连刷
+  // ============================================================
+  FARM: [
+    { id: 'gold',  icon: '🪙', name: '金币矿洞', desc: '稳定产出大量金币',     stam: 10, unlock: 1, reward: { gold: 1500 } },
+    { id: 'exp',   icon: '📘', name: '修炼之地', desc: '出战队伍获得经验',     stam: 10, unlock: 2, reward: { exp: 800 } },
+    { id: 'gear',  icon: '⚒️', name: '装备秘境', desc: '掉落装备 + 金币',      stam: 12, unlock: 4, reward: { gold: 500, gearScale: 6 } },
+    { id: 'mixed', icon: '💎', name: '试炼回廊', desc: '综合产出（金/经/装）', stam: 15, unlock: 6, reward: { gold: 800, exp: 500, gearScale: 8 } },
+  ],
+  farmUnlocked(d) { return this.state.cleared.length >= d.unlock; },
+  runFarm(id, times) {
+    const d = this.FARM.find(x => x.id === id);
+    if (!d) return { ok: false, msg: '副本不存在' };
+    if (!this.farmUnlocked(d)) return { ok: false, msg: `通关 ${d.unlock} 关后解锁` };
+    times = Math.max(1, times | 0);
+    this.syncStamina();
+    const cost = d.stam * times;
+    if (this.state.stamina < cost) return { ok: false, msg: '体力不足' };
+    this.spendStamina(cost);
+    const tot = { gold: 0, exp: 0, gears: [] };
+    for (let i = 0; i < times; i++) {
+      const r = d.reward;
+      if (r.gold) { this.state.gold += r.gold; tot.gold += r.gold; }
+      if (r.exp) { this.state.team.forEach(uid => { const o = this.getOwned(uid); if (o) this.addExp(o, r.exp); }); tot.exp += r.exp; }
+      if (r.gearScale && Math.random() < 0.6) tot.gears.push(this.rollGear(r.gearScale));
+    }
+    this.incQuest('win', times);
+    this.save();
+    return { ok: true, tot, cost };
+  },
+
+  // ============================================================
+  //  远征派遣（dispatch）—— 离线挂机，按真实时间结算
+  // ============================================================
+  DISPATCH_TIERS: [
+    { id: 't1', name: '近郊巡逻', hours: 0.5, icon: '🥾', reward: { gold: 600, exp: 200 } },
+    { id: 't2', name: '商路护卫', hours: 2,   icon: '🛡️', reward: { gold: 2000, exp: 700 } },
+    { id: 't3', name: '远方探索', hours: 4,   icon: '🧭', reward: { gold: 4200, exp: 1500, gem: 30 } },
+    { id: 't4', name: '秘境远征', hours: 8,   icon: '🗺️', reward: { gold: 9000, exp: 3200, gem: 80, gearScale: 6 } },
+  ],
+  DISPATCH_SLOTS: 3,
+  dispatchSlotUnlocked(i) { return i === 0 || this.state.cleared.length >= i * 2; }, // 第2/3槽位需通关进度
+  // 派遣加成：参与人数 + 稀有度总和 → 奖励倍率
+  dispatchMult(charUids) {
+    let sum = 0;
+    (charUids || []).forEach(uid => { const o = this.getOwned(uid); if (o) sum += window.GameData.CHARACTERS[o.charId].rarity; });
+    return 1 + sum * 0.06; // 每点稀有度 +6%
+  },
+  startDispatch(slotIdx, tierId, charUids) {
+    if (!this.dispatchSlotUnlocked(slotIdx)) return { ok: false, msg: '该派遣位未解锁' };
+    if (this.state.dispatch.slots[slotIdx]) return { ok: false, msg: '该位正在派遣中' };
+    const tier = this.DISPATCH_TIERS.find(t => t.id === tierId);
+    if (!tier) return { ok: false, msg: '任务不存在' };
+    charUids = (charUids || []).filter(Boolean);
+    if (!charUids.length) return { ok: false, msg: '至少派遣 1 名佣兵' };
+    // 不可与其它派遣位重复占用同一角色
+    const busy = new Set();
+    this.state.dispatch.slots.forEach(s => s && s.charUids.forEach(u => busy.add(u)));
+    if (charUids.some(u => busy.has(u))) return { ok: false, msg: '有佣兵正在其它派遣中' };
+    this.state.dispatch.slots[slotIdx] = { tierId, charUids, mult: this.dispatchMult(charUids), endTs: Date.now() + tier.hours * 3600 * 1000 };
+    this.save();
+    return { ok: true };
+  },
+  dispatchDone(slotIdx) {
+    const s = this.state.dispatch.slots[slotIdx];
+    return s && Date.now() >= s.endTs;
+  },
+  claimDispatch(slotIdx) {
+    const s = this.state.dispatch.slots[slotIdx];
+    if (!s) return { ok: false, msg: '该位无派遣' };
+    if (Date.now() < s.endTs) return { ok: false, msg: '尚未完成' };
+    const tier = this.DISPATCH_TIERS.find(t => t.id === s.tierId);
+    const r = tier.reward, m = s.mult || 1;
+    const got = { gold: 0, exp: 0, gem: 0, gears: [] };
+    if (r.gold) { const g = Math.round(r.gold * m); this.state.gold += g; got.gold = g; }
+    if (r.gem) { const g = Math.round(r.gem * m); this.state.gem += g; got.gem = g; }
+    if (r.exp) { const e = Math.round(r.exp * m); s.charUids.forEach(uid => { const o = this.getOwned(uid); if (o) this.addExp(o, e); }); got.exp = e; }
+    if (r.gearScale && Math.random() < 0.7) got.gears.push(this.rollGear(r.gearScale));
+    this.state.dispatch.slots[slotIdx] = null;
+    this.save();
+    return { ok: true, got, tier };
+  },
+  cancelDispatch(slotIdx) {
+    if (this.state.dispatch.slots[slotIdx]) { this.state.dispatch.slots[slotIdx] = null; this.save(); return { ok: true }; }
+    return { ok: false };
+  },
+
   // ---------- 成就系统 ----------
   // metric(s) 返回当前进度值；达到 target 即可领取 reward（一次性）
   ACHIEVEMENTS: [
@@ -3832,8 +4009,11 @@ const UI = {
     const totalChars = s.roster.length;
     const cleared = s.cleared.length;
     // 单一主界面（大厅）：满屏背景（未来放动态背景图）+ 底部横向功能按钮（含编队）
+    Game.syncStamina();
     const actions = [
       { go: 'stages', icon: '🗺️', label: '冒险', sub: `${cleared}/${window.GameData.STAGES.length}` },
+      { go: 'dungeon', icon: '⚡', label: '副本', sub: `体力${s.stamina}` },
+      { go: 'dispatch', icon: '🧭', label: '远征', sub: '挂机产出' },
       { go: 'gacha', icon: '🎴', label: '招募', sub: `💎${s.gem}` },
       { go: 'roster', icon: '👥', label: '佣兵', sub: `${totalChars}名` },
       { act: 'team', icon: '⚔️', label: '编队', sub: `${s.team.length}/5` },
@@ -4887,6 +5067,173 @@ const UI = {
     if (oa) oa.onclick = () => this.showAchievements();
     const os = this.screenEl.querySelector('#open-save');
     if (os) os.onclick = () => this.showSaveManager();
+  },
+
+  // ============================================================
+  //  资源副本（farm）
+  // ============================================================
+  staminaBarHtml() {
+    Game.syncStamina();
+    const st = Game.state.stamina, mx = Game.STAMINA_MAX;
+    let eta = '';
+    if (st < mx) { const ms = Game.staminaEtaMs(); const min = Math.ceil(ms / 60000); eta = `· 下一点 ${min} 分钟`; }
+    else eta = '· 已满';
+    return `<div class="stam-bar">
+      <span class="stam-ico">⚡</span>
+      <div class="stam-track"><div class="stam-fill" style="width:${Math.min(100, st / mx * 100)}%;"></div></div>
+      <span class="stam-num">${st}/${mx}</span>
+      <span class="muted" style="font-size:11px;">${eta}</span>
+      <button class="btn secondary sm" id="stam-buy">💎50 +60</button>
+    </div>`;
+  },
+  renderDungeon() {
+    Game.syncStamina();
+    const cards = Game.FARM.map(d => {
+      const open = Game.farmUnlocked(d);
+      const r = d.reward;
+      const rew = [r.gold ? `🪙${r.gold}` : '', r.exp ? `📘${r.exp}` : '', r.gearScale ? '⚒️装备' : ''].filter(Boolean).join(' · ');
+      return `<div class="farm-card ${open ? '' : 'locked'}">
+        <div class="farm-ico">${d.icon}</div>
+        <div class="farm-main">
+          <div class="farm-name">${d.name} ${open ? '' : `<span class="muted">· 通关${d.unlock}关解锁</span>`}</div>
+          <div class="farm-sub muted">${d.desc}</div>
+          <div class="farm-rew">${rew}</div>
+        </div>
+        <div class="farm-actions">
+          <div class="farm-cost">⚡${d.stam}</div>
+          ${open ? `<button class="btn sm" data-run="${d.id}" data-x="1">挑战</button>
+                    <button class="btn secondary sm" data-run="${d.id}" data-x="5">扫荡×5</button>` : '<button class="btn sm" disabled>🔒</button>'}
+        </div>
+      </div>`;
+    }).join('');
+    this.screenEl.innerHTML = `
+      <div class="section-title">资源副本</div>
+      ${this.staminaBarHtml()}
+      <p class="muted" style="margin:6px 0 12px;">消耗体力快速获取金币 / 经验 / 装备，可一键扫荡多次。</p>
+      <div class="farm-list">${cards}</div>`;
+    const buy = this.screenEl.querySelector('#stam-buy');
+    if (buy) buy.onclick = () => { const r = Game.buyStamina(); this.toast(r.ok ? '体力 +60' : r.msg); this.updateResources(); this.renderDungeon(); };
+    this.screenEl.querySelectorAll('[data-run]').forEach(b => b.onclick = () => {
+      const r = Game.runFarm(b.dataset.run, parseInt(b.dataset.x, 10));
+      if (!r.ok) { this.toast(r.msg); return; }
+      const parts = [];
+      if (r.tot.gold) parts.push(`🪙${r.tot.gold}`);
+      if (r.tot.exp) parts.push(`📘经验${r.tot.exp}`);
+      if (r.tot.gears.length) parts.push(`⚒️装备×${r.tot.gears.length}`);
+      this.toast(`获得 ${parts.join(' · ') || '奖励'}（-⚡${r.cost}）`);
+      if (window.Sound) Sound.sfx('levelup');
+      this.updateResources(); this.renderDungeon();
+    });
+  },
+
+  // ============================================================
+  //  远征派遣（dispatch）—— 离线挂机
+  // ============================================================
+  renderDispatch() {
+    const slots = Game.DISPATCH_SLOTS;
+    let html = `<div class="section-title">远征派遣</div>
+      <p class="muted" style="margin:0 0 12px;">派遣闲置佣兵外出，按真实时间产出资源（可离线）。参与人数与稀有度越高奖励越多。</p>
+      <div class="disp-list">`;
+    for (let i = 0; i < slots; i++) {
+      const s = Game.state.dispatch.slots[i];
+      const unlocked = Game.dispatchSlotUnlocked(i);
+      if (!unlocked) {
+        html += `<div class="disp-slot locked"><div class="disp-empty">🔒 第 ${i + 1} 派遣位 · 通关 ${i * 2} 关解锁</div></div>`;
+      } else if (!s) {
+        html += `<div class="disp-slot"><div class="disp-empty">＋ 空闲派遣位</div>
+          <button class="btn sm" data-disp-new="${i}">派遣出发</button></div>`;
+      } else {
+        const tier = Game.DISPATCH_TIERS.find(t => t.id === s.tierId);
+        const done = Game.dispatchDone(i);
+        const names = s.charUids.map(u => { const o = Game.getOwned(u); return o ? window.GameData.CHARACTERS[o.charId].name : '?'; }).join('、');
+        html += `<div class="disp-slot ${done ? 'done' : 'running'}">
+          <div class="disp-info">
+            <div class="disp-name">${tier.icon} ${tier.name} <span class="muted">×${s.mult.toFixed(2)}</span></div>
+            <div class="disp-team muted">${names}</div>
+            <div class="disp-timer" data-end="${s.endTs}">${done ? '✅ 已完成' : '⏳ ' + this.fmtRemain(s.endTs - Date.now())}</div>
+          </div>
+          ${done ? `<button class="btn sm" data-disp-claim="${i}">领取</button>`
+                 : `<button class="btn secondary sm" data-disp-cancel="${i}">召回</button>`}
+        </div>`;
+      }
+    }
+    html += `</div>`;
+    this.screenEl.innerHTML = html;
+    this.screenEl.querySelectorAll('[data-disp-new]').forEach(b => b.onclick = () => this.showDispatchSetup(parseInt(b.dataset.dispNew, 10)));
+    this.screenEl.querySelectorAll('[data-disp-claim]').forEach(b => b.onclick = () => {
+      const r = Game.claimDispatch(parseInt(b.dataset.dispClaim, 10));
+      if (!r.ok) { this.toast(r.msg); return; }
+      const p = [];
+      if (r.got.gold) p.push(`🪙${r.got.gold}`); if (r.got.gem) p.push(`💎${r.got.gem}`);
+      if (r.got.exp) p.push(`📘经验${r.got.exp}`); if (r.got.gears.length) p.push(`⚒️装备×${r.got.gears.length}`);
+      this.toast(`远征归来：${p.join(' · ')}`); if (window.Sound) Sound.sfx('levelup');
+      this.updateResources(); this.renderDispatch();
+    });
+    this.screenEl.querySelectorAll('[data-disp-cancel]').forEach(b => b.onclick = () => {
+      Game.cancelDispatch(parseInt(b.dataset.dispCancel, 10)); this.toast('已召回佣兵'); this.renderDispatch();
+    });
+    // 定时刷新倒计时
+    clearInterval(this._dispTimer);
+    this._dispTimer = setInterval(() => {
+      if (Main.current !== 'dispatch') { clearInterval(this._dispTimer); return; }
+      this.screenEl.querySelectorAll('.disp-timer[data-end]').forEach(el => {
+        const left = parseInt(el.dataset.end, 10) - Date.now();
+        if (left <= 0) { this.renderDispatch(); } else { el.textContent = '⏳ ' + this.fmtRemain(left); }
+      });
+    }, 1000);
+  },
+  fmtRemain(ms) {
+    if (ms < 0) ms = 0;
+    const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
+    return (h ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
+  },
+  showDispatchSetup(slotIdx) {
+    let picked = [];
+    const busy = new Set();
+    Game.state.dispatch.slots.forEach(s => s && s.charUids.forEach(u => busy.add(u)));
+    let tierId = Game.DISPATCH_TIERS[0].id;
+    const render = (m) => {
+      const tiers = Game.DISPATCH_TIERS.map(t => {
+        const r = t.reward;
+        const rew = [r.gold ? `🪙${r.gold}` : '', r.gem ? `💎${r.gem}` : '', r.exp ? `📘${r.exp}` : '', r.gearScale ? '⚒️' : ''].filter(Boolean).join(' ');
+        return `<button class="disp-tier ${t.id === tierId ? 'sel' : ''}" data-tier="${t.id}">
+          <div>${t.icon} ${t.name}</div><div class="muted" style="font-size:11px;">${t.hours}小时 · ${rew}</div></button>`;
+      }).join('');
+      const avail = Game.state.roster.filter(o => !busy.has(o.uid));
+      const grid = avail.map(o => {
+        const c = window.GameData.CHARACTERS[o.charId];
+        const on = picked.includes(o.uid);
+        return `<div class="roster-card border-${this.rarityClass(c.rarity)} ${on ? 'sel-pick' : ''}" data-pick="${o.uid}">
+          <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${Game.activeColor(o)}44, transparent);">
+            <span class="rarity-badge ${this.rarityClass(c.rarity)}">${c.rarity}★</span>${this.charAvatar(o.charId)}</div>
+          <div class="rc-info"><div class="rc-name">${c.name}</div><div class="rc-lv">Lv.${o.level}</div></div></div>`;
+      }).join('') || '<div class="muted" style="grid-column:1/-1;padding:12px;">没有空闲佣兵</div>';
+      const mult = Game.dispatchMult(picked);
+      m.querySelector('.ds-tiers').innerHTML = tiers;
+      m.querySelector('.ds-grid').innerHTML = grid;
+      m.querySelector('.ds-mult').textContent = `已选 ${picked.length} 人 · 奖励 ×${mult.toFixed(2)}`;
+      m.querySelectorAll('[data-tier]').forEach(b => b.onclick = () => { tierId = b.dataset.tier; render(m); });
+      m.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => {
+        const u = el.dataset.pick;
+        if (picked.includes(u)) picked = picked.filter(x => x !== u);
+        else if (picked.length < 3) picked.push(u);
+        else { this.toast('最多派遣 3 人'); return; }
+        render(m);
+      });
+    };
+    const m = this.openModal(`
+      <h2>派遣出发</h2>
+      <div class="ds-tiers disp-tiers"></div>
+      <p class="muted" style="margin:10px 0 6px;">选择佣兵（最多 3 人，<span class="ds-mult"></span>）</p>
+      <div class="ds-grid roster-grid"></div>
+      <div class="close-row"><button class="btn secondary" id="ds-cancel">取消</button><button class="btn" id="ds-go">出发</button></div>`);
+    render(m);
+    m.querySelector('#ds-cancel').onclick = () => this.closeModal(m);
+    m.querySelector('#ds-go').onclick = () => {
+      const r = Game.startDispatch(slotIdx, tierId, picked);
+      if (!r.ok) { this.toast(r.msg); return; }
+      this.closeModal(m); this.toast('佣兵已派遣出发'); this.renderDispatch();
+    };
   },
 
   /** 存档管理：导出 / 导入 */
@@ -6918,6 +7265,8 @@ const Main = {
       case 'roster': UI.renderRoster(); break;
       case 'gacha': UI.renderGacha(); break;
       case 'welfare': UI.renderWelfare(); break;
+      case 'dungeon': UI.renderDungeon(); break;
+      case 'dispatch': UI.renderDispatch(); break;
     }
   },
 };

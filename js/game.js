@@ -40,6 +40,8 @@ const Game = {
     if (!this.state.daily) this.state.daily = { lastClaim: null, streak: 0 };
     if (!this.state.quests) this.state.quests = { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} };
     if (!this.state.shop) this.state.shop = { date: null, slots: [], bought: {} };
+    if (this.state.stamina == null) { this.state.stamina = 120; this.state.staminaTs = Date.now(); }
+    if (!this.state.dispatch) this.state.dispatch = { slots: [null, null, null] };
     this.state.roster.forEach(o => {
       if (!o.equip) o.equip = { weapon: null, armor: null, accessory: null, ex: null };
       if (o.plus == null) o.plus = 0;
@@ -146,6 +148,8 @@ const Game = {
       daily: { lastClaim: null, streak: 0 },
       quests: { date: null, progress: { win: 0, pull: 0, levelup: 0 }, claimed: {} },
       shop: { date: null, slots: [], bought: {} },
+      stamina: 120, staminaTs: Date.now(),     // 体力（资源副本消耗，随时间回复）
+      dispatch: { slots: [null, null, null] }, // 远征派遣槽（离线挂机）
       _uidSeq: 1,
       _gearSeq: 1,
     };
@@ -812,6 +816,141 @@ const Game = {
     }
     this.save();
     return { ok: true, gold, gem, exp: r.exp, drop };
+  },
+
+  // ============================================================
+  //  体力（行动力）—— 随时间回复，资源副本消耗
+  // ============================================================
+  STAMINA_MAX: 120,
+  STAMINA_PER_MS: 5 * 60 * 1000,   // 每 5 分钟回 1 点
+
+  syncStamina() {
+    const now = Date.now();
+    if (this.state.stamina == null) { this.state.stamina = this.STAMINA_MAX; this.state.staminaTs = now; }
+    if (this.state.stamina >= this.STAMINA_MAX) { this.state.staminaTs = now; return; }
+    const gained = Math.floor((now - this.state.staminaTs) / this.STAMINA_PER_MS);
+    if (gained > 0) {
+      this.state.stamina = Math.min(this.STAMINA_MAX, this.state.stamina + gained);
+      this.state.staminaTs = this.state.stamina >= this.STAMINA_MAX ? now : this.state.staminaTs + gained * this.STAMINA_PER_MS;
+    }
+  },
+  staminaEtaMs() { // 距下一点回复的毫秒
+    this.syncStamina();
+    if (this.state.stamina >= this.STAMINA_MAX) return 0;
+    return this.STAMINA_PER_MS - (Date.now() - this.state.staminaTs);
+  },
+  spendStamina(n) {
+    this.syncStamina();
+    if (this.state.stamina < n) return false;
+    if (this.state.stamina >= this.STAMINA_MAX) this.state.staminaTs = Date.now();
+    this.state.stamina -= n;
+    return true;
+  },
+  buyStamina() { // 宝石买体力
+    if (this.state.gem < 50) return { ok: false, msg: '宝石不足（需 50）' };
+    this.state.gem -= 50; this.state.stamina += 60; this.save();
+    return { ok: true };
+  },
+
+  // 通用装备掉落（scale 越大越易出高稀有）
+  rollGear(scale) {
+    const C = window.GameData.GEAR.CRAFT;
+    const type = C.types[Math.floor(Math.random() * C.types.length)];
+    const bonus = Math.min(0.30, (scale || 0) * 0.04);
+    const rr = Math.random();
+    let rarity = 3;
+    if (rr < C.rarityWeight[5] + bonus) rarity = 5;
+    else if (rr < C.rarityWeight[5] + C.rarityWeight[4] + bonus) rarity = 4;
+    const id = { weapon: 'wpn', armor: 'arm', accessory: 'acc' }[type] + '_' + { 3: 'r', 4: 'sr', 5: 'ur' }[rarity];
+    this.addGear(id);
+    return id;
+  },
+
+  // ============================================================
+  //  资源副本（farm）—— 体力换金币/经验/装备，可多倍连刷
+  // ============================================================
+  FARM: [
+    { id: 'gold',  icon: '🪙', name: '金币矿洞', desc: '稳定产出大量金币',     stam: 10, unlock: 1, reward: { gold: 1500 } },
+    { id: 'exp',   icon: '📘', name: '修炼之地', desc: '出战队伍获得经验',     stam: 10, unlock: 2, reward: { exp: 800 } },
+    { id: 'gear',  icon: '⚒️', name: '装备秘境', desc: '掉落装备 + 金币',      stam: 12, unlock: 4, reward: { gold: 500, gearScale: 6 } },
+    { id: 'mixed', icon: '💎', name: '试炼回廊', desc: '综合产出（金/经/装）', stam: 15, unlock: 6, reward: { gold: 800, exp: 500, gearScale: 8 } },
+  ],
+  farmUnlocked(d) { return this.state.cleared.length >= d.unlock; },
+  runFarm(id, times) {
+    const d = this.FARM.find(x => x.id === id);
+    if (!d) return { ok: false, msg: '副本不存在' };
+    if (!this.farmUnlocked(d)) return { ok: false, msg: `通关 ${d.unlock} 关后解锁` };
+    times = Math.max(1, times | 0);
+    this.syncStamina();
+    const cost = d.stam * times;
+    if (this.state.stamina < cost) return { ok: false, msg: '体力不足' };
+    this.spendStamina(cost);
+    const tot = { gold: 0, exp: 0, gears: [] };
+    for (let i = 0; i < times; i++) {
+      const r = d.reward;
+      if (r.gold) { this.state.gold += r.gold; tot.gold += r.gold; }
+      if (r.exp) { this.state.team.forEach(uid => { const o = this.getOwned(uid); if (o) this.addExp(o, r.exp); }); tot.exp += r.exp; }
+      if (r.gearScale && Math.random() < 0.6) tot.gears.push(this.rollGear(r.gearScale));
+    }
+    this.incQuest('win', times);
+    this.save();
+    return { ok: true, tot, cost };
+  },
+
+  // ============================================================
+  //  远征派遣（dispatch）—— 离线挂机，按真实时间结算
+  // ============================================================
+  DISPATCH_TIERS: [
+    { id: 't1', name: '近郊巡逻', hours: 0.5, icon: '🥾', reward: { gold: 600, exp: 200 } },
+    { id: 't2', name: '商路护卫', hours: 2,   icon: '🛡️', reward: { gold: 2000, exp: 700 } },
+    { id: 't3', name: '远方探索', hours: 4,   icon: '🧭', reward: { gold: 4200, exp: 1500, gem: 30 } },
+    { id: 't4', name: '秘境远征', hours: 8,   icon: '🗺️', reward: { gold: 9000, exp: 3200, gem: 80, gearScale: 6 } },
+  ],
+  DISPATCH_SLOTS: 3,
+  dispatchSlotUnlocked(i) { return i === 0 || this.state.cleared.length >= i * 2; }, // 第2/3槽位需通关进度
+  // 派遣加成：参与人数 + 稀有度总和 → 奖励倍率
+  dispatchMult(charUids) {
+    let sum = 0;
+    (charUids || []).forEach(uid => { const o = this.getOwned(uid); if (o) sum += window.GameData.CHARACTERS[o.charId].rarity; });
+    return 1 + sum * 0.06; // 每点稀有度 +6%
+  },
+  startDispatch(slotIdx, tierId, charUids) {
+    if (!this.dispatchSlotUnlocked(slotIdx)) return { ok: false, msg: '该派遣位未解锁' };
+    if (this.state.dispatch.slots[slotIdx]) return { ok: false, msg: '该位正在派遣中' };
+    const tier = this.DISPATCH_TIERS.find(t => t.id === tierId);
+    if (!tier) return { ok: false, msg: '任务不存在' };
+    charUids = (charUids || []).filter(Boolean);
+    if (!charUids.length) return { ok: false, msg: '至少派遣 1 名佣兵' };
+    // 不可与其它派遣位重复占用同一角色
+    const busy = new Set();
+    this.state.dispatch.slots.forEach(s => s && s.charUids.forEach(u => busy.add(u)));
+    if (charUids.some(u => busy.has(u))) return { ok: false, msg: '有佣兵正在其它派遣中' };
+    this.state.dispatch.slots[slotIdx] = { tierId, charUids, mult: this.dispatchMult(charUids), endTs: Date.now() + tier.hours * 3600 * 1000 };
+    this.save();
+    return { ok: true };
+  },
+  dispatchDone(slotIdx) {
+    const s = this.state.dispatch.slots[slotIdx];
+    return s && Date.now() >= s.endTs;
+  },
+  claimDispatch(slotIdx) {
+    const s = this.state.dispatch.slots[slotIdx];
+    if (!s) return { ok: false, msg: '该位无派遣' };
+    if (Date.now() < s.endTs) return { ok: false, msg: '尚未完成' };
+    const tier = this.DISPATCH_TIERS.find(t => t.id === s.tierId);
+    const r = tier.reward, m = s.mult || 1;
+    const got = { gold: 0, exp: 0, gem: 0, gears: [] };
+    if (r.gold) { const g = Math.round(r.gold * m); this.state.gold += g; got.gold = g; }
+    if (r.gem) { const g = Math.round(r.gem * m); this.state.gem += g; got.gem = g; }
+    if (r.exp) { const e = Math.round(r.exp * m); s.charUids.forEach(uid => { const o = this.getOwned(uid); if (o) this.addExp(o, e); }); got.exp = e; }
+    if (r.gearScale && Math.random() < 0.7) got.gears.push(this.rollGear(r.gearScale));
+    this.state.dispatch.slots[slotIdx] = null;
+    this.save();
+    return { ok: true, got, tier };
+  },
+  cancelDispatch(slotIdx) {
+    if (this.state.dispatch.slots[slotIdx]) { this.state.dispatch.slots[slotIdx] = null; this.save(); return { ok: true }; }
+    return { ok: false };
   },
 
   // ---------- 成就系统 ----------
