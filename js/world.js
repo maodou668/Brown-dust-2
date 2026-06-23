@@ -17,13 +17,15 @@ const World = {
   // 像素美术资源（统一 16-bit 风格，透明 PNG，2× 存储保证高 DPR 清晰）。
   // 资源源文件 144px 宽瓦片 / 96px 高小人，渲染按 CSS 尺寸缩放，统一比例。
   ART: {
-    tiles: { grass: 'assets/world/tile_grass.png', dirt: 'assets/world/tile_dirt.png', water: 'assets/world/tile_water.png' },
+    // 地面用无缝可平铺纹理（裁菱形填充，零接缝），而非带边框的菱形瓦片
+    tex: { grass: 'assets/world/tex_grass.png', dirt: 'assets/world/tex_dirt.png', water: 'assets/world/tex_water.png' },
     props: { tree: 'assets/world/prop_tree.png', rock: 'assets/world/prop_rock.png' },
-    // charId -> { down, up, left, right }
-    chars: { lecliss: { down: 'assets/world/lecliss_down.png', up: 'assets/world/lecliss_up.png', left: 'assets/world/lecliss_left.png', right: 'assets/world/lecliss_right.png' } },
+    // charId -> { down, up, left }（right 由 left 水平镜像）
+    chars: { lecliss: { down: 'assets/world/lecliss_down.png', up: 'assets/world/lecliss_up.png', left: 'assets/world/lecliss_left.png' } },
   },
   TILE_W: 72,        // 瓦片顶面 CSS 宽度（= HW*2）
   imgCache: {},      // path -> Image
+  patterns: {},      // 地面纹理 CanvasPattern
   artReady: false,   // 全部贴图就绪
   curChar: null,     // 当前主角方向贴图集
 
@@ -189,6 +191,10 @@ const World = {
     });
     this.cur = this.nodes[prog] || null;
 
+    // 剧情叙事：一条从森林边缘（起点）蜿蜒通往深处的「路」（呼应剧情「守的不是地方——是路」）
+    const route = [this.START, ...this.nodes.map(n => ({ x: n.x, y: n.y }))];
+    for (let i = 0; i < route.length - 1; i++) this.markPath(grid, route[i], route[i + 1]);
+
     // 主角
     this.player.x = this.START.x; this.player.y = this.START.y; this.player.dir = 'up';
     const lead = Game.state.team[0] && Game.getOwned(Game.state.team[0]);
@@ -196,7 +202,19 @@ const World = {
     this.loadArt(lead && lead.charId);
   },
 
-  // 统一加载像素美术（瓦片/道具/主角四向）。异步，未就绪时回退矢量占位。
+  // 把两点之间的草地格标记为「路」（dirt），构成叙事化的森林小径
+  markPath(grid, a, b) {
+    const steps = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) * 3);
+    for (let s = 0; s <= steps; s++) {
+      const t = s / steps, cx = a.x + (b.x - a.x) * t, cy = a.y + (b.y - a.y) * t;
+      for (const [ox, oy] of [[0, 0], [0.5, 0], [-0.5, 0], [0, 0.5], [0, -0.5]]) {
+        const gx = Math.floor(cx + ox), gy = Math.floor(cy + oy);
+        if (gx > 0 && gy > 0 && gx < this.w - 1 && gy < this.h - 1 && grid[gy][gx] === 'grass') grid[gy][gx] = 'path';
+      }
+    }
+  },
+
+  // 统一加载像素美术（纹理/道具/主角）。异步，未就绪时回退矢量占位。
   loadArt(charId) {
     const ver = (window.ASSET_VER || '');
     const get = (path) => {
@@ -208,14 +226,22 @@ const World = {
     };
     // 主角方向贴图：没有专属的角色暂时统一用 lecliss 作占位
     const cc = (charId && this.ART.chars[charId]) || this.ART.chars.lecliss;
-    this.curChar = { down: get(cc.down), up: get(cc.up), left: get(cc.left), right: get(cc.right) };
-    // 预加载瓦片与道具
+    this.curChar = { down: get(cc.down), up: get(cc.up), left: get(cc.left) };
+    // 预加载地面纹理与道具
+    const texImgs = Object.fromEntries(Object.entries(this.ART.tex).map(([k, p]) => [k, get(p)]));
     const all = [
-      ...Object.values(this.ART.tiles).map(get),
+      ...Object.values(texImgs),
       ...Object.values(this.ART.props).map(get),
       ...Object.values(this.curChar),
     ];
-    const check = () => { this.artReady = all.every(i => i.complete && i.naturalWidth); };
+    const check = () => {
+      if (!all.every(i => i.complete && i.naturalWidth)) return;
+      this.artReady = true;
+      // 构建地面纹理 pattern（一次）
+      if (!Object.keys(this.patterns).length) {
+        for (const k in texImgs) { try { this.patterns[k] = this.ctx.createPattern(texImgs[k], 'repeat'); } catch (e) {} }
+      }
+    };
     all.forEach(i => { i.onload = check; });
     check();
   },
@@ -243,7 +269,7 @@ const World = {
   resume() { if (this.root) { this.active = true; this.busyTrigger = false; this.start(); } },
 
   update(dt) {
-    const p = this.player;
+    const p = this.player; this._dustDt = dt;
     let dx = 0, dy = 0;
     if (this.input.up) { dx -= 1; dy -= 1; }
     if (this.input.down) { dx += 1; dy += 1; }
@@ -255,7 +281,9 @@ const World = {
       const nx = p.x + (dx / len) * sp, ny = p.y + (dy / len) * sp;
       if (!this.blockedWorld(nx, p.y)) p.x = nx;
       if (!this.blockedWorld(p.x, ny)) p.y = ny;
-      p.dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+      // 朝向按「屏幕方向」判定（等距下世界 dx/dy 始终等量，必须换算到屏幕速度）
+      const sdx = (dx - dy) * this.HW, sdy = (dx + dy) * this.HH;
+      p.dir = Math.abs(sdx) >= Math.abs(sdy) ? (sdx > 0 ? 'right' : 'left') : (sdy > 0 ? 'down' : 'up');
       p.step += dt;
     } else p.step = 0;
 
@@ -384,11 +412,15 @@ const World = {
     ctx.imageSmoothingEnabled = false;   // 像素锐利
     ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, this.vw, this.vh);
 
-    const TW = this.TILE_W, TH = TW / 2;  // 瓦片顶面菱形 72×36
-    const tileImg = k => this.img(this.ART.tiles[k]);
-    const ready = this.artReady;
+    const ready = this.artReady && Object.keys(this.patterns).length;
+    const terrainTex = t => t === 'water' ? 'water' : t === 'path' ? 'dirt' : 'grass';
+    // 纹理锚定到世界坐标（随相机平移），避免地面纹理「漂移」
+    if (ready && typeof DOMMatrix !== 'undefined') {
+      const m = new DOMMatrix().translateSelf(-Math.round(this.cam.x), -Math.round(this.cam.y));
+      for (const k in this.patterns) { try { this.patterns[k].setTransform(m); } catch (e) {} }
+    }
 
-    // 地面瓦片（像素等距）
+    // 地面：无缝纹理裁菱形填充（相邻格共享连续纹理 → 零接缝）
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         const t = this.grid[y][x];
@@ -396,10 +428,7 @@ const World = {
         const sx = iso.x - this.cam.x, sy = iso.y - this.cam.y;
         if (sx < -this.HW * 2 || sx > this.vw + this.HW * 2 || sy < -this.HH * 4 || sy > this.vh + this.HH * 4) continue;
         if (ready) {
-          const im = (t === 'water') ? tileImg('water') : tileImg('grass');
-          const w = TW, h = im.naturalHeight * (TW / im.naturalWidth);
-          // 顶面菱形中心对齐格心：图顶 = 中心上方 TH/2
-          ctx.drawImage(im, Math.round(sx - w / 2), Math.round(sy - TH / 2), w, h);
+          this.fillDiamondTex(sx, sy, this.patterns[terrainTex(t)]);
         } else {
           const ground = (t === 'water') ? pal.water : ((x + y) % 2 === 0 ? pal.grass : pal.grass2);
           this.diamond(sx, sy, ground);
@@ -426,8 +455,46 @@ const World = {
       else this.drawPlayer(sx, sy);
     });
 
+    // 纵深氛围：越往森林深处（屏上方）越阴冷，叠一层冷色渐变
+    const g = ctx.createLinearGradient(0, 0, 0, this.vh);
+    g.addColorStop(0, 'rgba(12,18,32,0.34)');
+    g.addColorStop(0.55, 'rgba(12,18,32,0.05)');
+    g.addColorStop(1, 'rgba(40,30,18,0.0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, this.vw, this.vh);
+
+    // 飘落的褐尘（呼应剧情：尘落之后森林再无安宁）
+    this.drawDust();
+
     // 离屏目标的边缘指引箭头
     this.drawGuideArrow();
+  },
+
+  // 纹理裁菱形填充（轻微外扩 0.6px 防止相邻菱形出现发丝缝）
+  fillDiamondTex(cx, cy, pattern) {
+    if (!pattern) return;
+    const ctx = this.ctx, hw = this.HW + 0.6, hh = this.HH + 0.6;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - hh); ctx.lineTo(cx + hw, cy); ctx.lineTo(cx, cy + hh); ctx.lineTo(cx - hw, cy); ctx.closePath();
+    ctx.fillStyle = pattern; ctx.fill();
+  },
+
+  // 褐尘粒子（屏幕空间，循环飘落）
+  drawDust() {
+    const ctx = this.ctx;
+    if (!this.dust) {
+      this.dust = [];
+      for (let i = 0; i < 46; i++) this.dust.push({ x: Math.random() * this.vw, y: Math.random() * this.vh, s: 0.6 + Math.random() * 1.6, v: 6 + Math.random() * 14, d: Math.random() * 6.28 });
+    }
+    const dt = this._dustDt || 16;
+    ctx.save();
+    for (const p of this.dust) {
+      p.y += p.v * dt / 1000; p.x += Math.sin((performance.now() / 900) + p.d) * 0.25;
+      if (p.y > this.vh + 4) { p.y = -4; p.x = Math.random() * this.vw; }
+      ctx.globalAlpha = 0.28 + (p.s / 2.2) * 0.4;
+      ctx.fillStyle = '#9c7a4e';
+      ctx.fillRect(p.x, p.y, p.s, p.s);
+    }
+    ctx.restore();
   },
 
   // 像素道具（底部贴地，立绘式 billboard）
@@ -480,16 +547,34 @@ const World = {
   drawPlayer(sx, sy) {
     const ctx = this.ctx, p = this.player;
     const moving = p.step > 0;
-    const bob = moving ? Math.abs(Math.sin(p.step / 120)) * 3 : Math.sin(performance.now() / 420) * 1.2;
-    // 地面阴影
-    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(sx, sy + this.HH * 0.35, 14, 6, 0, 0, 7); ctx.fill();
+    // 动画：移动=走路（较快上下踏步+左右轻摆+触地挤压），静止=呼吸（缓慢起伏）
+    const now = performance.now();
+    let bob, sway = 0, squash = 1;
+    if (moving) {
+      const phase = p.step / 95;
+      bob = Math.abs(Math.sin(phase)) * 3.2;          // 踏步起伏
+      sway = Math.sin(phase) * 1.2;                    // 身体左右轻摆
+      squash = 1 - Math.abs(Math.sin(phase)) * 0.05;   // 触地轻微压缩
+    } else {
+      bob = (Math.sin(now / 620) * 0.5 + 0.5) * 1.6;   // 呼吸
+      squash = 1 + Math.sin(now / 620) * 0.012;
+    }
+    // 地面阴影（移动时随踏步缩放）
+    const shScale = moving ? (0.85 + Math.abs(Math.sin(p.step / 95)) * 0.2) : 1;
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath();
+    ctx.ellipse(sx, sy + this.HH * 0.35, 13 * shScale, 5.5 * shScale, 0, 0, 7); ctx.fill();
 
     if (this.curChar) {
-      const im = this.curChar[p.dir] || this.curChar.down;
+      const flip = (p.dir === 'right');
+      const im = flip ? this.curChar.left : (this.curChar[p.dir] || this.curChar.down);
       if (im && im.complete && im.naturalWidth) {
-        const H = 52, W = H * (im.naturalWidth / im.naturalHeight);
+        const H = 52 * squash, W = (52) * (im.naturalWidth / im.naturalHeight);
+        const dx = Math.round(sx - W / 2 + sway), dy = Math.round(sy + this.HH * 0.4 - H - bob);
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(im, Math.round(sx - W / 2), Math.round(sy + this.HH * 0.4 - H - bob), W, H);
+        ctx.save();
+        if (flip) { ctx.translate(dx + W, dy); ctx.scale(-1, 1); ctx.drawImage(im, 0, 0, W, H); }
+        else ctx.drawImage(im, dx, dy, W, H);
+        ctx.restore();
         return;
       }
     }
