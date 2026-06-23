@@ -605,6 +605,15 @@ const Game = {
     return { ok: true };
   },
 
+  // 上阵 / 移出（佣兵列表的快捷部署）
+  toggleDeploy(uid) {
+    const idx = this.state.team.indexOf(uid);
+    if (idx >= 0) { this.state.team.splice(idx, 1); this.save(); return { ok: true, deployed: false }; }
+    if (this.state.team.length >= 5) return { ok: false, msg: '阵形已满，点阵形槽位替换' };
+    this.state.team.push(uid); this.save();
+    return { ok: true, deployed: true };
+  },
+
   // 清空指定出战位
   clearTeamSlot(slotIdx) {
     if (slotIdx < this.state.team.length) {

@@ -1570,3 +1570,51 @@ body {
   .lobby-right { width: 120px; } .lr-name { font-size: 11px; } .lr-ico { font-size: 18px; }
   .lobby-music { display: none; }
 }
+
+/* ============================================================
+   佣兵（伙伴）页 v2 —— 顶部筛选 + 左侧选中预览/阵形 + 右侧角色网格
+   ============================================================ */
+.roster2 { display: flex; flex-direction: column; height: 100%; gap: 8px; }
+.r2-filterbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rf-group { display: flex; gap: 3px; background: var(--panel); border-radius: 10px; padding: 3px; }
+.rf-chip { width: 30px; height: 28px; border: none; background: transparent; color: var(--text); font-size: 14px; border-radius: 7px; cursor: pointer; }
+.rf-chip.on { background: var(--accent); color: #fff; }
+.rf-toggle, .rf-sort { background: var(--panel); border: 1px solid rgba(255,255,255,.08); color: var(--text-dim); border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+.rf-toggle.on { background: var(--accent); color: #fff; border-color: transparent; }
+
+.r2-body { flex: 1; display: flex; gap: 10px; min-height: 0; }
+/* 左侧预览 */
+.r2-preview { flex: 0 0 190px; display: flex; flex-direction: column; gap: 8px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 12px; overflow-y: auto; }
+.r2-prev-art { position: relative; aspect-ratio: 3/4; border-radius: 12px; display: grid; place-items: center; overflow: hidden; }
+.r2-prev-avatar { font-size: 64px; } .r2-prev-avatar img.char-img { width: 100%; height: 100%; object-fit: cover; }
+.r2-prev-el { position: absolute; top: 6px; left: 8px; font-size: 11px; background: rgba(0,0,0,.4); padding: 1px 7px; border-radius: 8px; }
+.r2-prev-star { position: absolute; bottom: 6px; left: 8px; color: var(--r5); font-size: 12px; letter-spacing: 1px; }
+.r2-prev-name { font-size: 15px; font-weight: 800; }
+.r2-prev-meta { font-size: 11px; }
+.r2-prev-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; font-size: 12px; }
+.r2-prev-stats span { background: var(--panel-2); border-radius: 6px; padding: 4px 6px; }
+.r2-prev-actions { display: flex; gap: 6px; } .r2-prev-actions .btn.sm { margin-top: 0; flex: 1; }
+.r2-form { margin-top: 4px; }
+.r2-form-head { font-size: 11px; margin-bottom: 5px; }
+.r2-form-slots { display: flex; gap: 4px; }
+.r2-form-slot { flex: 1; aspect-ratio: 1/1; border-radius: 8px; background: var(--panel-2); border: 1.5px solid rgba(255,255,255,.08); display: grid; place-items: center; cursor: pointer; overflow: hidden; }
+.r2-form-slot.empty { color: var(--text-dim); }
+.r2-fs-art { width: 100%; height: 100%; display: grid; place-items: center; font-size: 18px; } .r2-fs-art img.char-img { width: 100%; height: 100%; object-fit: cover; }
+.r2-fs-plus { font-size: 16px; }
+
+/* 右侧网格 */
+.r2-grid { flex: 1; min-width: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; align-content: start; }
+.r2-card { position: relative; background: var(--panel); border-radius: 10px; padding: 4px; cursor: pointer; border-width: 2px; }
+.r2-card.sel { outline: 2px solid var(--accent); outline-offset: 1px; }
+.r2-card-art { position: relative; aspect-ratio: 1/1; border-radius: 8px; display: grid; place-items: center; font-size: 30px; overflow: hidden; }
+.r2-card-art img.char-img { width: 100%; height: 100%; object-fit: cover; }
+.r2-el { position: absolute; top: 2px; left: 3px; font-size: 11px; }
+.r2-star { position: absolute; bottom: 1px; left: 0; right: 0; text-align: center; color: var(--r5); font-size: 8px; letter-spacing: -1px; text-shadow: 0 1px 2px #000; }
+.r2-card-name { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; margin-top: 2px; }
+.r2-card-lv { font-size: 10px; color: var(--text-dim); text-align: center; }
+.r2-team-tag { position: absolute; top: 3px; right: 3px; z-index: 2; background: var(--accent); color: #fff; font-size: 8px; padding: 1px 4px; border-radius: 6px; }
+
+@media (min-width: 820px) {
+  .r2-preview { flex: 0 0 240px; } .r2-prev-avatar { font-size: 84px; }
+  .r2-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+}

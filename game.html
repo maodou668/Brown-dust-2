@@ -1578,6 +1578,54 @@ body {
   .lobby-music { display: none; }
 }
 
+/* ============================================================
+   佣兵（伙伴）页 v2 —— 顶部筛选 + 左侧选中预览/阵形 + 右侧角色网格
+   ============================================================ */
+.roster2 { display: flex; flex-direction: column; height: 100%; gap: 8px; }
+.r2-filterbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rf-group { display: flex; gap: 3px; background: var(--panel); border-radius: 10px; padding: 3px; }
+.rf-chip { width: 30px; height: 28px; border: none; background: transparent; color: var(--text); font-size: 14px; border-radius: 7px; cursor: pointer; }
+.rf-chip.on { background: var(--accent); color: #fff; }
+.rf-toggle, .rf-sort { background: var(--panel); border: 1px solid rgba(255,255,255,.08); color: var(--text-dim); border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+.rf-toggle.on { background: var(--accent); color: #fff; border-color: transparent; }
+
+.r2-body { flex: 1; display: flex; gap: 10px; min-height: 0; }
+/* 左侧预览 */
+.r2-preview { flex: 0 0 190px; display: flex; flex-direction: column; gap: 8px; background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 12px; overflow-y: auto; }
+.r2-prev-art { position: relative; aspect-ratio: 3/4; border-radius: 12px; display: grid; place-items: center; overflow: hidden; }
+.r2-prev-avatar { font-size: 64px; } .r2-prev-avatar img.char-img { width: 100%; height: 100%; object-fit: cover; }
+.r2-prev-el { position: absolute; top: 6px; left: 8px; font-size: 11px; background: rgba(0,0,0,.4); padding: 1px 7px; border-radius: 8px; }
+.r2-prev-star { position: absolute; bottom: 6px; left: 8px; color: var(--r5); font-size: 12px; letter-spacing: 1px; }
+.r2-prev-name { font-size: 15px; font-weight: 800; }
+.r2-prev-meta { font-size: 11px; }
+.r2-prev-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; font-size: 12px; }
+.r2-prev-stats span { background: var(--panel-2); border-radius: 6px; padding: 4px 6px; }
+.r2-prev-actions { display: flex; gap: 6px; } .r2-prev-actions .btn.sm { margin-top: 0; flex: 1; }
+.r2-form { margin-top: 4px; }
+.r2-form-head { font-size: 11px; margin-bottom: 5px; }
+.r2-form-slots { display: flex; gap: 4px; }
+.r2-form-slot { flex: 1; aspect-ratio: 1/1; border-radius: 8px; background: var(--panel-2); border: 1.5px solid rgba(255,255,255,.08); display: grid; place-items: center; cursor: pointer; overflow: hidden; }
+.r2-form-slot.empty { color: var(--text-dim); }
+.r2-fs-art { width: 100%; height: 100%; display: grid; place-items: center; font-size: 18px; } .r2-fs-art img.char-img { width: 100%; height: 100%; object-fit: cover; }
+.r2-fs-plus { font-size: 16px; }
+
+/* 右侧网格 */
+.r2-grid { flex: 1; min-width: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; align-content: start; }
+.r2-card { position: relative; background: var(--panel); border-radius: 10px; padding: 4px; cursor: pointer; border-width: 2px; }
+.r2-card.sel { outline: 2px solid var(--accent); outline-offset: 1px; }
+.r2-card-art { position: relative; aspect-ratio: 1/1; border-radius: 8px; display: grid; place-items: center; font-size: 30px; overflow: hidden; }
+.r2-card-art img.char-img { width: 100%; height: 100%; object-fit: cover; }
+.r2-el { position: absolute; top: 2px; left: 3px; font-size: 11px; }
+.r2-star { position: absolute; bottom: 1px; left: 0; right: 0; text-align: center; color: var(--r5); font-size: 8px; letter-spacing: -1px; text-shadow: 0 1px 2px #000; }
+.r2-card-name { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; margin-top: 2px; }
+.r2-card-lv { font-size: 10px; color: var(--text-dim); text-align: center; }
+.r2-team-tag { position: absolute; top: 3px; right: 3px; z-index: 2; background: var(--accent); color: #fff; font-size: 8px; padding: 1px 4px; border-radius: 6px; }
+
+@media (min-width: 820px) {
+  .r2-preview { flex: 0 0 240px; } .r2-prev-avatar { font-size: 84px; }
+  .r2-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+}
+
 </style>
 </head>
 <body>
@@ -1623,7 +1671,7 @@ body {
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '54';</script>
+  <script>window.ASSET_VER = '55';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -3296,6 +3344,15 @@ const Game = {
     }
     this.save();
     return { ok: true };
+  },
+
+  // 上阵 / 移出（佣兵列表的快捷部署）
+  toggleDeploy(uid) {
+    const idx = this.state.team.indexOf(uid);
+    if (idx >= 0) { this.state.team.splice(idx, 1); this.save(); return { ok: true, deployed: false }; }
+    if (this.state.team.length >= 5) return { ok: false, msg: '阵形已满，点阵形槽位替换' };
+    this.state.team.push(uid); this.save();
+    return { ok: true, deployed: true };
   },
 
   // 清空指定出战位
@@ -4979,19 +5036,18 @@ const UI = {
   // ============================================================
   renderRoster() {
     const s = Game.state;
-    const E = window.GameData.ELEMENTS;
-    this.rosterFilter = this.rosterFilter || { element: null, team: false };
+    const E = window.GameData.ELEMENTS, CL = window.GameData.CLASSES;
+    this.rosterFilter = this.rosterFilter || { element: null, team: false, cls: null };
     this.rosterSort = this.rosterSort || 'rarity';
     const f = this.rosterFilter;
 
-    // 筛选
     let list = s.roster.filter(o => {
       const c = window.GameData.CHARACTERS[o.charId];
       if (f.element && c.element !== f.element) return false;
+      if (f.cls && c.cls !== f.cls) return false;
       if (f.team && !Game.inTeam(o.uid)) return false;
       return true;
     });
-    // 排序
     const sortFns = {
       rarity: (a, b) => { const ca = window.GameData.CHARACTERS[a.charId], cb = window.GameData.CHARACTERS[b.charId]; return cb.rarity - ca.rarity || b.level - a.level; },
       level: (a, b) => b.level - a.level || (b.plus || 0) - (a.plus || 0),
@@ -4999,54 +5055,107 @@ const UI = {
     };
     list = list.slice().sort(sortFns[this.rosterSort] || sortFns.rarity);
 
+    // 选中预览（默认列表首位；失效则回退）
+    if (!this.rosterSel || !s.roster.find(o => o.uid === this.rosterSel)) this.rosterSel = list[0] ? list[0].uid : null;
+    const sel = this.rosterSel ? Game.getOwned(this.rosterSel) : null;
+
+    // 卡片
     const cards = list.map(o => {
       const c = window.GameData.CHARACTERS[o.charId];
       const inTeam = Game.inTeam(o.uid);
-      return `
-        <div class="roster-card border-${this.rarityClass(c.rarity)}" data-uid="${o.uid}">
-          ${inTeam ? '<span class="in-team-tag">出战</span>' : ''}
-          <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${c.color}44, transparent);">
-            <span class="rarity-badge ${this.rarityClass(c.rarity)}">${c.rarity}★</span>
-            ${o.plus ? `<span class="plus-badge corner">+${o.plus}</span>` : ''}
-            ${this.charAvatar(o.charId)}
-            <span class="cls-chip">${E[c.element].icon}</span>
-          </div>
-          <div class="rc-info">
-            <div class="rc-name">${c.name}</div>
-            <div class="rc-lv">Lv.${o.level} · ${window.GameData.CLASSES[c.cls].name}</div>
-          </div>
-        </div>`;
+      return `<div class="r2-card border-${this.rarityClass(c.rarity)} ${o.uid === this.rosterSel ? 'sel' : ''}" data-uid="${o.uid}">
+        ${inTeam ? '<span class="r2-team-tag">出战</span>' : ''}
+        <div class="r2-card-art" style="background:radial-gradient(circle at 50% 30%, ${c.color}55, transparent);">
+          <span class="r2-el">${E[c.element].icon}</span>
+          <span class="r2-star">${'★'.repeat(c.rarity)}</span>
+          ${this.charAvatar(o.charId)}
+          ${o.plus ? `<span class="plus-badge corner">+${o.plus}</span>` : ''}
+        </div>
+        <div class="r2-card-name">${c.name}</div>
+        <div class="r2-card-lv">Lv.${o.level}</div>
+      </div>`;
     }).join('') || '<p class="muted" style="grid-column:1/-1;padding:16px;text-align:center;">没有符合筛选的佣兵</p>';
 
+    // 左侧预览
+    let preview;
+    if (sel) {
+      const c = window.GameData.CHARACTERS[sel.charId];
+      const st = Game.computeStats(sel);
+      const cos = Game.activeCostumeDef(sel);
+      const inTeam = Game.inTeam(sel.uid);
+      preview = `
+        <div class="r2-prev-art border-${this.rarityClass(c.rarity)}" style="background:radial-gradient(circle at 50% 30%, ${cos.color}66, var(--panel));">
+          <span class="r2-prev-el">${E[c.element].icon}${E[c.element].name}</span>
+          <div class="r2-prev-avatar">${this.charAvatar(sel.charId)}</div>
+          <span class="r2-prev-star">${'★'.repeat(c.rarity)}</span>
+        </div>
+        <div class="r2-prev-name">${c.name} <span class="muted" style="font-size:11px;">${c.title}</span></div>
+        <div class="r2-prev-meta muted">${CL[c.cls].icon}${CL[c.cls].name} · Lv.${sel.level} · 突破+${sel.plus || 0} · 觉醒${sel.awaken || 0}★ · 好感Lv${Game.affLevel(sel)}</div>
+        <div class="r2-prev-stats">
+          <span>❤️${st.maxHp}</span><span>⚔️${st.atk}</span><span>🛡️${st.def}</span><span>⚡${st.spd}</span><span>💥${Math.round(st.crit * 100)}%</span>
+        </div>
+        <div class="r2-prev-actions">
+          <button class="btn secondary sm" id="r2-detail">详情养成</button>
+          <button class="btn sm ${inTeam ? 'secondary' : 'gold'}" id="r2-deploy">${inTeam ? '移出阵形' : '上阵'}</button>
+        </div>`;
+    } else preview = '<div class="muted" style="padding:24px;text-align:center;">还没有佣兵，去招募吧</div>';
+
+    // 阵形行
+    const formSlots = Array.from({ length: 5 }, (_, i) => {
+      const uid = s.team[i]; const o = uid ? Game.getOwned(uid) : null;
+      const c = o ? window.GameData.CHARACTERS[o.charId] : null;
+      return `<div class="r2-form-slot ${o ? 'border-' + this.rarityClass(c.rarity) : 'empty'}" data-slot="${i}">
+        ${o ? `<div class="r2-fs-art" style="background:radial-gradient(circle at 50% 35%, ${Game.activeColor(o)}55, transparent);">${this.charAvatar(o.charId)}</div>` : '<span class="r2-fs-plus">＋</span>'}
+      </div>`;
+    }).join('');
+
     const elemChip = (key, icon) => `<button class="rf-chip ${f.element === key ? 'on' : ''}" data-elem="${key || ''}">${icon}</button>`;
-    const sortLabel = { rarity: '稀有度', level: '等级', element: '元素' }[this.rosterSort];
+    const clsChip = (key, icon) => `<button class="rf-chip ${f.cls === key ? 'on' : ''}" data-cls="${key || ''}">${icon}</button>`;
+    const sortLabel = { rarity: '稀有', level: '等级', element: '元素' }[this.rosterSort];
 
     this.screenEl.innerHTML = `
-      <div class="section-title">佣兵团（${s.roster.length}）</div>
-      <div class="roster-bar">
-        <div class="rf-elems">
-          ${elemChip(null, '全部')}
-          ${['fire', 'wind', 'earth', 'water', 'light', 'dark'].map(k => elemChip(k, E[k].icon)).join('')}
+      <div class="roster2">
+        <div class="r2-filterbar">
+          <div class="rf-group">${elemChip(null, '全')}${['fire', 'wind', 'earth', 'water', 'light', 'dark'].map(k => elemChip(k, E[k].icon)).join('')}</div>
+          <div class="rf-group">${clsChip(null, '职')}${Object.keys(CL).map(k => clsChip(k, CL[k].icon)).join('')}</div>
+          <div class="rf-group">
+            <button class="rf-toggle ${f.team ? 'on' : ''}" id="rf-team">仅出战</button>
+            <button class="rf-sort" id="rf-sort">排序·${sortLabel}</button>
+          </div>
         </div>
-        <div class="rf-ctrl">
-          <button class="rf-toggle ${f.team ? 'on' : ''}" id="rf-team">仅出战</button>
-          <button class="rf-sort" id="rf-sort">排序：${sortLabel}</button>
+        <div class="r2-body">
+          <div class="r2-preview">
+            ${preview}
+            <div class="r2-form">
+              <div class="r2-form-head">当前阵形 <span class="muted">· 战力 ⚔${Game.playerPower()}</span></div>
+              <div class="r2-form-slots">${formSlots}</div>
+            </div>
+          </div>
+          <div class="r2-grid">${cards}</div>
         </div>
-      </div>
-      <p class="muted" style="margin:-2px 0 10px;font-size:11px;">点击佣兵查看详情、升级 · 出战 ${s.team.length}/5 · 显示 ${list.length}</p>
-      <div class="roster-grid">${cards}</div>`;
+      </div>`;
 
-    this.screenEl.querySelectorAll('[data-elem]').forEach(b => b.onclick = () => {
-      f.element = b.dataset.elem || null; this.renderRoster();
-    });
+    // 筛选
+    this.screenEl.querySelectorAll('[data-elem]').forEach(b => b.onclick = () => { f.element = b.dataset.elem || null; this.renderRoster(); });
+    this.screenEl.querySelectorAll('[data-cls]').forEach(b => b.onclick = () => { f.cls = b.dataset.cls || null; this.renderRoster(); });
     this.screenEl.querySelector('#rf-team').onclick = () => { f.team = !f.team; this.renderRoster(); };
     this.screenEl.querySelector('#rf-sort').onclick = () => {
       const order = ['rarity', 'level', 'element'];
-      this.rosterSort = order[(order.indexOf(this.rosterSort) + 1) % order.length];
-      this.renderRoster();
+      this.rosterSort = order[(order.indexOf(this.rosterSort) + 1) % order.length]; this.renderRoster();
     };
-    this.screenEl.querySelectorAll('.roster-card').forEach(card =>
-      card.addEventListener('click', () => this.showCharDetail(card.dataset.uid)));
+    // 卡片：单击选中（更新左侧预览）
+    this.screenEl.querySelectorAll('.r2-card[data-uid]').forEach(card => card.onclick = () => { this.rosterSel = card.dataset.uid; this.renderRoster(); });
+    // 预览按钮
+    const det = this.screenEl.querySelector('#r2-detail');
+    if (det) det.onclick = () => this.showCharDetail(this.rosterSel);
+    const dep = this.screenEl.querySelector('#r2-deploy');
+    if (dep) dep.onclick = () => {
+      const r = Game.toggleDeploy(this.rosterSel);
+      if (!r.ok) { this.toast(r.msg); return; }
+      this.updateResources(); this.renderRoster();
+    };
+    // 阵形槽点击 → 编队
+    this.screenEl.querySelectorAll('.r2-form-slot[data-slot]').forEach(sl => sl.onclick = () => this.showTeamEditor(parseInt(sl.dataset.slot, 10)));
   },
 
   /** 好感 + 觉醒 区块 */
