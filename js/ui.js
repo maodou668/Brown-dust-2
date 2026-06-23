@@ -533,30 +533,30 @@ const UI = {
     }).join('') || '<p class="muted" style="grid-column:1/-1;padding:16px;text-align:center;">没有符合筛选的佣兵</p>';
 
     // 左侧预览
-    let preview;
+    let splash, actions = '';
     if (sel) {
       const c = window.GameData.CHARACTERS[sel.charId];
-      const st = Game.computeStats(sel);
       const cos = Game.activeCostumeDef(sel);
       const inTeam = Game.inTeam(sel.uid);
-      preview = `
-        <div class="r2-prev-art border-${this.rarityClass(c.rarity)}" style="background:radial-gradient(circle at 50% 30%, ${cos.color}66, var(--panel));">
-          <span class="r2-prev-el">${E[c.element].icon}${E[c.element].name}</span>
-          <div class="r2-prev-avatar">${this.charAvatar(sel.charId)}</div>
-          <span class="r2-prev-star">${'★'.repeat(c.rarity)}</span>
-        </div>
-        <div class="r2-prev-name">${c.name} <span class="muted" style="font-size:11px;">${c.title}</span></div>
-        <div class="r2-prev-meta muted">${CL[c.cls].icon}${CL[c.cls].name} · Lv.${sel.level} · 突破+${sel.plus || 0} · 觉醒${sel.awaken || 0}★ · 好感Lv${Game.affLevel(sel)}</div>
-        <div class="r2-prev-stats">
-          <span>❤️${st.maxHp}</span><span>⚔️${st.atk}</span><span>🛡️${st.def}</span><span>⚡${st.spd}</span><span>💥${Math.round(st.crit * 100)}%</span>
-        </div>
-        <div class="r2-prev-actions">
-          <button class="btn secondary sm" id="r2-detail">详情养成</button>
-          <button class="btn sm ${inTeam ? 'secondary' : 'gold'}" id="r2-deploy">${inTeam ? '移出阵形' : '上阵'}</button>
+      const st = Game.computeStats(sel);
+      splash = `
+        <div class="r2-splash border-${this.rarityClass(c.rarity)}" style="background:linear-gradient(180deg, ${cos.color}66 0%, ${cos.color}22 45%, var(--bg) 90%);">
+          <span class="r2-splash-el">${E[c.element].icon}${E[c.element].name}</span>
+          <span class="r2-splash-star">${'★'.repeat(c.rarity)}</span>
+          <div class="r2-splash-avatar">${this.charAvatar(sel.charId)}</div>
+          <div class="r2-splash-info">
+            <div class="r2-splash-name">${c.name}</div>
+            <div class="r2-splash-meta">${c.title} · ${CL[c.cls].icon}${CL[c.cls].name} · Lv.${sel.level}</div>
+            <div class="r2-splash-grow">突破+${sel.plus || 0} · 觉醒${sel.awaken || 0}★ · 好感Lv${Game.affLevel(sel)} · ⚔${Math.round(st.maxHp * 0.25 + st.atk * 1.5 + st.def)}</div>
+          </div>
         </div>`;
-    } else preview = '<div class="muted" style="padding:24px;text-align:center;">还没有佣兵，去招募吧</div>';
+      actions = `<div class="r2-splash-actions">
+        <button class="btn secondary sm" id="r2-detail">详情养成</button>
+        <button class="btn sm ${inTeam ? 'secondary' : 'gold'}" id="r2-deploy">${inTeam ? '移出阵形' : '上 阵'}</button>
+      </div>`;
+    } else splash = '<div class="r2-splash empty"><div class="muted">还没有佣兵，去招募吧</div></div>';
 
-    // 阵形行
+    // 阵形行（立绘下方）
     const formSlots = Array.from({ length: 5 }, (_, i) => {
       const uid = s.team[i]; const o = uid ? Game.getOwned(uid) : null;
       const c = o ? window.GameData.CHARACTERS[o.charId] : null;
@@ -580,13 +580,16 @@ const UI = {
           </div>
         </div>
         <div class="r2-body">
-          <div class="r2-preview">
-            ${preview}
-            <div class="r2-form">
+          <!-- 左：大立绘 + 操作 + 立绘下方的当前阵形 -->
+          <div class="r2-left">
+            ${splash}
+            ${actions}
+            <div class="r2-formation">
               <div class="r2-form-head">当前阵形 <span class="muted">· 战力 ⚔${Game.playerPower()}</span></div>
               <div class="r2-form-slots">${formSlots}</div>
             </div>
           </div>
+          <!-- 右：所有角色网格 -->
           <div class="r2-grid">${cards}</div>
         </div>
       </div>`;
