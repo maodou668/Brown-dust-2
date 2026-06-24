@@ -3,55 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>DragonBones 占位骨骼演示 · 棕色尘埃2</title>
+  <title>DragonBones 角色动作演示 · 棕色尘埃2</title>
   <style>
     :root { --accent:#b06bff; --accent2:#ff6b9d; --gold:#f0c674; }
     * { box-sizing:border-box; }
     html,body { margin:0; height:100%; background:radial-gradient(circle at 50% 0%, #2a2038, #1a1422 60%); color:#e8e2f0;
       font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif; -webkit-user-select:none; user-select:none; overflow:hidden; }
     .wrap { height:100dvh; display:flex; flex-direction:column; }
-    header { padding:12px 16px; font-weight:800; font-size:15px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,.07); }
-    header small { color:#9d92ad; font-weight:400; }
-    .stage { flex:1; position:relative; display:grid; place-items:center; }
-    canvas { display:block; }
-    .floor { position:absolute; bottom:64px; left:50%; transform:translateX(-50%); width:220px; height:26px;
-      background:radial-gradient(ellipse at center, rgba(0,0,0,.45), transparent 70%); border-radius:50%; }
-    .bar { display:flex; gap:8px; padding:14px; justify-content:center; flex-wrap:wrap; }
-    button { background:#261d33; color:#e8e2f0; border:1px solid rgba(255,255,255,.12); border-radius:10px;
-      padding:10px 18px; font-size:14px; font-weight:700; cursor:pointer; }
+    header { padding:8px 14px; font-weight:800; font-size:14px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,.07); flex:0 0 auto; }
+    header small { color:#9d92ad; font-weight:400; font-size:11px; }
+    .stage { flex:1 1 auto; min-height:0; position:relative; }
+    canvas { display:block; position:absolute; inset:0; }
+    .controls { flex:0 0 auto; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); border-top:1px solid rgba(255,255,255,.07); background:rgba(20,16,28,.6); }
+    .row { display:flex; gap:7px; justify-content:center; flex-wrap:wrap; }
+    .row + .row { margin-top:7px; }
+    .label { font-size:11px; color:#9d92ad; align-self:center; margin-right:2px; }
+    button { background:#261d33; color:#e8e2f0; border:1px solid rgba(255,255,255,.12); border-radius:9px;
+      padding:9px 16px; font-size:14px; font-weight:700; cursor:pointer; }
+    button.sm { padding:6px 12px; font-size:12px; }
     button.on { background:linear-gradient(135deg,var(--accent),var(--accent2)); border-color:transparent; color:#fff; }
-    button:active { transform:scale(.96); }
-    .hint { text-align:center; color:#9d92ad; font-size:12px; padding-bottom:10px; line-height:1.6; }
+    button:active { transform:scale(.95); }
+    .hint { text-align:center; color:#9d92ad; font-size:11px; margin-top:7px; line-height:1.5; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <span>🦴 DragonBones 占位骨骼演示</span>
-      <small>赛璐璐拼装人形 · 标准骨架 + idle/walk/attack</small>
+      <span>🦴 DragonBones 角色动作</span>
+      <small>骨骼动画 · 一套骨架多种动作</small>
     </header>
-    <div class="stage">
-      <div class="floor"></div>
-      <canvas id="cv"></canvas>
+    <div class="stage"><canvas id="cv"></canvas></div>
+    <div class="controls">
+      <div class="row" id="animbar"></div>
+      <div class="row" id="charbar"></div>
+      <div class="hint" id="hint"></div>
     </div>
-    <div class="bar" id="charbar"></div>
-    <div class="bar" id="bar"></div>
-    <div class="hint" id="hint"></div>
   </div>
 
-  <script src="js/dragonbones-lite.js?v=db2"></script>
+  <script src="js/dragonbones-lite.js?v=db3"></script>
   <script>
   (async function () {
     const DIR = 'art/02_dragonbones/';
-    // 角色配置：h=总高(px)，above=root 之上的高度(px)，用于自动缩放定位
+    const ANIM_LABEL = { idle:'待机', walk:'行走', run:'奔跑', jump:'跳跃', attack_normal:'普攻' };
     const CHARS = {
-      lecliss: { label: 'Lecliss（Gemini 立绘切件）', h: 760, above: 540,
-        note: '由 Gemini 立绘<b>自动切件</b>绑骨。idle 呼吸自然；挥臂/行走因自动切件在肩部有轻微接缝——干净绑定需手工分层 PSD。' },
-      char_template: { label: '占位骨骼（程序生成）', h: 340, above: 180,
+      lecliss: { label: 'Lecliss（Gemini 立绘）', h: 760, above: 540,
+        note: '由 Gemini 立绘<b>自动切件</b>绑同一套骨架；走/跑/跳/攻击均由骨骼驱动。<br>自动切件在大幅动作时肩/腿有轻微接缝，干净绑定需手工分层 PSD。' },
+      char_template: { label: '占位骨骼', h: 340, above: 180,
         note: '程序化生成的赛璐璐拼装木偶，用于验证管线。' },
     };
-    let curChar = 'lecliss', player = null, conf = CHARS.lecliss;
+    let curChar = 'lecliss', curAnim = 'idle', player = null, conf = CHARS.lecliss;
 
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    function resize() {
+      const st = cv.parentElement, w = st.clientWidth, h = st.clientHeight;
+      cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + 'px'; cv.style.height = h + 'px';
+    }
+    window.addEventListener('resize', resize);
+
+    const animbar = document.getElementById('animbar');
+    function buildAnimButtons() {
+      animbar.innerHTML = '<span class="label">动作</span>';
+      Object.keys(player.data.anims).forEach(id => {
+        const b = document.createElement('button');
+        b.textContent = ANIM_LABEL[id] || id; b.className = (id === curAnim ? 'on' : '');
+        b.onclick = () => { curAnim = id; player.play(id); [...animbar.querySelectorAll('button')].forEach(c => c.classList.remove('on')); b.classList.add('on'); };
+        animbar.appendChild(b);
+      });
+    }
     async function loadChar(name) {
       const [ske, tex] = await Promise.all([
         fetch(DIR + name + '_ske.json').then(r => r.json()),
@@ -60,68 +80,39 @@
       const atlas = new Image(); atlas.src = DIR + name + '_tex.png';
       await new Promise(res => { atlas.onload = res; atlas.onerror = res; });
       player = new DBLite.Player(DBLite.parse(ske, tex), atlas);
-      player.play('idle');
-      conf = CHARS[name];
+      conf = CHARS[name]; curAnim = 'idle'; player.play('idle');
       document.getElementById('hint').innerHTML = conf.note;
+      buildAnimButtons();
     }
-    await loadChar(curChar);
 
-    const cv = document.getElementById('cv');
-    const ctx = cv.getContext('2d');
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    function resize() {
-      const stage = cv.parentElement;
-      const w = stage.clientWidth, h = stage.clientHeight;
-      cv.width = w * dpr; cv.height = h * dpr;
-      cv.style.width = w + 'px'; cv.style.height = h + 'px';
-    }
-    resize(); window.addEventListener('resize', resize);
-
-    // 角色切换
     const charbar = document.getElementById('charbar');
+    charbar.innerHTML = '<span class="label">角色</span>';
     Object.keys(CHARS).forEach(name => {
-      const b = document.createElement('button');
-      b.textContent = CHARS[name].label; b.className = name === curChar ? 'on' : '';
-      b.onclick = async () => {
-        curChar = name; await loadChar(name); cur = 'idle';
-        [...charbar.children].forEach(c => c.classList.remove('on')); b.classList.add('on');
-        [...bar.children].forEach((c, i) => c.classList.toggle('on', anims[i][0] === 'idle'));
-      };
+      const b = document.createElement('button'); b.className = 'sm' + (name === curChar ? ' on' : '');
+      b.textContent = CHARS[name].label;
+      b.onclick = async () => { curChar = name; await loadChar(name); [...charbar.querySelectorAll('button')].forEach(c => c.classList.remove('on')); b.classList.add('on'); };
       charbar.appendChild(b);
     });
-    // 动画按钮
-    const anims = [['idle', '待机'], ['walk', '行走'], ['attack_normal', '普攻']];
-    const bar = document.getElementById('bar');
-    let cur = 'idle';
-    anims.forEach(([id, label]) => {
-      const b = document.createElement('button');
-      b.textContent = label; b.className = id === cur ? 'on' : '';
-      b.onclick = () => { cur = id; player.play(id); [...bar.children].forEach(c => c.classList.remove('on')); b.classList.add('on'); };
-      bar.appendChild(b);
-    });
 
-    // 渲染循环：放大约 1.6 倍，root 置于地面
+    await loadChar(curChar);
+    resize();
+
     let last = performance.now();
     function loop(now) {
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
       player.update(dt);
-      // 普攻播放完毕自动回 idle
-      if (cur === 'attack_normal' && player.onceDone) {
-        cur = 'idle'; player.play('idle');
-        [...bar.children].forEach((c, i) => c.classList.toggle('on', anims[i][0] === 'idle'));
+      // 非循环动作（跳跃/普攻）播完自动回待机
+      const a = player.data.anims[curAnim];
+      if (a && !a.loop && player.onceDone) {
+        curAnim = 'idle'; player.play('idle');
+        [...animbar.querySelectorAll('button')].forEach((c, i) => c.classList.toggle('on', Object.keys(player.data.anims)[i] === 'idle'));
       }
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.clearRect(0, 0, cv.width, cv.height);
-      const w = cv.width, h = cv.height;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+      const cssW = cv.width / dpr, cssH = cv.height / dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const cssW = w / dpr, cssH = h / dpr;
-      const s = (cssH * 0.86) / conf.h;            // 按角色总高自适应缩放
-      const rootY = cssH * 0.06 + conf.above * s;  // root 之上留出头部
-      ctx.save();
-      ctx.translate(cssW / 2, rootY);
-      ctx.scale(s, s);
-      player.draw(ctx);
-      ctx.restore();
+      const s = (cssH * 0.82) / conf.h;
+      const rootY = cssH * 0.08 + conf.above * s;
+      ctx.save(); ctx.translate(cssW / 2, rootY); ctx.scale(s, s); player.draw(ctx); ctx.restore();
       requestAnimationFrame(loop);
     }
     requestAnimationFrame(loop);

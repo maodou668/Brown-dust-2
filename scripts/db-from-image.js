@@ -122,30 +122,55 @@ const P = {
   });
 
   const rf = (...fr) => fr.map(([d, r]) => ({ duration: d, tweenEasing: 0, rotate: r }));
+  const tf = (...fr) => fr.map(([d, y, x]) => ({ duration: d, tweenEasing: 0, x: x || 0, y: y || 0 }));
+
   const idle = { name: 'idle', playTimes: 0, duration: 60, bone: [
     { name: 'torso', rotateFrame: rf([30, 1.6], [30, -1.6]) },
     { name: 'head', rotateFrame: rf([30, -1], [30, 1]) },
     { name: 'shoulder_l', rotateFrame: rf([30, 2.5], [30, -2.5]) },
     { name: 'shoulder_r', rotateFrame: rf([30, -2.5], [30, 2.5]) },
+    { name: 'hip', translateFrame: tf([30, 0], [30, -3]) },
   ] };
-  // 攻击：前倾蓄力 + 右臂适度上抬（控制在小幅度，避免切件接缝外露）
-  const attack = { name: 'attack_normal', playTimes: 1, duration: 21, bone: [
-    { name: 'torso', rotateFrame: rf([5, -3], [4, 7], [6, 4], [6, 0]) },
-    { name: 'shoulder_r', rotateFrame: rf([5, -14], [4, -42], [6, -20], [6, 0]) },
-    { name: 'shoulder_l', rotateFrame: rf([5, 8], [4, 16], [6, 6], [6, 0]) },
-    { name: 'thigh_r', rotateFrame: rf([5, 0], [4, -8], [6, -4], [6, 0]) },
-    { name: 'head', rotateFrame: rf([5, 2], [4, -3], [6, -1], [6, 0]) },
-  ] };
+  // 行走：迈步 + 摆臂 + 身体上下起伏
   const walk = { name: 'walk', playTimes: 0, duration: 36, bone: [
-    { name: 'thigh_l', rotateFrame: rf([9, 9], [9, 0], [9, -9], [9, 0]) },
-    { name: 'thigh_r', rotateFrame: rf([9, -9], [9, 0], [9, 9], [9, 0]) },
-    { name: 'shoulder_l', rotateFrame: rf([9, -6], [9, 0], [9, 6], [9, 0]) },
-    { name: 'shoulder_r', rotateFrame: rf([9, 6], [9, 0], [9, -6], [9, 0]) },
-    { name: 'torso', rotateFrame: rf([9, 1], [9, 0], [9, -1], [9, 0]) },
-    { name: 'head', rotateFrame: rf([9, -0.8], [9, 0], [9, 0.8], [9, 0]) },
+    { name: 'thigh_l', rotateFrame: rf([9, 17], [9, 0], [9, -17], [9, 0]) },
+    { name: 'thigh_r', rotateFrame: rf([9, -17], [9, 0], [9, 17], [9, 0]) },
+    { name: 'shoulder_l', rotateFrame: rf([9, -13], [9, 0], [9, 13], [9, 0]) },
+    { name: 'shoulder_r', rotateFrame: rf([9, 13], [9, 0], [9, -13], [9, 0]) },
+    { name: 'torso', rotateFrame: rf([9, 1.5], [9, 0], [9, -1.5], [9, 0]) },
+    { name: 'head', rotateFrame: rf([9, -1], [9, 0], [9, 1], [9, 0]) },
+    { name: 'hip', translateFrame: tf([9, -5], [9, 0], [9, -5], [9, 0]) },
+  ] };
+  // 奔跑：大跨步 + 前倾 + 更大起伏，节奏更快
+  const run = { name: 'run', playTimes: 0, duration: 24, bone: [
+    { name: 'thigh_l', rotateFrame: rf([6, 30], [6, 2], [6, -30], [6, 2]) },
+    { name: 'thigh_r', rotateFrame: rf([6, -30], [6, 2], [6, 30], [6, 2]) },
+    { name: 'shoulder_l', rotateFrame: rf([6, -26], [6, 0], [6, 26], [6, 0]) },
+    { name: 'shoulder_r', rotateFrame: rf([6, 26], [6, 0], [6, -26], [6, 0]) },
+    { name: 'torso', rotateFrame: rf([6, 7], [6, 6], [6, 8], [6, 6]) },
+    { name: 'head', rotateFrame: rf([6, -5], [6, -6], [6, -5], [6, -6]) },
+    { name: 'hip', translateFrame: tf([6, -10], [6, -2], [6, -10], [6, -2]) },
+  ] };
+  // 跳跃：下蹲蓄力 → 腾空 → 收腿 → 落地缓冲（用 hip 位移做整体起跳）
+  const jump = { name: 'jump', playTimes: 1, duration: 36, bone: [
+    { name: 'hip', translateFrame: tf([5, 12], [6, -46], [9, -62], [7, -22], [5, 10], [4, 0]) },
+    { name: 'thigh_l', rotateFrame: rf([5, 18], [6, -12], [9, 24], [7, 12], [5, 16], [4, 0]) },
+    { name: 'thigh_r', rotateFrame: rf([5, 18], [6, -12], [9, -24], [7, -12], [5, 16], [4, 0]) },
+    { name: 'shoulder_l', rotateFrame: rf([5, 12], [6, -34], [9, -28], [7, -14], [5, 6], [4, 0]) },
+    { name: 'shoulder_r', rotateFrame: rf([5, -12], [6, 34], [9, 28], [7, 14], [5, -6], [4, 0]) },
+    { name: 'torso', rotateFrame: rf([5, 6], [6, -4], [9, -2], [7, 2], [5, 5], [4, 0]) },
+  ] };
+  // 攻击：前倾蓄力 + 右臂上挥
+  const attack = { name: 'attack_normal', playTimes: 1, duration: 24, bone: [
+    { name: 'torso', rotateFrame: rf([5, -5], [5, 10], [7, 6], [7, 0]) },
+    { name: 'shoulder_r', rotateFrame: rf([5, -16], [5, -52], [7, -24], [7, 0]) },
+    { name: 'shoulder_l', rotateFrame: rf([5, 10], [5, 20], [7, 8], [7, 0]) },
+    { name: 'thigh_r', rotateFrame: rf([5, 2], [5, -12], [7, -6], [7, 0]) },
+    { name: 'head', rotateFrame: rf([5, 3], [5, -4], [7, -1], [7, 0]) },
+    { name: 'hip', translateFrame: tf([5, 6], [5, -4], [7, 0], [7, 0]) },
   ] };
 
-  const ske = { frameRate: 24, name: NAME, version: '5.5', armature: [{ name: 'char', frameRate: 24, bone: bones, slot: slots, skin: [{ slot: skinSlots }], animation: [idle, attack, walk], defaultActions: [{ gotoAndPlay: 'idle' }] }] };
+  const ske = { frameRate: 24, name: NAME, version: '5.5', armature: [{ name: 'char', frameRate: 24, bone: bones, slot: slots, skin: [{ slot: skinSlots }], animation: [idle, walk, run, jump, attack], defaultActions: [{ gotoAndPlay: 'idle' }] }] };
   fs.writeFileSync(path.join(OUT, NAME + '_ske.json'), JSON.stringify(ske, null, 2));
   console.log('已生成 lecliss 骨骼：图集', ATLAS_W + 'x' + ATLAS_H, '部件', sub.length);
 })();
