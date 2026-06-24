@@ -1,0 +1,76 @@
+{
+  "name": "char_template",
+  "imagePath": "char_template_tex.png",
+  "SubTexture": [
+    {
+      "name": "hair_b",
+      "x": 2,
+      "y": 2,
+      "width": 76,
+      "height": 92
+    },
+    {
+      "name": "head",
+      "x": 80,
+      "y": 2,
+      "width": 56,
+      "height": 60
+    },
+    {
+      "name": "hair_f",
+      "x": 138,
+      "y": 2,
+      "width": 60,
+      "height": 38
+    },
+    {
+      "name": "torso",
+      "x": 2,
+      "y": 96,
+      "width": 70,
+      "height": 104
+    },
+    {
+      "name": "arm_up",
+      "x": 74,
+      "y": 96,
+      "width": 22,
+      "height": 56
+    },
+    {
+      "name": "arm_fore",
+      "x": 98,
+      "y": 96,
+      "width": 20,
+      "height": 52
+    },
+    {
+      "name": "hand",
+      "x": 120,
+      "y": 96,
+      "width": 22,
+      "height": 22
+    },
+    {
+      "name": "thigh",
+      "x": 144,
+      "y": 96,
+      "width": 26,
+      "height": 70
+    },
+    {
+      "name": "shin",
+      "x": 172,
+      "y": 96,
+      "width": 22,
+      "height": 64
+    },
+    {
+      "name": "foot",
+      "x": 196,
+      "y": 96,
+      "width": 30,
+      "height": 24
+    }
+  ]
+}
