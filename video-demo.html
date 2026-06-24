@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>视频序列帧演示 · 棕色尘埃2</title>
+  <style>
+    :root { --accent:#b06bff; --accent2:#ff6b9d; }
+    * { box-sizing:border-box; }
+    html,body { margin:0; height:100%; background:radial-gradient(circle at 50% 0%, #2a2038, #1a1422 60%); color:#e8e2f0;
+      font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif; -webkit-user-select:none; user-select:none; overflow:hidden; }
+    .wrap { height:100dvh; display:flex; flex-direction:column; }
+    header { padding:8px 14px; font-weight:800; font-size:14px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,.07); flex:0 0 auto; }
+    header small { color:#9d92ad; font-weight:400; font-size:11px; }
+    .stage { flex:1 1 auto; min-height:0; position:relative; }
+    canvas { display:block; position:absolute; inset:0; }
+    .controls { flex:0 0 auto; padding:10px 12px calc(10px + env(safe-area-inset-bottom)); border-top:1px solid rgba(255,255,255,.07); }
+    .hint { text-align:center; color:#9d92ad; font-size:12px; line-height:1.6; }
+    .hint b { color:#f0c674; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <span>🎬 视频序列帧演示</span>
+      <small>视频 → 抠像透明 → 序列帧播放</small>
+    </header>
+    <div class="stage"><canvas id="cv"></canvas></div>
+    <div class="controls">
+      <div class="hint" id="hint">机制验证片（绿幕小球已抠成透明帧循环播放）。<br>把<b>真人物动作视频（绿幕背景）</b>给我，同一条管线即可换成角色动作。</div>
+    </div>
+  </div>
+
+  <script src="js/sprite-anim.js?v=1"></script>
+  <script>
+  (async function () {
+    const DIR = 'art/02_video/';
+    const NAME = 'demo_ball';
+    const meta = await fetch(DIR + NAME + '.json').then(r => r.json());
+    const img = new Image(); img.src = DIR + NAME + '_sheet.png';
+    await new Promise(res => { img.onload = res; img.onerror = res; });
+    const anim = new SpriteAnim(img, meta);
+
+    const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    function resize() { const s = cv.parentElement; cv.width = s.clientWidth * dpr; cv.height = s.clientHeight * dpr; cv.style.width = s.clientWidth + 'px'; cv.style.height = s.clientHeight + 'px'; }
+    resize(); window.addEventListener('resize', resize);
+
+    let last = performance.now();
+    function loop(now) {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      anim.update(dt);
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const cssW = cv.width / dpr, cssH = cv.height / dpr;
+      const s = Math.min((cssW * 0.7) / meta.fw, (cssH * 0.8) / meta.fh);
+      anim.draw(ctx, cssW / 2, cssH * 0.92, s);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  })();
+  </script>
+</body>
+</html>

@@ -21,6 +21,8 @@
     "@capacitor/status-bar": "^6.0.2"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.1.2"
+    "@capacitor/cli": "^6.1.2",
+    "@napi-rs/canvas": "^0.1.60",
+    "jsdom": "^24.0.0"
   }
 }

@@ -1,0 +1,8 @@
+{
+  "name": "demo_ball",
+  "frames": 16,
+  "fw": 230,
+  "fh": 196,
+  "fps": 15,
+  "loop": true
+}
