@@ -27,17 +27,17 @@
     </header>
     <div class="stage"><canvas id="cv"></canvas></div>
     <div class="controls">
-      <div class="hint" id="hint">机制验证片（绿幕小球已抠成透明帧循环播放）。<br>把<b>真人物动作视频（绿幕背景）</b>给我，同一条管线即可换成角色动作。</div>
+      <div class="hint" id="hint">Lecliss · <b>待机</b>（Gemini 视频抽帧抠像而成，赛璐璐全质量、零接缝循环）。<br>同一条管线，走/跑/跳/攻击各生成一段视频即可补齐。</div>
     </div>
   </div>
 
-  <script src="js/sprite-anim.js?v=1"></script>
+  <script src="js/sprite-anim.js?v=2"></script>
   <script>
   (async function () {
     const DIR = 'art/02_video/';
-    const NAME = 'demo_ball';
+    const NAME = 'lecliss_idle';
     const meta = await fetch(DIR + NAME + '.json').then(r => r.json());
-    const img = new Image(); img.src = DIR + NAME + '_sheet.png';
+    const img = new Image(); img.src = DIR + (meta.sheet || NAME + '_sheet.webp');
     await new Promise(res => { img.onload = res; img.onerror = res; });
     const anim = new SpriteAnim(img, meta);
 
@@ -53,8 +53,14 @@
       ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const cssW = cv.width / dpr, cssH = cv.height / dpr;
-      const s = Math.min((cssW * 0.7) / meta.fw, (cssH * 0.8) / meta.fh);
-      anim.draw(ctx, cssW / 2, cssH * 0.92, s);
+      const s = Math.min((cssW * 0.78) / meta.fw, (cssH * 0.92) / meta.fh);
+      const footX = cssW / 2, footY = cssH * 0.96;
+      // 接地软阴影
+      ctx.save(); ctx.translate(footX, footY); ctx.scale(1, 0.28);
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, meta.fw * s * 0.34);
+      g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, meta.fw * s * 0.34, 0, 7); ctx.fill(); ctx.restore();
+      anim.draw(ctx, footX, footY, s);
       requestAnimationFrame(loop);
     }
     requestAnimationFrame(loop);

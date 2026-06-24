@@ -16,10 +16,11 @@
     if (m.loop) this.frame = ((f % m.frames) + m.frames) % m.frames;
     else { if (f >= m.frames - 1) { this.frame = m.frames - 1; this.done = true; } else this.frame = f; }
   };
-  // 以 (x,y) 为脚底中心绘制；scale 缩放
+  // 以 (x,y) 为脚底中心绘制；scale 缩放（支持网格图集 cols/rows）
   SpriteAnim.prototype.draw = function (ctx, x, y, scale) {
-    const m = this.meta, fw = m.fw, fh = m.fh, s = scale || 1;
-    ctx.drawImage(this.img, this.frame * fw, 0, fw, fh, x - fw * s / 2, y - fh * s, fw * s, fh * s);
+    const m = this.meta, fw = m.fw, fh = m.fh, s = scale || 1, cols = m.cols || m.frames;
+    const sx = (this.frame % cols) * fw, sy = Math.floor(this.frame / cols) * fh;
+    ctx.drawImage(this.img, sx, sy, fw, fh, x - fw * s / 2, y - fh * s, fw * s, fh * s);
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = SpriteAnim;
   else global.SpriteAnim = SpriteAnim;

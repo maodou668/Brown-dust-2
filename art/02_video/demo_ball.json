@@ -1,8 +1,11 @@
 {
   "name": "demo_ball",
+  "sheet": "demo_ball_sheet.webp",
   "frames": 16,
   "fw": 230,
   "fh": 196,
+  "cols": 17,
+  "rows": 1,
   "fps": 15,
   "loop": true
 }

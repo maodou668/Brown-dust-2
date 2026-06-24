@@ -19,9 +19,13 @@ const OUTDIR = path.resolve(__dirname, '..', opt.outdir || 'art/02_video');
 const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 fs.mkdirSync(OUTDIR, { recursive: true });
 
-// 1) 抽帧
+// 1) 抽帧（可选 --ss 起点 / --t 时长 跳过片头白底等）
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vframes-'));
-execFileSync(FFMPEG, ['-y', '-i', video, '-vf', `fps=${FPS}`, '-frames:v', String(MAX), path.join(tmp, 'f%03d.png')], { stdio: 'ignore' });
+const ffArgs = ['-y'];
+if (opt.ss) ffArgs.push('-ss', String(opt.ss));
+if (opt.t) ffArgs.push('-t', String(opt.t));
+ffArgs.push('-i', video, '-vf', `fps=${FPS}`, '-frames:v', String(MAX), path.join(tmp, 'f%03d.png'));
+execFileSync(FFMPEG, ffArgs, { stdio: 'ignore' });
 let files = fs.readdirSync(tmp).filter(f => f.endsWith('.png')).sort();
 if (!files.length) { console.error('✗ 未抽到帧'); process.exit(1); }
 console.log('抽帧', files.length, '张 @', FPS, 'fps');
@@ -63,14 +67,23 @@ let X0 = 1e9, Y0 = 1e9, X1 = 0, Y1 = 0, W = 0, H = 0;
     for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) { if (D[(yy * W + xx) * 4 + 3] > 16) { if (xx < X0) X0 = xx; if (xx > X1) X1 = xx; if (yy < Y0) Y0 = yy; if (yy > Y1) Y1 = yy; } }
     frames.push(c);
   }
-  // 3) 裁边 + 拼图（横向一排）
+  // 3) 裁边 → 缩放 → 网格拼图（控制单边 ≤4096，浏览器纹理安全）
   const pad = 2;
-  const fw = Math.min(W, X1 - X0 + 1 + pad * 2), fh = Math.min(H, Y1 - Y0 + 1 + pad * 2);
+  const cropW = Math.min(W, X1 - X0 + 1 + pad * 2), cropH = Math.min(H, Y1 - Y0 + 1 + pad * 2);
   const cx0 = Math.max(0, X0 - pad), cy0 = Math.max(0, Y0 - pad);
-  const sheet = createCanvas(fw * frames.length, fh), sc = sheet.getContext('2d');
-  frames.forEach((c, i) => sc.drawImage(c, cx0, cy0, fw, fh, i * fw, 0, fw, fh));
-  fs.writeFileSync(path.join(OUTDIR, outName + '_sheet.png'), sheet.toBuffer('image/png'));
-  fs.writeFileSync(path.join(OUTDIR, outName + '.json'), JSON.stringify({ name: outName, frames: frames.length, fw, fh, fps: FPS, loop: true }, null, 2));
+  const MAXDIM = parseInt(opt.scale || '540', 10);                       // 输出每帧最大边
+  const oscale = Math.min(1, MAXDIM / Math.max(cropW, cropH));
+  const fw = Math.round(cropW * oscale), fh = Math.round(cropH * oscale);
+  const cols = Math.max(1, Math.floor(4096 / fw));                       // 单行列数，限宽
+  const rows = Math.ceil(frames.length / cols);
+  const sheet = createCanvas(cols * fw, rows * fh), sc = sheet.getContext('2d');
+  frames.forEach((c, i) => { const cxx = (i % cols) * fw, cyy = Math.floor(i / cols) * fh; sc.drawImage(c, cx0, cy0, cropW, cropH, cxx, cyy, fw, fh); });
+  const q = parseInt(opt.q || '86', 10);
+  const sheetFile = outName + '_sheet.webp';
+  fs.writeFileSync(path.join(OUTDIR, sheetFile), sheet.toBuffer('image/webp', q));
+  const meta = { name: outName, sheet: sheetFile, frames: frames.length, fw, fh, cols, rows, fps: FPS, loop: opt.once ? false : true };
+  fs.writeFileSync(path.join(OUTDIR, outName + '.json'), JSON.stringify(meta, null, 2));
   fs.rmSync(tmp, { recursive: true, force: true });
-  console.log('✓', outName + '_sheet.png', `${frames.length} 帧 ${fw}x${fh} → 图 ${fw * frames.length}x${fh}`);
+  const kb = (fs.statSync(path.join(OUTDIR, sheetFile)).size / 1024) | 0;
+  console.log('✓', sheetFile, `${frames.length} 帧 ${fw}x${fh} ${cols}×${rows} → 图 ${cols * fw}x${rows * fh} · ${kb}KB`);
 })();
