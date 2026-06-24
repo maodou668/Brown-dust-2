@@ -763,6 +763,8 @@ const Main = {
       const autoFs = () => { if (!this.isFullscreen()) this.requestFullscreen(); };
       document.addEventListener('pointerdown', autoFs, { once: true });
     }
+    // 原生 App（Capacitor）：沉浸式全屏 + 锁定横屏
+    this.initNative();
 
     // 重置存档
     document.getElementById('btn-reset').addEventListener('click', () => {
@@ -818,6 +820,18 @@ const Main = {
     if (this.isFullscreen()) { this.exitFullscreen(); return; }
     if (this.fullscreenSupported()) { this.requestFullscreen(); return; }
     this.showIOSFullscreenTip();   // iOS Safari 不支持全屏 API → 引导添加到主屏幕
+  },
+  // 原生壳（Capacitor）下：隐藏状态栏 + 锁横屏，达到「点开即全屏」
+  isNative() { return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); },
+  initNative() {
+    if (!this.isNative()) return;
+    const P = (window.Capacitor && window.Capacitor.Plugins) || {};
+    try { if (P.StatusBar) { P.StatusBar.hide(); P.StatusBar.setOverlaysWebView && P.StatusBar.setOverlaysWebView({ overlay: true }); } } catch (e) {}
+    try { if (P.ScreenOrientation) P.ScreenOrientation.lock({ orientation: 'landscape' }); } catch (e) {}
+    try { if (P.SplashScreen) P.SplashScreen.hide(); } catch (e) {}
+    // 原生已全屏，隐藏网页版的全屏按钮
+    const fsBtn = document.getElementById('btn-fullscreen');
+    if (fsBtn) fsBtn.style.display = 'none';
   },
   showIOSFullscreenTip() {
     if (this.isStandalone()) { UI.toast('已是全屏模式'); return; }

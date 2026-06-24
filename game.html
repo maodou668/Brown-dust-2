@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=66">
+  <link rel="manifest" href="manifest.webmanifest?v=67">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=66">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=66">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=67">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=67">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2146,7 +2146,7 @@ button.ac-circle:active { transform: scale(.92); }
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '66';</script>
+  <script>window.ASSET_VER = '67';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -10404,6 +10404,8 @@ const Main = {
       const autoFs = () => { if (!this.isFullscreen()) this.requestFullscreen(); };
       document.addEventListener('pointerdown', autoFs, { once: true });
     }
+    // 原生 App（Capacitor）：沉浸式全屏 + 锁定横屏
+    this.initNative();
 
     // 重置存档
     document.getElementById('btn-reset').addEventListener('click', () => {
@@ -10459,6 +10461,18 @@ const Main = {
     if (this.isFullscreen()) { this.exitFullscreen(); return; }
     if (this.fullscreenSupported()) { this.requestFullscreen(); return; }
     this.showIOSFullscreenTip();   // iOS Safari 不支持全屏 API → 引导添加到主屏幕
+  },
+  // 原生壳（Capacitor）下：隐藏状态栏 + 锁横屏，达到「点开即全屏」
+  isNative() { return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); },
+  initNative() {
+    if (!this.isNative()) return;
+    const P = (window.Capacitor && window.Capacitor.Plugins) || {};
+    try { if (P.StatusBar) { P.StatusBar.hide(); P.StatusBar.setOverlaysWebView && P.StatusBar.setOverlaysWebView({ overlay: true }); } } catch (e) {}
+    try { if (P.ScreenOrientation) P.ScreenOrientation.lock({ orientation: 'landscape' }); } catch (e) {}
+    try { if (P.SplashScreen) P.SplashScreen.hide(); } catch (e) {}
+    // 原生已全屏，隐藏网页版的全屏按钮
+    const fsBtn = document.getElementById('btn-fullscreen');
+    if (fsBtn) fsBtn.style.display = 'none';
   },
   showIOSFullscreenTip() {
     if (this.isStandalone()) { UI.toast('已是全屏模式'); return; }

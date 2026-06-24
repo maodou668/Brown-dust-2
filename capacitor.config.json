@@ -1,0 +1,25 @@
+{
+  "appId": "io.github.maodou668.bd2",
+  "appName": "棕色尘埃2",
+  "webDir": "www",
+  "backgroundColor": "#1a1422",
+  "android": {
+    "backgroundColor": "#1a1422"
+  },
+  "ios": {
+    "backgroundColor": "#1a1422",
+    "contentInset": "never"
+  },
+  "plugins": {
+    "StatusBar": {
+      "overlaysWebView": true,
+      "style": "DARK",
+      "backgroundColor": "#1a1422"
+    },
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "backgroundColor": "#1a1422",
+      "showSpinner": false
+    }
+  }
+}

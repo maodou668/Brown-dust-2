@@ -1,0 +1,26 @@
+{
+  "name": "maodou-bd2",
+  "version": "1.0.0",
+  "private": true,
+  "description": "棕色尘埃2 · Brown Dust 2 风格横版 JRPG（Web + Android/iOS 原生壳）",
+  "scripts": {
+    "build:web": "node scripts/build-web.js",
+    "build:game": "node scripts/build.js",
+    "sync": "npm run build:web && npx cap sync",
+    "android": "npm run sync && npx cap open android",
+    "ios": "npm run sync && npx cap open ios",
+    "add:android": "npm run build:web && npx cap add android",
+    "add:ios": "npm run build:web && npx cap add ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/ios": "^6.1.2",
+    "@capacitor/screen-orientation": "^6.0.3",
+    "@capacitor/splash-screen": "^6.0.3",
+    "@capacitor/status-bar": "^6.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}
