@@ -34,26 +34,37 @@
       <div class="floor"></div>
       <canvas id="cv"></canvas>
     </div>
+    <div class="bar" id="charbar"></div>
     <div class="bar" id="bar"></div>
-    <div class="hint">这是程序化生成的「占位骨骼」，用于验证 DragonBones 管线。<br>真立绘到位后，按同一套骨架命名换皮即可，动画与运行时不变。</div>
+    <div class="hint" id="hint"></div>
   </div>
 
-  <script src="js/dragonbones-lite.js?v=db1"></script>
+  <script src="js/dragonbones-lite.js?v=db2"></script>
   <script>
   (async function () {
     const DIR = 'art/02_dragonbones/';
-    const NAME = 'char_template';
-    const [ske, tex] = await Promise.all([
-      fetch(DIR + NAME + '_ske.json').then(r => r.json()),
-      fetch(DIR + NAME + '_tex.json').then(r => r.json()),
-    ]);
-    const atlas = new Image();
-    atlas.src = DIR + NAME + '_tex.png';
-    await new Promise(res => { atlas.onload = res; atlas.onerror = res; });
+    // 角色配置：h=总高(px)，above=root 之上的高度(px)，用于自动缩放定位
+    const CHARS = {
+      lecliss: { label: 'Lecliss（Gemini 立绘切件）', h: 760, above: 540,
+        note: '由 Gemini 立绘<b>自动切件</b>绑骨。idle 呼吸自然；挥臂/行走因自动切件在肩部有轻微接缝——干净绑定需手工分层 PSD。' },
+      char_template: { label: '占位骨骼（程序生成）', h: 340, above: 180,
+        note: '程序化生成的赛璐璐拼装木偶，用于验证管线。' },
+    };
+    let curChar = 'lecliss', player = null, conf = CHARS.lecliss;
 
-    const data = DBLite.parse(ske, tex);
-    const player = new DBLite.Player(data, atlas);
-    player.play('idle');
+    async function loadChar(name) {
+      const [ske, tex] = await Promise.all([
+        fetch(DIR + name + '_ske.json').then(r => r.json()),
+        fetch(DIR + name + '_tex.json').then(r => r.json()),
+      ]);
+      const atlas = new Image(); atlas.src = DIR + name + '_tex.png';
+      await new Promise(res => { atlas.onload = res; atlas.onerror = res; });
+      player = new DBLite.Player(DBLite.parse(ske, tex), atlas);
+      player.play('idle');
+      conf = CHARS[name];
+      document.getElementById('hint').innerHTML = conf.note;
+    }
+    await loadChar(curChar);
 
     const cv = document.getElementById('cv');
     const ctx = cv.getContext('2d');
@@ -66,7 +77,19 @@
     }
     resize(); window.addEventListener('resize', resize);
 
-    // 控制按钮
+    // 角色切换
+    const charbar = document.getElementById('charbar');
+    Object.keys(CHARS).forEach(name => {
+      const b = document.createElement('button');
+      b.textContent = CHARS[name].label; b.className = name === curChar ? 'on' : '';
+      b.onclick = async () => {
+        curChar = name; await loadChar(name); cur = 'idle';
+        [...charbar.children].forEach(c => c.classList.remove('on')); b.classList.add('on');
+        [...bar.children].forEach((c, i) => c.classList.toggle('on', anims[i][0] === 'idle'));
+      };
+      charbar.appendChild(b);
+    });
+    // 动画按钮
     const anims = [['idle', '待机'], ['walk', '行走'], ['attack_normal', '普攻']];
     const bar = document.getElementById('bar');
     let cur = 'idle';
@@ -92,9 +115,10 @@
       const w = cv.width, h = cv.height;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const cssW = w / dpr, cssH = h / dpr;
+      const s = (cssH * 0.86) / conf.h;            // 按角色总高自适应缩放
+      const rootY = cssH * 0.06 + conf.above * s;  // root 之上留出头部
       ctx.save();
-      ctx.translate(cssW / 2, cssH - 70);
-      const s = Math.min(1.8, cssH / 360);
+      ctx.translate(cssW / 2, rootY);
       ctx.scale(s, s);
       player.draw(ctx);
       ctx.restore();
