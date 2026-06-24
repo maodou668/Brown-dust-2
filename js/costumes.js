@@ -67,6 +67,58 @@ const EXTRA_SKILLS = {
 };
 Object.assign(SK, EXTRA_SKILLS);
 
+// ============================================================
+//  专属招式（全部由数值平衡模型 Balance 求解威力，落在统一曲线上）
+//  新增角色只需在此加规格（sp/target/effect/附带效果），威力自动算，不会崩盘。
+// ============================================================
+const B = window.Balance;
+const pct = p => Math.round(p * 100);
+const SIG_SPECS = {
+  // —— 已有招式：纳入模型重算（基本贴近原值）——
+  inferno:          { name: '炼狱业火', target: 'enemyAll', effect: 'damage', sp: 4, icon: '🔥', inflict: { type: 'burn', turns: 2, power: 0.5 }, d: p => `召唤业火对敌方全体造成 ${pct(p)}% 火焰伤害，并灼烧 2 回合。` },
+  shadow_volley:    { name: '暗影连射', target: 'enemySingle', effect: 'damage', sp: 4, icon: '🌌', pierce: true, d: p => `倾泻暗影箭雨，对单体造成 ${pct(p)}% 攻击力的恐怖伤害（无视前排）。` },
+  tempest_blade:    { name: '苍穹一闪', target: 'enemySingle', effect: 'damage', sp: 4, icon: '🌀', knockback: true, d: p => `极致剑速爆发，对单体造成 ${pct(p)}% 风属性伤害并击退。` },
+  blazing_arrow:    { name: '红莲烈箭', target: 'enemySingle', effect: 'damage', sp: 3, icon: '🔥', pierce: true, d: p => `点燃箭矢射穿目标，造成 ${pct(p)}% 火焰伤害（无视前排）。` },
+  earth_slam:       { name: '大地践踏', target: 'enemyAll', effect: 'damage', sp: 3, icon: '⛰️', knockback: true, d: p => `震动大地对全体造成 ${pct(p)}% 伤害并击退前排。` },
+  grand_heal:       { name: '圣光普照', target: 'allyAll', effect: 'heal', sp: 4, icon: '🌈', d: p => `降下圣光为全体恢复 ${pct(p)}% 攻击力的大量生命。` },
+  blessing:         { name: '祝福', target: 'allyAll', effect: 'buffAtk', sp: 3, duration: 3, icon: '🌟', d: p => `为全体提升 ${pct(p)}% 攻击力，持续 3 回合。` },
+  radiant_judgment: { name: '圣裁', target: 'enemyAll', effect: 'damage', sp: 4, icon: '⚜️', d: p => `降下审判圣光，对全体造成 ${pct(p)}% 光属性伤害。` },
+  frost_nova:       { name: '霜冻新星', target: 'enemyAll', effect: 'damage', sp: 4, icon: '❄️', d: p => `冰霜爆发对全体造成 ${pct(p)}% 水属性伤害。` },
+  twin_fang:        { name: '双牙连射', target: 'enemySingle', effect: 'damage', sp: 2, icon: '🐺', pierce: true, d: p => `瞬发两箭对单体造成 ${pct(p)}% 伤害（无视前排）。` },
+  brave_charge:     { name: '勇者突击', target: 'enemyRow', effect: 'damage', sp: 3, icon: '🐎', knockback: true, d: p => `策马冲锋践踏一排，造成 ${pct(p)}% 伤害并击退。` },
+  mending_song:     { name: '治愈之歌', target: 'allyAll', effect: 'heal', sp: 3, icon: '🎵', d: p => `吟唱治愈旋律为全体恢复 ${pct(p)}% 生命。` },
+  holy_smite:       { name: '圣光裁决', target: 'enemyRow', effect: 'damage', sp: 3, icon: '⚡', d: p => `降下圣光对一排造成 ${pct(p)}% 光属性伤害。` },
+  tidal_burst:      { name: '怒涛', target: 'enemyAll', effect: 'damage', sp: 4, icon: '🌊', d: p => `滔天巨浪冲击全体，造成 ${pct(p)}% 水属性伤害。` },
+  shield_bash:      { name: '盾击', target: 'enemySingle', effect: 'damage', sp: 2, icon: '🛡️', inflict: { type: 'stun', turns: 1 }, d: p => `巨盾猛击单体，造成 ${pct(p)}% 伤害并眩晕 1 回合。` },
+  venom_shot:       { name: '淬毒之箭', target: 'enemySingle', effect: 'damage', sp: 2, icon: '🏹', pierce: true, inflict: { type: 'poison', turns: 3, power: 0.45 }, d: p => `淬毒之箭贯穿目标，造成 ${pct(p)}% 伤害（无视前排）并中毒 3 回合。` },
+  // —— 9 个新专属招式（角色差异化）——
+  oath_aegis:       { name: '誓约圣盾', target: 'allyAll', effect: 'shield', sp: 3, icon: '🛡️', extra: { type: 'taunt' }, d: p => `为全体张开等同 ${pct(p)}% 攻击力的护盾，并嘲讽敌人集火自身。` },
+  mountain_bulwark: { name: '山岳壁垒', target: 'allyAll', effect: 'shield', sp: 4, icon: '🏔️', d: p => `以山岳之力为全体张开 ${pct(p)}% 攻击力的厚重护盾。` },
+  abyssal_prison:   { name: '深渊水牢', target: 'enemyAll', effect: 'damage', sp: 4, icon: '🌀', extra: { type: 'debuffDef', power: 0.20, duration: 2 }, d: p => `深渊水牢封锁全体，造成 ${pct(p)}% 水属性伤害并降低 20% 防御。` },
+  absolute_zero:    { name: '绝对零度', target: 'enemyAll', effect: 'damage', sp: 4, icon: '🧊', inflict: { type: 'stun', turns: 1 }, d: p => `绝对零度冻结全体，造成 ${pct(p)}% 水属性伤害并冻结 1 回合。` },
+  galeblade_flurry: { name: '疾风连斩', target: 'enemyRow', effect: 'damage', sp: 2, icon: '🌪️', knockback: true, d: p => `疾风乱舞横扫一排，造成 ${pct(p)}% 风属性伤害并击退。` },
+  flame_slash:      { name: '烈焰斩', target: 'enemySingle', effect: 'damage', sp: 2, icon: '🔥', inflict: { type: 'burn', turns: 2, power: 0.5 }, d: p => `烈焰附刃斩击单体，造成 ${pct(p)}% 伤害并灼烧 2 回合。` },
+  rooting_shot:     { name: '缚地穿杨', target: 'enemySingle', effect: 'damage', sp: 3, icon: '🎯', pierce: true, inflict: { type: 'stun', turns: 1 }, d: p => `钉地之箭贯穿目标，造成 ${pct(p)}% 伤害（无视前排）并定身 1 回合。` },
+  zephyr_mend:      { name: '微风治愈', target: 'allyAll', effect: 'heal', sp: 2, icon: '🍃', d: p => `微风拂过为全体恢复 ${pct(p)}% 攻击力的生命。` },
+  dawnblade:        { name: '黎明之刃', target: 'enemySingle', effect: 'damage', sp: 2, icon: '🌅', knockback: true, d: p => `黎明之刃斩击单体，造成 ${pct(p)}% 光属性伤害并击退。` },
+};
+Object.entries(SIG_SPECS).forEach(([id, spec]) => {
+  const sk = B.make(spec);
+  sk.desc = spec.d ? spec.d(sk.power) : spec.desc;
+  delete sk.d;
+  SK[id] = sk;
+});
+
+// 每个角色「初始服装」的专属招式（显式指定，16 个互不重复）
+const BASE_SIG = {
+  lecliss: 'inferno', justia: 'oath_aegis', seir: 'shadow_volley', rou: 'blessing',
+  helena: 'galeblade_flurry', diana: 'abyssal_prison', garcia: 'earth_slam',
+  teried: 'flame_slash', lia: 'rooting_shot', mina: 'zephyr_mend',
+  refithea: 'grand_heal', rigenette: 'tempest_blade', olstein: 'mountain_bulwark',
+  glacia: 'absolute_zero', liatris: 'blazing_arrow', loen: 'dawnblade',
+};
+
+
 // 选取一个角色 2 技能中作为「初始服装」专属招式（取更强的那个）
 function pickSignature(skills) {
   return skills.reduce((b, s) => ((SK[s].sp || 0) >= (SK[b].sp || 0) ? s : b), skills[0]);
@@ -127,7 +179,7 @@ Object.values(CH).forEach(ch => {
     name: ch.name + ' · 初始', rarity: ch.rarity, cls: ch.cls,
     element: ch.element, color: ch.color,
     stats: { ...ch.base }, grow: { ...ch.grow },
-    signature: pickSignature(ch.skills), base: true,
+    signature: BASE_SIG[ch.id] || pickSignature(ch.skills), base: true,
     desc: ch.desc,
   };
 });

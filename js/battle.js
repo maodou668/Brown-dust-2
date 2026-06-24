@@ -183,6 +183,8 @@ const Battle = {
         // 新回合
         this.round++;
         this.tickRound();
+        this.checkEnd();               // 持续伤害（灼烧/中毒）致死也能正确结束战斗
+        if (this.finished) return null;
         this.buildTurnOrder();
         this.pushLog(`—— 第 ${this.round} 回合 ——`);
       }
@@ -402,7 +404,8 @@ const Battle = {
     combatant.sp -= this.skillSp(combatant, skillId);
     const sigMul = this.sigPowerMult(combatant, skillId); // 突破对专属招式的威力强化
 
-    const targets = this.resolveHitTargets(combatant, skillId, picked);
+    const targets = (this.resolveHitTargets(combatant, skillId, picked) || []).filter(Boolean);
+    if (!targets.length) { this.checkEnd(); return; }   // 目标已全灭（如持续伤害致死）：直接结算
 
     if (sk.effect === 'damage') {
       let summary = [];

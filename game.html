@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=67">
+  <link rel="manifest" href="manifest.webmanifest?v=68">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=67">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=67">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=68">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=68">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2146,7 +2146,7 @@ button.ac-circle:active { transform: scale(.92); }
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '67';</script>
+  <script>window.ASSET_VER = '68';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -2883,6 +2883,73 @@ window.GameData = { CLASSES, ELEMENTS, CHARACTERS, SKILLS, ENEMIES, STAGES, TRIA
 
 
 // ============================================================
+//  数值平衡模型（全局）—— 技能威力由「SP + 目标范围 + 附带效果」算出
+//  目的：所有技能落在同一性价比曲线上；新技能只填规格，威力自动求解，不会数值崩盘。
+//  已按现有技能校准（套用后基本不改变当前手感）。
+//  浏览器：window.Balance     Node：module.exports
+// ============================================================
+(function (global) {
+  'use strict';
+  const Balance = {
+    // —— 可调常数（改这里即全局微调）——
+    BASE: 0.85,        // 普攻威力（基准）
+    SP_VALUE: 0.60,    // 每点 SP 的价值
+    TF: { enemySingle: 1.0, enemyRow: 1.75, enemyAll: 2.1, allySingle: 1.0, allyAll: 2.1, self: 1.0 },
+    HEAL_F: 0.85, SHIELD_F: 0.90, BUFF_F: 1.10,
+    // 附带效果价值（换算成「威力」单位）
+    DOT_F: 0.55,       // 灼烧/中毒：每跳威力 × 回合 × 此系数
+    STUN_V: 0.80,      // 眩晕：每回合
+    SILENCE_V: 0.30,   // 沉默：每回合
+    DEBUFF_F: 1.20,    // 破防：破防量 × 此系数
+    KNOCKBACK_V: 0.20, // 击退（每个目标）
+    PIERCE_V: 0.15,    // 穿透（一次性）
+    TAUNT_V: 0.60,     // 嘲讽
+
+    budget(sp) { return this.BASE + this.SP_VALUE * (sp || 0); },
+    tf(t) { return this.TF[t] || 1; },
+    // 随目标数放大的效果（每个目标都吃到）
+    _modPerTarget(s) {
+      let v = 0;
+      if (s.inflict) {
+        const i = s.inflict;
+        if (i.type === 'burn' || i.type === 'poison') v += (i.power || 0.45) * (i.turns || 1) * this.DOT_F;
+        else if (i.type === 'stun') v += this.STUN_V * (i.turns || 1);
+        else if (i.type === 'silence') v += this.SILENCE_V * (i.turns || 1);
+      }
+      if (s.extra && s.extra.type === 'debuffDef') v += (s.extra.power || 0) * this.DEBUFF_F;
+      if (s.knockback) v += this.KNOCKBACK_V;
+      return v;
+    },
+    _modFlat(s) { return s.pierce ? this.PIERCE_V : 0; },
+    // 技能的实际「价值」（威力单位）
+    value(s) {
+      const tf = this.tf(s.target);
+      if (s.effect === 'heal') return s.power * tf * this.HEAL_F;
+      if (s.effect === 'shield') return s.power * tf * this.SHIELD_F + ((s.extra && s.extra.type === 'taunt') ? this.TAUNT_V : 0);
+      if (s.effect === 'buffAtk' || s.effect === 'buffDef') return s.power * (s.duration || 1) * tf * this.BUFF_F;
+      return (s.power + this._modPerTarget(s)) * tf + this._modFlat(s);
+    },
+    // 给定规格（不含 power），反解出应有的 power，使其正好落在预算线上
+    idealPower(spec) {
+      const tf = this.tf(spec.target), b = this.budget(spec.sp);
+      let p;
+      if (spec.effect === 'heal') p = b / (tf * this.HEAL_F);
+      else if (spec.effect === 'shield') p = (b - ((spec.extra && spec.extra.type === 'taunt') ? this.TAUNT_V : 0)) / (tf * this.SHIELD_F);
+      else if (spec.effect === 'buffAtk' || spec.effect === 'buffDef') p = b / ((spec.duration || 1) * tf * this.BUFF_F);
+      else p = (b - this._modFlat(spec)) / tf - this._modPerTarget(spec);
+      return Math.max(0.3, Math.round(p * 100) / 100);
+    },
+    // 平衡分：1.0 = 正好在线上；偏离 ±0.18 以内视为达标
+    score(s) { return this.value(s) / this.budget(s.sp || 0); },
+    // 用 idealPower 填好 power 后返回完整技能对象
+    make(spec) { return Object.assign({}, spec, { power: this.idealPower(spec) }); },
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = Balance;
+  else global.Balance = Balance;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+// ============================================================
 //  角色背景故事 / 台词（扩充「人物」深度）
 //  在 data.js 之后加载，将 lore / quotes 挂到角色图鉴上
 //  side 字段指向该角色的支线剧情 id（见 story.js 的 STORY）
@@ -3126,6 +3193,58 @@ const EXTRA_SKILLS = {
 };
 Object.assign(SK, EXTRA_SKILLS);
 
+// ============================================================
+//  专属招式（全部由数值平衡模型 Balance 求解威力，落在统一曲线上）
+//  新增角色只需在此加规格（sp/target/effect/附带效果），威力自动算，不会崩盘。
+// ============================================================
+const B = window.Balance;
+const pct = p => Math.round(p * 100);
+const SIG_SPECS = {
+  // —— 已有招式：纳入模型重算（基本贴近原值）——
+  inferno:          { name: '炼狱业火', target: 'enemyAll', effect: 'damage', sp: 4, icon: '🔥', inflict: { type: 'burn', turns: 2, power: 0.5 }, d: p => `召唤业火对敌方全体造成 ${pct(p)}% 火焰伤害，并灼烧 2 回合。` },
+  shadow_volley:    { name: '暗影连射', target: 'enemySingle', effect: 'damage', sp: 4, icon: '🌌', pierce: true, d: p => `倾泻暗影箭雨，对单体造成 ${pct(p)}% 攻击力的恐怖伤害（无视前排）。` },
+  tempest_blade:    { name: '苍穹一闪', target: 'enemySingle', effect: 'damage', sp: 4, icon: '🌀', knockback: true, d: p => `极致剑速爆发，对单体造成 ${pct(p)}% 风属性伤害并击退。` },
+  blazing_arrow:    { name: '红莲烈箭', target: 'enemySingle', effect: 'damage', sp: 3, icon: '🔥', pierce: true, d: p => `点燃箭矢射穿目标，造成 ${pct(p)}% 火焰伤害（无视前排）。` },
+  earth_slam:       { name: '大地践踏', target: 'enemyAll', effect: 'damage', sp: 3, icon: '⛰️', knockback: true, d: p => `震动大地对全体造成 ${pct(p)}% 伤害并击退前排。` },
+  grand_heal:       { name: '圣光普照', target: 'allyAll', effect: 'heal', sp: 4, icon: '🌈', d: p => `降下圣光为全体恢复 ${pct(p)}% 攻击力的大量生命。` },
+  blessing:         { name: '祝福', target: 'allyAll', effect: 'buffAtk', sp: 3, duration: 3, icon: '🌟', d: p => `为全体提升 ${pct(p)}% 攻击力，持续 3 回合。` },
+  radiant_judgment: { name: '圣裁', target: 'enemyAll', effect: 'damage', sp: 4, icon: '⚜️', d: p => `降下审判圣光，对全体造成 ${pct(p)}% 光属性伤害。` },
+  frost_nova:       { name: '霜冻新星', target: 'enemyAll', effect: 'damage', sp: 4, icon: '❄️', d: p => `冰霜爆发对全体造成 ${pct(p)}% 水属性伤害。` },
+  twin_fang:        { name: '双牙连射', target: 'enemySingle', effect: 'damage', sp: 2, icon: '🐺', pierce: true, d: p => `瞬发两箭对单体造成 ${pct(p)}% 伤害（无视前排）。` },
+  brave_charge:     { name: '勇者突击', target: 'enemyRow', effect: 'damage', sp: 3, icon: '🐎', knockback: true, d: p => `策马冲锋践踏一排，造成 ${pct(p)}% 伤害并击退。` },
+  mending_song:     { name: '治愈之歌', target: 'allyAll', effect: 'heal', sp: 3, icon: '🎵', d: p => `吟唱治愈旋律为全体恢复 ${pct(p)}% 生命。` },
+  holy_smite:       { name: '圣光裁决', target: 'enemyRow', effect: 'damage', sp: 3, icon: '⚡', d: p => `降下圣光对一排造成 ${pct(p)}% 光属性伤害。` },
+  tidal_burst:      { name: '怒涛', target: 'enemyAll', effect: 'damage', sp: 4, icon: '🌊', d: p => `滔天巨浪冲击全体，造成 ${pct(p)}% 水属性伤害。` },
+  shield_bash:      { name: '盾击', target: 'enemySingle', effect: 'damage', sp: 2, icon: '🛡️', inflict: { type: 'stun', turns: 1 }, d: p => `巨盾猛击单体，造成 ${pct(p)}% 伤害并眩晕 1 回合。` },
+  venom_shot:       { name: '淬毒之箭', target: 'enemySingle', effect: 'damage', sp: 2, icon: '🏹', pierce: true, inflict: { type: 'poison', turns: 3, power: 0.45 }, d: p => `淬毒之箭贯穿目标，造成 ${pct(p)}% 伤害（无视前排）并中毒 3 回合。` },
+  // —— 9 个新专属招式（角色差异化）——
+  oath_aegis:       { name: '誓约圣盾', target: 'allyAll', effect: 'shield', sp: 3, icon: '🛡️', extra: { type: 'taunt' }, d: p => `为全体张开等同 ${pct(p)}% 攻击力的护盾，并嘲讽敌人集火自身。` },
+  mountain_bulwark: { name: '山岳壁垒', target: 'allyAll', effect: 'shield', sp: 4, icon: '🏔️', d: p => `以山岳之力为全体张开 ${pct(p)}% 攻击力的厚重护盾。` },
+  abyssal_prison:   { name: '深渊水牢', target: 'enemyAll', effect: 'damage', sp: 4, icon: '🌀', extra: { type: 'debuffDef', power: 0.20, duration: 2 }, d: p => `深渊水牢封锁全体，造成 ${pct(p)}% 水属性伤害并降低 20% 防御。` },
+  absolute_zero:    { name: '绝对零度', target: 'enemyAll', effect: 'damage', sp: 4, icon: '🧊', inflict: { type: 'stun', turns: 1 }, d: p => `绝对零度冻结全体，造成 ${pct(p)}% 水属性伤害并冻结 1 回合。` },
+  galeblade_flurry: { name: '疾风连斩', target: 'enemyRow', effect: 'damage', sp: 2, icon: '🌪️', knockback: true, d: p => `疾风乱舞横扫一排，造成 ${pct(p)}% 风属性伤害并击退。` },
+  flame_slash:      { name: '烈焰斩', target: 'enemySingle', effect: 'damage', sp: 2, icon: '🔥', inflict: { type: 'burn', turns: 2, power: 0.5 }, d: p => `烈焰附刃斩击单体，造成 ${pct(p)}% 伤害并灼烧 2 回合。` },
+  rooting_shot:     { name: '缚地穿杨', target: 'enemySingle', effect: 'damage', sp: 3, icon: '🎯', pierce: true, inflict: { type: 'stun', turns: 1 }, d: p => `钉地之箭贯穿目标，造成 ${pct(p)}% 伤害（无视前排）并定身 1 回合。` },
+  zephyr_mend:      { name: '微风治愈', target: 'allyAll', effect: 'heal', sp: 2, icon: '🍃', d: p => `微风拂过为全体恢复 ${pct(p)}% 攻击力的生命。` },
+  dawnblade:        { name: '黎明之刃', target: 'enemySingle', effect: 'damage', sp: 2, icon: '🌅', knockback: true, d: p => `黎明之刃斩击单体，造成 ${pct(p)}% 光属性伤害并击退。` },
+};
+Object.entries(SIG_SPECS).forEach(([id, spec]) => {
+  const sk = B.make(spec);
+  sk.desc = spec.d ? spec.d(sk.power) : spec.desc;
+  delete sk.d;
+  SK[id] = sk;
+});
+
+// 每个角色「初始服装」的专属招式（显式指定，16 个互不重复）
+const BASE_SIG = {
+  lecliss: 'inferno', justia: 'oath_aegis', seir: 'shadow_volley', rou: 'blessing',
+  helena: 'galeblade_flurry', diana: 'abyssal_prison', garcia: 'earth_slam',
+  teried: 'flame_slash', lia: 'rooting_shot', mina: 'zephyr_mend',
+  refithea: 'grand_heal', rigenette: 'tempest_blade', olstein: 'mountain_bulwark',
+  glacia: 'absolute_zero', liatris: 'blazing_arrow', loen: 'dawnblade',
+};
+
+
 // 选取一个角色 2 技能中作为「初始服装」专属招式（取更强的那个）
 function pickSignature(skills) {
   return skills.reduce((b, s) => ((SK[s].sp || 0) >= (SK[b].sp || 0) ? s : b), skills[0]);
@@ -3186,7 +3305,7 @@ Object.values(CH).forEach(ch => {
     name: ch.name + ' · 初始', rarity: ch.rarity, cls: ch.cls,
     element: ch.element, color: ch.color,
     stats: { ...ch.base }, grow: { ...ch.grow },
-    signature: pickSignature(ch.skills), base: true,
+    signature: BASE_SIG[ch.id] || pickSignature(ch.skills), base: true,
     desc: ch.desc,
   };
 });
@@ -5372,6 +5491,8 @@ const Battle = {
         // 新回合
         this.round++;
         this.tickRound();
+        this.checkEnd();               // 持续伤害（灼烧/中毒）致死也能正确结束战斗
+        if (this.finished) return null;
         this.buildTurnOrder();
         this.pushLog(`—— 第 ${this.round} 回合 ——`);
       }
@@ -5591,7 +5712,8 @@ const Battle = {
     combatant.sp -= this.skillSp(combatant, skillId);
     const sigMul = this.sigPowerMult(combatant, skillId); // 突破对专属招式的威力强化
 
-    const targets = this.resolveHitTargets(combatant, skillId, picked);
+    const targets = (this.resolveHitTargets(combatant, skillId, picked) || []).filter(Boolean);
+    if (!targets.length) { this.checkEnd(); return; }   // 目标已全灭（如持续伤害致死）：直接结算
 
     if (sk.effect === 'damage') {
       let summary = [];
