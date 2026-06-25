@@ -1,0 +1,17 @@
+{
+  "name": "lecliss_sd_skill",
+  "sheet": "lecliss_sd_skill_sheet.webp",
+  "frames": 32,
+  "fw": 300,
+  "fh": 262,
+  "cols": 13,
+  "rows": 3,
+  "fps": 12,
+  "loop": false,
+  "norm": {
+    "scale": 1.1583,
+    "footY": 0.9924,
+    "cx": 0.4983,
+    "target": 300
+  }
+}

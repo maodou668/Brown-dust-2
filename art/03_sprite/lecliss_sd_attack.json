@@ -1,0 +1,17 @@
+{
+  "name": "lecliss_sd_attack",
+  "sheet": "lecliss_sd_attack_sheet.webp",
+  "frames": 24,
+  "fw": 132,
+  "fh": 300,
+  "cols": 31,
+  "rows": 1,
+  "fps": 15,
+  "loop": false,
+  "norm": {
+    "scale": 1.0101,
+    "footY": 0.9933,
+    "cx": 0.4962,
+    "target": 300
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "lecliss_sd_idle",
+  "sheet": "lecliss_sd_idle_sheet.webp",
+  "frames": 32,
+  "fw": 167,
+  "fh": 300,
+  "cols": 24,
+  "rows": 2,
+  "fps": 12,
+  "loop": true,
+  "norm": {
+    "scale": 1.0101,
+    "footY": 0.9933,
+    "cx": 0.497,
+    "target": 300
+  }
+}
