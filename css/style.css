@@ -1041,7 +1041,12 @@ body {
 }
 .char-emoji { line-height: 1; }
 .port-img { image-rendering: pixelated; }
-.unit .u-art { overflow: visible; }
+.unit .u-art { overflow: visible; position: relative; }
+.unit canvas.u-sprite {
+  position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%);
+  width: 56px; height: 62px; pointer-events: none; image-rendering: pixelated;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.45));
+}
 .unit .u-img {
   height: 54px; width: auto; max-width: 84px; object-fit: contain; object-position: bottom;
   image-rendering: pixelated; filter: drop-shadow(0 2px 4px rgba(0,0,0,.55));

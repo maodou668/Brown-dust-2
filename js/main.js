@@ -22,8 +22,11 @@ const BattleUI = {
     Battle.setup(Game.state.team, stage);
     Battle.onEvent = (e) => this.handleEvent(e);
     if (window.Sound) Sound.bgm(stage.isBoss ? 'boss' : 'battle');
+    this.loadBattleSprite();
+    this.spriteState = {};
     this.buildScreen();
     this.refresh();
+    this.startSpriteLoop();
     this.beginTurn();
     if (!Game.state._tacticTip) {
       Game.state._tacticTip = true; Game.save();
@@ -160,6 +163,7 @@ const BattleUI = {
   },
 
   exit() {
+    cancelAnimationFrame(this._spriteRaf); this._spriteRaf = 0;
     if (this.root) this.root.remove();
     this.root = null;
     if (window.Sound) Sound.bgm('home');
@@ -167,6 +171,66 @@ const BattleUI = {
     this.onExitCb = null;
     if (cb) cb();
     else Main.refreshCurrent();
+  },
+
+  // ---------- 战斗序列帧小人（PixelLab）----------
+  FIELD_SPRITE: { lecliss: 'art/05_pixellab/lecliss_field' },   // charId → 资源
+  sprite: null, spriteState: {}, _spriteRaf: 0,
+
+  loadBattleSprite() {
+    if (this.sprite) return;
+    const V = window.ASSET_VER || '1';
+    const BASE = 'art/05_pixellab/lecliss_field';
+    const sp = this.sprite = { ready: false, man: null, imgs: {} };
+    fetch(BASE + '/manifest.json?v=' + V).then(r => r.json()).then(man => {
+      sp.man = man;
+      const mk = src => { const im = new Image(); im.src = src; return im; };
+      for (const a in man.anims) {
+        sp.imgs[a] = {};
+        for (const d of man.dirs) {
+          const n = man.anims[a].frames[d] || 0, arr = [];
+          for (let i = 0; i < n; i++) arr.push(mk(`${BASE}/${a}/${d}/${String(i).padStart(2, '0')}.png?v=${V}`));
+          sp.imgs[a][d] = arr;
+        }
+      }
+      sp.ready = true;
+    }).catch(() => { this.sprite = null; });
+  },
+  startSpriteLoop() {
+    cancelAnimationFrame(this._spriteRaf);
+    const tick = (now) => { this.drawBattleSprites(now); this._spriteRaf = requestAnimationFrame(tick); };
+    this._spriteRaf = requestAnimationFrame(tick);
+  },
+  // 战斗里只渲染我方序列帧单位；朝向 north（背对镜头、面朝上方敌人）
+  drawBattleSprites(now) {
+    const sp = this.sprite; if (!sp || !sp.ready || !this.root) return;
+    this.root.querySelectorAll('canvas.u-sprite').forEach(cv => {
+      const uid = cv.dataset.uid, c = Battle.combatants.find(x => x.uid === uid); if (!c) return;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const W = cv.clientWidth || 64, H = cv.clientHeight || 72;
+      if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+      const ctx = cv.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+      if (!c.alive) return;
+      const st = this.spriteState[uid] || (this.spriteState[uid] = { anim: 'idle', start: 0 });
+      const dir = 'north';
+      let anim = st.anim, frame = 0;
+      if (anim === 'cast') {
+        const arrC = sp.imgs.cast[dir]; const fps = sp.man.fps.cast || 12;
+        frame = Math.floor((now - st.start) / 1000 * fps);
+        if (frame >= arrC.length) { st.anim = 'idle'; anim = 'idle'; }
+      }
+      const arr = (sp.imgs[anim] && sp.imgs[anim][dir] && sp.imgs[anim][dir].length) ? sp.imgs[anim][dir] : sp.imgs.idle.north;
+      if (anim === 'idle') frame = Math.floor(now / 1000 * (sp.man.fps.idle || 6)) % arr.length;
+      const im = arr[Math.min(frame, arr.length - 1)], bb = sp.man.bbox;
+      const scale = Math.min(W / bb.w, H / bb.h), dw = bb.w * scale, dh = bb.h * scale;
+      if (im && im.width) { ctx.imageSmoothingEnabled = false; ctx.drawImage(im, bb.x, bb.y, bb.w, bb.h, (W - dw) / 2, H - dh, dw, dh); }
+    });
+  },
+  triggerCast(uid) {
+    const c = Battle.combatants.find(x => x.uid === uid);
+    if (!c || !this.FIELD_SPRITE[c.charId]) return;
+    this.spriteState[uid] = { anim: 'cast', start: performance.now() };
   },
 
   // ---------- 渲染单位（斜俯视角舞台，近大远小） ----------
@@ -184,9 +248,11 @@ const BattleUI = {
     const isAlly = c.side === 'ally';
     const charDef = isAlly ? window.GameData.CHARACTERS[c.charId] : window.GameData.ENEMIES[c.charId];
     const fallback = isAlly ? window.GameData.CLASSES[charDef.cls].icon : '👹';
-    const icon = (charDef && charDef.art)
-      ? `<img class="u-img" src="${charDef.art}" alt="" onerror="this.outerHTML='${fallback}'">`
-      : fallback;
+    const icon = (isAlly && this.FIELD_SPRITE[c.charId])
+      ? `<canvas class="u-sprite" data-uid="${c.uid}"></canvas>`
+      : ((charDef && charDef.art)
+        ? `<img class="u-img" src="${charDef.art}" alt="" onerror="this.outerHTML='${fallback}'">`
+        : fallback);
     const hpPct = Math.max(0, (c.hp / c.maxHp) * 100);
     const spPct = (c.sp / c.maxSp) * 100;
     const stIcon = { poison: '☠️', burn: '🔥', stun: '💫', silence: '🔇' };
@@ -507,6 +573,7 @@ const BattleUI = {
     this.selectedSkill = null;
 
     this._lunged = false;
+    this.triggerCast(c.uid);          // 我方序列帧单位：行动时播放放招动画
     Battle.executeSkill(c, skillId, target);
 
     // 等动画后刷新并进入下一回合
