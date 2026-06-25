@@ -1,0 +1,26 @@
+status: completed
+id: 3461d4fd-fb80-490f-a3ae-7bbd2778a401
+name: Lecliss
+directions: 8 (south, east, north, west, south-east, north-east, north-west, south-west)
+size: 92x92px
+view: low top-down
+style: basic shading, single color black outline, medium detail
+
+rotations:
+  south: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/3461d4fd-fb80-490f-a3ae-7bbd2778a401/rotations/south.png
+  east: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/3461d4fd-fb80-490f-a3ae-7bbd2778a401/rotations/east.png
+  north: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/3461d4fd-fb80-490f-a3ae-7bbd2778a401/rotations/north.png
+  west: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/3461d4fd-fb80-490f-a3ae-7bbd2778a401/rotations/west.png
+  south-east: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/3461d4fd-fb80-490f-a3ae-7bbd2778a401/rotations/south-east.png
+  north-east: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/3461d4fd-fb80-490f-a3ae-7bbd2778a401/rotations/north-east.png
+  north-west: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/3461d4fd-fb80-490f-a3ae-7bbd2778a401/rotations/north-west.png
+  south-west: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/3461d4fd-fb80-490f-a3ae-7bbd2778a401/rotations/south-west.png
+
+animations: none
+
+download: https://api.pixellab.ai/mcp/characters/3461d4fd-fb80-490f-a3ae-7bbd2778a401/download
+
+available_animations: backflip, breathing-idle, cross-punch, crouched-walking, crouching, drinking, falling-back-death, fight-stance-idle-8-frames, fireball, flying-kick, front-flip, getting-up +37 more
+
+actions: animate_character(character_id="3461d4fd-fb80-490f-a3ae-7bbd2778a401", ...) | create_character_state(character_id="3461d4fd-fb80-490f-a3ae-7bbd2778a401", ...) | delete_character(character_id="3461d4fd-fb80-490f-a3ae-7bbd2778a401")
+hint: animate_character(character_id="3461d4fd-fb80-490f-a3ae-7bbd2778a401", template_animation_id="backflip")
