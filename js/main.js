@@ -268,6 +268,7 @@ const BattleUI = {
         <div class="u-shadow"></div>
         ${c.isBoss ? '<span class="u-boss">BOSS</span>' : ''}
         <span class="u-elem">${window.GameData.ELEMENTS[c.element].icon}</span>
+        ${(c.imprint && c.imprint.turns > 0) ? `<span class="u-imprint" title="元素印记：异色命中可引爆">${window.GameData.ELEMENTS[c.imprint.element].icon}</span>` : ''}
         ${statusHtml ? `<div class="u-status">${statusHtml}</div>` : ''}
         <div class="u-art">${icon}</div>
         <div class="u-name">${c.name}</div>
@@ -322,6 +323,12 @@ const BattleUI = {
       if (!su) { su = UI.el('<div class="u-status"></div>'); el.insertBefore(su, el.querySelector('.u-art')); }
       su.innerHTML = active.map(s => `<span class="st-badge">${stIcon[s.type] || ''}</span>`).join('');
     } else if (su) su.remove();
+    // 元素印记（异色连击可引爆元素反应）
+    let im = el.querySelector('.u-imprint');
+    if (c.imprint && c.imprint.turns > 0) {
+      if (!im) { im = UI.el('<span class="u-imprint" title="元素印记：异色命中可引爆"></span>'); el.appendChild(im); }
+      im.textContent = window.GameData.ELEMENTS[c.imprint.element].icon;
+    } else if (im) im.remove();
   },
 
   /** 拖动调整我方站位（前后排/左右） */
@@ -636,6 +643,13 @@ const BattleUI = {
       this.screenShake();
       if (S) S.sfx('crit');
       this.updateUnitDom(e.target);
+    } else if (e.type === 'reaction') {
+      this.showSkillBanner(`${e.icon} ${e.name}!`);
+      if (e.amount > 0) this.floatText(e.target, e.amount, 'reaction', true);
+      this.knockFloat(e.target, `${e.icon}${e.name}`);
+      this.screenShake();
+      if (S) S.sfx('crit');
+      this.updateUnitDom(e.target);
     } else if (e.type === 'end') {
       setTimeout(() => this.showResult(e.result), 700);
     }
@@ -699,7 +713,7 @@ const BattleUI = {
     const unitEl = this.root.querySelector(`.unit[data-uid="${target.uid}"]`);
     if (!unitEl) return;
     const rect = unitEl.getBoundingClientRect();
-    const cls = kind === 'heal' ? 'heal' : kind === 'dot' ? 'dot' : (crit ? 'crit' : 'dmg');
+    const cls = kind === 'heal' ? 'heal' : kind === 'dot' ? 'dot' : kind === 'reaction' ? 'reaction' : (crit ? 'crit' : 'dmg');
     const ft = UI.el(`<div class="float-text ${cls}">${kind === 'heal' ? '+' : '-'}${amount}${crit ? '!' : ''}</div>`);
     ft.style.left = (rect.left + rect.width / 2 - 14) + 'px';
     ft.style.top = (rect.top + 10) + 'px';

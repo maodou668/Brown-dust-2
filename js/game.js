@@ -363,6 +363,27 @@ const Game = {
     return { elemBonus, balance, rainbow, list, els, classes, n: members.length };
   },
 
+  /**
+   * 队伍可触发的「元素反应」预览（战斗内：异色连击引爆爆发）。
+   * 依据队伍现有的不同元素两两组合，列出命中的具名反应，教学玩家「混色轮转」打法。
+   */
+  teamReactions(teamUids) {
+    const D = window.GameData;
+    const R = D.REACTIONS || {}, E = D.ELEMENTS;
+    const members = (teamUids || []).map(uid => this.getOwned(uid)).filter(Boolean);
+    const elems = [...new Set(members.map(o => this.activeCostumeDef(o).element))];
+    const out = [];
+    for (let i = 0; i < elems.length; i++) {
+      for (let j = i + 1; j < elems.length; j++) {
+        const key = [elems[i], elems[j]].sort().join('+');
+        const rx = R[key];
+        if (rx) out.push({ key, icon: rx.icon, name: rx.name,
+          desc: `${E[elems[i]].icon}+${E[elems[j]].icon} ${rx.icon}${rx.name}` });
+      }
+    }
+    return out;
+  },
+
   // 好感（赠礼提升）
   GIFT_COST: 200, GIFT_AFF: 25, AFF_MAX: 1000,
   giveGift(uid) {

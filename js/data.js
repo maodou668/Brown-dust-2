@@ -45,6 +45,24 @@ const ELEMENTS = {
 };
 
 /**
+ * 元素反应（战场内）
+ * 我方用一种元素命中敌人会留下「元素印记」(2 回合)；
+ * 若紧接着用「不同」元素再次命中，便触发对应反应：附带爆发伤害与额外效果。
+ * 键名为两元素按字典序排序后用 '+' 连接（顺序无关）。
+ * 设计张力：羁绊「元素共鸣」奖励同色叠加，元素反应奖励混色轮转 —— 玩家需在两条路线间取舍。
+ */
+const REACTIONS = {
+  'fire+water':  { name: '蒸发', icon: '💥', bonus: 0.85 },                                   // 水↔火：最高爆发
+  'fire+wind':   { name: '助燃', icon: '🔥', bonus: 0.35, inflict: { type: 'burn', turns: 2, power: 0.14 } }, // 风助火势：强灼烧
+  'earth+fire':  { name: '熔岩', icon: '🌋', bonus: 0.45, breakGain: 32 },                    // 火烧地：大幅破防
+  'water+wind':  { name: '冰封', icon: '❄️', bonus: 0.20, inflict: { type: 'stun', turns: 1 } }, // 风裹水：冻结控制
+  'earth+water': { name: '泥泞', icon: '🟤', bonus: 0.30, debuffDef: { power: 0.25, turns: 2 } }, // 水浸地：碎防
+  'earth+wind':  { name: '沙暴', icon: '🌫️', bonus: 0.50, debuffDef: { power: 0.15, turns: 2 } }, // 风卷沙：磨防+爆发
+  'dark+light':  { name: '湮灭', icon: '🌟', bonus: 1.10 },                                    // 光暗相消：终极爆发
+};
+const REACTION_DEFAULT = { name: '元素紊乱', icon: '✦', bonus: 0.40 };  // 其余异色组合的保底反应
+
+/**
  * 角色图鉴
  * baseStats 为 1 级基础值，成长随等级线性提升
  */
@@ -551,7 +569,7 @@ const ABYSS = [
     ],
     reward: { gold: 8000, exp: 4000, gem: 180 },
     isBoss: true, abyss: true,
-    mod: { healCut: 0.3, atkMul: 0.90, hpMul: 1.25 },
+    mod: { healCut: 0.3, atkMul: 0.91, hpMul: 1.30 },
   },
   {
     id: 202, tier: 2, name: '深渊 · 枯萎之巢', recommend: 46,
@@ -565,7 +583,7 @@ const ABYSS = [
     ],
     reward: { gold: 10000, exp: 5000, gem: 200 },
     isBoss: true, abyss: true,
-    mod: { healCut: 0.3, atkMul: 0.90, hpMul: 1.25 },
+    mod: { healCut: 0.3, atkMul: 0.915, hpMul: 1.37 },
   },
   {
     id: 203, tier: 3, name: '深渊 · 绝命牢笼', recommend: 48,
@@ -579,7 +597,7 @@ const ABYSS = [
     ],
     reward: { gold: 13000, exp: 6500, gem: 240 },
     isBoss: true, abyss: true,
-    mod: { healCut: 0.3, atkMul: 0.90, hpMul: 1.25 },
+    mod: { healCut: 0.3, atkMul: 0.92, hpMul: 1.43 },
   },
   {
     id: 204, tier: 4, name: '深渊 · 永夜深处', recommend: 50,
@@ -593,7 +611,7 @@ const ABYSS = [
     ],
     reward: { gold: 18000, exp: 9000, gem: 320 },
     isBoss: true, abyss: true,
-    mod: { healCut: 0.3, atkMul: 0.90, hpMul: 1.25 },
+    mod: { healCut: 0.3, atkMul: 0.92, hpMul: 1.45 },
   },
 ];
 
@@ -611,4 +629,4 @@ const GACHA = {
 };
 
 // 暴露到全局
-window.GameData = { CLASSES, ELEMENTS, CHARACTERS, SKILLS, ENEMIES, STAGES, TRIALS, ABYSS, GACHA };
+window.GameData = { CLASSES, ELEMENTS, REACTIONS, REACTION_DEFAULT, CHARACTERS, SKILLS, ENEMIES, STAGES, TRIALS, ABYSS, GACHA };

@@ -35,6 +35,7 @@ class Combatant {
     this.shield = 0;                   // 当前护盾值
     this.buffs = [];                   // {stat:'atk'|'def', mult, turns}
     this.statuses = [];                // {type:'poison'|'burn'|'stun'|'silence', turns, dmg}
+    this.imprint = null;               // 元素印记 {element, turns}（被我方异色命中可触发元素反应）
     this.enraged = false;              // BOSS 狂暴标记
     this.taunting = 0;                 // 嘲讽剩余回合
     // BOSS 弱点破防机制
@@ -286,6 +287,7 @@ const Battle = {
       c.statuses.forEach(s => { if (s.type !== 'stun') s.turns--; });
       c.statuses = c.statuses.filter(s => s.turns > 0);
       if (c.taunting > 0) c.taunting--;
+      if (c.imprint && c.imprint.turns > 0) { c.imprint.turns--; if (c.imprint.turns <= 0) c.imprint = null; }
       Object.keys(c.cooldowns).forEach(k => { if (c.cooldowns[k] > 0) c.cooldowns[k]--; });
     });
   },
@@ -392,6 +394,9 @@ const Battle = {
     }
     defender.hp -= dmg;
 
+    // 元素反应：我方异色连击触发爆发（基于本次减伤后的伤害值放大）
+    if (defender.hp > 0) this.applyReaction(attacker, defender, reduced);
+
     // 我方受击也积攒连携槽（绝境反击）
     if (defender.side === 'ally' && dmg > 0) this.addCombo(3);
 
@@ -424,6 +429,46 @@ const Battle = {
     }
     if (this.onEvent) this.onEvent({ type: 'damage', target: defender, attacker, amount: dmg, crit: isCrit, elem: elem > 1 });
     return { dmg, isCrit, elem: elem > 1, tag };
+  },
+
+  /**
+   * 元素反应：仅我方→敌方触发。
+   * 敌人若已带有「异色」印记，则立即引爆对应反应（爆发伤害 + 额外效果），并清除印记；
+   * 否则用本次攻击的元素刷新印记（2 回合）。
+   * @param baseReduced 本次攻击减伤后、吸盾前的伤害值，反应爆发以此为基准放大
+   */
+  applyReaction(attacker, defender, baseReduced) {
+    if (attacker.side !== 'ally' || defender.side !== 'enemy') return null;
+    const R = window.GameData.REACTIONS || {}, DEF = window.GameData.REACTION_DEFAULT;
+    const cur = (defender.imprint && defender.imprint.turns > 0) ? defender.imprint.element : null;
+    if (!cur || cur === attacker.element) {
+      defender.imprint = { element: attacker.element, turns: 2 };  // 同色/无印记：刷新
+      return null;
+    }
+    // 异色 → 触发反应
+    const rx = R[[cur, attacker.element].sort().join('+')] || DEF;
+    defender.imprint = null;
+    let bonus = Math.max(1, Math.round(baseReduced * (rx.bonus || 0)));
+    if (defender.shield > 0) { const a = Math.min(defender.shield, bonus); defender.shield -= a; bonus -= a; }
+    if (bonus > 0) defender.hp -= bonus;
+    // 额外效果
+    if (rx.breakGain && defender.breakMax > 0 && !defender.broken && defender.alive && defender.hp > 0) {
+      defender.breakCur += rx.breakGain;
+      if (defender.breakCur >= defender.breakMax) {
+        defender.breakCur = 0; defender.broken = true;
+        defender.statuses.push({ type: 'stun', turns: 1 });
+        this.pushLog(`💢 ${defender.name} 被【破防】！眩晕且受到额外伤害！`);
+        if (this.onEvent) this.onEvent({ type: 'break', target: defender });
+      }
+    }
+    if (rx.inflict && defender.alive && defender.hp > 0) this.applyStatus(defender, rx.inflict, attacker);
+    if (rx.debuffDef && defender.alive && defender.hp > 0) {
+      defender.buffs.push({ stat: 'def', mult: -rx.debuffDef.power, turns: rx.debuffDef.turns });
+    }
+    this.pushLog(`${rx.icon} 元素反应【${rx.name}】！${defender.name} 受到额外 ${Math.max(0, bonus)} 点爆发`);
+    if (this.onEvent) this.onEvent({ type: 'reaction', target: defender, name: rx.name, icon: rx.icon, amount: Math.max(0, bonus) });
+    if (defender.hp <= 0) { defender.hp = 0; defender.alive = false; this.pushLog(`💀 ${defender.name} 被击倒！`); }
+    return rx;
   },
 
   /** 执行一个技能 */

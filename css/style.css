@@ -361,6 +361,9 @@ body {
 .unit .u-name { font-size: 9px; text-align: center; font-weight: 700;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .unit .u-elem { position: absolute; top: 2px; right: 3px; font-size: 11px; }
+.unit .u-imprint { position: absolute; top: 2px; right: 20px; font-size: 11px;
+  filter: drop-shadow(0 0 3px #ff2ec4); animation: imprintPulse 1.1s ease-in-out infinite; }
+@keyframes imprintPulse { 0%,100% { opacity: .55; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.12); } }
 .unit .u-boss { position: absolute; top: 2px; left: 3px; font-size: 9px; color: var(--danger); font-weight: 800; }
 .bar { height: 5px; border-radius: 3px; background: rgba(0,0,0,.4); margin-top: 3px; overflow: hidden; }
 .bar .fill { height: 100%; transition: width .3s; }
@@ -978,6 +981,7 @@ body {
 .st-badge { font-size: 10px; filter: drop-shadow(0 1px 2px #000); }
 .unit.enraged { box-shadow: 0 0 14px rgba(255,90,60,.6); border-color: #ff5a3c; }
 .float-text.dot { color: #c08bff; font-size: 14px; }
+.float-text.reaction { color: #ff7ae6; font-size: 22px; text-shadow: 0 0 8px #ff2ec4, 0 2px 4px #000; }
 
 /* 自动战斗按钮 */
 .auto-btn {
@@ -1049,6 +1053,10 @@ body {
 .syn-item.syn-balance { background: rgba(90,209,120,.14); border-color: rgba(90,209,120,.35); color: #d6ffe0; }
 .syn-item.syn-rainbow { background: rgba(255,177,92,.14); border-color: rgba(255,177,92,.35); color: #ffe7c0; }
 .syn-empty { font-size: 11px; color: var(--muted, #9a90b0); padding: 4px 2px; }
+.rx-title { margin-top: 4px; color: #ff7ae6; }
+.rx-row { display: flex; flex-wrap: wrap; gap: 4px; }
+.rx-chip { font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 7px;
+  background: rgba(255,122,230,.12); border: 1px solid rgba(255,122,230,.32); color: #ffd8f5; }
 
 .unit .u-art { overflow: visible; position: relative; }
 .unit canvas.u-sprite {
