@@ -9,7 +9,7 @@ const World = {
   root: null, canvas: null, ctx: null, raf: 0,
   chapter: null, grid: null, w: 0, h: 0, theme: null,
   cam: { x: 0, y: 0 }, vw: 0, vh: 0, dpr: 1,
-  player: { x: 0, y: 0, dir: 'down', step: 0, color: '#b06bff' },
+  player: { x: 0, y: 0, dir: 'down', face: 'south', step: 0, color: '#b06bff' },
   input: { up: false, down: false, left: false, right: false },
   nodes: [], cur: null, busyTrigger: false, active: false,
   sprite: null, _spriteT: 0,    // PixelLab 主角序列帧（地图）
@@ -105,12 +105,7 @@ const World = {
         <div class="world-obj" id="world-obj"></div>
         <canvas id="world-canvas"></canvas>
         <div class="world-ctrl">
-          <div class="dpad">
-            <button class="dbtn up"    data-dir="up">▲</button>
-            <button class="dbtn left"  data-dir="left">◀</button>
-            <button class="dbtn right" data-dir="right">▶</button>
-            <button class="dbtn down"  data-dir="down">▼</button>
-          </div>
+          <div class="joystick" id="world-joy"><div class="joy-knob" id="joy-knob"></div></div>
           <button class="act-btn" id="world-act" disabled>互动</button>
         </div>
       </div>`);
@@ -120,14 +115,28 @@ const World = {
     this.resize();
     this.root.querySelector('#world-exit').onclick = () => this.close();
     this.root.querySelector('#world-act').onclick = () => this.tryTrigger(true);
-    this.root.querySelectorAll('.dbtn').forEach(b => {
-      const dir = b.dataset.dir;
-      const on = (e) => { e.preventDefault(); this.input[dir] = true; };
-      const off = (e) => { e.preventDefault(); this.input[dir] = false; };
-      b.addEventListener('touchstart', on, { passive: false });
-      b.addEventListener('touchend', off); b.addEventListener('touchcancel', off);
-      b.addEventListener('mousedown', on); b.addEventListener('mouseup', off); b.addEventListener('mouseleave', off);
-    });
+    // —— 虚拟摇杆（轮盘）：输出连续向量，实现自然 8 方向移动 ——
+    const joy = this.root.querySelector('#world-joy'), knob = this.root.querySelector('#joy-knob');
+    this.joy = { active: false, x: 0, y: 0 };
+    const radius = () => joy.clientWidth / 2;
+    const setKnob = (kx, ky) => { knob.style.transform = `translate(${kx}px,${ky}px)`; };
+    const move = (e) => {
+      if (!this.joy.active) return; e.preventDefault();
+      const t = (e.touches && e.touches[0]) || e;
+      const r = joy.getBoundingClientRect();
+      let dx = t.clientX - (r.left + r.width / 2), dy = t.clientY - (r.top + r.height / 2);
+      const rad = radius(), len = Math.hypot(dx, dy);
+      if (len > rad) { dx = dx / len * rad; dy = dy / len * rad; }
+      setKnob(dx, dy);
+      this.joy.x = dx / rad; this.joy.y = dy / rad;   // [-1,1]
+    };
+    const start = (e) => { this.joy.active = true; move(e); };
+    const end = () => { this.joy.active = false; this.joy.x = this.joy.y = 0; setKnob(0, 0); };
+    joy.addEventListener('touchstart', start, { passive: false });
+    joy.addEventListener('touchmove', move, { passive: false });
+    joy.addEventListener('touchend', end); joy.addEventListener('touchcancel', end);
+    joy.addEventListener('mousedown', start);
+    window.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
     this._keyHandler = (e) => {
       const m = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right' };
       const dir = m[e.key];
@@ -265,17 +274,23 @@ const World = {
     const p = this.player; this._dustDt = dt;
     this._spriteT += dt;
     let dx = 0, dy = 0;
-    if (this.input.left) dx -= 1;
-    if (this.input.right) dx += 1;
-    if (this.input.up) dy -= 1;
-    if (this.input.down) dy += 1;
-    if (dx || dy) {
-      const len = Math.hypot(dx, dy) || 1;
-      const sp = 0.075 * (dt / 16.67);
-      const nx = p.x + (dx / len) * sp, ny = p.y + (dy / len) * sp;
+    // 摇杆优先（连续向量 → 自然 8 方向 + 模拟力度）；否则键盘
+    if (this.joy && this.joy.active && Math.hypot(this.joy.x, this.joy.y) > 0.18) {
+      dx = this.joy.x; dy = this.joy.y;
+    } else {
+      if (this.input.left) dx -= 1;
+      if (this.input.right) dx += 1;
+      if (this.input.up) dy -= 1;
+      if (this.input.down) dy += 1;
+    }
+    const mag = Math.hypot(dx, dy);
+    if (mag > 0.01) {
+      const sp = 0.075 * (dt / 16.67) * Math.min(1, mag);   // 力度影响速度（摇杆轻推=慢走）
+      const nx = p.x + (dx / mag) * sp, ny = p.y + (dy / mag) * sp;
       if (!this.blockedWorld(nx, p.y)) p.x = nx;
       if (!this.blockedWorld(p.x, ny)) p.y = ny;
-      p.dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+      p.dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'); // 4 向(兼容)
+      p.face = this.dir8(dx, dy);   // 8 向朝向（贴图用）
       p.step += dt;
     } else p.step = 0;
 
@@ -507,6 +522,13 @@ const World = {
     ctx.restore();
   },
 
+  // 移动向量 → 8 向贴图名（屏幕坐标 y 向下）
+  dir8(vx, vy) {
+    const names = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east'];
+    const i = Math.round(Math.atan2(vy, vx) / (Math.PI / 4));
+    return names[((i % 8) + 8) % 8];
+  },
+
   // 载入 PixelLab 主角序列帧（地图用）
   loadFieldSprite() {
     if (this.sprite) return;
@@ -539,7 +561,7 @@ const World = {
     // —— PixelLab 序列帧主角 ——
     const sp = this.sprite;
     if (sp && sp.ready) {
-      const dir = { up: 'north', down: 'south', left: 'west', right: 'east' }[p.dir] || 'south';
+      const dir = p.face || 'south';
       const anim = moving ? 'run' : 'idle';
       const arr = (sp.imgs[anim] && sp.imgs[anim][dir] && sp.imgs[anim][dir].length) ? sp.imgs[anim][dir] : sp.imgs.idle.south;
       const fps = (sp.man.fps && sp.man.fps[anim]) || 8;
