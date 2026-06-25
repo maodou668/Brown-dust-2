@@ -15,10 +15,8 @@ const BONES = [
   ['neck', 'chest', [235, 150]],
   ['head', 'neck', [235, 140]],
   ['hair', 'chest', [235, 150]],
-  ['shoulderL', 'chest', [188, 168]],   // 图左 = 角色右臂
-  ['forearmL', 'shoulderL', [150, 250]],
-  ['shoulderR', 'chest', [285, 168]],
-  ['forearmR', 'shoulderR', [322, 250]],
+  ['armL', 'chest', [188, 168]],        // 图左 = 角色右臂；整条手臂一根骨
+  ['armR', 'chest', [285, 168]],
   ['thighL', 'root', [212, 305]],
   ['shinL', 'thighL', [205, 480]],
   ['thighR', 'root', [260, 305]],
@@ -27,6 +25,9 @@ const BONES = [
 
 // ---- 部件：name, bone, z, 多边形(源图坐标) ----
 // 多边形尽量覆盖该部件，并在关节处向父件多伸 10~20px 作重叠。
+// subHair:true → 抽取后把"头发区域"像素抠掉(头发只归 hair_back，手臂不夹带头发)。
+const HAIR_MASK = [   // 头发占据的大致区域(用于从手臂里减掉头发)
+  [150,80],[104,250],[100,400],[160,430],[210,330],[214,150],[235,90],[256,150],[262,330],[312,430],[366,400],[362,250],[322,80],[235,30] ];
 const PARTS = [
   { name: 'hair_back', bone: 'hair', z: 0, poly: [
     [150,90],[112,250],[110,382],[155,418],[202,340],[212,180],[235,118],[258,180],[270,340],[316,418],[360,382],[358,250],[320,90],[235,38] ] },
@@ -39,14 +40,13 @@ const PARTS = [
   { name: 'skirt', bone: 'spine', z: 20, poly: [
     [144,248],[86,396],[42,598],[120,654],[190,548],[206,438],[235,428],[268,438],[290,548],[352,654],[432,598],[382,396],[328,248],[235,234] ] },
 
-  { name: 'armL_up', bone: 'shoulderL', z: 30, poly: [[143,142],[210,148],[206,242],[150,278],[110,210]] },
-  { name: 'armR_up', bone: 'shoulderR', z: 30, poly: [[262,148],[328,142],[360,210],[322,278],[266,242]] },
+  { name: 'armL', bone: 'armL', z: 30, subHair: true, poly: [
+    [143,142],[212,150],[206,210],[184,248],[140,372],[30,360],[46,248],[100,196] ] },
+  { name: 'armR', bone: 'armR', z: 30, subHair: true, poly: [
+    [259,150],[328,142],[372,196],[426,248],[442,360],[332,372],[286,248],[264,210] ] },
 
   { name: 'torso', bone: 'chest', z: 40, poly: [
     [176,140],[297,140],[304,210],[283,302],[235,310],[187,302],[168,210] ] },
-
-  { name: 'armL_fore', bone: 'forearmL', z: 50, poly: [[92,214],[182,250],[140,372],[32,360],[48,252]] },
-  { name: 'armR_fore', bone: 'forearmR', z: 50, poly: [[290,250],[380,214],[424,252],[440,360],[332,372]] },
 
   { name: 'head', bone: 'head', z: 60, poly: [
     [160,26],[176,10],[294,10],[310,40],[303,150],[273,180],[235,186],[199,180],[168,150] ] },
@@ -70,15 +70,30 @@ function bboxOf(ctx, w, h) {
   const img = await loadImage(SRC); const W = img.width, H = img.height;
   const boneMap = {}; BONES.forEach(b => boneMap[b[0]] = { name: b[0], parent: b[1], pivot: b[2] });
 
+  // 紫发判定：紫罗兰(B>R 且 R>=G 的发色)，用于把头发从手臂里抠掉
+  const isHair = (R, G, B, A) => A > 8 && B > R + 4 && R >= G - 4 && B > 40 && (R - G) < 45;
   // 抽取每个部件到独立 canvas（裁到 bbox）
   const extracted = [];
   for (const p of PARTS) {
     const c = createCanvas(W, H), x = c.getContext('2d');
     x.save(); clipPoly(x, p.poly); x.drawImage(img, 0, 0); x.restore();
+    // subHair：仅在 HAIR_MASK 区域内、且像素为发色时抠掉
+    if (p.subHair) {
+      const mc = createCanvas(W, H), mx = mc.getContext('2d');
+      mx.save(); clipPoly(mx, HAIR_MASK); mx.fillStyle = '#fff'; mx.fillRect(0, 0, W, H); mx.restore();
+      const inMask = mx.getImageData(0, 0, W, H).data;
+      const id = x.getImageData(0, 0, W, H); const d = id.data;
+      for (let i = 0; i < d.length; i += 4) {
+        if (inMask[i + 3] > 0 && isHair(d[i], d[i + 1], d[i + 2], d[i + 3])) d[i + 3] = 0;
+      }
+      x.putImageData(id, 0, 0);
+    }
     const bb = bboxOf(x, W, H);
     if (!bb) { console.warn('空部件', p.name); continue; }
     const pc = createCanvas(bb.w, bb.h), px = pc.getContext('2d');
     px.drawImage(c, bb.x, bb.y, bb.w, bb.h, 0, 0, bb.w, bb.h);
+    // 把抠发后的 alpha 同步到裁切图
+    if (p.subHair) { px.clearRect(0, 0, bb.w, bb.h); px.drawImage(x.canvas, bb.x, bb.y, bb.w, bb.h, 0, 0, bb.w, bb.h); }
     extracted.push({ part: p, bb, canvas: pc });
   }
 

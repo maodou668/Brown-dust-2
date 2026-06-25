@@ -76,7 +76,7 @@
    ]
   },
   {
-   "name": "shoulderL",
+   "name": "armL",
    "parent": "chest",
    "rest": [
     -47,
@@ -88,19 +88,7 @@
    ]
   },
   {
-   "name": "forearmL",
-   "parent": "shoulderL",
-   "rest": [
-    -38,
-    82
-   ],
-   "pivot": [
-    150,
-    250
-   ]
-  },
-  {
-   "name": "shoulderR",
+   "name": "armR",
    "parent": "chest",
    "rest": [
     50,
@@ -109,18 +97,6 @@
    "pivot": [
     285,
     168
-   ]
-  },
-  {
-   "name": "forearmR",
-   "parent": "shoulderR",
-   "rest": [
-    37,
-    82
-   ],
-   "pivot": [
-    322,
-    250
    ]
   },
   {
@@ -264,33 +240,33 @@
    ]
   },
   {
-   "name": "armL_up",
-   "bone": "shoulderL",
+   "name": "armL",
+   "bone": "armL",
    "z": 30,
    "atlas": {
     "x": 0,
     "y": 1758,
-    "w": 92,
-    "h": 134
+    "w": 181,
+    "h": 227
    },
    "off": [
-    -70,
-    -24
+    -157,
+    -23
    ]
   },
   {
-   "name": "armR_up",
-   "bone": "shoulderR",
+   "name": "armR",
+   "bone": "armR",
    "z": 30,
    "atlas": {
     "x": 0,
-    "y": 1894,
-    "w": 91,
-    "h": 134
+    "y": 1987,
+    "w": 183,
+    "h": 227
    },
    "off": [
-    -23,
-    -24
+    -26,
+    -23
    ]
   },
   {
@@ -299,7 +275,7 @@
    "z": 40,
    "atlas": {
     "x": 0,
-    "y": 2030,
+    "y": 2216,
     "w": 136,
     "h": 170
    },
@@ -309,42 +285,12 @@
    ]
   },
   {
-   "name": "armL_fore",
-   "bone": "forearmL",
-   "z": 50,
-   "atlas": {
-    "x": 0,
-    "y": 2202,
-    "w": 147,
-    "h": 152
-   },
-   "off": [
-    -115,
-    -30
-   ]
-  },
-  {
-   "name": "armR_fore",
-   "bone": "forearmR",
-   "z": 50,
-   "atlas": {
-    "x": 0,
-    "y": 2356,
-    "w": 149,
-    "h": 152
-   },
-   "off": [
-    -32,
-    -30
-   ]
-  },
-  {
    "name": "head",
    "bone": "head",
    "z": 60,
    "atlas": {
     "x": 0,
-    "y": 2510,
+    "y": 2388,
     "w": 134,
     "h": 176
    },
