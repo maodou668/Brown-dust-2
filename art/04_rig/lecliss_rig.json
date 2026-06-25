@@ -1,0 +1,357 @@
+{
+ "image": "lecliss_atlas.png",
+ "W": 471,
+ "H": 749,
+ "bones": [
+  {
+   "name": "root",
+   "parent": null,
+   "rest": [
+    235,
+    300
+   ],
+   "pivot": [
+    235,
+    300
+   ]
+  },
+  {
+   "name": "spine",
+   "parent": "root",
+   "rest": [
+    0,
+    -15
+   ],
+   "pivot": [
+    235,
+    285
+   ]
+  },
+  {
+   "name": "chest",
+   "parent": "spine",
+   "rest": [
+    0,
+    -110
+   ],
+   "pivot": [
+    235,
+    175
+   ]
+  },
+  {
+   "name": "neck",
+   "parent": "chest",
+   "rest": [
+    0,
+    -25
+   ],
+   "pivot": [
+    235,
+    150
+   ]
+  },
+  {
+   "name": "head",
+   "parent": "neck",
+   "rest": [
+    0,
+    -10
+   ],
+   "pivot": [
+    235,
+    140
+   ]
+  },
+  {
+   "name": "hair",
+   "parent": "chest",
+   "rest": [
+    0,
+    -25
+   ],
+   "pivot": [
+    235,
+    150
+   ]
+  },
+  {
+   "name": "shoulderL",
+   "parent": "chest",
+   "rest": [
+    -47,
+    -7
+   ],
+   "pivot": [
+    188,
+    168
+   ]
+  },
+  {
+   "name": "forearmL",
+   "parent": "shoulderL",
+   "rest": [
+    -38,
+    82
+   ],
+   "pivot": [
+    150,
+    250
+   ]
+  },
+  {
+   "name": "shoulderR",
+   "parent": "chest",
+   "rest": [
+    50,
+    -7
+   ],
+   "pivot": [
+    285,
+    168
+   ]
+  },
+  {
+   "name": "forearmR",
+   "parent": "shoulderR",
+   "rest": [
+    37,
+    82
+   ],
+   "pivot": [
+    322,
+    250
+   ]
+  },
+  {
+   "name": "thighL",
+   "parent": "root",
+   "rest": [
+    -23,
+    5
+   ],
+   "pivot": [
+    212,
+    305
+   ]
+  },
+  {
+   "name": "shinL",
+   "parent": "thighL",
+   "rest": [
+    -7,
+    175
+   ],
+   "pivot": [
+    205,
+    480
+   ]
+  },
+  {
+   "name": "thighR",
+   "parent": "root",
+   "rest": [
+    25,
+    5
+   ],
+   "pivot": [
+    260,
+    305
+   ]
+  },
+  {
+   "name": "shinR",
+   "parent": "thighR",
+   "rest": [
+    8,
+    175
+   ],
+   "pivot": [
+    268,
+    480
+   ]
+  }
+ ],
+ "parts": [
+  {
+   "name": "hair_back",
+   "bone": "hair",
+   "z": 0,
+   "atlas": {
+    "x": 0,
+    "y": 0,
+    "w": 248,
+    "h": 380
+   },
+   "off": [
+    -124,
+    -112
+   ]
+  },
+  {
+   "name": "thighL",
+   "bone": "thighL",
+   "z": 10,
+   "atlas": {
+    "x": 0,
+    "y": 382,
+    "w": 61,
+    "h": 230
+   },
+   "off": [
+    -34,
+    -13
+   ]
+  },
+  {
+   "name": "thighR",
+   "bone": "thighR",
+   "z": 10,
+   "atlas": {
+    "x": 0,
+    "y": 614,
+    "w": 61,
+    "h": 230
+   },
+   "off": [
+    -28,
+    -13
+   ]
+  },
+  {
+   "name": "shinL",
+   "bone": "shinL",
+   "z": 11,
+   "atlas": {
+    "x": 0,
+    "y": 846,
+    "w": 111,
+    "h": 248
+   },
+   "off": [
+    -77,
+    14
+   ]
+  },
+  {
+   "name": "shinR",
+   "bone": "shinR",
+   "z": 11,
+   "atlas": {
+    "x": 0,
+    "y": 1096,
+    "w": 103,
+    "h": 248
+   },
+   "off": [
+    -35,
+    14
+   ]
+  },
+  {
+   "name": "skirt",
+   "bone": "spine",
+   "z": 20,
+   "atlas": {
+    "x": 0,
+    "y": 1346,
+    "w": 377,
+    "h": 410
+   },
+   "off": [
+    -187,
+    -51
+   ]
+  },
+  {
+   "name": "armL_up",
+   "bone": "shoulderL",
+   "z": 30,
+   "atlas": {
+    "x": 0,
+    "y": 1758,
+    "w": 92,
+    "h": 134
+   },
+   "off": [
+    -70,
+    -24
+   ]
+  },
+  {
+   "name": "armR_up",
+   "bone": "shoulderR",
+   "z": 30,
+   "atlas": {
+    "x": 0,
+    "y": 1894,
+    "w": 91,
+    "h": 134
+   },
+   "off": [
+    -23,
+    -24
+   ]
+  },
+  {
+   "name": "torso",
+   "bone": "chest",
+   "z": 40,
+   "atlas": {
+    "x": 0,
+    "y": 2030,
+    "w": 136,
+    "h": 170
+   },
+   "off": [
+    -67,
+    -35
+   ]
+  },
+  {
+   "name": "armL_fore",
+   "bone": "forearmL",
+   "z": 50,
+   "atlas": {
+    "x": 0,
+    "y": 2202,
+    "w": 147,
+    "h": 152
+   },
+   "off": [
+    -115,
+    -30
+   ]
+  },
+  {
+   "name": "armR_fore",
+   "bone": "forearmR",
+   "z": 50,
+   "atlas": {
+    "x": 0,
+    "y": 2356,
+    "w": 149,
+    "h": 152
+   },
+   "off": [
+    -32,
+    -30
+   ]
+  },
+  {
+   "name": "head",
+   "bone": "head",
+   "z": 60,
+   "atlas": {
+    "x": 0,
+    "y": 2510,
+    "w": 134,
+    "h": 176
+   },
+   "off": [
+    -65,
+    -130
+   ]
+  }
+ ]
+}
