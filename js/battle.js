@@ -97,6 +97,8 @@ const Battle = {
     this.mod = stage.mod || {}; // 关卡特殊条件：{turnLimit, survive, protect, ...}
 
     const D = window.GameData;
+    // 阵容羁绊：开战即结算并加成到我方面板
+    this.synergy = Game.teamSynergy ? Game.teamSynergy(teamUids) : { elemBonus: {}, balance: false, rainbow: false, list: [] };
 
     // 我方
     teamUids.forEach((uid, i) => {
@@ -107,10 +109,17 @@ const Battle = {
       const st = Game.computeStats(owned);
       // 三段站位：坦克/战士在前，游侠居中，法师/治疗在后
       const pos = this.tierOfClass(def.cls);
+      // —— 羁绊加成 ——
+      const syn = this.synergy;
+      let am = 1 + (syn.elemBonus[cos.element] || 0);   // 元素共鸣（只加该元素单位攻击）
+      let dm = 1, hm = 1;
+      if (syn.balance) { hm *= 1.10; dm *= 1.08; }
+      if (syn.rainbow) { am *= 1.06; dm *= 1.06; hm *= 1.06; }
+      const maxHp = Math.round(st.maxHp * hm);
       this.combatants.push(new Combatant({
         uid: 'A' + i, name: def.name, side: 'ally', charId: owned.charId,
         cls: def.cls, element: cos.element, color: cos.color, level: owned.level,
-        pos, maxHp: st.maxHp, atk: st.atk, def: st.def, spd: st.spd, crit: st.crit,
+        pos, maxHp, atk: Math.round(st.atk * am), def: Math.round(st.def * dm), spd: st.spd, crit: st.crit,
         skills: Game.battleSkills(owned), // 普攻 + 各服装招式
         sigSkillId: cos.signature,        // 当前服装专属招式（受突破强化）
         sigPlus: owned.plus || 0,         // 突破等级

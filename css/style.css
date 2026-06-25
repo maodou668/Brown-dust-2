@@ -1041,6 +1041,15 @@ body {
 }
 .char-emoji { line-height: 1; }
 .port-img { image-rendering: pixelated; }
+/* ---------- 阵容羁绊面板 ---------- */
+.te-synergy { margin: 6px 0 4px; display: flex; flex-direction: column; gap: 4px; }
+.syn-title { font-size: 12px; font-weight: 800; color: var(--gold); }
+.syn-item { font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 7px;
+  background: rgba(176,107,255,.14); border: 1px solid rgba(176,107,255,.3); color: #e8d8ff; }
+.syn-item.syn-balance { background: rgba(90,209,120,.14); border-color: rgba(90,209,120,.35); color: #d6ffe0; }
+.syn-item.syn-rainbow { background: rgba(255,177,92,.14); border-color: rgba(255,177,92,.35); color: #ffe7c0; }
+.syn-empty { font-size: 11px; color: var(--muted, #9a90b0); padding: 4px 2px; }
+
 .unit .u-art { overflow: visible; position: relative; }
 .unit canvas.u-sprite {
   position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%);

@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=79">
+  <link rel="manifest" href="manifest.webmanifest?v=80">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=79">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=79">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=80">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=80">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -1057,6 +1057,15 @@ body {
 }
 .char-emoji { line-height: 1; }
 .port-img { image-rendering: pixelated; }
+/* ---------- 阵容羁绊面板 ---------- */
+.te-synergy { margin: 6px 0 4px; display: flex; flex-direction: column; gap: 4px; }
+.syn-title { font-size: 12px; font-weight: 800; color: var(--gold); }
+.syn-item { font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 7px;
+  background: rgba(176,107,255,.14); border: 1px solid rgba(176,107,255,.3); color: #e8d8ff; }
+.syn-item.syn-balance { background: rgba(90,209,120,.14); border-color: rgba(90,209,120,.35); color: #d6ffe0; }
+.syn-item.syn-rainbow { background: rgba(255,177,92,.14); border-color: rgba(255,177,92,.35); color: #ffe7c0; }
+.syn-empty { font-size: 11px; color: var(--muted, #9a90b0); padding: 4px 2px; }
+
 .unit .u-art { overflow: visible; position: relative; }
 .unit canvas.u-sprite {
   position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%);
@@ -2177,7 +2186,7 @@ button.ac-circle:active { transform: scale(.92); }
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '79';</script>
+  <script>window.ASSET_VER = '80';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -2927,7 +2936,7 @@ const ABYSS = [
     ],
     reward: { gold: 8000, exp: 4000, gem: 180 },
     isBoss: true, abyss: true,
-    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+    mod: { healCut: 0.3, atkMul: 0.90, hpMul: 1.25 },
   },
   {
     id: 202, tier: 2, name: '深渊 · 枯萎之巢', recommend: 46,
@@ -2941,7 +2950,7 @@ const ABYSS = [
     ],
     reward: { gold: 10000, exp: 5000, gem: 200 },
     isBoss: true, abyss: true,
-    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+    mod: { healCut: 0.3, atkMul: 0.90, hpMul: 1.25 },
   },
   {
     id: 203, tier: 3, name: '深渊 · 绝命牢笼', recommend: 48,
@@ -2955,7 +2964,7 @@ const ABYSS = [
     ],
     reward: { gold: 13000, exp: 6500, gem: 240 },
     isBoss: true, abyss: true,
-    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+    mod: { healCut: 0.3, atkMul: 0.90, hpMul: 1.25 },
   },
   {
     id: 204, tier: 4, name: '深渊 · 永夜深处', recommend: 50,
@@ -2969,7 +2978,7 @@ const ABYSS = [
     ],
     reward: { gold: 18000, exp: 9000, gem: 320 },
     isBoss: true, abyss: true,
-    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+    mod: { healCut: 0.3, atkMul: 0.90, hpMul: 1.25 },
   },
 ];
 
@@ -3792,6 +3801,42 @@ const Game = {
       spd:   cos.stats.spd + g.spd,
       crit:  cos.stats.crit + g.crit,
     };
+  },
+
+  // ============================================================
+  //  阵容羁绊（Team Synergy）——让「带哪 5 个」成为真实抉择
+  //  · 元素共鸣：同元素 2/3/4/5 个 → 该元素单位攻击 +8/15/22/30%（堆元素=爆发流）
+  //  · 均衡阵：同时有 坦克+治疗+输出 → 全队 +10%生命 +8%防御（生存流）
+  //  · 彩虹阵：5 个元素各不相同 → 全队 +6% 攻防血（灵活全能，与元素共鸣互斥）
+  //  返回纯数据，供战斗结算与 UI 展示共用。
+  // ============================================================
+  ELEM_RESONANCE: { 2: 0.08, 3: 0.15, 4: 0.22, 5: 0.30 },
+  teamSynergy(teamUids) {
+    const D = window.GameData;
+    const members = (teamUids || []).map(uid => this.getOwned(uid)).filter(Boolean);
+    const els = {}, classes = {};
+    members.forEach(o => {
+      const el = this.activeCostumeDef(o).element;
+      els[el] = (els[el] || 0) + 1;
+      const cls = (D.CHARACTERS[o.charId] || {}).cls;
+      classes[cls] = (classes[cls] || 0) + 1;
+    });
+    const elemBonus = {}, list = [];
+    for (const e in els) {
+      if (els[e] >= 2) {
+        const b = this.ELEM_RESONANCE[Math.min(5, els[e])];
+        elemBonus[e] = b;
+        list.push({ kind: 'element', el: e, n: els[e], desc: `${D.ELEMENTS[e].icon}${D.ELEMENTS[e].name}共鸣 ×${els[e]}：该元素攻击 +${Math.round(b * 100)}%` });
+      }
+    }
+    const hasTank = (classes.defender || 0) >= 1;
+    const hasHeal = (classes.healer || 0) >= 1;
+    const hasDps = ((classes.warrior || 0) + (classes.archer || 0) + (classes.mage || 0)) >= 1;
+    const balance = hasTank && hasHeal && hasDps && members.length >= 4;
+    const rainbow = members.length >= 5 && Object.keys(els).length === 5;
+    if (balance) list.push({ kind: 'balance', desc: '均衡阵（坦+奶+输出）：全队 +10% 生命、+8% 防御' });
+    if (rainbow) list.push({ kind: 'rainbow', desc: '彩虹阵（五元素各异）：全队 +6% 攻防血' });
+    return { elemBonus, balance, rainbow, list, els, classes, n: members.length };
   },
 
   // 好感（赠礼提升）
@@ -5544,6 +5589,8 @@ const Battle = {
     this.mod = stage.mod || {}; // 关卡特殊条件：{turnLimit, survive, protect, ...}
 
     const D = window.GameData;
+    // 阵容羁绊：开战即结算并加成到我方面板
+    this.synergy = Game.teamSynergy ? Game.teamSynergy(teamUids) : { elemBonus: {}, balance: false, rainbow: false, list: [] };
 
     // 我方
     teamUids.forEach((uid, i) => {
@@ -5554,10 +5601,17 @@ const Battle = {
       const st = Game.computeStats(owned);
       // 三段站位：坦克/战士在前，游侠居中，法师/治疗在后
       const pos = this.tierOfClass(def.cls);
+      // —— 羁绊加成 ——
+      const syn = this.synergy;
+      let am = 1 + (syn.elemBonus[cos.element] || 0);   // 元素共鸣（只加该元素单位攻击）
+      let dm = 1, hm = 1;
+      if (syn.balance) { hm *= 1.10; dm *= 1.08; }
+      if (syn.rainbow) { am *= 1.06; dm *= 1.06; hm *= 1.06; }
+      const maxHp = Math.round(st.maxHp * hm);
       this.combatants.push(new Combatant({
         uid: 'A' + i, name: def.name, side: 'ally', charId: owned.charId,
         cls: def.cls, element: cos.element, color: cos.color, level: owned.level,
-        pos, maxHp: st.maxHp, atk: st.atk, def: st.def, spd: st.spd, crit: st.crit,
+        pos, maxHp, atk: Math.round(st.atk * am), def: Math.round(st.def * dm), spd: st.spd, crit: st.crit,
         skills: Game.battleSkills(owned), // 普攻 + 各服装招式
         sigSkillId: cos.signature,        // 当前服装专属招式（受突破强化）
         sigPlus: owned.plus || 0,         // 突破等级
@@ -6321,6 +6375,11 @@ const UI = {
       }).join('') : '<div class="muted" style="padding:12px;grid-column:1/-1;">没有可上阵的角色了</div>';
 
       m.querySelector('.te-slots').innerHTML = slotsBar;
+      // 阵容羁绊（实时随编队变化）
+      const syn = Game.teamSynergy(Game.state.team);
+      m.querySelector('.te-synergy').innerHTML = syn.list.length
+        ? `<div class="syn-title">⚜️ 当前羁绊</div>${syn.list.map(x => `<div class="syn-item syn-${x.kind}">${x.desc}</div>`).join('')}`
+        : `<div class="syn-empty">暂无羁绊 · 同元素叠 2+ 触发共鸣；带齐 坦克+治疗+输出 触发均衡阵</div>`;
       m.querySelector('.te-current-wrap').innerHTML = curHtml;
       m.querySelector('.te-body').innerHTML = grid;
       m.querySelector('.te-count').textContent = `${Game.state.team.length}/${TEAM_MAX}`;
@@ -6337,6 +6396,7 @@ const UI = {
     const m = this.openModal(`
       <h2>编队 <span class="te-count" style="font-size:13px;color:var(--accent);"></span></h2>
       <div class="te-slots"></div>
+      <div class="te-synergy"></div>
       <div class="te-current-wrap"></div>
       <p class="muted" style="margin:10px 0 8px;">先点上方选择位置，再点下方角色上阵 / 替换（最多 ${TEAM_MAX} 人）。</p>
       <div class="te-body roster-grid"></div>

@@ -209,6 +209,11 @@ const UI = {
       }).join('') : '<div class="muted" style="padding:12px;grid-column:1/-1;">没有可上阵的角色了</div>';
 
       m.querySelector('.te-slots').innerHTML = slotsBar;
+      // 阵容羁绊（实时随编队变化）
+      const syn = Game.teamSynergy(Game.state.team);
+      m.querySelector('.te-synergy').innerHTML = syn.list.length
+        ? `<div class="syn-title">⚜️ 当前羁绊</div>${syn.list.map(x => `<div class="syn-item syn-${x.kind}">${x.desc}</div>`).join('')}`
+        : `<div class="syn-empty">暂无羁绊 · 同元素叠 2+ 触发共鸣；带齐 坦克+治疗+输出 触发均衡阵</div>`;
       m.querySelector('.te-current-wrap').innerHTML = curHtml;
       m.querySelector('.te-body').innerHTML = grid;
       m.querySelector('.te-count').textContent = `${Game.state.team.length}/${TEAM_MAX}`;
@@ -225,6 +230,7 @@ const UI = {
     const m = this.openModal(`
       <h2>编队 <span class="te-count" style="font-size:13px;color:var(--accent);"></span></h2>
       <div class="te-slots"></div>
+      <div class="te-synergy"></div>
       <div class="te-current-wrap"></div>
       <p class="muted" style="margin:10px 0 8px;">先点上方选择位置，再点下方角色上阵 / 替换（最多 ${TEAM_MAX} 人）。</p>
       <div class="te-body roster-grid"></div>

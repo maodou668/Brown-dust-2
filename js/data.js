@@ -551,7 +551,7 @@ const ABYSS = [
     ],
     reward: { gold: 8000, exp: 4000, gem: 180 },
     isBoss: true, abyss: true,
-    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+    mod: { healCut: 0.3, atkMul: 0.90, hpMul: 1.25 },
   },
   {
     id: 202, tier: 2, name: '深渊 · 枯萎之巢', recommend: 46,
@@ -565,7 +565,7 @@ const ABYSS = [
     ],
     reward: { gold: 10000, exp: 5000, gem: 200 },
     isBoss: true, abyss: true,
-    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+    mod: { healCut: 0.3, atkMul: 0.90, hpMul: 1.25 },
   },
   {
     id: 203, tier: 3, name: '深渊 · 绝命牢笼', recommend: 48,
@@ -579,7 +579,7 @@ const ABYSS = [
     ],
     reward: { gold: 13000, exp: 6500, gem: 240 },
     isBoss: true, abyss: true,
-    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+    mod: { healCut: 0.3, atkMul: 0.90, hpMul: 1.25 },
   },
   {
     id: 204, tier: 4, name: '深渊 · 永夜深处', recommend: 50,
@@ -593,7 +593,7 @@ const ABYSS = [
     ],
     reward: { gold: 18000, exp: 9000, gem: 320 },
     isBoss: true, abyss: true,
-    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+    mod: { healCut: 0.3, atkMul: 0.90, hpMul: 1.25 },
   },
 ];
 

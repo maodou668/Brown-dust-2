@@ -327,6 +327,42 @@ const Game = {
     };
   },
 
+  // ============================================================
+  //  阵容羁绊（Team Synergy）——让「带哪 5 个」成为真实抉择
+  //  · 元素共鸣：同元素 2/3/4/5 个 → 该元素单位攻击 +8/15/22/30%（堆元素=爆发流）
+  //  · 均衡阵：同时有 坦克+治疗+输出 → 全队 +10%生命 +8%防御（生存流）
+  //  · 彩虹阵：5 个元素各不相同 → 全队 +6% 攻防血（灵活全能，与元素共鸣互斥）
+  //  返回纯数据，供战斗结算与 UI 展示共用。
+  // ============================================================
+  ELEM_RESONANCE: { 2: 0.08, 3: 0.15, 4: 0.22, 5: 0.30 },
+  teamSynergy(teamUids) {
+    const D = window.GameData;
+    const members = (teamUids || []).map(uid => this.getOwned(uid)).filter(Boolean);
+    const els = {}, classes = {};
+    members.forEach(o => {
+      const el = this.activeCostumeDef(o).element;
+      els[el] = (els[el] || 0) + 1;
+      const cls = (D.CHARACTERS[o.charId] || {}).cls;
+      classes[cls] = (classes[cls] || 0) + 1;
+    });
+    const elemBonus = {}, list = [];
+    for (const e in els) {
+      if (els[e] >= 2) {
+        const b = this.ELEM_RESONANCE[Math.min(5, els[e])];
+        elemBonus[e] = b;
+        list.push({ kind: 'element', el: e, n: els[e], desc: `${D.ELEMENTS[e].icon}${D.ELEMENTS[e].name}共鸣 ×${els[e]}：该元素攻击 +${Math.round(b * 100)}%` });
+      }
+    }
+    const hasTank = (classes.defender || 0) >= 1;
+    const hasHeal = (classes.healer || 0) >= 1;
+    const hasDps = ((classes.warrior || 0) + (classes.archer || 0) + (classes.mage || 0)) >= 1;
+    const balance = hasTank && hasHeal && hasDps && members.length >= 4;
+    const rainbow = members.length >= 5 && Object.keys(els).length === 5;
+    if (balance) list.push({ kind: 'balance', desc: '均衡阵（坦+奶+输出）：全队 +10% 生命、+8% 防御' });
+    if (rainbow) list.push({ kind: 'rainbow', desc: '彩虹阵（五元素各异）：全队 +6% 攻防血' });
+    return { elemBonus, balance, rainbow, list, els, classes, n: members.length };
+  },
+
   // 好感（赠礼提升）
   GIFT_COST: 200, GIFT_AFF: 25, AFF_MAX: 1000,
   giveGift(uid) {
