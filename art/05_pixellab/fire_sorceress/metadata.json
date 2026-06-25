@@ -1,0 +1,298 @@
+{
+  "group_id": null,
+  "states": [
+    {
+      "character": {
+        "id": "25fe9fbb-ca7d-4237-862f-58b7d8501ed4",
+        "name": "Beautiful anime-style fire sorceress girl",
+        "prompt": "Beautiful anime-style fire sorceress girl warrior. Long flowing dark purple hair, striking large red eyes, a small glowing orange flame ornament on the side of her head. Elegant sleeveless black and crimson battle dress with intricate orange flame patterns along the layered skirt, a glowing orange flame gem on the chest and on the belt buckle. Black fingerless armored gloves, black thigh-high armored boots with orange flame trim. Confident fierce beautiful expression, vibrant fire theme, clean lineart, polished.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-06-25T15:25:26.658673+00:00"
+      },
+      "folder": "Beautiful_anime-style_fire_sorceress_girl",
+      "frames": {
+        "rotations": {
+          "south": "Beautiful_anime-style_fire_sorceress_girl/rotations/south.png",
+          "south-east": "Beautiful_anime-style_fire_sorceress_girl/rotations/south-east.png",
+          "east": "Beautiful_anime-style_fire_sorceress_girl/rotations/east.png",
+          "north-east": "Beautiful_anime-style_fire_sorceress_girl/rotations/north-east.png",
+          "north": "Beautiful_anime-style_fire_sorceress_girl/rotations/north.png",
+          "north-west": "Beautiful_anime-style_fire_sorceress_girl/rotations/north-west.png",
+          "west": "Beautiful_anime-style_fire_sorceress_girl/rotations/west.png",
+          "south-west": "Beautiful_anime-style_fire_sorceress_girl/rotations/south-west.png"
+        },
+        "animations": {
+          "The_character_stands_in_place_with_a_gentle_rhythm": {
+            "east": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/east/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/east/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/east/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/east/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/east/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/east/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/east/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/east/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/east/frame_008.png"
+            ],
+            "south-west": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-west/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-west/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-west/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-west/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-west/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-west/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-west/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-west/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-west/frame_008.png"
+            ],
+            "north-west": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-west/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-west/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-west/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-west/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-west/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-west/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-west/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-west/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-west/frame_008.png"
+            ],
+            "south-east": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-east/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-east/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-east/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-east/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-east/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-east/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-east/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-east/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south-east/frame_008.png"
+            ],
+            "south": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/south/frame_008.png"
+            ],
+            "west": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/west/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/west/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/west/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/west/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/west/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/west/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/west/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/west/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/west/frame_008.png"
+            ],
+            "north": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north/frame_008.png"
+            ],
+            "north-east": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-east/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-east/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-east/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-east/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-east/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-east/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-east/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-east/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_in_place_with_a_gentle_rhythm/north-east/frame_008.png"
+            ]
+          },
+          "The_character_runs_forward_toward_the_bottom_of_th": {
+            "west": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/west/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/west/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/west/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/west/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/west/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/west/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/west/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/west/frame_007.png"
+            ],
+            "north-west": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-west/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-west/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-west/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-west/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-west/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-west/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-west/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-west/frame_007.png"
+            ],
+            "south": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south/frame_007.png"
+            ],
+            "north": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north/frame_007.png"
+            ],
+            "east": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/east/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/east/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/east/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/east/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/east/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/east/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/east/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/east/frame_007.png"
+            ],
+            "south-west": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-west/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-west/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-west/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-west/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-west/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-west/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-west/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-west/frame_007.png"
+            ],
+            "north-east": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-east/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-east/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-east/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-east/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-east/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-east/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-east/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/north-east/frame_007.png"
+            ],
+            "south-east": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-east/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-east/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-east/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-east/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-east/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-east/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-east/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_runs_forward_toward_the_bottom_of_th/south-east/frame_007.png"
+            ]
+          },
+          "The_character_stands_firmly_drawing_energy_from_wi": {
+            "west": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/west/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/west/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/west/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/west/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/west/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/west/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/west/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/west/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/west/frame_008.png"
+            ],
+            "east": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/east/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/east/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/east/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/east/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/east/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/east/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/east/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/east/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/east/frame_008.png"
+            ],
+            "north-west": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-west/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-west/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-west/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-west/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-west/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-west/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-west/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-west/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-west/frame_008.png"
+            ],
+            "north-east": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-east/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-east/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-east/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-east/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-east/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-east/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-east/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-east/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north-east/frame_008.png"
+            ],
+            "south-east": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-east/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-east/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-east/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-east/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-east/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-east/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-east/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-east/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-east/frame_008.png"
+            ],
+            "south": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south/frame_008.png"
+            ],
+            "north": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/north/frame_008.png"
+            ],
+            "south-west": [
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-west/frame_000.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-west/frame_001.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-west/frame_002.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-west/frame_003.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-west/frame_004.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-west/frame_005.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-west/frame_006.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-west/frame_007.png",
+              "Beautiful_anime-style_fire_sorceress_girl/animations/The_character_stands_firmly_drawing_energy_from_wi/south-west/frame_008.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.0",
+  "export_date": "2026-06-25T16:56:44.783833"
+}

@@ -12,6 +12,7 @@ const World = {
   player: { x: 0, y: 0, dir: 'down', step: 0, color: '#b06bff' },
   input: { up: false, down: false, left: false, right: false },
   nodes: [], cur: null, busyTrigger: false, active: false,
+  sprite: null, _spriteT: 0,    // PixelLab 主角序列帧（地图）
 
   // 顶视角占位渲染（纯色地块 + emoji 道具，无外接美术）
   TILE: 16, SCALE: 3,            // 屏上 48px / 格
@@ -84,6 +85,7 @@ const World = {
     if (!ch) return;
     if (Game.state.team.length === 0) { UI.toast('请先在「佣兵」页编入出战队伍'); Main.switchScreen('roster'); return; }
     this.chapter = ch; this.theme = ch.theme; this.w = 15; this.h = 15;
+    this.loadFieldSprite();
     this.buildDOM();
     this.buildMap(ch);
     this.active = true; this.busyTrigger = false;
@@ -261,6 +263,7 @@ const World = {
 
   update(dt) {
     const p = this.player; this._dustDt = dt;
+    this._spriteT += dt;
     let dx = 0, dy = 0;
     if (this.input.left) dx -= 1;
     if (this.input.right) dx += 1;
@@ -504,15 +507,57 @@ const World = {
     ctx.restore();
   },
 
+  // 载入 PixelLab 主角序列帧（地图用）
+  loadFieldSprite() {
+    if (this.sprite) return;
+    const V = window.ASSET_VER || '1';
+    const BASE = 'art/05_pixellab/lecliss_field';
+    const sp = this.sprite = { ready: false, man: null, imgs: {} };
+    fetch(BASE + '/manifest.json?v=' + V).then(r => r.json()).then(man => {
+      sp.man = man;
+      const mk = src => { const im = new Image(); im.src = src; return im; };
+      for (const anim in man.anims) {
+        sp.imgs[anim] = {};
+        for (const d of man.dirs) {
+          const n = man.anims[anim].frames[d] || 0, arr = [];
+          for (let i = 0; i < n; i++) arr.push(mk(`${BASE}/${anim}/${d}/${String(i).padStart(2, '0')}.png?v=${V}`));
+          sp.imgs[anim][d] = arr;
+        }
+      }
+      sp.ready = true;
+    }).catch(() => { this.sprite = null; });
+  },
+
   drawPlayer() {
     const ctx = this.ctx, p = this.player;
     const TS = this.TILE * this.SCALE;
     const cx = p.x * TS - this.cam.x, cy = p.y * TS - this.cam.y;
     const moving = p.step > 0;
-    const bob = moving ? Math.abs(Math.sin(p.step / 95)) * 4 : (Math.sin(performance.now() / 620) * 0.5 + 0.5) * 2;
     // 阴影
     ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(cx, cy + TS * 0.34, TS * 0.26, TS * 0.11, 0, 0, 7); ctx.fill();
-    // 占位主角：圆头 + 身体 + 朝向小点
+
+    // —— PixelLab 序列帧主角 ——
+    const sp = this.sprite;
+    if (sp && sp.ready) {
+      const dir = { up: 'north', down: 'south', left: 'west', right: 'east' }[p.dir] || 'south';
+      const anim = moving ? 'run' : 'idle';
+      const arr = (sp.imgs[anim] && sp.imgs[anim][dir] && sp.imgs[anim][dir].length) ? sp.imgs[anim][dir] : sp.imgs.idle.south;
+      const fps = (sp.man.fps && sp.man.fps[anim]) || 8;
+      const im = arr[Math.floor(this._spriteT / 1000 * fps) % arr.length];
+      const bb = sp.man.bbox;
+      const targetH = TS * 1.55, scale = targetH / bb.h;
+      const dw = bb.w * scale, dh = bb.h * scale;
+      const bob = moving ? Math.abs(Math.sin(p.step / 95)) * 3 : 0;
+      if (im && im.width) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(im, bb.x, bb.y, bb.w, bb.h, cx - dw / 2, cy + TS * 0.30 - dh - bob, dw, dh);
+        ctx.imageSmoothingEnabled = true;
+      }
+      return;
+    }
+
+    // —— 占位主角（序列帧未就绪时）——
+    const bob = moving ? Math.abs(Math.sin(p.step / 95)) * 4 : (Math.sin(performance.now() / 620) * 0.5 + 0.5) * 2;
     const bx = cx, by = cy + TS * 0.18 - bob;
     ctx.fillStyle = p.color || '#b06bff';
     this.rr(bx - 9, by - 18, 18, 20, 6); ctx.fill();
