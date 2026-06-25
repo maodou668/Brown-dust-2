@@ -32,15 +32,23 @@ const GEAR_CRAFT = {
   types: ['weapon', 'armor', 'accessory'],
 };
 
-// ---------- 专属武器（每角色一件，UR 级，按职业定制） ----------
-function exStatsByClass(cls) {
+// ---------- 专属武器（每角色一件，稀有度跟随角色，按职业定制） ----------
+// 5★ 满值；4★/3★ 按稀有度缩放，避免低星角色拿到与 5★ 等强的专属武器（数值越界）。
+const EX_RARITY_MUL = { 5: 1.0, 4: 0.7, 3: 0.5 };
+function exStatsByClass(cls, rarity) {
+  const m = EX_RARITY_MUL[rarity] || 1.0;
+  const sc = (s) => {
+    const out = {};
+    for (const k in s) out[k] = (k === 'crit') ? Math.round(s[k] * m * 1000) / 1000 : Math.round(s[k] * m);
+    return out;
+  };
   switch (cls) {
-    case 'warrior':  return { atk: 160, hp: 320, crit: 0.06 };
-    case 'archer':   return { atk: 175, crit: 0.14 };
-    case 'mage':     return { atk: 170, hp: 160 };
-    case 'defender': return { def: 95, hp: 950 };
-    case 'healer':   return { atk: 125, hp: 520 };
-    default:         return { atk: 100, hp: 200 };
+    case 'warrior':  return sc({ atk: 160, hp: 320, crit: 0.06 });
+    case 'archer':   return sc({ atk: 175, crit: 0.14 });
+    case 'mage':     return sc({ atk: 170, hp: 160 });
+    case 'defender': return sc({ def: 95, hp: 950 });
+    case 'healer':   return sc({ atk: 125, hp: 520 });
+    default:         return sc({ atk: 100, hp: 200 });
   }
 }
 const EX_NAME = {
@@ -60,7 +68,7 @@ if (window.GameData && window.GameData.CHARACTERS) {
       owner: c.id,
       name: `${c.name}·${EX_NAME[c.cls] || '专属武器'}`,
       icon: '🗡️',
-      stats: exStatsByClass(c.cls),
+      stats: exStatsByClass(c.cls, rarity),
       desc: `${c.name} 的专属武器，仅 ${c.name} 可装备，提供强力专属属性。`,
     };
     (EX_POOL[rarity] || (EX_POOL[rarity] = [])).push('ex_' + c.id);

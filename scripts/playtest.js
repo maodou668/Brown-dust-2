@@ -10,7 +10,7 @@ const ctx = {
   localStorage: { getItem: k => store[k] || null, setItem: (k, v) => store[k] = String(v), removeItem: k => delete store[k] },
 };
 ctx.window = ctx; ctx.window.GameData = {}; vm.createContext(ctx);
-for (const f of ['data.js', 'balance.js', 'gear.js', 'costumes.js', 'game.js', 'battle.js'])
+for (const f of ['data.js', 'balance.js', 'budget.js', 'gear.js', 'costumes.js', 'game.js', 'battle.js'])
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8'), ctx, { filename: f });
 const { Game, Battle, GameData } = ctx.window;
 const SK = GameData.SKILLS;

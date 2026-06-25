@@ -4,7 +4,7 @@ const ctx={console,Math,Object,Array,JSON,Date,setTimeout,clearTimeout,
   localStorage:{getItem:k=>store[k]||null,setItem:(k,v)=>store[k]=String(v),removeItem:k=>delete store[k]}};
 ctx.window=ctx; ctx.window.GameData={};
 vm.createContext(ctx);
-for(const f of ['data.js','balance.js','gear.js','costumes.js','game.js','battle.js'])
+for(const f of ['data.js','balance.js','budget.js','gear.js','costumes.js','game.js','battle.js'])
   vm.runInContext(fs.readFileSync(path.join(__dirname,'..','js',f),'utf8'),ctx,{filename:f});
 const {Game,Battle,GameData}=ctx.window;
 Game.init();
@@ -56,3 +56,4 @@ const r2=drive();
 console.log('\n=== 五人队 vs 第1关 ===');
 console.log('结果:',r2.result,'回合:',r2.guard, r2.threw?('异常:'+r2.threw.message):'');
 console.log(`\n单挑失败 ${fails}/16`);
+if (fails > 0 || r2.result !== 'win') process.exitCode = 1;   // 单挑异常或主线翻车 → CI 失败

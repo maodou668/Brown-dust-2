@@ -207,19 +207,31 @@ Object.values(CH).forEach(ch => {
     desc: ch.desc,
   };
 });
+// 稀有度缺口补偿：服装稀有度高于角色基础稀有度时，按预算模型把属性抬到服装应有的档位
+// （否则「4★ 服装套在 3★ 角色基础上」会永远达不到 4★ 预算，价值虚低）。
+const OM = (window.Budget && window.Budget.O_MULT) || { 3: 0.72, 4: 0.86, 5: 1.0 };
+const SM = (window.Budget && window.Budget.S_MULT) || { 3: 0.90, 4: 0.95, 5: 1.0 };
 Object.entries(ALTS).forEach(([id, a]) => {
   const ch = CH[a.charId];
+  const oGap = (OM[a.rarity] || 1) / (OM[ch.rarity] || 1);   // 进攻轴（atk）补偿
+  const sGap = (SM[a.rarity] || 1) / (SM[ch.rarity] || 1);   // 生存轴（hp/def）补偿
   COSTUMES[id] = {
     id, charId: a.charId, charName: ch.name, costumeName: a.costumeName,
     name: ch.name + ' · ' + a.costumeName, rarity: a.rarity, cls: ch.cls,
     element: a.element, color: a.color,
     stats: {
-      hp: Math.round(ch.base.hp * (a.mul.hp || 1)),
-      atk: Math.round(ch.base.atk * (a.mul.atk || 1)),
-      def: Math.round(ch.base.def * (a.mul.def || 1)),
+      hp: Math.round(ch.base.hp * (a.mul.hp || 1) * sGap),
+      atk: Math.round(ch.base.atk * (a.mul.atk || 1) * oGap),
+      def: Math.round(ch.base.def * (a.mul.def || 1) * sGap),
       spd: ch.base.spd, crit: ch.base.crit,
     },
-    grow: { ...ch.grow }, signature: a.signature, desc: a.desc,
+    // 成长同步补偿，确保满级也落在该稀有度预算（仅在跨稀有度时偏离 1）
+    grow: {
+      hp: Math.round((ch.grow.hp || 0) * sGap * 100) / 100,
+      atk: Math.round((ch.grow.atk || 0) * oGap * 100) / 100,
+      def: Math.round((ch.grow.def || 0) * sGap * 100) / 100,
+    },
+    signature: a.signature, desc: a.desc,
   };
 });
 

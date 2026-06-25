@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),path=require('path');
 const ctx={window:{},console,Math,Object,Array,JSON};ctx.window.GameData={};vm.createContext(ctx);
-for(const f of ['data.js','balance.js','gear.js','costumes.js']) vm.runInContext(fs.readFileSync(path.join(__dirname,'..','js',f),'utf8'),ctx,{filename:f});
+for(const f of ['data.js','balance.js','budget.js','gear.js','costumes.js']) vm.runInContext(fs.readFileSync(path.join(__dirname,'..','js',f),'utf8'),ctx,{filename:f});
 const G=ctx.window.GameData, B=ctx.window.Balance, SK=G.SKILLS, COS=G.COSTUMES, CH=G.CHARACTERS;
 // 收集所有「服装专属招式」
 const sigIds=new Set();
@@ -17,3 +17,4 @@ console.log(`--- 超标 ${bad} 个 ---`);
 console.log('\n=== 16 角色「初始服装」专属招式 ===');
 Object.values(CH).forEach(ch=>{const c=COS['base_'+ch.id];const s=SK[c.signature];
   console.log(`${ch.name.padEnd(6)} ${ch.element}/${ch.cls}  →  ${s.name}（${c.signature}）`);});
+if (bad > 0) process.exitCode = 1;   // 有超标技能 → CI 失败
