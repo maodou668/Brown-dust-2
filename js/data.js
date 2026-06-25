@@ -495,7 +495,7 @@ const TRIALS = [
       { id: 'dark_mage', level: 19, pos: 'back' },
     ],
     reward: { gold: 1600, exp: 900, gem: 55 },
-    mod: { turnLimit: 8 },
+    mod: { turnLimit: 8, hpMul: 1.35 },
   },
   {
     id: 103, tier: 3, name: '试炼之塔 · 第 3 层 · 守关', recommend: 23,

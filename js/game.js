@@ -384,6 +384,15 @@ const Game = {
     return out;
   },
 
+  /** 一次性教学提示：某 id 的提示是否还没展示过（展示后落盘，永不重复） */
+  onceTip(id) {
+    if (!this.state._tips) this.state._tips = {};
+    if (this.state._tips[id]) return false;
+    this.state._tips[id] = true;
+    this.save();
+    return true;
+  },
+
   // 好感（赠礼提升）
   GIFT_COST: 200, GIFT_AFF: 25, AFF_MAX: 1000,
   giveGift(uid) {

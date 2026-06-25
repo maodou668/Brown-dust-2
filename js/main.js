@@ -87,6 +87,7 @@ const BattleUI = {
     const ready = Battle.comboReady();
     label.textContent = ready ? '连携就绪！' : '连携 ' + Math.floor(Battle.combo) + '%';
     fill.classList.toggle('ready', ready);
+    if (ready && Game.onceTip('combo')) UI.toast('🌟 连携槽已满！点「全军连携」让全队立刻追加一轮攻击——攒满后挑时机一次倾泻最划算。');
     // 仅在我方可操作、非忙、非自动时可点
     btn.disabled = !(ready && Battle.isPlayerTurn() && !this.busy && !this.auto);
     btn.classList.toggle('ready', ready);
@@ -650,6 +651,7 @@ const BattleUI = {
       this.screenShake();
       if (S) S.sfx('crit');
       this.updateUnitDom(e.target);
+      if (Game.onceTip('reaction')) setTimeout(() => UI.toast('⚡ 元素反应！用不同元素连续命中同一敌人即可引爆爆发——敌人头顶的印记图标就是下一次引爆的元素。'), 400);
     } else if (e.type === 'end') {
       setTimeout(() => this.showResult(e.result), 700);
     }

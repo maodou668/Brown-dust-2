@@ -242,6 +242,7 @@ const UI = {
       <div class="close-row"><button class="btn" id="te-done">完成</button></div>
     `);
     render(m);
+    if (Game.onceTip('synergy')) setTimeout(() => this.toast('⚜️ 编队会触发「羁绊」：同元素叠 2+ 加爆发、坦+奶+输出凑齐更耐久。下方还会列出本队战斗中可引爆的元素反应。'), 450);
     m.querySelector('#te-done').onclick = () => { this.closeModal(m); this.renderHome(); };
   },
 

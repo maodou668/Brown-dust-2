@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=81">
+  <link rel="manifest" href="manifest.webmanifest?v=82">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=81">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=81">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=82">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=82">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2194,7 +2194,7 @@ button.ac-circle:active { transform: scale(.92); }
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '81';</script>
+  <script>window.ASSET_VER = '82';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -2888,7 +2888,7 @@ const TRIALS = [
       { id: 'dark_mage', level: 19, pos: 'back' },
     ],
     reward: { gold: 1600, exp: 900, gem: 55 },
-    mod: { turnLimit: 8 },
+    mod: { turnLimit: 8, hpMul: 1.35 },
   },
   {
     id: 103, tier: 3, name: '试炼之塔 · 第 3 层 · 守关', recommend: 23,
@@ -3884,6 +3884,15 @@ const Game = {
       }
     }
     return out;
+  },
+
+  /** 一次性教学提示：某 id 的提示是否还没展示过（展示后落盘，永不重复） */
+  onceTip(id) {
+    if (!this.state._tips) this.state._tips = {};
+    if (this.state._tips[id]) return false;
+    this.state._tips[id] = true;
+    this.save();
+    return true;
   },
 
   // 好感（赠礼提升）
@@ -6500,6 +6509,7 @@ const UI = {
       <div class="close-row"><button class="btn" id="te-done">完成</button></div>
     `);
     render(m);
+    if (Game.onceTip('synergy')) setTimeout(() => this.toast('⚜️ 编队会触发「羁绊」：同元素叠 2+ 加爆发、坦+奶+输出凑齐更耐久。下方还会列出本队战斗中可引爆的元素反应。'), 450);
     m.querySelector('#te-done').onclick = () => { this.closeModal(m); this.renderHome(); };
   },
 
@@ -10421,6 +10431,7 @@ const BattleUI = {
     const ready = Battle.comboReady();
     label.textContent = ready ? '连携就绪！' : '连携 ' + Math.floor(Battle.combo) + '%';
     fill.classList.toggle('ready', ready);
+    if (ready && Game.onceTip('combo')) UI.toast('🌟 连携槽已满！点「全军连携」让全队立刻追加一轮攻击——攒满后挑时机一次倾泻最划算。');
     // 仅在我方可操作、非忙、非自动时可点
     btn.disabled = !(ready && Battle.isPlayerTurn() && !this.busy && !this.auto);
     btn.classList.toggle('ready', ready);
@@ -10984,6 +10995,7 @@ const BattleUI = {
       this.screenShake();
       if (S) S.sfx('crit');
       this.updateUnitDom(e.target);
+      if (Game.onceTip('reaction')) setTimeout(() => UI.toast('⚡ 元素反应！用不同元素连续命中同一敌人即可引爆爆发——敌人头顶的印记图标就是下一次引爆的元素。'), 400);
     } else if (e.type === 'end') {
       setTimeout(() => this.showResult(e.result), 700);
     }
