@@ -2083,3 +2083,19 @@ button.ac-circle:active { transform: scale(.92); }
 @media (display-mode: standalone), (display-mode: fullscreen) {
   #app { padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; }
 }
+
+/* ---------- 团队连携槽 ---------- */
+.combo-row { display: flex; align-items: center; gap: 8px; margin: 2px 0 6px; }
+.combo-gauge { position: relative; flex: 1 1 auto; height: 18px; border-radius: 10px;
+  background: rgba(255,255,255,.08); overflow: hidden; border: 1px solid rgba(255,255,255,.12); }
+.combo-fill { height: 100%; width: 0%; border-radius: 10px;
+  background: linear-gradient(90deg, #6b5bff, #b06bff); transition: width .35s ease; }
+.combo-fill.ready { background: linear-gradient(90deg, #ff6b3d, #ffd86b); animation: comboPulse 1s ease-in-out infinite; }
+@keyframes comboPulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.4); } }
+.combo-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.combo-btn { flex: 0 0 auto; padding: 7px 12px; font-size: 13px; font-weight: 800; border-radius: 9px;
+  border: 1px solid rgba(255,255,255,.15); background: #2a2536; color: #9a90b0; cursor: not-allowed; }
+.combo-btn.ready { background: linear-gradient(135deg, #ff6b3d, #ffb15c); color: #1a1014;
+  border-color: transparent; cursor: pointer; box-shadow: 0 0 12px rgba(255,140,60,.55); }
+.combo-btn:active.ready { transform: scale(.95); }

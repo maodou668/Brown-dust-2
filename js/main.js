@@ -55,6 +55,11 @@ const BattleUI = {
         </div>
         <div class="battle-ctrl">
           <div class="turn-hint" id="turn-hint"></div>
+          <div class="combo-row" id="combo-row">
+            <div class="combo-gauge"><div class="combo-fill" id="combo-fill"></div>
+              <span class="combo-label" id="combo-label">连携 0%</span></div>
+            <button class="combo-btn" id="combo-btn" disabled>🌟 全军连携</button>
+          </div>
           <div class="skill-bar" id="skill-bar"></div>
         </div>
         <div class="battle-log" id="battle-log"></div>
@@ -64,7 +69,39 @@ const BattleUI = {
     this.root.querySelector('#battle-flee').onclick = () => this.flee();
     this.root.querySelector('#battle-auto').onclick = () => this.toggleAuto();
     this.root.querySelector('#battle-speed').onclick = () => this.cycleSpeed();
+    this.root.querySelector('#combo-btn').onclick = () => this.doCombo();
     this.spawnParticles(scene);
+  },
+
+  // 更新连携槽显示 + 按钮可用态
+  updateCombo() {
+    if (!this.root) return;
+    const fill = this.root.querySelector('#combo-fill');
+    const label = this.root.querySelector('#combo-label');
+    const btn = this.root.querySelector('#combo-btn');
+    if (!fill) return;
+    fill.style.width = Battle.combo + '%';
+    const ready = Battle.comboReady();
+    label.textContent = ready ? '连携就绪！' : '连携 ' + Math.floor(Battle.combo) + '%';
+    fill.classList.toggle('ready', ready);
+    // 仅在我方可操作、非忙、非自动时可点
+    btn.disabled = !(ready && Battle.isPlayerTurn() && !this.busy && !this.auto);
+    btn.classList.toggle('ready', ready);
+  },
+
+  // 玩家发动全军连携
+  doCombo() {
+    if (!Battle.comboReady() || this.busy || Battle.finished) return;
+    this.busy = true;
+    this.clearTargets && this.clearTargets();
+    if (window.Sound) Sound.sfx && Sound.sfx('skill');
+    Battle.unleashCombo();
+    this.setHint('🌟 全军连携！');
+    setTimeout(() => {
+      this.refresh();
+      this.busy = false;
+      if (!Battle.finished) this.nextTurn();
+    }, this.d(800));
   },
 
   cycleSpeed() {
@@ -194,6 +231,7 @@ const BattleUI = {
       if (ce) ce.classList.add('active-turn');
     }
     this.attachDrag();
+    this.updateCombo();
   },
 
   /** 仅更新单个单位的血量/SP/状态（不重建，保留动画） */
@@ -397,6 +435,13 @@ const BattleUI = {
     if (!this.root || this.busy || Battle.finished) return;
     const c = Battle.current();
     if (!c || c.side !== 'ally' || !c.alive) return;
+    // 连携就绪时优先发动（若已有足够输出可击杀则留着，简单起见就绪即放）
+    if (Battle.comboReady()) {
+      this.busy = true;
+      Battle.unleashCombo();
+      setTimeout(() => { this.refresh(); this.busy = false; if (!Battle.finished) this.nextTurn(); }, this.d(800));
+      return;
+    }
     const pick = this.autoPickAction(c);
     if (pick) this.execute(c, pick.skillId, pick.target);
   },
@@ -476,6 +521,14 @@ const BattleUI = {
   handleEvent(e) {
     if (!this.root) return;
     const S = window.Sound;
+    if (e.type === 'combo') {
+      this.updateCombo();
+      return;
+    } else if (e.type === 'comboUnleash') {
+      this.screenShake && this.screenShake();
+      if (S) S.sfx && S.sfx('crit');
+      return;
+    }
     if (e.type === 'log') {
       const logEl = this.root.querySelector('#battle-log');
       if (logEl) logEl.textContent = e.msg;

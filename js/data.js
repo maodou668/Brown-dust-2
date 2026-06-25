@@ -349,11 +349,18 @@ const ENEMIES = {
   },
   shadow_empress: {
     id: 'shadow_empress', name: '暗影女皇 · 涅夫提斯', element: 'dark', color: '#7a2a6a',
-    base: { hp: 6800, atk: 235, def: 115, spd: 110, crit: 0.22 },
+    base: { hp: 6000, atk: 200, def: 115, spd: 110, crit: 0.22 },
     skills: ['shadow_volley', 'inferno', 'shield_bash'],
     isBoss: true,
   },
 };
+
+// 敌人阵型层级（前/中/后）：按定位自动分段，让三段站位与前排保护真正生效
+const ENEMY_TIER = {
+  goblin: 'mid', goblin_archer: 'back', wolf: 'front', ogre: 'front', dark_mage: 'back',
+  demon_lord: 'back', troll_king: 'front', revenant: 'mid', dark_knight: 'front', shadow_empress: 'back',
+};
+Object.keys(ENEMY_TIER).forEach(k => { if (ENEMIES[k]) ENEMIES[k].tier = ENEMY_TIER[k]; });
 
 /**
  * 关卡定义
@@ -461,8 +468,8 @@ const TRIALS = [
     reward: { gold: 1200, exp: 700, gem: 50 },
   },
   {
-    id: 102, tier: 2, name: '试炼之塔 · 第 2 层', recommend: 19,
-    desc: '亡魂骑士在塔中游荡，黑暗法师以禁咒守护着上行之路。',
+    id: 102, tier: 2, name: '试炼之塔 · 第 2 层 · 速攻', recommend: 19,
+    desc: '禁咒每回合不断增强——须在 8 回合内速攻击破全场，否则任务失败。',
     enemies: [
       { id: 'revenant', level: 19, pos: 'front' },
       { id: 'revenant', level: 19, pos: 'front' },
@@ -470,6 +477,7 @@ const TRIALS = [
       { id: 'dark_mage', level: 19, pos: 'back' },
     ],
     reward: { gold: 1600, exp: 900, gem: 55 },
+    mod: { turnLimit: 8 },
   },
   {
     id: 103, tier: 3, name: '试炼之塔 · 第 3 层 · 守关', recommend: 23,
@@ -508,15 +516,16 @@ const TRIALS = [
   },
   {
     id: 106, tier: 6, name: '试炼之塔 · 塔顶 · 永夜女皇', recommend: 36,
-    desc: '塔顶的永夜女皇涅夫提斯，是登塔者所能遭遇的最强存在。',
+    desc: '塔顶的永夜女皇涅夫提斯，被永夜护甲笼罩——须以克制/弱点打出【破防】才能真正伤到她。',
     enemies: [
-      { id: 'shadow_empress', level: 36, pos: 'back' },
+      { id: 'shadow_empress', level: 36, pos: 'back', armored: true },
       { id: 'dark_knight', level: 35, pos: 'front' },
       { id: 'dark_knight', level: 35, pos: 'front' },
       { id: 'revenant', level: 35, pos: 'back' },
     ],
     reward: { gold: 6000, exp: 3600, gem: 150 },
     isBoss: true,
+    mod: { armorTip: true },
   },
 ];
 

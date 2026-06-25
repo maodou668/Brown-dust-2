@@ -42,6 +42,7 @@ class Combatant {
     this.breakMax = opts.isBoss ? 100 : 0;
     this.breakCur = 0;
     this.broken = false;               // 当前是否处于破防（受额外伤害）
+    this.armored = !!opts.armored;     // 机制护甲：未破防时大幅减伤，须先破防
     this.alive = true;
   }
 
@@ -81,6 +82,8 @@ const Battle = {
   onEvent: null,   // UI 回调
   finished: false,
   result: null,    // 'win' | 'lose'
+  combo: 0,        // 团队连携槽 0~100
+  COMBO_MAX: 100,
 
   /** 从存档队伍 + 关卡数据构建战斗 */
   setup(teamUids, stage) {
@@ -90,6 +93,8 @@ const Battle = {
     this.turnIdx = 0;
     this.finished = false;
     this.result = null;
+    this.combo = 0;            // 团队连携槽 0~100
+    this.mod = stage.mod || {}; // 关卡特殊条件：{turnLimit, survive, protect, ...}
 
     const D = window.GameData;
 
@@ -100,9 +105,8 @@ const Battle = {
       const def = D.CHARACTERS[owned.charId];
       const cos = Game.activeCostumeDef(owned); // 当前装扮：属性/元素/配色
       const st = Game.computeStats(owned);
-      // 三段站位：坦克/战士在前，弓手居中，法师/治疗在后
-      const pos = (def.cls === 'warrior' || def.cls === 'defender') ? 'front'
-                : (def.cls === 'archer' || def.cls === 'rogue') ? 'mid' : 'back';
+      // 三段站位：坦克/战士在前，游侠居中，法师/治疗在后
+      const pos = this.tierOfClass(def.cls);
       this.combatants.push(new Combatant({
         uid: 'A' + i, name: def.name, side: 'ally', charId: owned.charId,
         cls: def.cls, element: cos.element, color: cos.color, level: owned.level,
@@ -121,8 +125,7 @@ const Battle = {
         const cdef = D.CHARACTERS[e.char];
         const cos = Game.activeCostumeDef(ao);
         const st = Game.computeStats(ao);
-        const pos = e.pos || ((cdef.cls === 'warrior' || cdef.cls === 'defender') ? 'front'
-          : (cdef.cls === 'archer' || cdef.cls === 'rogue') ? 'mid' : 'back');
+        const pos = e.pos || this.tierOfClass(cdef.cls);
         this.combatants.push(new Combatant({
           uid: 'E' + i, name: cdef.name, side: 'enemy', charId: e.char,
           cls: cdef.cls, element: cos.element, color: cos.color, level: ao.level, pos,
@@ -133,17 +136,19 @@ const Battle = {
       }
       const def = D.ENEMIES[e.id];
       const lv = e.level - 1;
-      const grow = { hp: def.base.hp * 0.10, atk: def.base.atk * 0.08, def: def.base.def * 0.08 };
+      // 把敌人成长从「血厚」偏向「打得痛」：增加紧张感（会输）而非拖时长（变肉）
+      const grow = { hp: def.base.hp * 0.085, atk: def.base.atk * 0.10, def: def.base.def * 0.08 };
       this.combatants.push(new Combatant({
         uid: 'E' + i, name: def.name, side: 'enemy', charId: e.id,
         cls: 'enemy', element: def.element, color: def.color, level: e.level,
-        pos: e.pos,
+        pos: def.tier || e.pos || 'mid',
         maxHp: Math.round(def.base.hp + grow.hp * lv),
         atk: Math.round(def.base.atk + grow.atk * lv),
         def: Math.round(def.base.def + grow.def * lv),
         spd: def.base.spd, crit: def.base.crit,
         skills: def.skills, isBoss: def.isBoss,
         weak: def.isBoss ? (def.weak || this.counterElement(def.element)) : null,
+        armored: !!e.armored,
       }));
     });
 
@@ -184,6 +189,7 @@ const Battle = {
         this.round++;
         this.tickRound();
         this.checkEnd();               // 持续伤害（灼烧/中毒）致死也能正确结束战斗
+        if (!this.finished) this.checkModifiers();   // 限时/坚守等关卡条件
         if (this.finished) return null;
         this.buildTurnOrder();
         this.pushLog(`—— 第 ${this.round} 回合 ——`);
@@ -276,6 +282,12 @@ const Battle = {
   // 三段站位（由前到后）：前排 → 中排 → 后排
   TIER_ORDER: ['front', 'mid', 'back'],
   tierIdx(pos) { const i = this.TIER_ORDER.indexOf(pos); return i < 0 ? 0 : i; },
+  // 职业 → 默认站位：战/守在前，游侠居中，法/治在后
+  tierOfClass(cls) {
+    if (cls === 'warrior' || cls === 'defender') return 'front';
+    if (cls === 'archer' || cls === 'rogue') return 'mid';
+    return 'back';
+  },
 
   /** 前排保护：只能攻击「当前最靠前、仍有存活单位」的那一段站位（穿透技能除外） */
   frontline(units) {
@@ -353,9 +365,12 @@ const Battle = {
     const isCrit = Math.random() < attacker.crit;
     const critMult = isCrit ? 1.6 : 1.0;
     const brokenMult = defender.broken ? 1.4 : 1.0;   // 破防中受到额外伤害
-    const raw = attacker.effAtk() * power * elem * critMult * brokenMult;
+    const armorAtk = (attacker.armored && !attacker.broken) ? 1.4 : 1.0; // 护甲BOSS未破防时攻击更凶，逼你破防
+    const raw = attacker.effAtk() * power * elem * critMult * brokenMult * armorAtk;
     // 防御减伤公式
-    const reduced = raw * (100 / (100 + defender.effDef()));
+    let reduced = raw * (100 / (100 + defender.effDef()));
+    // 机制护甲：未破防时减伤约 2/3，必须先用克制/弱点把它打破防（破防窗口集火）
+    if (defender.armored && !defender.broken) reduced *= 0.34;
     let dmg = Math.max(1, Math.round(reduced));
 
     // 护盾吸收
@@ -365,6 +380,9 @@ const Battle = {
       dmg -= absorb;
     }
     defender.hp -= dmg;
+
+    // 我方受击也积攒连携槽（绝境反击）
+    if (defender.side === 'ally' && dmg > 0) this.addCombo(3);
 
     // BOSS 破防积累：弱点元素命中显著、其它命中少量；满槽→破防眩晕一回合
     if (defender.breakMax > 0 && !defender.broken && attacker.side === 'ally' && defender.alive) {
@@ -457,6 +475,8 @@ const Battle = {
     } else {
       combatant.cooldowns[skillId] = this.skillCD(sk);
     }
+    // 我方行动积攒连携槽（大招攒更多）——攒满约需 8~10 个动作，做成「关键时刻」资源而非每回合刷
+    if (combatant.side === 'ally') this.addCombo(sk.basic ? 5 : ((sk.sp || 0) >= 4 ? 13 : 9));
 
     this.checkEnd();
   },
@@ -488,7 +508,33 @@ const Battle = {
     }
   },
 
+  // 关卡特殊条件（按回合判定）：坚守 survive 回合即胜；超过 turnLimit 回合即败
+  checkModifiers() {
+    if (this.finished) return;
+    const m = this.mod || {};
+    if (m.survive && this.round > m.survive) {
+      this.finished = true; this.result = 'win';
+      this.pushLog(`🛡️ 成功坚守 ${m.survive} 回合，战斗胜利！`);
+      if (this.onEvent) this.onEvent({ type: 'end', result: 'win' });
+    } else if (m.turnLimit && this.round > m.turnLimit) {
+      this.finished = true; this.result = 'lose';
+      this.pushLog(`⏳ 超过限定 ${m.turnLimit} 回合，任务失败……`);
+      if (this.onEvent) this.onEvent({ type: 'end', result: 'lose' });
+    }
+  },
+
   checkEnd() {
+    // 护送/保护目标：被保护单位（队伍第 protect 位）阵亡即败
+    const m = this.mod || {};
+    if (m.protect != null && !this.finished) {
+      const guard = this.combatants.find(c => c.uid === 'A' + m.protect);
+      if (guard && !guard.alive) {
+        this.finished = true; this.result = 'lose';
+        this.pushLog(`💔 被保护的 ${guard.name} 倒下了，护送失败……`);
+        if (this.onEvent) this.onEvent({ type: 'end', result: 'lose' });
+        return;
+      }
+    }
     if (this.aliveEnemies().length === 0) {
       this.finished = true;
       this.result = 'win';
@@ -502,33 +548,104 @@ const Battle = {
     }
   },
 
+  // ---------- 团队连携槽（战略资源层）----------
+  // 我方行动 / 受击积攒；满槽可发动「全军连携」——全员强化追击，集火前排。
+  addCombo(n) {
+    if (this.finished) return;
+    const before = this.combo;
+    this.combo = Math.max(0, Math.min(this.COMBO_MAX, this.combo + n));
+    if (this.combo !== before && this.onEvent) this.onEvent({ type: 'combo', value: this.combo, ready: this.comboReady() });
+  },
+  comboReady() { return this.combo >= this.COMBO_MAX; },
+  // 发动全军连携：所有存活我方按速度依次对当前敌方前排最弱者强化一击（1.4x）
+  unleashCombo() {
+    if (!this.comboReady() || this.finished) return false;
+    this.combo = 0;
+    this.pushLog('🌟【全军连携】发动！全员追击！');
+    if (this.onEvent) this.onEvent({ type: 'comboUnleash' });
+    const allies = this.aliveAllies().sort((a, b) => b.spd - a.spd);
+    allies.forEach(a => {
+      const front = this.frontline(this.aliveEnemies());
+      if (!front.length) return;
+      const tgt = front.reduce((lo, t) => (t.hp < lo.hp ? t : lo), front[0]);
+      const r = this.dealDamage(a, tgt, 1.4);
+      this.pushLog(`  ↳ ${a.name} 连携追击 ${tgt.name} -${r.dmg}${r.tag}`);
+    });
+    this.checkEnd();
+    if (this.onEvent) this.onEvent({ type: 'combo', value: this.combo, ready: false });
+    return true;
+  },
+
   // ---------- 敌方 AI ----------
 
+  // 伤害估算（用于 AI 评估是否可击杀，忽略暴击随机与护盾）
+  estDamage(attacker, defender, power) {
+    const elem = this.elementMult(attacker, defender);
+    const brokenMult = defender.broken ? 1.4 : 1.0;
+    const raw = attacker.effAtk() * power * elem * brokenMult;
+    return Math.max(1, Math.round(raw * (100 / (100 + defender.effDef()))));
+  },
+  isSupport(c) { return c.cls === 'healer' || c.cls === 'defender'; },
+
+  // 价值评估型敌方 AI：集火可击杀目标、穿透点后排辅助、辅助会奶/盾、AoE 打成群
   enemyAct() {
     const c = this.current();
     if (!c || c.side !== 'enemy' || !c.alive) return;
+    const SK = window.GameData.SKILLS;
+    const foes = this.aliveAllies();
+    const friends = this.aliveEnemies();
+    if (!foes.length) { this.checkEnd(); return; }
 
-    // 可用技能：SP 足够 且 不在冷却；否则用普通攻击
-    const usable = c.skills
-      .map(id => ({ id, sk: window.GameData.SKILLS[id] }))
-      .filter(s => this.canUseSkill(c, s.id));
-    usable.sort((a, b) => (b.sk.power * (1 + (b.sk.sp || 0))) - (a.sk.power * (1 + (a.sk.sp || 0))));
-    const basic = { id: 'basic_attack', sk: window.GameData.SKILLS.basic_attack };
-    const choice = usable[0] || basic;
+    const usable = c.skills.filter(id => this.canUseSkill(c, id));
+    if (!usable.includes('basic_attack')) usable.push('basic_attack');
+    const taunters = foes.filter(a => a.taunting > 0);
 
-    // 选目标：攻击类 → 优先打血量最低的我方；治疗 → 自己
-    let picked;
-    if (choice.sk.effect === 'damage') {
-      // 嘲讽优先；否则受前排保护约束（穿透技能可越过前排）
-      const taunters = this.aliveAllies().filter(a => a.taunting > 0);
-      const pool = taunters.length
-        ? taunters
-        : (choice.sk.pierce ? this.aliveAllies() : this.frontline(this.aliveAllies()));
-      picked = pool.reduce((lo, t) => (t.hp < lo.hp ? t : lo), pool[0]);
-    } else {
-      picked = c;
+    let best = null, bestVal = -1;
+    for (const id of usable) {
+      const sk = SK[id]; if (!sk) continue;
+      let val = 0, target = null;
+
+      if (sk.effect === 'damage') {
+        if (sk.target === 'enemyAll') {
+          val = c.effAtk() * sk.power * foes.length * 0.85; target = foes[0];
+        } else if (sk.target === 'enemyRow') {
+          const tiers = {}; foes.forEach(f => { (tiers[f.pos] = tiers[f.pos] || []).push(f); });
+          const grp = Object.values(tiers).sort((a, b) => b.length - a.length)[0] || [foes[0]];
+          val = c.effAtk() * sk.power * grp.length * 0.9; target = grp[0];
+        } else {
+          // 单体：嘲讽优先 → 否则前排保护约束（穿透可越过）
+          const pool = taunters.length ? taunters : (sk.pierce ? foes : this.frontline(foes));
+          // 选目标：可击杀 > 后排辅助/高威胁 > 血量最低（集火）
+          const killable = pool.filter(t => this.estDamage(c, t, sk.power) >= t.hp);
+          if (killable.length) target = killable.sort((a, b) => b.atk - a.atk)[0];
+          else { const sup = pool.filter(t => this.isSupport(t)); target = (sk.pierce && sup.length ? sup : pool).reduce((lo, t) => (t.hp < lo.hp ? t : lo), pool[0]); }
+          val = this.estDamage(c, target, sk.power);
+          if (target && this.estDamage(c, target, sk.power) >= target.hp) val += 600;
+          if (target && this.isSupport(target)) val += 180;
+        }
+        if (sk.inflict) val += 120;
+        if (sk.extra && sk.extra.type === 'debuffDef') val += 80;
+      } else if (sk.effect === 'heal') {
+        const missing = friends.reduce((s, f) => s + (f.maxHp - f.hp), 0);
+        if (missing < 1) { val = -1; }
+        else {
+          const heal = c.effAtk() * sk.power * (sk.target === 'allyAll' ? friends.length : 1);
+          val = Math.min(missing, heal);
+          target = sk.target === 'allySingle'
+            ? friends.slice().sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0] : c;
+          const lowest = friends.reduce((lo, f) => (f.hp / f.maxHp < lo.hp / lo.maxHp ? f : lo), friends[0]);
+          if (lowest.hp / lowest.maxHp < 0.35) val *= 1.8;   // 危急时优先奶
+        }
+      } else if (sk.effect === 'shield') {
+        val = c.effAtk() * sk.power * friends.length * 0.5; target = c;
+        if (sk.extra && sk.extra.type === 'taunt') val += 150;
+      } else if (sk.effect === 'buffAtk' || sk.effect === 'buffDef') {
+        val = c.effAtk() * 0.55 * friends.length; target = c;
+      }
+      if (val > bestVal) { bestVal = val; best = { id, target }; }
     }
-    this.executeSkill(c, choice.id, picked);
+    if (!best || !best.target) best = { id: 'basic_attack', target: (taunters[0] || this.frontline(foes)[0] || foes[0]) };
+    this.executeSkill(c, best.id, best.target);
   },
 };
 
