@@ -1,0 +1,231 @@
+{
+  "group_id": null,
+  "states": [
+    {
+      "character": {
+        "id": "26b91346-07cb-4b55-95de-2f948306f39f",
+        "name": "Lecliss-v3",
+        "prompt": "Beautiful anime-style fire sorceress girl warrior. Long flowing dark purple hair, striking large red eyes, a small glowing orange flame ornament on the side of her head. Elegant sleeveless black and crimson battle dress with intricate orange flame patterns along the layered skirt, a glowing orange flame gem on the chest and on the belt buckle. Black fingerless armored gloves, black thigh-high armored boots with orange flame trim. Confident fierce beautiful expression, vibrant fire theme, clean lineart, polished.",
+        "size": {
+          "width": 252,
+          "height": 252
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-25T05:13:59.400593+00:00"
+      },
+      "folder": "Lecliss-v3",
+      "frames": {
+        "rotations": {
+          "south": "Lecliss-v3/rotations/south.png",
+          "south-east": "Lecliss-v3/rotations/south-east.png",
+          "east": "Lecliss-v3/rotations/east.png",
+          "north-east": "Lecliss-v3/rotations/north-east.png",
+          "north": "Lecliss-v3/rotations/north.png",
+          "north-west": "Lecliss-v3/rotations/north-west.png",
+          "west": "Lecliss-v3/rotations/west.png",
+          "south-west": "Lecliss-v3/rotations/south-west.png"
+        },
+        "animations": {
+          "casting_a_fireball": {
+            "west": [
+              "Lecliss-v3/animations/casting_a_fireball/west/frame_000.png",
+              "Lecliss-v3/animations/casting_a_fireball/west/frame_001.png",
+              "Lecliss-v3/animations/casting_a_fireball/west/frame_002.png",
+              "Lecliss-v3/animations/casting_a_fireball/west/frame_003.png",
+              "Lecliss-v3/animations/casting_a_fireball/west/frame_004.png",
+              "Lecliss-v3/animations/casting_a_fireball/west/frame_005.png"
+            ],
+            "south-west": [
+              "Lecliss-v3/animations/casting_a_fireball/south-west/frame_000.png",
+              "Lecliss-v3/animations/casting_a_fireball/south-west/frame_001.png",
+              "Lecliss-v3/animations/casting_a_fireball/south-west/frame_002.png",
+              "Lecliss-v3/animations/casting_a_fireball/south-west/frame_003.png",
+              "Lecliss-v3/animations/casting_a_fireball/south-west/frame_004.png",
+              "Lecliss-v3/animations/casting_a_fireball/south-west/frame_005.png"
+            ],
+            "south": [
+              "Lecliss-v3/animations/casting_a_fireball/south/frame_000.png",
+              "Lecliss-v3/animations/casting_a_fireball/south/frame_001.png",
+              "Lecliss-v3/animations/casting_a_fireball/south/frame_002.png",
+              "Lecliss-v3/animations/casting_a_fireball/south/frame_003.png",
+              "Lecliss-v3/animations/casting_a_fireball/south/frame_004.png",
+              "Lecliss-v3/animations/casting_a_fireball/south/frame_005.png"
+            ],
+            "north-east": [
+              "Lecliss-v3/animations/casting_a_fireball/north-east/frame_000.png",
+              "Lecliss-v3/animations/casting_a_fireball/north-east/frame_001.png",
+              "Lecliss-v3/animations/casting_a_fireball/north-east/frame_002.png",
+              "Lecliss-v3/animations/casting_a_fireball/north-east/frame_003.png",
+              "Lecliss-v3/animations/casting_a_fireball/north-east/frame_004.png",
+              "Lecliss-v3/animations/casting_a_fireball/north-east/frame_005.png"
+            ],
+            "east": [
+              "Lecliss-v3/animations/casting_a_fireball/east/frame_000.png",
+              "Lecliss-v3/animations/casting_a_fireball/east/frame_001.png",
+              "Lecliss-v3/animations/casting_a_fireball/east/frame_002.png",
+              "Lecliss-v3/animations/casting_a_fireball/east/frame_003.png",
+              "Lecliss-v3/animations/casting_a_fireball/east/frame_004.png",
+              "Lecliss-v3/animations/casting_a_fireball/east/frame_005.png"
+            ],
+            "north": [
+              "Lecliss-v3/animations/casting_a_fireball/north/frame_000.png",
+              "Lecliss-v3/animations/casting_a_fireball/north/frame_001.png",
+              "Lecliss-v3/animations/casting_a_fireball/north/frame_002.png",
+              "Lecliss-v3/animations/casting_a_fireball/north/frame_003.png",
+              "Lecliss-v3/animations/casting_a_fireball/north/frame_004.png",
+              "Lecliss-v3/animations/casting_a_fireball/north/frame_005.png"
+            ],
+            "north-west": [
+              "Lecliss-v3/animations/casting_a_fireball/north-west/frame_000.png",
+              "Lecliss-v3/animations/casting_a_fireball/north-west/frame_001.png",
+              "Lecliss-v3/animations/casting_a_fireball/north-west/frame_002.png",
+              "Lecliss-v3/animations/casting_a_fireball/north-west/frame_003.png",
+              "Lecliss-v3/animations/casting_a_fireball/north-west/frame_004.png",
+              "Lecliss-v3/animations/casting_a_fireball/north-west/frame_005.png"
+            ],
+            "south-east": [
+              "Lecliss-v3/animations/casting_a_fireball/south-east/frame_000.png",
+              "Lecliss-v3/animations/casting_a_fireball/south-east/frame_001.png",
+              "Lecliss-v3/animations/casting_a_fireball/south-east/frame_002.png",
+              "Lecliss-v3/animations/casting_a_fireball/south-east/frame_003.png",
+              "Lecliss-v3/animations/casting_a_fireball/south-east/frame_004.png",
+              "Lecliss-v3/animations/casting_a_fireball/south-east/frame_005.png"
+            ]
+          },
+          "animating": {
+            "south": [
+              "Lecliss-v3/animations/animating/south/frame_000.png",
+              "Lecliss-v3/animations/animating/south/frame_001.png",
+              "Lecliss-v3/animations/animating/south/frame_002.png",
+              "Lecliss-v3/animations/animating/south/frame_003.png"
+            ],
+            "south-east": [
+              "Lecliss-v3/animations/animating/south-east/frame_000.png",
+              "Lecliss-v3/animations/animating/south-east/frame_001.png",
+              "Lecliss-v3/animations/animating/south-east/frame_002.png",
+              "Lecliss-v3/animations/animating/south-east/frame_003.png"
+            ],
+            "north-east": [
+              "Lecliss-v3/animations/animating/north-east/frame_000.png",
+              "Lecliss-v3/animations/animating/north-east/frame_001.png",
+              "Lecliss-v3/animations/animating/north-east/frame_002.png",
+              "Lecliss-v3/animations/animating/north-east/frame_003.png"
+            ],
+            "north": [
+              "Lecliss-v3/animations/animating/north/frame_000.png",
+              "Lecliss-v3/animations/animating/north/frame_001.png",
+              "Lecliss-v3/animations/animating/north/frame_002.png",
+              "Lecliss-v3/animations/animating/north/frame_003.png"
+            ],
+            "west": [
+              "Lecliss-v3/animations/animating/west/frame_000.png",
+              "Lecliss-v3/animations/animating/west/frame_001.png",
+              "Lecliss-v3/animations/animating/west/frame_002.png",
+              "Lecliss-v3/animations/animating/west/frame_003.png"
+            ],
+            "east": [
+              "Lecliss-v3/animations/animating/east/frame_000.png",
+              "Lecliss-v3/animations/animating/east/frame_001.png",
+              "Lecliss-v3/animations/animating/east/frame_002.png",
+              "Lecliss-v3/animations/animating/east/frame_003.png"
+            ],
+            "south-west": [
+              "Lecliss-v3/animations/animating/south-west/frame_000.png",
+              "Lecliss-v3/animations/animating/south-west/frame_001.png",
+              "Lecliss-v3/animations/animating/south-west/frame_002.png",
+              "Lecliss-v3/animations/animating/south-west/frame_003.png"
+            ],
+            "north-west": [
+              "Lecliss-v3/animations/animating/north-west/frame_000.png",
+              "Lecliss-v3/animations/animating/north-west/frame_001.png",
+              "Lecliss-v3/animations/animating/north-west/frame_002.png",
+              "Lecliss-v3/animations/animating/north-west/frame_003.png"
+            ]
+          },
+          "walking": {
+            "south": [
+              "Lecliss-v3/animations/walking/south/frame_000.png",
+              "Lecliss-v3/animations/walking/south/frame_001.png",
+              "Lecliss-v3/animations/walking/south/frame_002.png",
+              "Lecliss-v3/animations/walking/south/frame_003.png",
+              "Lecliss-v3/animations/walking/south/frame_004.png",
+              "Lecliss-v3/animations/walking/south/frame_005.png"
+            ]
+          },
+          "walking-b9d5edec": {
+            "north-west": [
+              "Lecliss-v3/animations/walking-b9d5edec/north-west/frame_000.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north-west/frame_001.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north-west/frame_002.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north-west/frame_003.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north-west/frame_004.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north-west/frame_005.png"
+            ],
+            "north": [
+              "Lecliss-v3/animations/walking-b9d5edec/north/frame_000.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north/frame_001.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north/frame_002.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north/frame_003.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north/frame_004.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north/frame_005.png"
+            ],
+            "west": [
+              "Lecliss-v3/animations/walking-b9d5edec/west/frame_000.png",
+              "Lecliss-v3/animations/walking-b9d5edec/west/frame_001.png",
+              "Lecliss-v3/animations/walking-b9d5edec/west/frame_002.png",
+              "Lecliss-v3/animations/walking-b9d5edec/west/frame_003.png",
+              "Lecliss-v3/animations/walking-b9d5edec/west/frame_004.png",
+              "Lecliss-v3/animations/walking-b9d5edec/west/frame_005.png"
+            ],
+            "south-east": [
+              "Lecliss-v3/animations/walking-b9d5edec/south-east/frame_000.png",
+              "Lecliss-v3/animations/walking-b9d5edec/south-east/frame_001.png",
+              "Lecliss-v3/animations/walking-b9d5edec/south-east/frame_002.png",
+              "Lecliss-v3/animations/walking-b9d5edec/south-east/frame_003.png",
+              "Lecliss-v3/animations/walking-b9d5edec/south-east/frame_004.png",
+              "Lecliss-v3/animations/walking-b9d5edec/south-east/frame_005.png"
+            ],
+            "south-west": [
+              "Lecliss-v3/animations/walking-b9d5edec/south-west/frame_000.png",
+              "Lecliss-v3/animations/walking-b9d5edec/south-west/frame_001.png",
+              "Lecliss-v3/animations/walking-b9d5edec/south-west/frame_002.png",
+              "Lecliss-v3/animations/walking-b9d5edec/south-west/frame_003.png",
+              "Lecliss-v3/animations/walking-b9d5edec/south-west/frame_004.png",
+              "Lecliss-v3/animations/walking-b9d5edec/south-west/frame_005.png"
+            ],
+            "east": [
+              "Lecliss-v3/animations/walking-b9d5edec/east/frame_000.png",
+              "Lecliss-v3/animations/walking-b9d5edec/east/frame_001.png",
+              "Lecliss-v3/animations/walking-b9d5edec/east/frame_002.png",
+              "Lecliss-v3/animations/walking-b9d5edec/east/frame_003.png",
+              "Lecliss-v3/animations/walking-b9d5edec/east/frame_004.png",
+              "Lecliss-v3/animations/walking-b9d5edec/east/frame_005.png"
+            ],
+            "north-east": [
+              "Lecliss-v3/animations/walking-b9d5edec/north-east/frame_000.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north-east/frame_001.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north-east/frame_002.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north-east/frame_003.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north-east/frame_004.png",
+              "Lecliss-v3/animations/walking-b9d5edec/north-east/frame_005.png"
+            ]
+          },
+          "walking-d2cc880b": {
+            "south": [
+              "Lecliss-v3/animations/walking-d2cc880b/south/frame_000.png",
+              "Lecliss-v3/animations/walking-d2cc880b/south/frame_001.png",
+              "Lecliss-v3/animations/walking-d2cc880b/south/frame_002.png",
+              "Lecliss-v3/animations/walking-d2cc880b/south/frame_003.png",
+              "Lecliss-v3/animations/walking-d2cc880b/south/frame_004.png",
+              "Lecliss-v3/animations/walking-d2cc880b/south/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.0",
+  "export_date": "2026-06-25T06:05:44.002554"
+}
