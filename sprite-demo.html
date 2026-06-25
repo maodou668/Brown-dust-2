@@ -38,8 +38,7 @@
   <script src="js/sprite-actor.js?v=1"></script>
   <script>
   (async function () {
-    const meta = await fetch('art/03_sprite/lecliss.json').catch(()=>({json:()=>({})})).then(r=>r.json());
-    const img = new Image(); img.src = 'art/03_sprite/lecliss_chibi.webp';
+    const img = new Image(); img.src = 'art/03_sprite/lecliss_chibi.webp?v=2';
     await new Promise(r => { img.onload = r; img.onerror = r; });
     const actor = new SpriteActor(img);
 
