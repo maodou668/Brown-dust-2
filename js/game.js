@@ -276,8 +276,13 @@ const Game = {
   /** 战斗技能池：普通攻击 + 各拥有服装的专属招式（去重） */
   battleSkills(owned) {
     const skills = ['basic_attack'];
+    // 职业通用节奏技（sp2）：让每个单位都有「普攻 / 便宜技 / 大招」三档抉择
+    const D = window.GameData;
+    const cls = (D.CHARACTERS[owned.charId] || {}).cls;
+    const clsSkill = D.CLASS_SKILL_OF && D.CLASS_SKILL_OF[cls];
+    if (clsSkill && !skills.includes(clsSkill)) skills.push(clsSkill);
     this.ownedCostumeIds(owned).forEach(cid => {
-      const c = window.GameData.COSTUMES[cid];
+      const c = D.COSTUMES[cid];
       if (c && c.signature && !skills.includes(c.signature)) skills.push(c.signature);
     });
     return skills;

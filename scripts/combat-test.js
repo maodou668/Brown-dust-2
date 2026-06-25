@@ -18,8 +18,10 @@ function drive(){
       if(Battle.isStunned(c)){Battle.consumeStun(c);Battle.advance();continue;}
       if(c.side==='enemy'){Battle.enemyAct();}
       else{
-        let chosen='basic_attack';
-        for(const id of c.skills){ if(id!=='basic_attack'&&Battle.canUseSkill(c,id)){chosen=id;break;} }
+        // 智能选择：优先可用的最高 SP 技能（=专属大招），确保大招被实测；否则便宜技；否则普攻
+        const usable=c.skills.filter(id=>id!=='basic_attack'&&Battle.canUseSkill(c,id));
+        usable.sort((a,b)=>((GameData.SKILLS[b].sp||0)-(GameData.SKILLS[a].sp||0))||(GameData.SKILLS[b].power-GameData.SKILLS[a].power));
+        const chosen=usable[0]||'basic_attack';
         if(chosen!=='basic_attack') sigUsed=true;
         const picked=(Battle.validTargets(c,chosen)||[])[0];
         Battle.executeSkill(c,chosen,picked);

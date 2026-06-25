@@ -109,6 +109,30 @@ Object.entries(SIG_SPECS).forEach(([id, spec]) => {
   SK[id] = sk;
 });
 
+// ============================================================
+//  职业通用技（每个职业一个 sp2「节奏技」）——让每个单位都有
+//  「普攻蓄能 / 便宜节奏技 / 昂贵专属大招」三档真实抉择，而非只有 2 个按钮。
+//  威力同样由 Balance 模型求解，落在统一曲线上，不会数值崩盘。
+// ============================================================
+const CLASS_SKILL_SPECS = {
+  warrior:  { id: 'cls_cleave',  name: '横扫',     target: 'enemyRow',    effect: 'damage', sp: 2, icon: '⚔️', knockback: true, d: p => `横扫敌方一排，造成 ${pct(p)}% 攻击力的伤害并击退。` },
+  archer:   { id: 'cls_aimshot', name: '瞄准射击', target: 'enemySingle', effect: 'damage', sp: 2, icon: '🏹', pierce: true,    d: p => `瞄准要害射击单体，造成 ${pct(p)}% 攻击力的伤害（无视前排）。` },
+  mage:     { id: 'cls_arcane',  name: '奥术弹',   target: 'enemySingle', effect: 'damage', sp: 2, icon: '🔮', pierce: true,    d: p => `凝聚奥术弹贯穿目标，造成 ${pct(p)}% 攻击力的伤害（无视前排）。` },
+  defender: { id: 'cls_guard',   name: '守护姿态', target: 'allyAll',     effect: 'shield', sp: 2, icon: '🛡️',                  d: p => `进入守护姿态，为全体张开 ${pct(p)}% 攻击力的护盾。` },
+  healer:   { id: 'cls_mend',    name: '治愈术',   target: 'allySingle',  effect: 'heal',   sp: 2, icon: '💚',                  d: p => `集中治愈单个友方，恢复 ${pct(p)}% 攻击力的生命。` },
+};
+const CLASS_SKILL_OF = {};
+Object.entries(CLASS_SKILL_SPECS).forEach(([cls, spec]) => {
+  const { id, d, ...rest } = spec;
+  const sk = B.make(rest);
+  sk.desc = d(sk.power);
+  sk.classSkill = true;
+  SK[id] = sk;
+  CLASS_SKILL_OF[cls] = id;
+});
+window.GameData.CLASS_SKILL_OF = CLASS_SKILL_OF;
+
+
 // 每个角色「初始服装」的专属招式（显式指定，16 个互不重复）
 const BASE_SIG = {
   lecliss: 'inferno', justia: 'oath_aegis', seir: 'shadow_volley', rou: 'blessing',

@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=68">
+  <link rel="manifest" href="manifest.webmanifest?v=75">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=68">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=68">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=75">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=75">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2146,7 +2146,7 @@ button.ac-circle:active { transform: scale(.92); }
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '68';</script>
+  <script>window.ASSET_VER = '75';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -3235,6 +3235,30 @@ Object.entries(SIG_SPECS).forEach(([id, spec]) => {
   SK[id] = sk;
 });
 
+// ============================================================
+//  职业通用技（每个职业一个 sp2「节奏技」）——让每个单位都有
+//  「普攻蓄能 / 便宜节奏技 / 昂贵专属大招」三档真实抉择，而非只有 2 个按钮。
+//  威力同样由 Balance 模型求解，落在统一曲线上，不会数值崩盘。
+// ============================================================
+const CLASS_SKILL_SPECS = {
+  warrior:  { id: 'cls_cleave',  name: '横扫',     target: 'enemyRow',    effect: 'damage', sp: 2, icon: '⚔️', knockback: true, d: p => `横扫敌方一排，造成 ${pct(p)}% 攻击力的伤害并击退。` },
+  archer:   { id: 'cls_aimshot', name: '瞄准射击', target: 'enemySingle', effect: 'damage', sp: 2, icon: '🏹', pierce: true,    d: p => `瞄准要害射击单体，造成 ${pct(p)}% 攻击力的伤害（无视前排）。` },
+  mage:     { id: 'cls_arcane',  name: '奥术弹',   target: 'enemySingle', effect: 'damage', sp: 2, icon: '🔮', pierce: true,    d: p => `凝聚奥术弹贯穿目标，造成 ${pct(p)}% 攻击力的伤害（无视前排）。` },
+  defender: { id: 'cls_guard',   name: '守护姿态', target: 'allyAll',     effect: 'shield', sp: 2, icon: '🛡️',                  d: p => `进入守护姿态，为全体张开 ${pct(p)}% 攻击力的护盾。` },
+  healer:   { id: 'cls_mend',    name: '治愈术',   target: 'allySingle',  effect: 'heal',   sp: 2, icon: '💚',                  d: p => `集中治愈单个友方，恢复 ${pct(p)}% 攻击力的生命。` },
+};
+const CLASS_SKILL_OF = {};
+Object.entries(CLASS_SKILL_SPECS).forEach(([cls, spec]) => {
+  const { id, d, ...rest } = spec;
+  const sk = B.make(rest);
+  sk.desc = d(sk.power);
+  sk.classSkill = true;
+  SK[id] = sk;
+  CLASS_SKILL_OF[cls] = id;
+});
+window.GameData.CLASS_SKILL_OF = CLASS_SKILL_OF;
+
+
 // 每个角色「初始服装」的专属招式（显式指定，16 个互不重复）
 const BASE_SIG = {
   lecliss: 'inferno', justia: 'oath_aegis', seir: 'shadow_volley', rou: 'blessing',
@@ -3611,8 +3635,13 @@ const Game = {
   /** 战斗技能池：普通攻击 + 各拥有服装的专属招式（去重） */
   battleSkills(owned) {
     const skills = ['basic_attack'];
+    // 职业通用节奏技（sp2）：让每个单位都有「普攻 / 便宜技 / 大招」三档抉择
+    const D = window.GameData;
+    const cls = (D.CHARACTERS[owned.charId] || {}).cls;
+    const clsSkill = D.CLASS_SKILL_OF && D.CLASS_SKILL_OF[cls];
+    if (clsSkill && !skills.includes(clsSkill)) skills.push(clsSkill);
     this.ownedCostumeIds(owned).forEach(cid => {
-      const c = window.GameData.COSTUMES[cid];
+      const c = D.COSTUMES[cid];
       if (c && c.signature && !skills.includes(c.signature)) skills.push(c.signature);
     });
     return skills;
