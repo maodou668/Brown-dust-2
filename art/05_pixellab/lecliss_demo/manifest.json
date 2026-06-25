@@ -1,0 +1,65 @@
+{
+ "srcSize": {
+  "w": 252,
+  "h": 252
+ },
+ "bbox": {
+  "x": 73,
+  "y": 51,
+  "w": 104,
+  "h": 144
+ },
+ "dirs": [
+  "south",
+  "south-east",
+  "east",
+  "north-east",
+  "north",
+  "north-west",
+  "west",
+  "south-west"
+ ],
+ "fps": {
+  "idle": 7,
+  "walk": 10,
+  "attack": 12
+ },
+ "anims": {
+  "idle": {
+   "frames": {
+    "south": 4,
+    "south-east": 4,
+    "east": 4,
+    "north-east": 4,
+    "north": 4,
+    "north-west": 4,
+    "west": 4,
+    "south-west": 4
+   }
+  },
+  "walk": {
+   "frames": {
+    "south": 6,
+    "south-east": 6,
+    "east": 6,
+    "north-east": 6,
+    "north": 6,
+    "north-west": 6,
+    "west": 6,
+    "south-west": 6
+   }
+  },
+  "attack": {
+   "frames": {
+    "south": 6,
+    "south-east": 6,
+    "east": 6,
+    "north-east": 6,
+    "north": 6,
+    "north-west": 6,
+    "west": 6,
+    "south-west": 6
+   }
+  }
+ }
+}
