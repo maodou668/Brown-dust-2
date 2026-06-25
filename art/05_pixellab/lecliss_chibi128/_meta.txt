@@ -1,0 +1,26 @@
+status: completed
+id: 4926842b-729e-4a96-a55e-fa33f51a7edb
+name: Lecliss-chibi128
+directions: 8 (south, east, north, west, south-east, north-east, north-west, south-west)
+size: 180x180px
+view: low top-down
+style: detailed shading, selective outline, high detail
+
+rotations:
+  south: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/4926842b-729e-4a96-a55e-fa33f51a7edb/rotations/south.png
+  east: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/4926842b-729e-4a96-a55e-fa33f51a7edb/rotations/east.png
+  north: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/4926842b-729e-4a96-a55e-fa33f51a7edb/rotations/north.png
+  west: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/4926842b-729e-4a96-a55e-fa33f51a7edb/rotations/west.png
+  south-east: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/4926842b-729e-4a96-a55e-fa33f51a7edb/rotations/south-east.png
+  north-east: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/4926842b-729e-4a96-a55e-fa33f51a7edb/rotations/north-east.png
+  north-west: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/4926842b-729e-4a96-a55e-fa33f51a7edb/rotations/north-west.png
+  south-west: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/4926842b-729e-4a96-a55e-fa33f51a7edb/rotations/south-west.png
+
+animations: none
+
+download: https://api.pixellab.ai/mcp/characters/4926842b-729e-4a96-a55e-fa33f51a7edb/download
+
+available_animations: backflip, breathing-idle, cross-punch, crouched-walking, crouching, drinking, falling-back-death, fight-stance-idle-8-frames, fireball, flying-kick, front-flip, getting-up +37 more
+
+actions: animate_character(character_id="4926842b-729e-4a96-a55e-fa33f51a7edb", ...) | create_character_state(character_id="4926842b-729e-4a96-a55e-fa33f51a7edb", ...) | delete_character(character_id="4926842b-729e-4a96-a55e-fa33f51a7edb")
+hint: animate_character(character_id="4926842b-729e-4a96-a55e-fa33f51a7edb", template_animation_id="backflip")

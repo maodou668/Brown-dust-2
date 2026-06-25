@@ -1,0 +1,30 @@
+status: completed
+id: 26b91346-07cb-4b55-95de-2f948306f39f
+name: Lecliss-v3
+directions: 8 (south, east, north, west, south-east, north-east, north-west, south-west)
+size: 252x252px
+view: low top-down
+style: -, -, -
+
+rotations:
+  south: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/26b91346-07cb-4b55-95de-2f948306f39f/rotations/south.png
+  east: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/26b91346-07cb-4b55-95de-2f948306f39f/rotations/east.png
+  north: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/26b91346-07cb-4b55-95de-2f948306f39f/rotations/north.png
+  west: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/26b91346-07cb-4b55-95de-2f948306f39f/rotations/west.png
+  south-east: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/26b91346-07cb-4b55-95de-2f948306f39f/rotations/south-east.png
+  north-east: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/26b91346-07cb-4b55-95de-2f948306f39f/rotations/north-east.png
+  north-west: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/26b91346-07cb-4b55-95de-2f948306f39f/rotations/north-west.png
+  south-west: https://backblaze.pixellab.ai/file/pixellab-characters/651fff02-8b56-4f26-839c-7ade53181175/26b91346-07cb-4b55-95de-2f948306f39f/rotations/south-west.png
+
+animations: none
+
+pending jobs (1):
+  8-directions: 12% ~1541s
+
+download: https://api.pixellab.ai/mcp/characters/26b91346-07cb-4b55-95de-2f948306f39f/download
+  (returns HTTP 423 until jobs complete — use curl --fail)
+
+available_animations: backflip, breathing-idle, cross-punch, crouched-walking, crouching, drinking, falling-back-death, fight-stance-idle-8-frames, fireball, flying-kick, front-flip, getting-up +37 more
+
+actions: animate_character(character_id="26b91346-07cb-4b55-95de-2f948306f39f", ...) | create_character_state(character_id="26b91346-07cb-4b55-95de-2f948306f39f", ...) | delete_character(character_id="26b91346-07cb-4b55-95de-2f948306f39f")
+hint: animate_character(character_id="26b91346-07cb-4b55-95de-2f948306f39f", template_animation_id="backflip")
