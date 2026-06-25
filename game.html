@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=75">
+  <link rel="manifest" href="manifest.webmanifest?v=76">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=75">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=75">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=76">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=76">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2116,6 +2116,13 @@ button.ac-circle:active { transform: scale(.92); }
   border-color: transparent; cursor: pointer; box-shadow: 0 0 12px rgba(255,140,60,.55); }
 .combo-btn:active.ready { transform: scale(.95); }
 
+/* ---------- 深渊 ---------- */
+.trial-card.abyss { background: linear-gradient(135deg, rgba(60,30,70,.55), rgba(30,16,38,.55)); border-color: rgba(176,107,255,.30); }
+.trial-card.abyss:not(.locked):hover { border-color: rgba(176,107,255,.6); }
+.trial-card.abyss .trial-floor { color: #c89bff; }
+.abyss-mod { font-size: 10px; font-weight: 700; color: #ffb15c; background: rgba(255,107,61,.16);
+  border: 1px solid rgba(255,140,60,.35); padding: 1px 6px; border-radius: 6px; }
+
 </style>
 </head>
 <body>
@@ -2162,7 +2169,7 @@ button.ac-circle:active { transform: scale(.92); }
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '75';</script>
+  <script>window.ASSET_VER = '76';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -2891,6 +2898,74 @@ const TRIALS = [
 ];
 
 /**
+ * 深渊（Abyss）：专为「满练强队」设计的高难内容。
+ * 不靠堆数值，而是叠加机制破解「坦克+治疗+克制」的无脑通关：
+ *  - healCut   治疗削弱：我方治疗量按比例削减（逼放弃纯奶流）
+ *  - rampage   灼世狂暴：每回合敌方攻击层层叠加（逼 DPS 竞速）
+ *  - armored   机制护甲：须先打【破防】才能真正伤害，且未破防时它更凶
+ *  - turnLimit 限时：超时即败
+ * id 用 200+ 区段。
+ */
+const ABYSS = [
+  {
+    id: 201, tier: 1, name: '深渊 · 双王回廊', recommend: 44,
+    desc: '深渊第一道门：两位魔王残念同台，治疗被永夜削减——血厚命长的消耗战，带好坦克与输出稳扎稳打。',
+    enemies: [
+      { id: 'shadow_empress', level: 42, pos: 'back' },
+      { id: 'demon_lord', level: 42, pos: 'back' },
+      { id: 'dark_knight', level: 42, pos: 'front' },
+      { id: 'dark_knight', level: 42, pos: 'front' },
+      { id: 'dark_mage', level: 42, pos: 'mid' },
+    ],
+    reward: { gold: 8000, exp: 4000, gem: 180 },
+    isBoss: true, abyss: true,
+    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+  },
+  {
+    id: 202, tier: 2, name: '深渊 · 枯萎之巢', recommend: 46,
+    desc: '【枯萎】更深的诅咒，敌人更强。纯奶流在此撑不住——靠护盾、破防窗口与爆发抢节奏。',
+    enemies: [
+      { id: 'shadow_empress', level: 45, pos: 'back' },
+      { id: 'demon_lord', level: 45, pos: 'back' },
+      { id: 'dark_knight', level: 45, pos: 'front' },
+      { id: 'dark_knight', level: 45, pos: 'front' },
+      { id: 'dark_mage', level: 45, pos: 'mid' },
+    ],
+    reward: { gold: 10000, exp: 5000, gem: 200 },
+    isBoss: true, abyss: true,
+    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+  },
+  {
+    id: 203, tier: 3, name: '深渊 · 绝命牢笼', recommend: 48,
+    desc: '双王压境，强度再上一层——奶量见底前必须打穿，阵容与练度缺一不可。',
+    enemies: [
+      { id: 'shadow_empress', level: 48, pos: 'back' },
+      { id: 'demon_lord', level: 48, pos: 'back' },
+      { id: 'dark_knight', level: 48, pos: 'front' },
+      { id: 'dark_knight', level: 48, pos: 'front' },
+      { id: 'dark_mage', level: 48, pos: 'mid' },
+    ],
+    reward: { gold: 13000, exp: 6500, gem: 240 },
+    isBoss: true, abyss: true,
+    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+  },
+  {
+    id: 204, tier: 4, name: '深渊 · 永夜深处', recommend: 50,
+    desc: '深渊尽头：双王压境、永夜削治的极限消耗。只有阵容、练度、操作俱佳的真正强者才能踏足。',
+    enemies: [
+      { id: 'shadow_empress', level: 51, pos: 'back' },
+      { id: 'demon_lord', level: 51, pos: 'back' },
+      { id: 'dark_knight', level: 51, pos: 'front' },
+      { id: 'dark_knight', level: 51, pos: 'front' },
+      { id: 'dark_mage', level: 51, pos: 'mid' },
+    ],
+    reward: { gold: 18000, exp: 9000, gem: 320 },
+    isBoss: true, abyss: true,
+    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+  },
+];
+
+/**
  * 抽卡池：概率与对应角色
  */
 const GACHA = {
@@ -2904,7 +2979,7 @@ const GACHA = {
 };
 
 // 暴露到全局
-window.GameData = { CLASSES, ELEMENTS, CHARACTERS, SKILLS, ENEMIES, STAGES, TRIALS, GACHA };
+window.GameData = { CLASSES, ELEMENTS, CHARACTERS, SKILLS, ENEMIES, STAGES, TRIALS, ABYSS, GACHA };
 
 
 // ============================================================
@@ -3419,6 +3494,7 @@ const Game = {
     if (this.state.powder == null) this.state.powder = 0;
     if (this.state.firstTen == null) this.state.firstTen = false;
     if (this.state.trialMax == null) this.state.trialMax = 0;
+    if (this.state.abyssMax == null) this.state.abyssMax = 0;
     if (!this.state.stats) this.state.stats = { pulls: 0, wins: 0 };
     if (!this.state.achClaimed) this.state.achClaimed = {};
     if (this.state.achExp == null) this.state.achExp = 0;
@@ -3540,6 +3616,7 @@ const Game = {
       pity: 0,
       firstTen: false, // 首次十连保底（必出 5★）是否已用
       trialMax: 0,     // 试炼之塔已通关的最高层数（用于解锁下一层）
+      abyssMax: 0,     // 深渊已通关的最高层数
       stats: { pulls: 0, wins: 0 }, // 终身统计（成就用）
       achClaimed: {},  // 已领取的成就 id
       achExp: 0,       // 成就经验值（→ 成就等级）
@@ -5499,13 +5576,15 @@ const Battle = {
       const def = D.ENEMIES[e.id];
       const lv = e.level - 1;
       // 把敌人成长从「血厚」偏向「打得痛」：增加紧张感（会输）而非拖时长（变肉）
-      const grow = { hp: def.base.hp * 0.085, atk: def.base.atk * 0.10, def: def.base.def * 0.08 };
+      const grow = { hp: def.base.hp * 0.062, atk: def.base.atk * 0.115, def: def.base.def * 0.07 };
+      // 关卡级倍率：解耦高低级数值（线性成长在高级会爆炸，深渊用此把攻/血单独调到位）
+      const hpMul = this.mod.hpMul || 1, atkMul = this.mod.atkMul || 1;
       this.combatants.push(new Combatant({
         uid: 'E' + i, name: def.name, side: 'enemy', charId: e.id,
         cls: 'enemy', element: def.element, color: def.color, level: e.level,
         pos: def.tier || e.pos || 'mid',
-        maxHp: Math.round(def.base.hp + grow.hp * lv),
-        atk: Math.round(def.base.atk + grow.atk * lv),
+        maxHp: Math.round((def.base.hp + grow.hp * lv) * hpMul),
+        atk: Math.round((def.base.atk + grow.atk * lv) * atkMul),
         def: Math.round(def.base.def + grow.def * lv),
         spd: def.base.spd, crit: def.base.crit,
         skills: def.skills, isBoss: def.isBoss,
@@ -5727,12 +5806,12 @@ const Battle = {
     const isCrit = Math.random() < attacker.crit;
     const critMult = isCrit ? 1.6 : 1.0;
     const brokenMult = defender.broken ? 1.4 : 1.0;   // 破防中受到额外伤害
-    const armorAtk = (attacker.armored && !attacker.broken) ? 1.4 : 1.0; // 护甲BOSS未破防时攻击更凶，逼你破防
+    const armorAtk = (attacker.armored && !attacker.broken) ? 1.22 : 1.0; // 护甲BOSS未破防时攻击更凶，逼你破防
     const raw = attacker.effAtk() * power * elem * critMult * brokenMult * armorAtk;
     // 防御减伤公式
     let reduced = raw * (100 / (100 + defender.effDef()));
     // 机制护甲：未破防时减伤约 2/3，必须先用克制/弱点把它打破防（破防窗口集火）
-    if (defender.armored && !defender.broken) reduced *= 0.34;
+    if (defender.armored && !defender.broken) reduced *= 0.45;
     let dmg = Math.max(1, Math.round(reduced));
 
     // 护盾吸收
@@ -5808,7 +5887,9 @@ const Battle = {
         targets.forEach(t => { if (t.alive) this.applyStatus(t, sk.inflict, combatant); });
       }
     } else if (sk.effect === 'heal') {
-      const amt = Math.round(combatant.effAtk() * sk.power * sigMul);
+      // 深渊「治疗削弱」：我方治疗量按 healCut 削减，逼你放弃纯奶流
+      const healMul = (combatant.side === 'ally' && this.mod.healCut) ? Math.max(0, 1 - this.mod.healCut) : 1;
+      const amt = Math.round(combatant.effAtk() * sk.power * sigMul * healMul);
       let summary = [];
       targets.forEach(t => {
         if (!t.alive) return;
@@ -5874,6 +5955,12 @@ const Battle = {
   checkModifiers() {
     if (this.finished) return;
     const m = this.mod || {};
+    // 深渊「灼世狂暴」：每回合(第2回合起)全体敌人攻击层层叠加，逼你打 DPS 竞速
+    if (m.rampage && this.round > 1) {
+      this.aliveEnemies().forEach(e => e.buffs.push({ stat: 'atk', mult: m.rampage, turns: 999 }));
+      this.pushLog(`🔥【灼世】敌方狂暴层数 +1（攻击持续攀升）`);
+      if (this.onEvent) this.onEvent({ type: 'rampage', round: this.round });
+    }
     if (m.survive && this.round > m.survive) {
       this.finished = true; this.result = 'win';
       this.pushLog(`🛡️ 成功坚守 ${m.survive} 回合，战斗胜利！`);
@@ -6464,7 +6551,8 @@ const UI = {
       <div class="section-title">章节冒险 <span class="muted" style="font-weight:400;font-size:11px;">· 在场景中走动，到达目标触发剧情与战斗</span></div>
       ${chapters}
       <p class="muted" style="text-align:center;margin-top:10px;">用方向键移动，跟随 ▼ 指引到达目标</p>
-      ${this.trialSectionHtml()}`;
+      ${this.trialSectionHtml()}
+      ${this.abyssSectionHtml()}`;
     this.screenEl.querySelectorAll('.chapter-card[data-ch]').forEach(card => {
       const id = card.dataset.ch;
       if (!id) return;
@@ -6472,6 +6560,9 @@ const UI = {
     });
     this.screenEl.querySelectorAll('.trial-card[data-trial]').forEach(card => {
       card.addEventListener('click', () => this.showTrialConfirm(parseInt(card.dataset.trial, 10)));
+    });
+    this.screenEl.querySelectorAll('.trial-card[data-abyss]').forEach(card => {
+      card.addEventListener('click', () => this.showAbyssConfirm(parseInt(card.dataset.abyss, 10)));
     });
     this.screenEl.querySelectorAll('.trial-sweep').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -6510,6 +6601,83 @@ const UI = {
       <div class="section-title" style="margin-top:20px;">🗼 试炼之塔 <span class="muted" style="font-weight:400;font-size:11px;">· 逐层强化的循环挑战，越高层奖励越丰厚</span></div>
       <div class="trial-progress muted">当前进度：${max} / ${trials.length} 层</div>
       ${cards}`;
+  },
+
+  /** 深渊区块 HTML（通关试炼之塔全部 6 层后开启）*/
+  abyssSectionHtml() {
+    const abyss = window.GameData.ABYSS || [];
+    if (!abyss.length) return '';
+    const trialDone = (Game.state.trialMax || 0) >= (window.GameData.TRIALS || []).length;
+    const max = Game.state.abyssMax || 0;
+    if (!trialDone) {
+      return `
+        <div class="section-title" style="margin-top:20px;">🌑 深渊 <span class="muted" style="font-weight:400;font-size:11px;">· 满练强者的终极试炼</span></div>
+        <div class="trial-card locked"><div class="trial-floor">🔒</div>
+          <div class="trial-info"><h3>深渊 · 封印中</h3><p>通关试炼之塔全部 ${(window.GameData.TRIALS || []).length} 层后开启</p></div>
+          <div class="trial-go">🔒</div></div>`;
+    }
+    const cards = abyss.map((t, i) => {
+      const unlocked = i <= max;
+      const cleared = i < max;
+      const bossName = window.GameData.ENEMIES[t.enemies[0].id].name;
+      const mods = [];
+      if (t.mod && t.mod.healCut) mods.push(`枯萎-${Math.round(t.mod.healCut * 100)}%治疗`);
+      if (t.mod && t.mod.rampage) mods.push('灼世狂暴');
+      if (t.enemies.some(e => e.armored)) mods.push('护甲·须破防');
+      return `<div class="trial-card abyss ${unlocked ? '' : 'locked'} ${cleared ? 'done' : ''}" ${unlocked ? `data-abyss="${i}"` : ''}>
+        <div class="trial-floor">🌑<span>${t.tier}层</span></div>
+        <div class="trial-info">
+          <h3>${unlocked ? t.name : `深渊 · 第 ${t.tier} 层`} ${cleared ? '<span class="clear-mark">✓</span>' : ''}</h3>
+          <p>${unlocked ? t.desc : '通关上一层后开启'}</p>
+          ${unlocked ? `<div class="trial-meta"><span class="muted">推荐 Lv.${t.recommend}</span><span class="trial-boss">BOSS ${bossName}</span>${mods.map(m => `<span class="abyss-mod">${m}</span>`).join('')}<span class="trial-reward">🪙${t.reward.gold} 💎${t.reward.gem}</span></div>` : ''}
+        </div>
+        <div class="trial-go">${!unlocked ? '🔒' : cleared ? '再战 ›' : '挑战 ›'}</div>
+      </div>`;
+    }).join('');
+    return `
+      <div class="section-title" style="margin-top:20px;">🌑 深渊 <span class="muted" style="font-weight:400;font-size:11px;">· 叠加机制的终极试炼，专为满练强队设计</span></div>
+      <div class="trial-progress muted">当前进度：${max} / ${abyss.length} 层</div>
+      ${cards}`;
+  },
+
+  /** 深渊出战确认 */
+  showAbyssConfirm(idx) {
+    const stage = window.GameData.ABYSS[idx];
+    if (!stage) return;
+    if (Game.state.team.length === 0) { this.toast('请先在「主页」编入出战队伍'); Main.switchScreen('home'); return; }
+    const enemyHtml = stage.enemies.map(e => {
+      const def = window.GameData.ENEMIES[e.id];
+      return `<span style="font-size:11px;background:var(--panel);padding:3px 7px;border-radius:6px;">${def.name} Lv.${e.level}${e.armored ? ' 🛡' : ''}</span>`;
+    }).join(' ');
+    const teamHtml = Game.state.team.map(uid => {
+      const o = Game.getOwned(uid); const c = window.GameData.CHARACTERS[o.charId];
+      return `<div class="team-slot filled border-${this.rarityClass(c.rarity)}" style="max-width:64px;">
+        <div class="char-portrait"><div class="avatar" style="font-size:26px;">${this.charAvatar(o.charId)}</div>
+        <span class="pname">Lv.${o.level}</span></div></div>`;
+    }).join('');
+    const m = this.openModal(`
+      <h2>🌑 ${stage.name}</h2>
+      <p class="muted" style="margin:6px 0 12px;">${stage.desc}</p>
+      <div class="muted" style="margin-bottom:6px;">敌方阵容 · 推荐 Lv.${stage.recommend}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${enemyHtml}</div>
+      <div class="muted" style="margin-bottom:6px;">我方出战（${Game.state.team.length}/5）</div>
+      <div class="team-slots">${teamHtml}</div>
+      <div class="close-row">
+        <button class="btn secondary" id="ab-cancel">取消</button>
+        <button class="btn" id="ab-fight">踏入深渊 ⚔️</button>
+      </div>
+    `);
+    m.querySelector('#ab-cancel').onclick = () => this.closeModal(m);
+    m.querySelector('#ab-fight').onclick = () => {
+      this.closeModal(m);
+      BattleUI.start(stage, () => {
+        if (Battle.result === 'win' && idx + 1 > (Game.state.abyssMax || 0)) {
+          Game.state.abyssMax = idx + 1;
+          Game.save();
+        }
+        this.renderStages();
+      });
+    };
   },
 
   /** 试炼出战确认 */

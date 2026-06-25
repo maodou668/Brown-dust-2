@@ -137,13 +137,15 @@ const Battle = {
       const def = D.ENEMIES[e.id];
       const lv = e.level - 1;
       // 把敌人成长从「血厚」偏向「打得痛」：增加紧张感（会输）而非拖时长（变肉）
-      const grow = { hp: def.base.hp * 0.085, atk: def.base.atk * 0.10, def: def.base.def * 0.08 };
+      const grow = { hp: def.base.hp * 0.062, atk: def.base.atk * 0.115, def: def.base.def * 0.07 };
+      // 关卡级倍率：解耦高低级数值（线性成长在高级会爆炸，深渊用此把攻/血单独调到位）
+      const hpMul = this.mod.hpMul || 1, atkMul = this.mod.atkMul || 1;
       this.combatants.push(new Combatant({
         uid: 'E' + i, name: def.name, side: 'enemy', charId: e.id,
         cls: 'enemy', element: def.element, color: def.color, level: e.level,
         pos: def.tier || e.pos || 'mid',
-        maxHp: Math.round(def.base.hp + grow.hp * lv),
-        atk: Math.round(def.base.atk + grow.atk * lv),
+        maxHp: Math.round((def.base.hp + grow.hp * lv) * hpMul),
+        atk: Math.round((def.base.atk + grow.atk * lv) * atkMul),
         def: Math.round(def.base.def + grow.def * lv),
         spd: def.base.spd, crit: def.base.crit,
         skills: def.skills, isBoss: def.isBoss,
@@ -365,12 +367,12 @@ const Battle = {
     const isCrit = Math.random() < attacker.crit;
     const critMult = isCrit ? 1.6 : 1.0;
     const brokenMult = defender.broken ? 1.4 : 1.0;   // 破防中受到额外伤害
-    const armorAtk = (attacker.armored && !attacker.broken) ? 1.4 : 1.0; // 护甲BOSS未破防时攻击更凶，逼你破防
+    const armorAtk = (attacker.armored && !attacker.broken) ? 1.22 : 1.0; // 护甲BOSS未破防时攻击更凶，逼你破防
     const raw = attacker.effAtk() * power * elem * critMult * brokenMult * armorAtk;
     // 防御减伤公式
     let reduced = raw * (100 / (100 + defender.effDef()));
     // 机制护甲：未破防时减伤约 2/3，必须先用克制/弱点把它打破防（破防窗口集火）
-    if (defender.armored && !defender.broken) reduced *= 0.34;
+    if (defender.armored && !defender.broken) reduced *= 0.45;
     let dmg = Math.max(1, Math.round(reduced));
 
     // 护盾吸收
@@ -446,7 +448,9 @@ const Battle = {
         targets.forEach(t => { if (t.alive) this.applyStatus(t, sk.inflict, combatant); });
       }
     } else if (sk.effect === 'heal') {
-      const amt = Math.round(combatant.effAtk() * sk.power * sigMul);
+      // 深渊「治疗削弱」：我方治疗量按 healCut 削减，逼你放弃纯奶流
+      const healMul = (combatant.side === 'ally' && this.mod.healCut) ? Math.max(0, 1 - this.mod.healCut) : 1;
+      const amt = Math.round(combatant.effAtk() * sk.power * sigMul * healMul);
       let summary = [];
       targets.forEach(t => {
         if (!t.alive) return;
@@ -512,6 +516,12 @@ const Battle = {
   checkModifiers() {
     if (this.finished) return;
     const m = this.mod || {};
+    // 深渊「灼世狂暴」：每回合(第2回合起)全体敌人攻击层层叠加，逼你打 DPS 竞速
+    if (m.rampage && this.round > 1) {
+      this.aliveEnemies().forEach(e => e.buffs.push({ stat: 'atk', mult: m.rampage, turns: 999 }));
+      this.pushLog(`🔥【灼世】敌方狂暴层数 +1（攻击持续攀升）`);
+      if (this.onEvent) this.onEvent({ type: 'rampage', round: this.round });
+    }
     if (m.survive && this.round > m.survive) {
       this.finished = true; this.result = 'win';
       this.pushLog(`🛡️ 成功坚守 ${m.survive} 回合，战斗胜利！`);

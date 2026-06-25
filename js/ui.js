@@ -447,7 +447,8 @@ const UI = {
       <div class="section-title">章节冒险 <span class="muted" style="font-weight:400;font-size:11px;">· 在场景中走动，到达目标触发剧情与战斗</span></div>
       ${chapters}
       <p class="muted" style="text-align:center;margin-top:10px;">用方向键移动，跟随 ▼ 指引到达目标</p>
-      ${this.trialSectionHtml()}`;
+      ${this.trialSectionHtml()}
+      ${this.abyssSectionHtml()}`;
     this.screenEl.querySelectorAll('.chapter-card[data-ch]').forEach(card => {
       const id = card.dataset.ch;
       if (!id) return;
@@ -455,6 +456,9 @@ const UI = {
     });
     this.screenEl.querySelectorAll('.trial-card[data-trial]').forEach(card => {
       card.addEventListener('click', () => this.showTrialConfirm(parseInt(card.dataset.trial, 10)));
+    });
+    this.screenEl.querySelectorAll('.trial-card[data-abyss]').forEach(card => {
+      card.addEventListener('click', () => this.showAbyssConfirm(parseInt(card.dataset.abyss, 10)));
     });
     this.screenEl.querySelectorAll('.trial-sweep').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -493,6 +497,83 @@ const UI = {
       <div class="section-title" style="margin-top:20px;">🗼 试炼之塔 <span class="muted" style="font-weight:400;font-size:11px;">· 逐层强化的循环挑战，越高层奖励越丰厚</span></div>
       <div class="trial-progress muted">当前进度：${max} / ${trials.length} 层</div>
       ${cards}`;
+  },
+
+  /** 深渊区块 HTML（通关试炼之塔全部 6 层后开启）*/
+  abyssSectionHtml() {
+    const abyss = window.GameData.ABYSS || [];
+    if (!abyss.length) return '';
+    const trialDone = (Game.state.trialMax || 0) >= (window.GameData.TRIALS || []).length;
+    const max = Game.state.abyssMax || 0;
+    if (!trialDone) {
+      return `
+        <div class="section-title" style="margin-top:20px;">🌑 深渊 <span class="muted" style="font-weight:400;font-size:11px;">· 满练强者的终极试炼</span></div>
+        <div class="trial-card locked"><div class="trial-floor">🔒</div>
+          <div class="trial-info"><h3>深渊 · 封印中</h3><p>通关试炼之塔全部 ${(window.GameData.TRIALS || []).length} 层后开启</p></div>
+          <div class="trial-go">🔒</div></div>`;
+    }
+    const cards = abyss.map((t, i) => {
+      const unlocked = i <= max;
+      const cleared = i < max;
+      const bossName = window.GameData.ENEMIES[t.enemies[0].id].name;
+      const mods = [];
+      if (t.mod && t.mod.healCut) mods.push(`枯萎-${Math.round(t.mod.healCut * 100)}%治疗`);
+      if (t.mod && t.mod.rampage) mods.push('灼世狂暴');
+      if (t.enemies.some(e => e.armored)) mods.push('护甲·须破防');
+      return `<div class="trial-card abyss ${unlocked ? '' : 'locked'} ${cleared ? 'done' : ''}" ${unlocked ? `data-abyss="${i}"` : ''}>
+        <div class="trial-floor">🌑<span>${t.tier}层</span></div>
+        <div class="trial-info">
+          <h3>${unlocked ? t.name : `深渊 · 第 ${t.tier} 层`} ${cleared ? '<span class="clear-mark">✓</span>' : ''}</h3>
+          <p>${unlocked ? t.desc : '通关上一层后开启'}</p>
+          ${unlocked ? `<div class="trial-meta"><span class="muted">推荐 Lv.${t.recommend}</span><span class="trial-boss">BOSS ${bossName}</span>${mods.map(m => `<span class="abyss-mod">${m}</span>`).join('')}<span class="trial-reward">🪙${t.reward.gold} 💎${t.reward.gem}</span></div>` : ''}
+        </div>
+        <div class="trial-go">${!unlocked ? '🔒' : cleared ? '再战 ›' : '挑战 ›'}</div>
+      </div>`;
+    }).join('');
+    return `
+      <div class="section-title" style="margin-top:20px;">🌑 深渊 <span class="muted" style="font-weight:400;font-size:11px;">· 叠加机制的终极试炼，专为满练强队设计</span></div>
+      <div class="trial-progress muted">当前进度：${max} / ${abyss.length} 层</div>
+      ${cards}`;
+  },
+
+  /** 深渊出战确认 */
+  showAbyssConfirm(idx) {
+    const stage = window.GameData.ABYSS[idx];
+    if (!stage) return;
+    if (Game.state.team.length === 0) { this.toast('请先在「主页」编入出战队伍'); Main.switchScreen('home'); return; }
+    const enemyHtml = stage.enemies.map(e => {
+      const def = window.GameData.ENEMIES[e.id];
+      return `<span style="font-size:11px;background:var(--panel);padding:3px 7px;border-radius:6px;">${def.name} Lv.${e.level}${e.armored ? ' 🛡' : ''}</span>`;
+    }).join(' ');
+    const teamHtml = Game.state.team.map(uid => {
+      const o = Game.getOwned(uid); const c = window.GameData.CHARACTERS[o.charId];
+      return `<div class="team-slot filled border-${this.rarityClass(c.rarity)}" style="max-width:64px;">
+        <div class="char-portrait"><div class="avatar" style="font-size:26px;">${this.charAvatar(o.charId)}</div>
+        <span class="pname">Lv.${o.level}</span></div></div>`;
+    }).join('');
+    const m = this.openModal(`
+      <h2>🌑 ${stage.name}</h2>
+      <p class="muted" style="margin:6px 0 12px;">${stage.desc}</p>
+      <div class="muted" style="margin-bottom:6px;">敌方阵容 · 推荐 Lv.${stage.recommend}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${enemyHtml}</div>
+      <div class="muted" style="margin-bottom:6px;">我方出战（${Game.state.team.length}/5）</div>
+      <div class="team-slots">${teamHtml}</div>
+      <div class="close-row">
+        <button class="btn secondary" id="ab-cancel">取消</button>
+        <button class="btn" id="ab-fight">踏入深渊 ⚔️</button>
+      </div>
+    `);
+    m.querySelector('#ab-cancel').onclick = () => this.closeModal(m);
+    m.querySelector('#ab-fight').onclick = () => {
+      this.closeModal(m);
+      BattleUI.start(stage, () => {
+        if (Battle.result === 'win' && idx + 1 > (Game.state.abyssMax || 0)) {
+          Game.state.abyssMax = idx + 1;
+          Game.save();
+        }
+        this.renderStages();
+      });
+    };
   },
 
   /** 试炼出战确认 */

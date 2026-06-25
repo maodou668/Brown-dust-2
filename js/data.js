@@ -530,6 +530,74 @@ const TRIALS = [
 ];
 
 /**
+ * 深渊（Abyss）：专为「满练强队」设计的高难内容。
+ * 不靠堆数值，而是叠加机制破解「坦克+治疗+克制」的无脑通关：
+ *  - healCut   治疗削弱：我方治疗量按比例削减（逼放弃纯奶流）
+ *  - rampage   灼世狂暴：每回合敌方攻击层层叠加（逼 DPS 竞速）
+ *  - armored   机制护甲：须先打【破防】才能真正伤害，且未破防时它更凶
+ *  - turnLimit 限时：超时即败
+ * id 用 200+ 区段。
+ */
+const ABYSS = [
+  {
+    id: 201, tier: 1, name: '深渊 · 双王回廊', recommend: 44,
+    desc: '深渊第一道门：两位魔王残念同台，治疗被永夜削减——血厚命长的消耗战，带好坦克与输出稳扎稳打。',
+    enemies: [
+      { id: 'shadow_empress', level: 42, pos: 'back' },
+      { id: 'demon_lord', level: 42, pos: 'back' },
+      { id: 'dark_knight', level: 42, pos: 'front' },
+      { id: 'dark_knight', level: 42, pos: 'front' },
+      { id: 'dark_mage', level: 42, pos: 'mid' },
+    ],
+    reward: { gold: 8000, exp: 4000, gem: 180 },
+    isBoss: true, abyss: true,
+    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+  },
+  {
+    id: 202, tier: 2, name: '深渊 · 枯萎之巢', recommend: 46,
+    desc: '【枯萎】更深的诅咒，敌人更强。纯奶流在此撑不住——靠护盾、破防窗口与爆发抢节奏。',
+    enemies: [
+      { id: 'shadow_empress', level: 45, pos: 'back' },
+      { id: 'demon_lord', level: 45, pos: 'back' },
+      { id: 'dark_knight', level: 45, pos: 'front' },
+      { id: 'dark_knight', level: 45, pos: 'front' },
+      { id: 'dark_mage', level: 45, pos: 'mid' },
+    ],
+    reward: { gold: 10000, exp: 5000, gem: 200 },
+    isBoss: true, abyss: true,
+    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+  },
+  {
+    id: 203, tier: 3, name: '深渊 · 绝命牢笼', recommend: 48,
+    desc: '双王压境，强度再上一层——奶量见底前必须打穿，阵容与练度缺一不可。',
+    enemies: [
+      { id: 'shadow_empress', level: 48, pos: 'back' },
+      { id: 'demon_lord', level: 48, pos: 'back' },
+      { id: 'dark_knight', level: 48, pos: 'front' },
+      { id: 'dark_knight', level: 48, pos: 'front' },
+      { id: 'dark_mage', level: 48, pos: 'mid' },
+    ],
+    reward: { gold: 13000, exp: 6500, gem: 240 },
+    isBoss: true, abyss: true,
+    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+  },
+  {
+    id: 204, tier: 4, name: '深渊 · 永夜深处', recommend: 50,
+    desc: '深渊尽头：双王压境、永夜削治的极限消耗。只有阵容、练度、操作俱佳的真正强者才能踏足。',
+    enemies: [
+      { id: 'shadow_empress', level: 51, pos: 'back' },
+      { id: 'demon_lord', level: 51, pos: 'back' },
+      { id: 'dark_knight', level: 51, pos: 'front' },
+      { id: 'dark_knight', level: 51, pos: 'front' },
+      { id: 'dark_mage', level: 51, pos: 'mid' },
+    ],
+    reward: { gold: 18000, exp: 9000, gem: 320 },
+    isBoss: true, abyss: true,
+    mod: { healCut: 0.3, atkMul: 0.80, hpMul: 1.25 },
+  },
+];
+
+/**
  * 抽卡池：概率与对应角色
  */
 const GACHA = {
@@ -543,4 +611,4 @@ const GACHA = {
 };
 
 // 暴露到全局
-window.GameData = { CLASSES, ELEMENTS, CHARACTERS, SKILLS, ENEMIES, STAGES, TRIALS, GACHA };
+window.GameData = { CLASSES, ELEMENTS, CHARACTERS, SKILLS, ENEMIES, STAGES, TRIALS, ABYSS, GACHA };

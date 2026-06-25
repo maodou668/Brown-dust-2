@@ -144,6 +144,18 @@ makeTeam(BALANCED, 38);
 let aw = 0, at = []; for (let i = 0; i < RUNS; i++) { const r = runBattle(Game.state.team, stageFrom(t106), null); if (r.result === 'win') aw++; at.push(r.turns); }
 console.log(`  护甲女皇(须破防) 胜率 ${pct(aw / RUNS)}  平均 ${avg(at).toFixed(1)} 回合 → ${aw > 0 ? '✅ 可破防击杀' : '⚠ 打不过'}`);
 
+// ---- 6c) 深渊：必须挑战满练强队 ----
+console.log('\n【6c】深渊（专为满练强队设计，强队应 ~40~80% 而非 100%）');
+const abyssWr = [];
+GameData.ABYSS.forEach(s => {
+  makeTeam(BALANCED, s.recommend);
+  let wins = 0, turns = [];
+  for (let i = 0; i < RUNS; i++) { const r = runBattle(Game.state.team, stageFrom(s), null); if (r.result === 'win') wins++; turns.push(r.turns); }
+  abyssWr.push(wins / RUNS);
+  const mods = Object.entries(s.mod || {}).map(([k, v]) => k + (v !== true ? ':' + v : '')).join(' ');
+  console.log(`  ${s.name.padEnd(18)} 强队胜率 ${pct(wins / RUNS).padStart(4)}  平均 ${avg(turns).toFixed(1).padStart(4)} 回合  [${mods}]`);
+});
+
 // ---- 7) 站位/穿透 ----
 console.log('\n【7】站位机制：');
 makeTeam(['lecliss', 'seir'], 14);
@@ -162,7 +174,7 @@ const recT = avg(curve.map(c => c.t));
 const strongMin = Math.min(...curve.map(c => c.wr));     // 强队在最难内容的胜率
 const check = (label, ok, detail) => console.log(`  ${ok ? '✅' : '⚠ '} ${label}：${detail}`);
 check('平民队推荐胜率合理(55~92%)', casWr >= 0.55 && casWr <= 0.92, pct(casWr) + ' 平均（平民队）');
-check('存在真正挑战(强队最难内容<90%)', strongMin < 0.90, '强队最低胜率 ' + pct(strongMin));
+check('深渊真正挑战满练强队(均<85%且非0)', abyssWr.every(w => w < 0.85) && abyssWr.some(w => w > 0.05), '深渊强队胜率 ' + abyssWr.map(pct).join('/'));
 check('战斗节奏(4~18回合)', recT >= 4 && recT <= 18, recT.toFixed(1) + ' 回合平均');
 check('三档动作都被用到', acts.basic > 0 && acts.class > 0 && acts.sig > 0, '普攻/职业/大招占比 ' + pct(acts.basic / totAct) + '/' + pct(acts.class / totAct) + '/' + pct(acts.sig / totAct));
 check('连携常被触发', comboBattles / battles > 0.3, pct(comboBattles / battles) + ' 战斗用到');

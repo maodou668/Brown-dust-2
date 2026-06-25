@@ -2099,3 +2099,10 @@ button.ac-circle:active { transform: scale(.92); }
 .combo-btn.ready { background: linear-gradient(135deg, #ff6b3d, #ffb15c); color: #1a1014;
   border-color: transparent; cursor: pointer; box-shadow: 0 0 12px rgba(255,140,60,.55); }
 .combo-btn:active.ready { transform: scale(.95); }
+
+/* ---------- 深渊 ---------- */
+.trial-card.abyss { background: linear-gradient(135deg, rgba(60,30,70,.55), rgba(30,16,38,.55)); border-color: rgba(176,107,255,.30); }
+.trial-card.abyss:not(.locked):hover { border-color: rgba(176,107,255,.6); }
+.trial-card.abyss .trial-floor { color: #c89bff; }
+.abyss-mod { font-size: 10px; font-weight: 700; color: #ffb15c; background: rgba(255,107,61,.16);
+  border: 1px solid rgba(255,140,60,.35); padding: 1px 6px; border-radius: 6px; }

@@ -35,6 +35,7 @@ const Game = {
     if (this.state.powder == null) this.state.powder = 0;
     if (this.state.firstTen == null) this.state.firstTen = false;
     if (this.state.trialMax == null) this.state.trialMax = 0;
+    if (this.state.abyssMax == null) this.state.abyssMax = 0;
     if (!this.state.stats) this.state.stats = { pulls: 0, wins: 0 };
     if (!this.state.achClaimed) this.state.achClaimed = {};
     if (this.state.achExp == null) this.state.achExp = 0;
@@ -156,6 +157,7 @@ const Game = {
       pity: 0,
       firstTen: false, // 首次十连保底（必出 5★）是否已用
       trialMax: 0,     // 试炼之塔已通关的最高层数（用于解锁下一层）
+      abyssMax: 0,     // 深渊已通关的最高层数
       stats: { pulls: 0, wins: 0 }, // 终身统计（成就用）
       achClaimed: {},  // 已领取的成就 id
       achExp: 0,       // 成就经验值（→ 成就等级）
