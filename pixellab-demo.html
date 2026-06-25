@@ -35,21 +35,26 @@
       <div class="hint" id="hint">8 方向像素小人,模板动画(骨架驱动)。点动作切换;方向可手选或「自动转圈」。攻击播完自动回待机。</div>
     </div>
   </div>
-  <script>window.ASSET_VER='73';</script>
+  <script>window.ASSET_VER='74';</script>
   <script>
   (async function () {
     const V = window.ASSET_VER || '1';
     const BASE = 'art/05_pixellab/lecliss_demo';
     const man = await fetch(BASE + '/manifest.json?v=' + V).then(r => r.json());
     const DIRS = man.dirs, bb = man.bbox;
-    // 预加载所有帧
+    // 并行预加载所有帧（不阻塞首屏）：立刻建 Image 开始下载，渲染循环随到随画
     const imgs = {};   // imgs[anim][dir] = [Image,...]
-    async function load(src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>res(im); im.src=src; }); }
+    let total = 0, loaded = 0;
     for (const anim of Object.keys(man.anims)) {
       imgs[anim] = {};
       for (const d of DIRS) {
         const n = man.anims[anim].frames[d]; const arr = [];
-        for (let i = 0; i < n; i++) arr.push(await load(`${BASE}/${anim}/${d}/${String(i).padStart(2,'0')}.png?v=${V}`));
+        for (let i = 0; i < n; i++) {
+          const im = new Image();
+          im.onload = () => { loaded++; }; im.onerror = () => { loaded++; };
+          im.src = `${BASE}/${anim}/${d}/${String(i).padStart(2,'0')}.png?v=${V}`;
+          arr.push(im); total++;
+        }
         imgs[anim][d] = arr;
       }
     }
@@ -99,7 +104,9 @@
       ctx.fillStyle=grd; ctx.beginPath(); ctx.ellipse(fx,fy,dw*0.55,dh*0.10,0,0,7); ctx.fill();
       ctx.imageSmoothingEnabled=false;
       if(im&&im.width) ctx.drawImage(im, bb.x,bb.y,bb.w,bb.h, fx-dw/2, fy-dh, dw,dh);
-      ctx.fillStyle='#b09a90'; ctx.font='12px sans-serif'; ctx.textAlign='center';
+      ctx.textAlign='center';
+      if(loaded<total){ ctx.fillStyle='#ffb15c'; ctx.font='bold 14px sans-serif'; ctx.fillText('加载中… '+loaded+'/'+total, fx, H*0.5); }
+      ctx.fillStyle='#b09a90'; ctx.font='12px sans-serif';
       ctx.fillText(dir+'  ·  '+act+'  ·  '+(frame+1)+'/'+arr.length, fx, H-8);
       requestAnimationFrame(loop);
     }
