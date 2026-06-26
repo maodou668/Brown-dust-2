@@ -177,27 +177,32 @@ const BattleUI = {
   },
 
   // ---------- 战斗序列帧小人（PixelLab）----------
-  FIELD_SPRITE: { lecliss: 'art/05_pixellab/lecliss_field' },   // charId → 资源
-  sprite: null, spriteState: {}, _spriteRaf: 0,
+  FIELD_SPRITE: {                                    // charId → 资源目录
+    lecliss: 'art/05_pixellab/lecliss_field',
+    justia:  'art/05_pixellab/justia_field',
+  },
+  sprites: {}, spriteState: {}, _spriteRaf: 0,
 
   loadBattleSprite() {
-    if (this.sprite) return;
     const V = window.ASSET_VER || '1';
-    const BASE = 'art/05_pixellab/lecliss_field';
-    const sp = this.sprite = { ready: false, man: null, imgs: {} };
-    fetch(BASE + '/manifest.json?v=' + V).then(r => r.json()).then(man => {
-      sp.man = man;
-      const mk = src => { const im = new Image(); im.src = src; return im; };
-      for (const a in man.anims) {
-        sp.imgs[a] = {};
-        for (const d of man.dirs) {
-          const n = man.anims[a].frames[d] || 0, arr = [];
-          for (let i = 0; i < n; i++) arr.push(mk(`${BASE}/${a}/${d}/${String(i).padStart(2, '0')}.png?v=${V}`));
-          sp.imgs[a][d] = arr;
+    for (const charId in this.FIELD_SPRITE) {
+      if (this.sprites[charId]) continue;
+      const BASE = this.FIELD_SPRITE[charId];
+      const sp = this.sprites[charId] = { ready: false, man: null, imgs: {} };
+      fetch(BASE + '/manifest.json?v=' + V).then(r => r.json()).then(man => {
+        sp.man = man;
+        const mk = src => { const im = new Image(); im.src = src; return im; };
+        for (const a in man.anims) {
+          sp.imgs[a] = {};
+          for (const d of man.dirs) {
+            const n = man.anims[a].frames[d] || 0, arr = [];
+            for (let i = 0; i < n; i++) arr.push(mk(`${BASE}/${a}/${d}/${String(i).padStart(2, '0')}.png?v=${V}`));
+            sp.imgs[a][d] = arr;
+          }
         }
-      }
-      sp.ready = true;
-    }).catch(() => { this.sprite = null; });
+        sp.ready = true;
+      }).catch(() => { this.sprites[charId] = null; });
+    }
   },
   startSpriteLoop() {
     cancelAnimationFrame(this._spriteRaf);
@@ -206,9 +211,10 @@ const BattleUI = {
   },
   // 战斗里只渲染我方序列帧单位；朝向 north（背对镜头、面朝上方敌人）
   drawBattleSprites(now) {
-    const sp = this.sprite; if (!sp || !sp.ready || !this.root) return;
+    if (!this.root) return;
     this.root.querySelectorAll('canvas.u-sprite').forEach(cv => {
       const uid = cv.dataset.uid, c = Battle.combatants.find(x => x.uid === uid); if (!c) return;
+      const sp = this.sprites[c.charId]; if (!sp || !sp.ready) return;
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const W = cv.clientWidth || 64, H = cv.clientHeight || 72;
       if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
@@ -218,13 +224,16 @@ const BattleUI = {
       const st = this.spriteState[uid] || (this.spriteState[uid] = { anim: 'idle', start: 0 });
       const dir = 'north';
       let anim = st.anim, frame = 0;
+      const castArr = sp.imgs.cast && sp.imgs.cast[dir];
       if (anim === 'cast') {
-        const arrC = sp.imgs.cast[dir]; const fps = sp.man.fps.cast || 12;
-        frame = Math.floor((now - st.start) / 1000 * fps);
-        if (frame >= arrC.length) { st.anim = 'idle'; anim = 'idle'; }
+        if (castArr && castArr.length) {                     // 该角色有施法帧
+          const fps = (sp.man.fps && sp.man.fps.cast) || 12;
+          frame = Math.floor((now - st.start) / 1000 * fps);
+          if (frame >= castArr.length) { st.anim = 'idle'; anim = 'idle'; }
+        } else { st.anim = 'idle'; anim = 'idle'; }           // 无施法帧→退回 idle
       }
       const arr = (sp.imgs[anim] && sp.imgs[anim][dir] && sp.imgs[anim][dir].length) ? sp.imgs[anim][dir] : sp.imgs.idle.north;
-      if (anim === 'idle') frame = Math.floor(now / 1000 * (sp.man.fps.idle || 6)) % arr.length;
+      if (anim === 'idle') frame = Math.floor(now / 1000 * ((sp.man.fps && sp.man.fps.idle) || 6)) % arr.length;
       const im = arr[Math.min(frame, arr.length - 1)], bb = sp.man.bbox;
       const scale = Math.min(W / bb.w, H / bb.h), dw = bb.w * scale, dh = bb.h * scale;
       if (im && im.width) { ctx.imageSmoothingEnabled = false; ctx.drawImage(im, bb.x, bb.y, bb.w, bb.h, (W - dw) / 2, H - dh, dw, dh); }
