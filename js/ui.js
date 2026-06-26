@@ -1181,7 +1181,7 @@ const UI = {
       const pity = 90 - s.pity;
       const pickups = (pool[5] || []).slice(0, 8).map(cid => {
         const cd = window.GameData.COSTUMES[cid];
-        return `<span class="gf-pick border-r5" data-cid="${cid}" title="${cd.charName} · ${cd.costumeName}（点击查看详情）" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">${window.GameData.CLASSES[cd.cls].icon}</span>`;
+        return `<span class="gf-pick border-r5" data-cid="${cid}" title="${cd.charName} · ${cd.costumeName}（点击查看详情）" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">${this.charAvatar(cd.charId)}</span>`;
       }).join('');
       feature = `
         <div class="gf-art b-costume">
@@ -1326,7 +1326,7 @@ const UI = {
     return `<div class="roster-card border-${this.rarityClass(cd.rarity)}">
       <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">
         <span class="rarity-badge ${this.rarityClass(cd.rarity)}">${cd.rarity}★</span>
-        ${window.GameData.CLASSES[cd.cls].icon}
+        ${this.charAvatar(cd.charId)}
         <span class="cls-chip">${window.GameData.ELEMENTS[cd.element].icon}</span>
       </div>
       <div class="rc-info"><div class="rc-name" style="font-size:11px;">${cd.charName}</div>
@@ -1372,7 +1372,7 @@ const UI = {
       const m = this.openModal(`
         <div class="pull-result">
           <div class="pull-art border-${this.rarityClass(cd.rarity)}" data-cid="${r.costumeId}" title="点击查看详情" style="cursor:pointer;background:radial-gradient(circle at 50% 35%, ${cd.color}66, var(--panel));">
-            ${window.GameData.CLASSES[cd.cls].icon}
+            ${this.charAvatar(cd.charId)}
           </div>
           <div class="pull-stars ${this.rarityClass(cd.rarity)}" style="-webkit-text-fill-color:initial;color:var(--${'r'+r.rarity});">${'★'.repeat(r.rarity)}</div>
           <div class="pull-name">${cd.charName} <span class="muted" style="font-size:13px;">· ${cd.costumeName}</span></div>
@@ -1392,7 +1392,7 @@ const UI = {
         return `<div class="roster-card border-${this.rarityClass(r.rarity)}" data-cid="${r.costumeId}" title="点击查看详情">
           <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${cd.color}44, transparent);">
             <span class="rarity-badge ${this.rarityClass(r.rarity)}">${r.rarity}★</span>
-            ${window.GameData.CLASSES[cd.cls].icon}
+            ${this.charAvatar(cd.charId)}
             <span class="in-team-tag" style="background:${tagBg};">${tag}</span>
           </div>
           <div class="rc-info"><div class="rc-name" style="font-size:11px;">${cd.charName}·${cd.costumeName}</div></div>
@@ -2888,7 +2888,7 @@ const UI = {
         return `<div class="roster-card border-${this.rarityClass(cd.rarity)}" data-pick="${cid}">
           <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">
             <span class="rarity-badge ${this.rarityClass(cd.rarity)}">${cd.rarity}★</span>
-            ${window.GameData.CLASSES[cd.cls].icon}
+            ${this.charAvatar(cd.charId)}
           </div>
           <div class="rc-info"><div class="rc-name" style="font-size:10px;">${cd.charName}·${cd.costumeName}</div></div>
         </div>`;

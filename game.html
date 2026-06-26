@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=91">
+  <link rel="manifest" href="manifest.webmanifest?v=92">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=91">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=91">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=92">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=92">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2171,7 +2171,7 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=91" alt="" onerror="this.outerHTML='🎖️'"></span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=92" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
@@ -2210,7 +2210,7 @@ button.ac-circle:active { transform: scale(.92); }
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '91';</script>
+  <script>window.ASSET_VER = '92';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -7618,7 +7618,7 @@ const UI = {
       const pity = 90 - s.pity;
       const pickups = (pool[5] || []).slice(0, 8).map(cid => {
         const cd = window.GameData.COSTUMES[cid];
-        return `<span class="gf-pick border-r5" data-cid="${cid}" title="${cd.charName} · ${cd.costumeName}（点击查看详情）" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">${window.GameData.CLASSES[cd.cls].icon}</span>`;
+        return `<span class="gf-pick border-r5" data-cid="${cid}" title="${cd.charName} · ${cd.costumeName}（点击查看详情）" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">${this.charAvatar(cd.charId)}</span>`;
       }).join('');
       feature = `
         <div class="gf-art b-costume">
@@ -7763,7 +7763,7 @@ const UI = {
     return `<div class="roster-card border-${this.rarityClass(cd.rarity)}">
       <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">
         <span class="rarity-badge ${this.rarityClass(cd.rarity)}">${cd.rarity}★</span>
-        ${window.GameData.CLASSES[cd.cls].icon}
+        ${this.charAvatar(cd.charId)}
         <span class="cls-chip">${window.GameData.ELEMENTS[cd.element].icon}</span>
       </div>
       <div class="rc-info"><div class="rc-name" style="font-size:11px;">${cd.charName}</div>
@@ -7809,7 +7809,7 @@ const UI = {
       const m = this.openModal(`
         <div class="pull-result">
           <div class="pull-art border-${this.rarityClass(cd.rarity)}" data-cid="${r.costumeId}" title="点击查看详情" style="cursor:pointer;background:radial-gradient(circle at 50% 35%, ${cd.color}66, var(--panel));">
-            ${window.GameData.CLASSES[cd.cls].icon}
+            ${this.charAvatar(cd.charId)}
           </div>
           <div class="pull-stars ${this.rarityClass(cd.rarity)}" style="-webkit-text-fill-color:initial;color:var(--${'r'+r.rarity});">${'★'.repeat(r.rarity)}</div>
           <div class="pull-name">${cd.charName} <span class="muted" style="font-size:13px;">· ${cd.costumeName}</span></div>
@@ -7829,7 +7829,7 @@ const UI = {
         return `<div class="roster-card border-${this.rarityClass(r.rarity)}" data-cid="${r.costumeId}" title="点击查看详情">
           <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${cd.color}44, transparent);">
             <span class="rarity-badge ${this.rarityClass(r.rarity)}">${r.rarity}★</span>
-            ${window.GameData.CLASSES[cd.cls].icon}
+            ${this.charAvatar(cd.charId)}
             <span class="in-team-tag" style="background:${tagBg};">${tag}</span>
           </div>
           <div class="rc-info"><div class="rc-name" style="font-size:11px;">${cd.charName}·${cd.costumeName}</div></div>
@@ -9325,7 +9325,7 @@ const UI = {
         return `<div class="roster-card border-${this.rarityClass(cd.rarity)}" data-pick="${cid}">
           <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">
             <span class="rarity-badge ${this.rarityClass(cd.rarity)}">${cd.rarity}★</span>
-            ${window.GameData.CLASSES[cd.cls].icon}
+            ${this.charAvatar(cd.charId)}
           </div>
           <div class="rc-info"><div class="rc-name" style="font-size:10px;">${cd.charName}·${cd.costumeName}</div></div>
         </div>`;
