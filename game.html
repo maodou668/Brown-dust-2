@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=88">
+  <link rel="manifest" href="manifest.webmanifest?v=89">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=88">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=88">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=89">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=89">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2206,7 +2206,7 @@ button.ac-circle:active { transform: scale(.92); }
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '88';</script>
+  <script>window.ASSET_VER = '89';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -10843,6 +10843,7 @@ const BattleUI = {
   // 技能 → 演出时间线（castMs 施法收招、telegraphMs 六芒星预警时长、star 预警特效、burst 爆炸特效）
   SKILL_VFX: {
     inferno: { castMs: 380, telegraphMs: 460, star: 'hexstar', burst: 'fire_explosion', tint: '#ff6a2a' },
+    cls_arcane: { castMs: 340, telegraphMs: 240, star: 'hexstar', burst: 'arcane_burst', tint: '#a06bff' },
   },
   fxCache: {},
   _fxEmitters: null, _fxRaf: 0, _fxDefer: null, _fxFlushed: false, _fxDone: false, _fxSafety: 0,
@@ -10947,7 +10948,9 @@ const BattleUI = {
     if (!im || !im.width) return;
     const size = em.base * 2.0 * em.scale, dw = size, dh = size * (im.height / im.width || 1);
     const ox = em.x - dw / 2, oy = em.anchor === 'feet' ? em.y - dh : em.y - dh / 2;
-    ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1; ctx.drawImage(im, ox, oy, dw, dh);
+    // 尾部淡出：最后 28% 渐隐到 0，确保不会自然消散的素材也能优雅收尾（不会硬切）
+    const fade = p > 0.72 ? Math.max(0, (1 - p) / 0.28) : 1;
+    ctx.imageSmoothingEnabled = false; ctx.globalAlpha = fade; ctx.drawImage(im, ox, oy, dw, dh); ctx.globalAlpha = 1;
   },
 
   // —— 程序化兜底特效（在真 PNG 到位前用来跑通握手）——

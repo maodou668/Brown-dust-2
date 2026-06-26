@@ -248,6 +248,7 @@ const BattleUI = {
   // 技能 → 演出时间线（castMs 施法收招、telegraphMs 六芒星预警时长、star 预警特效、burst 爆炸特效）
   SKILL_VFX: {
     inferno: { castMs: 380, telegraphMs: 460, star: 'hexstar', burst: 'fire_explosion', tint: '#ff6a2a' },
+    cls_arcane: { castMs: 340, telegraphMs: 240, star: 'hexstar', burst: 'arcane_burst', tint: '#a06bff' },
   },
   fxCache: {},
   _fxEmitters: null, _fxRaf: 0, _fxDefer: null, _fxFlushed: false, _fxDone: false, _fxSafety: 0,
@@ -352,7 +353,9 @@ const BattleUI = {
     if (!im || !im.width) return;
     const size = em.base * 2.0 * em.scale, dw = size, dh = size * (im.height / im.width || 1);
     const ox = em.x - dw / 2, oy = em.anchor === 'feet' ? em.y - dh : em.y - dh / 2;
-    ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1; ctx.drawImage(im, ox, oy, dw, dh);
+    // 尾部淡出：最后 28% 渐隐到 0，确保不会自然消散的素材也能优雅收尾（不会硬切）
+    const fade = p > 0.72 ? Math.max(0, (1 - p) / 0.28) : 1;
+    ctx.imageSmoothingEnabled = false; ctx.globalAlpha = fade; ctx.drawImage(im, ox, oy, dw, dh); ctx.globalAlpha = 1;
   },
 
   // —— 程序化兜底特效（在真 PNG 到位前用来跑通握手）——
