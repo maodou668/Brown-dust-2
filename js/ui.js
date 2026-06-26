@@ -20,6 +20,9 @@ const UI = {
 
   rarityClass(r) { return 'r' + r; },
 
+  // 动态立绘（佣兵详情大框）：charId → 视频基名（自动找 .mp4/.webm）
+  LIVE_SPLASH: { lecliss: 'art/01_splash/lecliss_live' },
+
   charAvatar(charId) {
     const c = window.GameData.CHARACTERS[charId];
     const clsIcon = window.GameData.CLASSES[c.cls].icon;
@@ -745,11 +748,18 @@ const UI = {
       const cos = Game.activeCostumeDef(sel);
       const inTeam = Game.inTeam(sel.uid);
       const st = Game.computeStats(sel);
+      const live = this.LIVE_SPLASH[sel.charId];
+      const splashVisual = live
+        ? `<video class="r2-live" autoplay loop muted playsinline preload="auto" poster="${c.art || ''}">
+             <source src="${live}.mp4?v=${window.ASSET_VER || ''}" type="video/mp4">
+             <source src="${live}.webm?v=${window.ASSET_VER || ''}" type="video/webm">
+           </video><div class="r2-live-scrim"></div>`
+        : `<div class="r2-splash-avatar">${this.charAvatar(sel.charId)}</div>`;
       splash = `
         <div class="r2-splash border-${this.rarityClass(c.rarity)}" style="background:linear-gradient(180deg, ${cos.color}66 0%, ${cos.color}22 45%, var(--bg) 90%);">
           <span class="r2-splash-el">${E[c.element].icon}${E[c.element].name}</span>
           <span class="r2-splash-star">${'★'.repeat(c.rarity)}</span>
-          <div class="r2-splash-avatar">${this.charAvatar(sel.charId)}</div>
+          ${splashVisual}
           <div class="r2-splash-info">
             <div class="r2-splash-name">${c.name}</div>
             <div class="r2-splash-meta">${c.title} · ${CL[c.cls].icon}${CL[c.cls].name} · Lv.${sel.level}</div>
@@ -810,6 +820,9 @@ const UI = {
     };
     // 卡片：单击选中（更新左侧预览）
     this.screenEl.querySelectorAll('.r2-card[data-uid]').forEach(card => card.onclick = () => { this.rosterSel = card.dataset.uid; this.renderRoster(); });
+    // 动态立绘视频：尝试自动播放，失败则隐藏露出 poster 兜底
+    const lv = this.screenEl.querySelector('video.r2-live');
+    if (lv) { lv.muted = true; const p = lv.play(); if (p && p.catch) p.catch(() => {}); lv.addEventListener('error', () => { lv.style.display = 'none'; }, { once: true }); }
     // 预览按钮
     const det = this.screenEl.querySelector('#r2-detail');
     if (det) det.onclick = () => this.showCharDetail(this.rosterSel);

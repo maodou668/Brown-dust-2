@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=89">
+  <link rel="manifest" href="manifest.webmanifest?v=90">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=89">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=89">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=90">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=90">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -1057,8 +1057,8 @@ body {
 
 /* ============ 角色立绘 / 精灵图（PixelLab 资产） ============ */
 .char-img {
-  width: 100%; height: 100%; object-fit: contain; object-position: bottom;
-  image-rendering: pixelated; display: block;
+  width: 100%; height: 100%; object-fit: contain; object-position: top center;
+  image-rendering: auto; display: block;
 }
 .char-emoji { line-height: 1; }
 .port-img { image-rendering: pixelated; }
@@ -1424,7 +1424,8 @@ body {
 /* 顶栏：玩家信息 + 资源 + 系统 */
 .profile-chip { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid rgba(255,255,255,.08); border-radius: 22px; padding: 4px 12px 4px 5px; cursor: pointer; color: var(--text); }
 .profile-chip:active { transform: scale(.97); }
-.pc-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: grid; place-items: center; font-size: 16px; }
+.pc-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: grid; place-items: center; font-size: 16px; overflow: hidden; }
+.pc-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
 .pc-info { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
 .pc-name { font-size: 13px; font-weight: 700; }
 .pc-sub { font-size: 10px; color: var(--text-dim); }
@@ -1662,6 +1663,9 @@ body {
 .r2-left { flex: 0 0 36%; min-width: 180px; max-width: 360px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
 .r2-splash { flex: 1; position: relative; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; min-height: 200px; border-width: 2px; }
 .r2-splash.empty { align-items: center; justify-content: center; background: var(--panel); }
+.r2-live { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; z-index: 0; background: #1a1422; }
+.r2-live-scrim { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(0deg, rgba(8,6,12,.85) 0%, rgba(8,6,12,.15) 30%, transparent 55%); }
 .r2-splash-avatar { position: absolute; inset: 0 0 30px 0; display: grid; place-items: center; font-size: clamp(90px, 22vmin, 220px); }
 .r2-splash-avatar img.char-img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
 .r2-splash-el { position: absolute; top: 8px; left: 10px; font-size: 12px; background: rgba(0,0,0,.45); padding: 2px 9px; border-radius: 10px; z-index: 2; }
@@ -2167,7 +2171,7 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar">🎖️</span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=90" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
@@ -2206,7 +2210,7 @@ button.ac-circle:active { transform: scale(.92); }
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '89';</script>
+  <script>window.ASSET_VER = '90';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -2479,6 +2483,7 @@ const CHARACTERS = {
     base: { hp: 820, atk: 165, def: 60, spd: 95, crit: 0.20 },
     grow: { hp: 78, atk: 16, def: 5 },
     skills: ['fireball', 'inferno'],
+    art: 'art/01_splash/lecliss_bust.png',   // 半身像（佣兵/编队/招募小框）
     desc: '操纵烈焰的强大魔女，擅长对敌方全体造成毁灭性火焰伤害。',
   },
   justia: {
@@ -6452,6 +6457,9 @@ const UI = {
 
   rarityClass(r) { return 'r' + r; },
 
+  // 动态立绘（佣兵详情大框）：charId → 视频基名（自动找 .mp4/.webm）
+  LIVE_SPLASH: { lecliss: 'art/01_splash/lecliss_live' },
+
   charAvatar(charId) {
     const c = window.GameData.CHARACTERS[charId];
     const clsIcon = window.GameData.CLASSES[c.cls].icon;
@@ -7177,11 +7185,18 @@ const UI = {
       const cos = Game.activeCostumeDef(sel);
       const inTeam = Game.inTeam(sel.uid);
       const st = Game.computeStats(sel);
+      const live = this.LIVE_SPLASH[sel.charId];
+      const splashVisual = live
+        ? `<video class="r2-live" autoplay loop muted playsinline preload="auto" poster="${c.art || ''}">
+             <source src="${live}.mp4?v=${window.ASSET_VER || ''}" type="video/mp4">
+             <source src="${live}.webm?v=${window.ASSET_VER || ''}" type="video/webm">
+           </video><div class="r2-live-scrim"></div>`
+        : `<div class="r2-splash-avatar">${this.charAvatar(sel.charId)}</div>`;
       splash = `
         <div class="r2-splash border-${this.rarityClass(c.rarity)}" style="background:linear-gradient(180deg, ${cos.color}66 0%, ${cos.color}22 45%, var(--bg) 90%);">
           <span class="r2-splash-el">${E[c.element].icon}${E[c.element].name}</span>
           <span class="r2-splash-star">${'★'.repeat(c.rarity)}</span>
-          <div class="r2-splash-avatar">${this.charAvatar(sel.charId)}</div>
+          ${splashVisual}
           <div class="r2-splash-info">
             <div class="r2-splash-name">${c.name}</div>
             <div class="r2-splash-meta">${c.title} · ${CL[c.cls].icon}${CL[c.cls].name} · Lv.${sel.level}</div>
@@ -7242,6 +7257,9 @@ const UI = {
     };
     // 卡片：单击选中（更新左侧预览）
     this.screenEl.querySelectorAll('.r2-card[data-uid]').forEach(card => card.onclick = () => { this.rosterSel = card.dataset.uid; this.renderRoster(); });
+    // 动态立绘视频：尝试自动播放，失败则隐藏露出 poster 兜底
+    const lv = this.screenEl.querySelector('video.r2-live');
+    if (lv) { lv.muted = true; const p = lv.play(); if (p && p.catch) p.catch(() => {}); lv.addEventListener('error', () => { lv.style.display = 'none'; }, { once: true }); }
     // 预览按钮
     const det = this.screenEl.querySelector('#r2-detail');
     if (det) det.onclick = () => this.showCharDetail(this.rosterSel);

@@ -1041,8 +1041,8 @@ body {
 
 /* ============ 角色立绘 / 精灵图（PixelLab 资产） ============ */
 .char-img {
-  width: 100%; height: 100%; object-fit: contain; object-position: bottom;
-  image-rendering: pixelated; display: block;
+  width: 100%; height: 100%; object-fit: contain; object-position: top center;
+  image-rendering: auto; display: block;
 }
 .char-emoji { line-height: 1; }
 .port-img { image-rendering: pixelated; }
@@ -1408,7 +1408,8 @@ body {
 /* 顶栏：玩家信息 + 资源 + 系统 */
 .profile-chip { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid rgba(255,255,255,.08); border-radius: 22px; padding: 4px 12px 4px 5px; cursor: pointer; color: var(--text); }
 .profile-chip:active { transform: scale(.97); }
-.pc-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: grid; place-items: center; font-size: 16px; }
+.pc-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: grid; place-items: center; font-size: 16px; overflow: hidden; }
+.pc-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
 .pc-info { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
 .pc-name { font-size: 13px; font-weight: 700; }
 .pc-sub { font-size: 10px; color: var(--text-dim); }
@@ -1646,6 +1647,9 @@ body {
 .r2-left { flex: 0 0 36%; min-width: 180px; max-width: 360px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
 .r2-splash { flex: 1; position: relative; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; min-height: 200px; border-width: 2px; }
 .r2-splash.empty { align-items: center; justify-content: center; background: var(--panel); }
+.r2-live { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; z-index: 0; background: #1a1422; }
+.r2-live-scrim { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(0deg, rgba(8,6,12,.85) 0%, rgba(8,6,12,.15) 30%, transparent 55%); }
 .r2-splash-avatar { position: absolute; inset: 0 0 30px 0; display: grid; place-items: center; font-size: clamp(90px, 22vmin, 220px); }
 .r2-splash-avatar img.char-img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
 .r2-splash-el { position: absolute; top: 8px; left: 10px; font-size: 12px; background: rgba(0,0,0,.45); padding: 2px 9px; border-radius: 10px; z-index: 2; }
