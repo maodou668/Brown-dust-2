@@ -1,0 +1,42 @@
+# CLAUDE.md —— 项目 Playbook（每次会话先读这里）
+
+> ⚠️ 这是**模板**。开新项目时复制为根目录 `CLAUDE.md`，把 `<...>` 占位替换为本项目实际值。
+
+> 这是一个 **<GENRE，如：横版抽卡 RPG>**，技术栈 **<如：纯原生 HTML/CSS/JS>**，部署到 **<如：GitHub Pages>**。
+> 本文件让任何一次会话（即使零上下文）都能立刻按既定方法论工作，不必从头摸索。
+> 配套文档：`BALANCE.md`(数值契约) · `ART_PIPELINE.md`(美术分工) · `docs/VFX_PIPELINE.md`(VFX 流程)。
+
+## 0. 铁律
+- **分支**：只在 `<开发分支名>` 开发与推送；不开 PR（除非明确要求）。
+- **构建前必过数值闸门**：`node scripts/build.js` 会先跑 `balance-validate.js`，越界即拒绝构建。
+- **上线循环**：改源码 → bump 版本号(`ASSET_VER` + 所有 `?v=N`) → `node scripts/build.js` → commit/push → 轮询线上版本确认。
+- **自测优先于"我觉得"**：能脚本/无头浏览器验证的，先验证再下结论。
+- 提交信息按 `<团队约定>` 署名；产物里不要出现模型标识。
+
+## 1. 架构与构建
+- 源码目录 `<js/...>` + `<css/...>` + 入口 `<index.html>`。
+- `scripts/build.js` 把资源内联进**自包含的 `<game.html>`**（线上加载它）。
+- 本地预览：`<python3 -m http.server PORT + 打开 game.html>`。
+- 部署：`<.github/workflows/pages.yml>` —— `validate` job 过了才 `deploy`，**不过不上线**。
+
+## 2. 数值平衡（公式驱动，禁手填）—— 详见 BALANCE.md
+- **技能**：`engine/balance.js` 的 `Balance.make(spec)` 反解威力，平衡分须 `|score-1|≤0.18`。
+- **属性**：`engine/budget.js` 双轴预算（O 进攻 / S 生存），按 职业×稀有度 归一，`O/Oref+S/Sref≈2.0`，用 `Budget.makeCharStats()` 生成新角色。
+- **闸门**：`node scripts/balance-validate.js`（越界 exit 1，已接入 build + CI）。改数值后必跑自测脚本。
+- ⚠️ 接新项目时 `balance.js`/`budget.js` 的常数要**按本作重新校准**（见各文件头注 + stat-analyze.js）。
+
+## 3. 技能特效 VFX（动画/逻辑握手）—— 详见 docs/VFX_PIPELINE.md
+- **原则**：战斗逻辑瞬时算完且权威；伤害视觉（掉血/飘字）缓存，等特效「命中帧 impactFrame」再 flush，画面与扣血同步。
+- 框架：见 `engine/vfx-framework.reference.js`（注册表 `SKILL_VFX` + 逐帧播放器 + 程序化兜底 + handleEvent 拆即时/可延迟）。
+- 素材：`art/.../fx/<effect>/frame_NNN.png` + `manifest{fps,frames,anchor,impactFrame,scale}`。
+- **PixelLab 流程**：`create_1_direction_object`(size64) → 挑候选 → `animate_object`(v3) → 下载切帧 → 写 manifest（亮度峰值定 impactFrame）→ 挂 SKILL_VFX → 截图验收。
+- ⚠️ **画风教训**：提示词**别写** `black outline`/`low detailed`；写 `soft smooth shading, fine detailed pixels, no black outline, anime fantasy spell effect`，必要时贴本作立绘当 style reference。
+
+## 4. 美术分工 —— 详见 ART_PIPELINE.md
+- 用户出人物本体（8 向静态/idle/run、攻击施法仅 north、静态+动态立绘）。
+- 我出技能/普攻 VFX + 接入、头像自动裁切、怪物/BOSS/场景/道具图标。
+
+## 5. 自测手法
+- 无头浏览器 Playwright（横屏视口），开局先跳过剧情再截图。
+- 渲染/裁图 `@napi-rs/canvas`（从外部跑设 `NODE_PATH=<repo>/node_modules`）。
+- PixelLab 出图 ~5-8 分钟：后台 sleep 等待后 `get_object` 轮询。
