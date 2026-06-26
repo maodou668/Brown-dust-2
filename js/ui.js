@@ -109,8 +109,13 @@ const UI = {
       <span class="lb-icon">${a.icon}</span><span class="lb-label">${a.label}</span>${a.dot ? `<span class="lb-dot">${a.dot}</span>` : ''}</button>`;
     this.screenEl.innerHTML = `
       <div class="lobby">
-        <div class="lobby-bg"><div class="lobby-bg-grid"></div>
-          <div class="lobby-art-ph">🗡️<span class="muted">主角立绘 / 动态背景位</span></div>
+        <div class="lobby-bg">
+          <video class="lobby-video" autoplay loop muted playsinline preload="auto" poster="">
+            <source src="art/video/home_bg.mp4?v=${window.ASSET_VER || ''}" type="video/mp4">
+            <source src="art/video/home_bg.webm?v=${window.ASSET_VER || ''}" type="video/webm">
+          </video>
+          <div class="lobby-video-scrim"></div>
+          <div class="lobby-bg-grid"></div>
         </div>
         <!-- 左上集群 -->
         <div class="lobby-left">${leftCluster.map(clusterBtn).join('')}</div>
@@ -145,6 +150,16 @@ const UI = {
       }));
     const mt = this.screenEl.querySelector('#lm-toggle');
     if (mt) mt.onclick = () => { if (window.Sound) Sound.toggleMute(); mt.textContent = (window.Sound && Sound.muted) ? '▶' : '⏸'; };
+    // 动态背景视频：尝试自动播放；被浏览器拦截则在首次交互时补播；加载失败则隐藏露出渐变兜底
+    const vid = this.screenEl.querySelector('.lobby-video');
+    if (vid) {
+      vid.muted = true;                                  // 静音才允许自动播放
+      const tryPlay = () => { const p = vid.play(); if (p && p.catch) p.catch(() => {}); };
+      tryPlay();
+      const kick = () => { tryPlay(); document.removeEventListener('pointerdown', kick); };
+      document.addEventListener('pointerdown', kick, { once: true });
+      vid.addEventListener('error', () => { vid.style.display = 'none'; }, { once: true });
+    }
   },
 
   /** 队伍编辑器：从出战框直接编辑 */

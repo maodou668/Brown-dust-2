@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=83">
+  <link rel="manifest" href="manifest.webmanifest?v=84">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=83">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=83">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=84">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=84">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -1582,6 +1582,12 @@ body {
    ============================================================ */
 .lobby-art-ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: 56px; color: var(--text-dim); opacity: .35; pointer-events: none; }
 .lobby-art-ph .muted { font-size: 12px; }
+/* 动态背景视频（BD2 式大厅主背景）：铺满、裁切填充，叠暗角让前景按钮清晰 */
+.lobby-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; pointer-events: none; background: #0e0b14; }
+.lobby-video-scrim { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(10,8,16,.45) 0%, rgba(10,8,16,.10) 28%, rgba(10,8,16,.20) 62%, rgba(10,8,16,.72) 100%),
+    radial-gradient(120% 80% at 50% 0%, transparent 55%, rgba(10,8,16,.45) 100%); }
 
 /* 左上集群 */
 .lobby-left { position: absolute; top: 10px; left: 10px; z-index: 2; display: grid; grid-template-columns: repeat(2, 46px); gap: 6px; }
@@ -2194,7 +2200,7 @@ button.ac-circle:active { transform: scale(.92); }
     <div class="rt-sub">本游戏为横版设计，请旋转设备至横屏以获得最佳体验。</div>
   </div>
 
-  <script>window.ASSET_VER = '83';</script>
+  <script>window.ASSET_VER = '84';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -6522,8 +6528,13 @@ const UI = {
       <span class="lb-icon">${a.icon}</span><span class="lb-label">${a.label}</span>${a.dot ? `<span class="lb-dot">${a.dot}</span>` : ''}</button>`;
     this.screenEl.innerHTML = `
       <div class="lobby">
-        <div class="lobby-bg"><div class="lobby-bg-grid"></div>
-          <div class="lobby-art-ph">🗡️<span class="muted">主角立绘 / 动态背景位</span></div>
+        <div class="lobby-bg">
+          <video class="lobby-video" autoplay loop muted playsinline preload="auto" poster="">
+            <source src="art/video/home_bg.mp4?v=${window.ASSET_VER || ''}" type="video/mp4">
+            <source src="art/video/home_bg.webm?v=${window.ASSET_VER || ''}" type="video/webm">
+          </video>
+          <div class="lobby-video-scrim"></div>
+          <div class="lobby-bg-grid"></div>
         </div>
         <!-- 左上集群 -->
         <div class="lobby-left">${leftCluster.map(clusterBtn).join('')}</div>
@@ -6558,6 +6569,16 @@ const UI = {
       }));
     const mt = this.screenEl.querySelector('#lm-toggle');
     if (mt) mt.onclick = () => { if (window.Sound) Sound.toggleMute(); mt.textContent = (window.Sound && Sound.muted) ? '▶' : '⏸'; };
+    // 动态背景视频：尝试自动播放；被浏览器拦截则在首次交互时补播；加载失败则隐藏露出渐变兜底
+    const vid = this.screenEl.querySelector('.lobby-video');
+    if (vid) {
+      vid.muted = true;                                  // 静音才允许自动播放
+      const tryPlay = () => { const p = vid.play(); if (p && p.catch) p.catch(() => {}); };
+      tryPlay();
+      const kick = () => { tryPlay(); document.removeEventListener('pointerdown', kick); };
+      document.addEventListener('pointerdown', kick, { once: true });
+      vid.addEventListener('error', () => { vid.style.display = 'none'; }, { once: true });
+    }
   },
 
   /** 队伍编辑器：从出战框直接编辑 */

@@ -1566,6 +1566,12 @@ body {
    ============================================================ */
 .lobby-art-ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: 56px; color: var(--text-dim); opacity: .35; pointer-events: none; }
 .lobby-art-ph .muted { font-size: 12px; }
+/* 动态背景视频（BD2 式大厅主背景）：铺满、裁切填充，叠暗角让前景按钮清晰 */
+.lobby-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; pointer-events: none; background: #0e0b14; }
+.lobby-video-scrim { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(10,8,16,.45) 0%, rgba(10,8,16,.10) 28%, rgba(10,8,16,.20) 62%, rgba(10,8,16,.72) 100%),
+    radial-gradient(120% 80% at 50% 0%, transparent 55%, rgba(10,8,16,.45) 100%); }
 
 /* 左上集群 */
 .lobby-left { position: absolute; top: 10px; left: 10px; z-index: 2; display: grid; grid-template-columns: repeat(2, 46px); gap: 6px; }
