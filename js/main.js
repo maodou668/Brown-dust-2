@@ -1147,10 +1147,67 @@ const Main = {
 
     this.switchScreen('home');
 
-    // 首次进入播放序章
-    if (!Story.seen('prologue')) {
-      Story.play('prologue');
-    }
+    // 资源预加载 + 加载页：等关键美术(立绘/头像/视频)就绪再揭幕，避免"蹦图"
+    this.bootReveal();
+  },
+
+  // ---------- 启动加载页 / 资源预加载 ----------
+  bootReveal() {
+    const loader = document.getElementById('boot-loader');
+    const fill = document.getElementById('bl-fill');
+    const pct = document.getElementById('bl-pct');
+    const setP = (p) => {
+      const v = Math.round(Math.max(0, Math.min(1, p)) * 100);
+      if (fill) fill.style.width = v + '%';
+      if (pct) pct.textContent = v + '%';
+    };
+    const finish = () => {
+      setP(1);
+      this.warmSecondary();                       // 后台预热战斗序列帧/特效（不阻塞）
+      if (loader) { loader.classList.add('done'); setTimeout(() => loader.remove(), 650); }
+      if (!Story.seen('prologue')) setTimeout(() => Story.play('prologue'), 700);  // 首次序章在揭幕后
+    };
+    this.preloadAssets(setP).then(finish).catch(finish);
+  },
+
+  /** 预加载关键美术资源（角色半身/头像 + 大厅/动态立绘视频），带进度 */
+  preloadAssets(onProgress) {
+    const V = window.ASSET_VER || '';
+    const imgs = [];
+    const C = (window.GameData && window.GameData.CHARACTERS) || {};
+    Object.values(C).forEach(c => { if (c.art) imgs.push(c.art); });
+    imgs.push('art/01_splash/lecliss_avatar.png');
+    const vids = ['art/video/home_bg', 'art/01_splash/lecliss_live'];
+    const total = imgs.length + vids.length || 1;
+    let done = 0;
+    const tick = () => onProgress(done / total);
+    tick();
+    const loadImg = (src) => new Promise((res) => {
+      const im = new Image();
+      im.onload = im.onerror = () => { done++; tick(); res(); };
+      im.src = src + (src.indexOf('?') >= 0 ? '' : '?v=' + V);
+    });
+    const loadVid = (base) => new Promise((res) => {
+      const v = document.createElement('video');
+      v.muted = true; v.preload = 'auto';
+      let settled = false; const fin = () => { if (settled) return; settled = true; done++; tick(); res(); };
+      v.addEventListener('canplaythrough', fin, { once: true });
+      v.addEventListener('loadeddata', fin, { once: true });   // 首帧即可，不等整段下完
+      v.addEventListener('error', fin, { once: true });
+      setTimeout(fin, 9000);                                   // 单视频超时兜底
+      const sM = document.createElement('source'); sM.src = base + '.mp4?v=' + V; sM.type = 'video/mp4';
+      const sW = document.createElement('source'); sW.src = base + '.webm?v=' + V; sW.type = 'video/webm';
+      v.appendChild(sM); v.appendChild(sW); v.load();
+    });
+    const all = [...imgs.map(loadImg), ...vids.map(loadVid)];
+    // 全局超时：最长等 16s，无论如何揭幕，绝不卡死
+    return Promise.race([Promise.all(all), new Promise((r) => setTimeout(r, 16000))]);
+  },
+
+  /** 后台预热（不阻塞揭幕）：战斗序列帧 + 技能特效，进战斗时已就绪 */
+  warmSecondary() {
+    try { if (BattleUI.loadBattleSprite) BattleUI.loadBattleSprite(); } catch (e) {}
+    try { if (BattleUI.preloadSkillFx) BattleUI.preloadSkillFx(); } catch (e) {}
   },
 
   // ---------- 全屏 ----------

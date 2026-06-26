@@ -683,6 +683,21 @@ body {
 }
 
 /* 技能名横幅 */
+/* 启动加载页 */
+#boot-loader { transition: opacity .55s ease; }
+#boot-loader.done { opacity: 0; pointer-events: none; }
+#boot-loader .bl-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(78vw, 420px);
+  background: radial-gradient(120% 90% at 50% 30%, rgba(176,107,255,.18), transparent 70%); padding: 28px 10px; }
+#boot-loader .bl-title { font-size: 30px; font-weight: 900; letter-spacing: 2px; color: #fff; text-shadow: 0 2px 20px rgba(176,107,255,.55); }
+#boot-loader .bl-sub { font-size: 11px; letter-spacing: 4px; color: #b9a8e0; margin-top: -4px; }
+#boot-loader .bl-bar { width: 100%; height: 8px; border-radius: 6px; margin-top: 16px; overflow: hidden;
+  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.12); }
+#boot-loader .bl-fill { width: 0%; height: 100%; border-radius: 6px; transition: width .25s ease;
+  background: linear-gradient(90deg, #b06bff, #ff6b9d); box-shadow: 0 0 12px rgba(176,107,255,.7); }
+#boot-loader .bl-pct { font-size: 13px; font-weight: 700; color: #e8d8ff; }
+#boot-loader .bl-tip { font-size: 11px; color: #8a80a0; margin-top: 2px; animation: blPulse 1.4s ease-in-out infinite; }
+@keyframes blPulse { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
+
 #battle-fx { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
 .skill-banner {
   position: absolute; top: 44%; left: 50%; z-index: 3; pointer-events: none;
