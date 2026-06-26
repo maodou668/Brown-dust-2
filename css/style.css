@@ -1544,7 +1544,12 @@ body {
 .gf-pool { background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 10px 12px; }
 .gf-pool-label { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
 .gf-pick-row { display: flex; gap: 6px; overflow-x: auto; }
-.gf-pick { flex: 0 0 auto; width: 42px; height: 42px; border-radius: 9px; display: grid; place-items: center; font-size: 22px; overflow: hidden; background: var(--panel-2); border: 1.5px solid var(--r5); }
+.gf-pick { flex: 0 0 auto; width: 42px; height: 42px; border-radius: 9px; display: grid; place-items: center; font-size: 22px; overflow: hidden; background: var(--panel-2); border: 1.5px solid var(--r5); cursor: pointer; transition: transform .12s; }
+.gf-pick:active { transform: scale(.92); }
+/* 服装详情：专属招式块 */
+.cd-skill { background: rgba(176,107,255,.10); border: 1px solid rgba(176,107,255,.28); border-radius: 9px; padding: 8px 10px; }
+.cd-skill-head { font-size: 13px; margin-bottom: 4px; }
+.cd-skill-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
 .gf-pick img.char-img { width: 100%; height: 100%; object-fit: cover; }
 
 .gf-pull { display: flex; gap: 8px; align-items: stretch; margin-top: auto; }

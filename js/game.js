@@ -930,6 +930,7 @@ const Game = {
     if (r.powder) this.state.powder += r.powder;
     if (r.spark) this.state.spark += r.spark;
     if (r.gear) this.addGear(r.gear);
+    if (r.gearRarity) this.addRandomGear(r.gearRarity);
     if (r.stone) this.state.awakenStone = (this.state.awakenStone || 0) + r.stone;
     if (r.stam) this.state.stamina = (this.state.stamina || 0) + r.stam;
     if (r.ticket) this.state.actDraw.tickets = (this.state.actDraw.tickets || 0) + r.ticket;
@@ -1196,7 +1197,8 @@ const Game = {
     if (item.cur === 'gold') this.spendGold(item.price);
     else if (item.cur === 'gem') this.state.gem -= item.price;
     else if (item.cur === 'coin') this.state.event.coin -= item.price;
-    if (item.give.gearScale) this.rollGear(item.give.gearScale);
+    if (item.give.gearRarity) this.addRandomGear(item.give.gearRarity);
+    else if (item.give.gearScale) this.rollGear(item.give.gearScale);
     else this.applyReward(item.give || {});
     const key = this.shopPeriodKey(item.period);
     const rec = this.state.shop2.bought[itemId];
@@ -1224,21 +1226,11 @@ const Game = {
     if (firstClear && !this.state.cleared.includes(stage.id)) {
       this.state.cleared.push(stage.id);
     }
-    // 装备掉落：40% 概率掉一件通用装备，越后期关卡稀有度越高
+    // 装备掉落：主线首通必掉一件（前期不打资源副本也能攒装备过渡）；复刷 45% 概率。
+    // 稀有度按推荐等级走曲线：前期多蓝、偶尔紫，金极少；越后期金渐多但始终最稀有。
     let drop = null;
-    if (Math.random() < 0.40) {
-      const C = window.GameData.GEAR.CRAFT;
-      const type = C.types[Math.floor(Math.random() * C.types.length)];
-      // 关卡 id 越大，高稀有度概率越高
-      const bonus = Math.min(0.30, stage.id * 0.04);
-      const rr = Math.random();
-      let rarity = 3;
-      if (rr < C.rarityWeight[5] + bonus) rarity = 5;
-      else if (rr < C.rarityWeight[5] + C.rarityWeight[4] + bonus) rarity = 4;
-      const prefix = { weapon: 'wpn', armor: 'arm', accessory: 'acc' }[type];
-      const suffix = { 3: 'r', 4: 'sr', 5: 'ur' }[rarity];
-      drop = `${prefix}_${suffix}`;
-      this.addGear(drop);
+    if (firstClear || Math.random() < 0.45) {
+      drop = this.addRandomGear(this.rollGearRarity(this.gearTierOfStage(stage)));
     }
     this.save();
     return { drop };
@@ -1255,18 +1247,10 @@ const Game = {
     this.state.gold += gold;
     this.state.gem += gem;
     this.state.team.forEach(uid => { const o = this.getOwned(uid); if (o) this.addExp(o, r.exp); });
-    // 装备掉落（与 rewardStage 同概率/同加权）
+    // 装备掉落（扫荡复刷：45% 概率，稀有度按推荐等级走曲线）
     let drop = null;
-    if (Math.random() < 0.40) {
-      const C = window.GameData.GEAR.CRAFT;
-      const type = C.types[Math.floor(Math.random() * C.types.length)];
-      const bonus = Math.min(0.30, t.id * 0.04);
-      const rr = Math.random();
-      let rarity = 3;
-      if (rr < C.rarityWeight[5] + bonus) rarity = 5;
-      else if (rr < C.rarityWeight[5] + C.rarityWeight[4] + bonus) rarity = 4;
-      drop = { weapon: 'wpn', armor: 'arm', accessory: 'acc' }[type] + '_' + { 3: 'r', 4: 'sr', 5: 'ur' }[rarity];
-      this.addGear(drop);
+    if (Math.random() < 0.45) {
+      drop = this.addRandomGear(this.rollGearRarity(this.gearTierOfStage(t)));
     }
     this.save();
     return { ok: true, gold, gem, exp: r.exp, drop };
@@ -1306,18 +1290,39 @@ const Game = {
     return { ok: true };
   },
 
-  // 通用装备掉落（scale 越大越易出高稀有）
-  rollGear(scale) {
-    const C = window.GameData.GEAR.CRAFT;
-    const type = C.types[Math.floor(Math.random() * C.types.length)];
-    const bonus = Math.min(0.30, (scale || 0) * 0.04);
+  // ============================================================
+  //  装备掉落（统一稀有度曲线）——蓝(R) ≫ 紫(SR) > 金(UR)，金始终最稀有
+  //  tier 0..1：越后期内容越容易出高稀有，但 UR 上限仅 ~15%，不会泛滥。
+  //   tier 0   → R 78% / SR 20% / UR 2%
+  //   tier 0.5 → R 61% / SR 30% / UR 8.5%
+  //   tier 1   → R 45% / SR 40% / UR 15%
+  // ============================================================
+  GEAR_TYPES: ['weapon', 'armor', 'accessory'],
+  rollGearRarity(tier) {
+    tier = Math.max(0, Math.min(1, tier || 0));
+    const ur = 0.02 + 0.13 * tier;
+    const sr = 0.20 + 0.20 * tier;
     const rr = Math.random();
-    let rarity = 3;
-    if (rr < C.rarityWeight[5] + bonus) rarity = 5;
-    else if (rr < C.rarityWeight[5] + C.rarityWeight[4] + bonus) rarity = 4;
+    if (rr < ur) return 5;
+    if (rr < ur + sr) return 4;
+    return 3;
+  },
+  // 关卡掉落档位：按推荐等级归一（Lv1→0，Lv50→1），与关卡 id 无关
+  gearTierOfStage(stage) {
+    const lv = (stage && stage.recommend) || 1;
+    return Math.max(0, Math.min(1, (lv - 1) / 50));
+  },
+  // 新增一件「指定稀有度、随机部位」的通用装备，返回 tplId（用于掉落展示）
+  addRandomGear(rarity) {
+    const type = this.GEAR_TYPES[Math.floor(Math.random() * this.GEAR_TYPES.length)];
     const id = { weapon: 'wpn', armor: 'arm', accessory: 'acc' }[type] + '_' + { 3: 'r', 4: 'sr', 5: 'ur' }[rarity];
     this.addGear(id);
     return id;
+  },
+  // 通用装备掉落（scale 视作内容档位：farm/派遣/金币箱越高档越易出高稀有，但不泛滥 UR）
+  rollGear(scale) {
+    const tier = Math.max(0, Math.min(1, (scale || 0) / 12));
+    return this.addRandomGear(this.rollGearRarity(tier));
   },
 
   // ============================================================
@@ -1570,7 +1575,7 @@ const Game = {
       { id: 's_gem', icon: '💎', name: '宝石 ×300', cost: 120, stock: 3, give: { gem: 300 } },
       { id: 's_stone', icon: '🔮', name: '觉醒石 ×5', cost: 100, stock: 6, give: { stone: 5 } },
       { id: 's_powder', icon: '✨', name: '希望之粉 ×100', cost: 80, stock: 5, give: { powder: 100 } },
-      { id: 's_gear', icon: '⚒️', name: 'UR 装备宝箱', cost: 150, stock: 2, give: { gearScale: 10 } },
+      { id: 's_gear', icon: '⚒️', name: 'UR 装备宝箱', cost: 150, stock: 2, give: { gearRarity: 5 } },
       { id: 's_gold', icon: '🪙', name: '金币 ×5000', cost: 40, stock: 8, give: { gold: 5000 } },
     ],
   },
@@ -1615,7 +1620,8 @@ const Game = {
     if (this.state.event.coin < it.cost) return { ok: false, msg: '活动币不足' };
     this.state.event.coin -= it.cost;
     this.state.event.stock[itemId] = left - 1;
-    if (it.give.gearScale) this.rollGear(it.give.gearScale);
+    if (it.give.gearRarity) this.addRandomGear(it.give.gearRarity);
+    else if (it.give.gearScale) this.rollGear(it.give.gearScale);
     else this.applyReward(it.give);
     this.save();
     return { ok: true };
@@ -1942,6 +1948,7 @@ const Game = {
     if (r.powder) this.state.powder += r.powder;
     if (r.spark) this.state.spark += r.spark;
     if (r.gear) this.addGear(r.gear);
+    if (r.gearRarity) this.addRandomGear(r.gearRarity);
     if (r.stone) this.state.awakenStone = (this.state.awakenStone || 0) + r.stone;
   },
 

@@ -1168,7 +1168,7 @@ const UI = {
       const pity = 90 - s.pity;
       const pickups = (pool[5] || []).slice(0, 8).map(cid => {
         const cd = window.GameData.COSTUMES[cid];
-        return `<span class="gf-pick border-r5" title="${cd.charName} · ${cd.costumeName}" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">${window.GameData.CLASSES[cd.cls].icon}</span>`;
+        return `<span class="gf-pick border-r5" data-cid="${cid}" title="${cd.charName} · ${cd.costumeName}（点击查看详情）" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">${window.GameData.CLASSES[cd.cls].icon}</span>`;
       }).join('');
       feature = `
         <div class="gf-art b-costume">
@@ -1194,7 +1194,10 @@ const UI = {
           <button class="btn gf-pull-btn" id="pull10"><span class="gf-guar-badge">5★保底</span><b>抽 10 次</b><span>💎${g.cost * 10}</span></button>
         </div>`;
     } else {
-      const pickups = (exPool[5] || []).slice(0, 8).map(id => `<span class="gf-pick border-r5">${this.exPoolCard ? '🗡️' : '🗡️'}</span>`).join('') || '<span class="muted">暂无上架</span>';
+      const pickups = (exPool[5] || []).slice(0, 8).map(id => {
+        const t = window.GameData.GEAR.ex[id];
+        return `<span class="gf-pick border-r5" data-exid="${id}" title="${t ? t.name : ''}（点击查看详情）">${t ? t.icon : '🗡️'}</span>`;
+      }).join('') || '<span class="muted">暂无上架</span>';
       feature = `
         <div class="gf-art b-ex">
           <span class="gf-badge">WEAPON</span>
@@ -1228,6 +1231,11 @@ const UI = {
     });
     const rb = this.screenEl.querySelector('#gacha-rates');
     if (rb) rb.onclick = () => this.showGachaRates(tab);
+    // 卡池图标点击 → 详情
+    this.screenEl.querySelectorAll('.gf-pick[data-cid]').forEach(el =>
+      el.onclick = () => this.showCostumeDetail(el.dataset.cid));
+    this.screenEl.querySelectorAll('.gf-pick[data-exid]').forEach(el =>
+      el.onclick = () => this.showGearTplDetail(el.dataset.exid));
     if (tab === 'costume') {
       document.getElementById('pull1').onclick = () => this.doPull(1);
       document.getElementById('pull10').onclick = () => this.doPull(10);
@@ -1283,7 +1291,7 @@ const UI = {
     const grid = results.map(r => {
       const tpl = Game.getGearTpl(r.tplId);
       const rl = window.GameData.GEAR.RLABEL[tpl.rarity];
-      return `<div class="roster-card border-${this.rarityClass(tpl.rarity)}">
+      return `<div class="roster-card border-${this.rarityClass(tpl.rarity)}" data-exid="${r.tplId}" title="点击查看详情">
         <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, #ff9b3d44, transparent);">
           <span class="rarity-badge ${this.rarityClass(tpl.rarity)}">${rl}</span>
           🗡️${r.dup ? `<span class="in-team-tag" style="background:var(--panel-2);color:var(--text-dim);">💎${r.refund}</span>` : '<span class="in-team-tag" style="background:var(--gold);color:#241a08;">NEW</span>'}
@@ -1296,6 +1304,7 @@ const UI = {
       <div class="roster-grid">${grid}</div>
       <div class="close-row"><button class="btn" id="ex-ok">确定</button></div>
     `, { noBackdropClose: true });
+    m.querySelectorAll('.roster-card[data-exid]').forEach(c => c.onclick = () => this.showGearTplDetail(c.dataset.exid));
     m.querySelector('#ex-ok').onclick = () => { this.closeModal(m); this.renderGacha(); };
   },
 
@@ -1349,7 +1358,7 @@ const UI = {
       const cd = window.GameData.COSTUMES[r.costumeId];
       const m = this.openModal(`
         <div class="pull-result">
-          <div class="pull-art border-${this.rarityClass(cd.rarity)}" style="background:radial-gradient(circle at 50% 35%, ${cd.color}66, var(--panel));">
+          <div class="pull-art border-${this.rarityClass(cd.rarity)}" data-cid="${r.costumeId}" title="点击查看详情" style="cursor:pointer;background:radial-gradient(circle at 50% 35%, ${cd.color}66, var(--panel));">
             ${window.GameData.CLASSES[cd.cls].icon}
           </div>
           <div class="pull-stars ${this.rarityClass(cd.rarity)}" style="-webkit-text-fill-color:initial;color:var(--${'r'+r.rarity});">${'★'.repeat(r.rarity)}</div>
@@ -1359,13 +1368,15 @@ const UI = {
         </div>
         <div class="close-row"><button class="btn" id="pr-ok">确定</button></div>
       `, { noBackdropClose: true });
+      const pa = m.querySelector('.pull-art[data-cid]');
+      if (pa) pa.onclick = () => this.showCostumeDetail(pa.dataset.cid);
       m.querySelector('#pr-ok').onclick = () => { this.closeModal(m); this.renderGacha(); };
     } else {
       const grid = results.map(r => {
         const cd = window.GameData.COSTUMES[r.costumeId];
         const tag = r.isNew ? 'NEW' : r.newCostume ? '新装' : r.plusUp ? '突破+' + r.plus : '💎' + r.refund;
         const tagBg = r.isNew ? 'var(--gold);color:#241a08' : r.newCostume ? 'var(--gem)' : r.plusUp ? 'var(--accent-2)' : 'var(--panel-2);color:var(--text-dim)';
-        return `<div class="roster-card border-${this.rarityClass(r.rarity)}">
+        return `<div class="roster-card border-${this.rarityClass(r.rarity)}" data-cid="${r.costumeId}" title="点击查看详情">
           <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${cd.color}44, transparent);">
             <span class="rarity-badge ${this.rarityClass(r.rarity)}">${r.rarity}★</span>
             ${window.GameData.CLASSES[cd.cls].icon}
@@ -1377,10 +1388,11 @@ const UI = {
       const best = Math.max(...results.map(r => r.rarity));
       const m = this.openModal(`
         <h2 style="text-align:center;">十连招募结果</h2>
-        <p class="muted" style="text-align:center;margin-bottom:12px;">最高稀有度 <b class="${this.rarityClass(best)}" style="padding:1px 6px;border-radius:5px;">${best}★</b></p>
+        <p class="muted" style="text-align:center;margin-bottom:12px;">最高稀有度 <b class="${this.rarityClass(best)}" style="padding:1px 6px;border-radius:5px;">${best}★</b> · 点击卡片看详情</p>
         <div class="roster-grid">${grid}</div>
         <div class="close-row"><button class="btn" id="pr-ok">确定</button></div>
       `, { noBackdropClose: true });
+      m.querySelectorAll('.roster-card[data-cid]').forEach(c => c.onclick = () => this.showCostumeDetail(c.dataset.cid));
       m.querySelector('#pr-ok').onclick = () => { this.closeModal(m); this.renderGacha(); };
     }
   },
@@ -2288,6 +2300,65 @@ const UI = {
       <div class="close-row"><button class="btn secondary" id="gd-close">关闭</button><button class="btn gold" id="gd-enhance">强化</button></div>`);
     render(m);
     m.querySelector('#gd-close').onclick = () => { this.closeModal(m); this.renderInventory(); };
+  },
+
+  /** 服装详情（招募卡池 / 结果点击）——只读展示属性 + 专属招式，不需已拥有 */
+  showCostumeDetail(costumeId) {
+    const cos = window.GameData.COSTUMES[costumeId];
+    if (!cos) return;
+    const SK = window.GameData.SKILLS;
+    const sig = SK[cos.signature];
+    const cls = window.GameData.CLASSES[cos.cls] || { name: cos.cls, icon: '' };
+    const el = window.GameData.ELEMENTS[cos.element] || { name: '', icon: '' };
+    const owned = Game.state.roster.find(o => o.charId === cos.charId);
+    const has = owned && Game.ownedCostumeIds(owned).includes(costumeId);
+    const g = cos.grow || {};
+    const s60 = { hp: Math.round(cos.stats.hp + (g.hp || 0) * 59), atk: Math.round(cos.stats.atk + (g.atk || 0) * 59),
+                  def: Math.round(cos.stats.def + (g.def || 0) * 59), spd: cos.stats.spd, crit: cos.stats.crit };
+    const statRow = (k, v1, v60) => `<div class="gd-stat"><span>${this.STAT_LAB[k] || k}</span><b>${k === 'crit' ? (v1 * 100).toFixed(0) + '%' : Math.round(v1)}${v60 != null ? ` <span class="muted" style="font-weight:600;">→ Lv60 ${k === 'crit' ? (v60 * 100).toFixed(0) + '%' : Math.round(v60)}</span>` : ''}</b></div>`;
+    const tgtLab = { enemySingle: '单体', enemyRow: '一排', enemyAll: '全体敌', allySingle: '单友', allyAll: '全体友', self: '自身' }[sig && sig.target] || '';
+    const m = this.openModal(`<h2>服装详情</h2><div class="gd-body">
+      <div class="gd-head">
+        <div class="gd-art border-${this.rarityClass(cos.rarity)}" style="background:radial-gradient(circle at 50% 35%, ${cos.color}55, transparent);"><span class="gd-ico">${cls.icon}</span></div>
+        <div class="gd-title">
+          <div class="gd-name">${cos.name}</div>
+          <div class="gd-meta"><span class="rw ${this.rarityClass(cos.rarity)}" style="font-size:10px;padding:1px 6px;">${cos.rarity}★</span> · ${el.icon}${el.name} · ${cls.icon}${cls.name}${has ? ' · <span style="color:var(--accent);">已拥有</span>' : ''}</div>
+        </div>
+      </div>
+      <div class="gd-section">属性（Lv1 → 满级）</div>
+      <div class="gd-stats">
+        ${statRow('hp', cos.stats.hp, s60.hp)}${statRow('atk', cos.stats.atk, s60.atk)}${statRow('def', cos.stats.def, s60.def)}
+        ${statRow('spd', cos.stats.spd)}${statRow('crit', cos.stats.crit)}
+      </div>
+      <div class="gd-section">专属招式</div>
+      ${sig ? `<div class="cd-skill"><div class="cd-skill-head">${sig.icon || '✨'} <b>${sig.name}</b> <span class="muted">SP${sig.sp || 0} · ${tgtLab}</span></div><div class="cd-skill-desc">${sig.desc || ''}</div></div>` : '<div class="muted">—</div>'}
+      <p class="muted" style="font-size:11px;margin-top:8px;">${cos.desc || ''}</p>
+      <p class="muted" style="font-size:11px;">抽到服装即解锁该角色；重复获得提升突破等级（最高 +5，每级 +8% 基础属性）。</p>
+    </div><div class="close-row"><button class="btn" id="cd-close">关闭</button></div>`);
+    m.querySelector('#cd-close').onclick = () => this.closeModal(m);
+  },
+
+  /** 装备模板详情（招募卡池 / 未拥有）——只读展示，不需实例 */
+  showGearTplDetail(tplId) {
+    const tpl = Game.getGearTpl(tplId);
+    if (!tpl) return;
+    const typeLab = { weapon: '武器', armor: '防具', accessory: '饰品', ex: '专属武器' }[tpl.type] || '装备';
+    const ownerName = tpl.owner ? (window.GameData.CHARACTERS[tpl.owner] || {}).name : null;
+    const mainHtml = Object.entries(tpl.stats).map(([k, v]) =>
+      `<div class="gd-stat"><span>${this.STAT_LAB[k] || k}</span><b>${this.fmtStat(k, v)}</b></div>`).join('');
+    const m = this.openModal(`<h2>装备详情</h2><div class="gd-body">
+      <div class="gd-head">
+        <div class="gd-art border-${this.rarityClass(tpl.rarity)}"><span class="gd-ico">${tpl.icon}</span></div>
+        <div class="gd-title">
+          <div class="gd-name">${tpl.name}</div>
+          <div class="gd-meta"><span class="rw ${this.rarityClass(tpl.rarity)}" style="font-size:10px;padding:1px 6px;">${window.GameData.GEAR.RLABEL[tpl.rarity]}</span> · ${typeLab}${ownerName ? ` · 专属：${ownerName}` : ''}</div>
+        </div>
+      </div>
+      <div class="gd-section">基础属性</div>
+      <div class="gd-stats">${mainHtml}</div>
+      <p class="muted" style="font-size:11px;margin-top:8px;">${tpl.desc || (tpl.type === 'ex' ? '专属武器：仅对应角色可装备，效果远强于通用装备。' : '通用装备：可强化、可触发三件套加成。')}</p>
+    </div><div class="close-row"><button class="btn" id="gtd-close">关闭</button></div>`);
+    m.querySelector('#gtd-close').onclick = () => this.closeModal(m);
   },
 
   MAT_DESC: {
