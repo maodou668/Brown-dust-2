@@ -25,7 +25,7 @@
  "anims": {
   "idle": {
    "frames": {
-    "south": 1,
+    "south": 9,
     "south-east": 1,
     "east": 1,
     "north-east": 1,
