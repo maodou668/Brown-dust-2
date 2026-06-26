@@ -34,6 +34,7 @@
 ## 4. 美术分工 —— 详见 ART_PIPELINE.md
 - **用户出人物本体**：8 向 静态/idle/run、攻击施法(仅 north)、静态+动态立绘。
 - **我出**：技能/普攻 VFX(PixelLab) + 接入、头像自动裁切、manifest/播放器接入、怪物/BOSS/场景/道具图标(PixelLab)。
+- ⚠️ **PixelLab 母图硬规则**：角色形容词 **+ 正面对称后缀**（`perfectly symmetrical body, …, facing directly forward 90 degrees`）才出 Lecliss 同款正脸对称母图；缺了出斜身。全文见 ART_PIPELINE 第七节"母图生成黄金公式"。
 
 ## 5. 自测手法（沿用）
 - 无头浏览器：Playwright（`/opt/pw-browsers/.../chrome`，从 `/opt/node22/.../playwright-core` require），**横屏视口**(960×520)，开局先点几次"跳过"过剧情再截图。
