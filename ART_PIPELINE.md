@@ -149,7 +149,10 @@ Lecliss 是第一个走完全流程的角色，**新角色照此对齐即可**�
 
 > **深化提示词（Lecliss 同颗粒度，照抄）**：覆盖发型/眼睛/头饰 → 服装(配色+元素纹样+胸口/腰带宝石) → 手套/腿靴 → 表情/主题，
 > 末尾统一 `clean lineart, polished`。**生成时 = 下面整段 + 第七节 v2 正面对称后缀**；大小/画风/一致性交给 PixelLab 内部工具。
-> 已完成：**Lecliss**（参照模板）、**Justia**（来自 e558db3d）。以下为待生成的 14 个。
+> 已完成：**Lecliss**（参照模板）。**Justia 重做中**（提示词见下，须贴合已接入那版：金色太阳光环/白金铠/蓝披风/太阳纹圆盾）。
+
+**贾丝蒂亚 Justia · 5★ 光·坦克**
+`Beautiful anime-style holy paladin knight girl. Long flowing golden-blonde hair, bright noble golden eyes, a radiant golden sun-ray halo glowing behind her head. Ornate white and gold radiant plate armor with layered pauldrons and intricate gold filigree, a flowing deep-blue cape, a glowing warm-gold light gem on the breastplate and on the belt buckle, holding a large ornate round holy shield emblazoned with a golden sun emblem. White and gold armored gauntlets, white-and-gold armored thigh-high boots with blue trim. Dignified confident protective expression, radiant holy light theme, clean lineart, polished.`
 
 **希尔 Seir · 5★ 暗·游侠**
 `Beautiful anime-style dark ranger huntress girl. Long sleek silver-violet hair in a high ponytail with side bangs, sharp piercing violet eyes, a small crescent-moon ornament with faint purple glow on the side of her head. Form-fitting black and deep-violet leather assassin outfit with a layered shoulder cloak, a glowing violet shadow gem on the chest and on the quiver strap, intricate dark-purple shadow patterns. Black fingerless leather gloves holding an ornate black longbow, black thigh-high leather boots with violet trim. Cool confident deadly expression, swirling dark shadow theme, clean lineart, polished.`
