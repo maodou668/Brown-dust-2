@@ -183,6 +183,7 @@ const BattleUI = {
     seir:     'art/05_pixellab/seir_field',
     refithea: 'art/05_pixellab/refithea_field',
     rigenette:'art/05_pixellab/rigenette_field',
+    olstein:  'art/05_pixellab/olstein_field',
   },
   sprites: {}, spriteState: {}, _spriteRaf: 0,
 
