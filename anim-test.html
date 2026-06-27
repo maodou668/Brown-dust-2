@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>角色动画测试（临时 · 完工后可删）</title>
+<style>
+  :root{ --bg:#0e0b14; --panel:#1b1622; --line:#3a2f48; --txt:#e8e0f0; --accent:#ffd35a; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--txt); font-family:system-ui,sans-serif; }
+  header{ padding:10px 16px; border-bottom:1px solid var(--line); display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  header h1{ font-size:15px; margin:0; color:var(--accent); }
+  .tag{ font-size:11px; color:#9a8fb0; border:1px solid var(--line); border-radius:10px; padding:2px 8px; }
+  .wrap{ display:flex; gap:18px; padding:16px; flex-wrap:wrap; }
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px; }
+  .card h2{ font-size:13px; margin:0 0 10px; color:#cbbfe0; font-weight:600; }
+  label{ font-size:12px; color:#b8acc8; display:inline-flex; gap:6px; align-items:center; }
+  select,input[type=range]{ accent-color:var(--accent); }
+  select{ background:#241d30; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:4px 8px; }
+  #stage{ background:
+      linear-gradient(0deg, rgba(0,0,0,.35), rgba(0,0,0,0) 40%),
+      repeating-linear-gradient(0deg,#1d2a1c,#1d2a1c 28px,#223021 28px,#223021 56px); border-radius:10px; display:block; }
+  .hint{ font-size:12px; color:#9a8fb0; margin-top:8px; line-height:1.6; }
+  .compass{ display:grid; grid-template-columns:repeat(3,40px); grid-template-rows:repeat(3,40px); gap:4px; margin-top:10px; }
+  .compass button{ background:#241d30; color:var(--txt); border:1px solid var(--line); border-radius:6px; font-size:16px; cursor:pointer; }
+  .compass button:active{ background:var(--accent); color:#221; }
+  .grid8{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .cell{ text-align:center; }
+  .cell canvas{ background:#15101e; border:1px solid var(--line); border-radius:8px; }
+  .cell div{ font-size:11px; color:#9a8fb0; margin-top:3px; }
+  kbd{ background:#241d30; border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:11px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>角色动画测试台</h1>
+  <span class="tag">临时页面 · 游戏完工后可删除 anim-test.html</span>
+  <label>角色
+    <select id="charSel"></select>
+  </label>
+  <label>动作
+    <select id="animSel"></select>
+  </label>
+  <label>缩放 <input id="scale" type="range" min="2" max="8" step="1" value="4"></label>
+  <label>速度 <input id="speed" type="range" min="40" max="240" step="10" value="120"></label>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <h2>移动测试（八向朝向 + 行走动画）</h2>
+    <canvas id="stage" width="560" height="360"></canvas>
+    <div class="compass">
+      <button data-d="north-west">↖</button><button data-d="north">↑</button><button data-d="north-east">↗</button>
+      <button data-d="west">←</button><button data-d="" id="stopBtn">■</button><button data-d="east">→</button>
+      <button data-d="south-west">↙</button><button data-d="south">↓</button><button data-d="south-east">↘</button>
+    </div>
+    <div class="hint">
+      键盘 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 或 <kbd>方向键</kbd> 移动；松开停下。<br>
+      朝向按移动方向自动切到最近的八向；移动中若该角色有 <code>run</code> 帧则播放行走、否则播放 idle。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>八向总览（当前动作循环播放）</h2>
+    <div class="grid8" id="grid8"></div>
+    <div class="hint" id="metaInfo"></div>
+  </div>
+</div>
+
+<script>
+const ROOT = 'art/05_pixellab';
+// 可测试的角色注册表（与游戏 FIELD_SPRITE 对应；新增角色加一行即可）
+const CHARS = {
+  justia:  { name: 'Justia 贾丝蒂亚', base: 'justia_field' },
+  lecliss: { name: 'Lecliss 莉可莉丝', base: 'lecliss_field' },
+};
+const DIR_ORDER = ['south','south-east','east','north-east','north','north-west','west','south-west'];
+
+const state = { man:null, imgs:{}, base:null, anim:'idle', scale:4, speed:120 };
+
+function loadChar(base){
+  return fetch(`${ROOT}/${base}/manifest.json?cb=${Date.now()}`).then(r=>r.json()).then(man=>{
+    const imgs = {};
+    const jobs = [];
+    for(const a in man.anims){
+      imgs[a] = {};
+      for(const d of man.dirs){
+        const n = man.anims[a].frames[d] || 0; imgs[a][d] = [];
+        for(let i=0;i<n;i++){
+          const im = new Image();
+          const p = new Promise(res=>{ im.onload=res; im.onerror=res; });
+          im.src = `${ROOT}/${base}/${a}/${d}/${String(i).padStart(2,'0')}.png?cb=${man.__v||1}`;
+          imgs[a][d].push(im); jobs.push(p);
+        }
+      }
+    }
+    return Promise.all(jobs).then(()=>({man,imgs}));
+  });
+}
+
+function drawFrame(ctx, sp, anim, dir, frame, dx, dy, scale){
+  const arr = (sp.imgs[anim] && sp.imgs[anim][dir] && sp.imgs[anim][dir].length)
+    ? sp.imgs[anim][dir] : sp.imgs.idle[dir] || sp.imgs.idle.south;
+  if(!arr || !arr.length) return;
+  const im = arr[frame % arr.length]; if(!im || !im.width) return;
+  const bb = sp.man.bbox, sw = bb.w*scale, sh = bb.h*scale;
+  ctx.imageSmoothingEnabled = false;
+  // 以脚底为锚点放置（dx,dy 为脚底中心）
+  ctx.drawImage(im, bb.x, bb.y, bb.w, bb.h, dx - sw/2, dy - sh, sw, sh);
+}
+
+// ---------- 移动测试舞台 ----------
+const stage = document.getElementById('stage'), sctx = stage.getContext('2d');
+const player = { x:280, y:220, dir:'south', vx:0, vy:0 };
+const keys = {};
+let held = ''; // compass button held direction
+
+function dirFromVec(vx,vy){
+  const ang = Math.atan2(vy,vx)*180/Math.PI; // x→east, y→south(down)
+  const a = (ang+360)%360;
+  if(a<22.5||a>=337.5) return 'east';
+  if(a<67.5) return 'south-east';
+  if(a<112.5) return 'south';
+  if(a<157.5) return 'south-west';
+  if(a<202.5) return 'west';
+  if(a<247.5) return 'north-west';
+  if(a<292.5) return 'north';
+  return 'north-east';
+}
+
+let last = performance.now();
+function loop(now){
+  const dt = Math.min(0.05,(now-last)/1000); last = now;
+  const sp = state.imgs[state.base] ? state.imgs : null;
+  const cur = window.__sprites && window.__sprites[state.base];
+  // velocity from keys + held compass
+  let vx=0, vy=0;
+  if(keys['w']||keys['arrowup']) vy-=1;
+  if(keys['s']||keys['arrowdown']) vy+=1;
+  if(keys['a']||keys['arrowleft']) vx-=1;
+  if(keys['d']||keys['arrowright']) vx+=1;
+  if(held){ const m={north:[0,-1],south:[0,1],east:[1,0],west:[-1,0],'north-east':[1,-1],'north-west':[-1,-1],'south-east':[1,1],'south-west':[-1,1]}[held]; if(m){vx+=m[0];vy+=m[1];} }
+  const moving = (vx||vy);
+  if(moving){
+    const len = Math.hypot(vx,vy); vx/=len; vy/=len;
+    player.x += vx*state.speed*dt; player.y += vy*state.speed*dt;
+    player.dir = dirFromVec(vx,vy);
+    player.x = Math.max(30,Math.min(stage.width-30,player.x));
+    player.y = Math.max(50,Math.min(stage.height-10,player.y));
+  }
+  sctx.clearRect(0,0,stage.width,stage.height);
+  if(cur){
+    // 影子
+    sctx.fillStyle='rgba(0,0,0,.28)'; sctx.beginPath();
+    sctx.ellipse(player.x, player.y-2, 16*state.scale/4, 5*state.scale/4, 0,0,Math.PI*2); sctx.fill();
+    const hasRun = cur.man.anims.run && cur.man.anims.run.frames[player.dir];
+    const anim = (moving && hasRun) ? 'run' : (cur.man.anims[state.anim] ? state.anim : 'idle');
+    const fps = (cur.man.fps && cur.man.fps[anim]) || 8;
+    const frame = Math.floor(now/1000*fps);
+    drawFrame(sctx, cur, anim, player.dir, frame, player.x, player.y, state.scale);
+  }
+  requestAnimationFrame(loop);
+}
+
+// ---------- 八向总览 ----------
+const grid8 = document.getElementById('grid8');
+const gridCanvases = {};
+function buildGrid(){
+  grid8.innerHTML='';
+  DIR_ORDER.forEach(d=>{
+    const wrap=document.createElement('div'); wrap.className='cell';
+    const cv=document.createElement('canvas'); cv.width=80; cv.height=88;
+    const lab=document.createElement('div'); lab.textContent=d;
+    wrap.appendChild(cv); wrap.appendChild(lab); grid8.appendChild(wrap);
+    gridCanvases[d]=cv.getContext('2d');
+  });
+}
+function gridLoop(now){
+  const cur = window.__sprites && window.__sprites[state.base];
+  if(cur){
+    const anim = cur.man.anims[state.anim] ? state.anim : 'idle';
+    const fps = (cur.man.fps && cur.man.fps[anim]) || 8;
+    const frame = Math.floor(now/1000*fps);
+    DIR_ORDER.forEach(d=>{
+      const ctx=gridCanvases[d]; if(!ctx) return;
+      ctx.clearRect(0,0,80,88);
+      drawFrame(ctx, cur, anim, d, frame, 40, 84, 3);
+    });
+  }
+  requestAnimationFrame(gridLoop);
+}
+
+// ---------- 控件 ----------
+const charSel=document.getElementById('charSel'), animSel=document.getElementById('animSel');
+Object.keys(CHARS).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=CHARS[k].name; charSel.appendChild(o); });
+
+window.__sprites = {};
+function switchChar(k){
+  state.base = k;
+  if(window.__sprites[k]){ refreshAnims(); return; }
+  loadChar(CHARS[k].base).then(sp=>{ window.__sprites[k]=sp; refreshAnims(); });
+}
+function refreshAnims(){
+  const cur=window.__sprites[state.base]; if(!cur) return;
+  animSel.innerHTML='';
+  Object.keys(cur.man.anims).forEach(a=>{ const o=document.createElement('option'); o.value=a; o.textContent=a; animSel.appendChild(o); });
+  if(!cur.man.anims[state.anim]) state.anim=Object.keys(cur.man.anims)[0];
+  animSel.value=state.anim;
+  document.getElementById('metaInfo').textContent =
+    `${CHARS[state.base].name} · 源 ${cur.man.srcSize.w}×${cur.man.srcSize.h} · 动作 [${Object.keys(cur.man.anims).join(', ')}] · idle ${cur.man.fps.idle||'?'}fps`;
+}
+charSel.onchange = e=>switchChar(e.target.value);
+animSel.onchange = e=>{ state.anim=e.target.value; };
+document.getElementById('scale').oninput = e=>state.scale=+e.target.value;
+document.getElementById('speed').oninput = e=>state.speed=+e.target.value;
+
+addEventListener('keydown',e=>{ keys[e.key.toLowerCase()]=true; });
+addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
+document.querySelectorAll('.compass button').forEach(b=>{
+  const d=b.dataset.d;
+  if(b.id==='stopBtn'){ b.onclick=()=>{held=''; for(const k in keys)keys[k]=false;}; return; }
+  const set=v=>()=>{ held=v?d:''; };
+  b.addEventListener('pointerdown',set(true)); b.addEventListener('pointerup',set(false));
+  b.addEventListener('pointerleave',set(false));
+});
+
+buildGrid();
+switchChar('justia');
+requestAnimationFrame(loop);
+requestAnimationFrame(gridLoop);
+</script>
+</body>
+</html>
