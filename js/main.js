@@ -259,7 +259,7 @@ const BattleUI = {
   SKILL_VFX: {
     inferno: { castMs: 380, telegraphMs: 460, star: 'hexstar', burst: 'fire_explosion', tint: '#ff6a2a' },
     cls_arcane: { castMs: 340, telegraphMs: 240, star: 'hexstar', burst: 'arcane_burst', tint: '#a06bff' },
-    piercing_shot: { castMs: 320, telegraphMs: 180, star: 'hexstar', burst: 'shadow_pierce', tint: '#b58bff' },
+    cls_aimshot: { castMs: 300, telegraphMs: 140, burst: 'shadow_pierce', tint: '#b58bff', projectile: true, spriteAngle: 0.785 },
     shadow_volley: { castMs: 360, telegraphMs: 260, star: 'hexstar', burst: 'shadow_burst', tint: '#9a5cff' },
   },
   fxCache: {},
@@ -315,6 +315,7 @@ const BattleUI = {
       x: spec.x, y: spec.y, anchor: spec.anchor || 'center', tint: spec.tint,
       base: spec.base || 64, start: performance.now(), impacted: false,
       onImpact: spec.onImpact, onDone: spec.onDone, effect: spec.effect,
+      fromX: spec.fromX, fromY: spec.fromY, toX: spec.x, toY: spec.y, angle: spec.angle,
     };
     if (rec.ready && rec.frames.length) {
       em.mode = 'frames'; em.rec = rec;
@@ -348,6 +349,12 @@ const BattleUI = {
       const keep = [];
       for (const em of this._fxEmitters) {
         const t = now - em.start, p = Math.min(1, t / em.durMs);
+        // 投射物：从施法者飞向目标，在命中帧时刚好抵达
+        if (em.fromX != null) {
+          const ir = (em.impactMs / em.durMs) || 0.55, tp = Math.min(1, p / ir);
+          em.x = em.fromX + (em.toX - em.fromX) * tp;
+          em.y = em.fromY + (em.toY - em.fromY) * tp;
+        }
         // 命中帧：到点触发一次 onImpact（伤害 flush）
         if (!em.impacted && t >= em.impactMs) { em.impacted = true; em.onImpact && em.onImpact(); }
         try { if (em.mode === 'frames') this.drawFxFrame(ctx, em, p); else this.drawFxProc(ctx, em, p); }
@@ -367,7 +374,14 @@ const BattleUI = {
     const ox = em.x - dw / 2, oy = em.anchor === 'feet' ? em.y - dh : em.y - dh / 2;
     // 尾部淡出：最后 28% 渐隐到 0，确保不会自然消散的素材也能优雅收尾（不会硬切）
     const fade = p > 0.72 ? Math.max(0, (1 - p) / 0.28) : 1;
-    ctx.imageSmoothingEnabled = false; ctx.globalAlpha = fade; ctx.drawImage(im, ox, oy, dw, dh); ctx.globalAlpha = 1;
+    ctx.imageSmoothingEnabled = false; ctx.globalAlpha = fade;
+    if (em.angle != null) {   // 投射物：绕中心旋转，指向飞行方向
+      const cyp = em.anchor === 'feet' ? em.y - dh / 2 : em.y;
+      ctx.save(); ctx.translate(em.x, cyp); ctx.rotate(em.angle); ctx.drawImage(im, -dw / 2, -dh / 2, dw, dh); ctx.restore();
+    } else {
+      ctx.drawImage(im, ox, oy, dw, dh);
+    }
+    ctx.globalAlpha = 1;
   },
 
   // —— 程序化兜底特效（在真 PNG 到位前用来跑通握手）——
@@ -439,13 +453,16 @@ const BattleUI = {
     }, castMs);
     // 2) 预警后，居中爆炸；爆炸命中帧 flush 伤害；最后一个爆炸结束 → 收尾
     let done = 0;
+    const cp = vfx.projectile ? this.unitStagePos(caster.uid, 'center') : null;   // 投射物起点=施法者
     setTimeout(() => {
       if (window.Sound) Sound.sfx && Sound.sfx('skill');
       hits.forEach(uid => {
         const p = this.unitStagePos(uid, 'center');
         if (!p) { if (++done >= hits.length) this.finishSkill(); return; }
-        this.spawnFx({ effect: vfx.burst, x: p.x, y: p.y, anchor: 'center', base: p.w, tint: vfx.tint,
-          onImpact, onDone: () => { if (++done >= hits.length) this.finishSkill(); } });
+        const spec = { effect: vfx.burst, x: p.x, y: p.y, anchor: 'center', base: p.w, tint: vfx.tint,
+          onImpact, onDone: () => { if (++done >= hits.length) this.finishSkill(); } };
+        if (cp) { spec.fromX = cp.x; spec.fromY = cp.y; spec.angle = Math.atan2(p.y - cp.y, p.x - cp.x) + (vfx.spriteAngle || 0); }
+        this.spawnFx(spec);
       });
     }, castMs + telMs);
     // 安全兜底：万一某帧/回调没触发，强制 flush + 收尾，绝不卡住战斗
