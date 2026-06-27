@@ -178,9 +178,11 @@ const BattleUI = {
 
   // ---------- 战斗序列帧小人（PixelLab）----------
   FIELD_SPRITE: {                                    // charId → 资源目录
-    lecliss: 'art/05_pixellab/lecliss_field',
-    justia:  'art/05_pixellab/justia_field',
-    seir:    'art/05_pixellab/seir_field',
+    lecliss:  'art/05_pixellab/lecliss_field',
+    justia:   'art/05_pixellab/justia_field',
+    seir:     'art/05_pixellab/seir_field',
+    refithea: 'art/05_pixellab/refithea_field',
+    rigenette:'art/05_pixellab/rigenette_field',
   },
   sprites: {}, spriteState: {}, _spriteRaf: 0,
 
