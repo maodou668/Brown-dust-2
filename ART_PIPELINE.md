@@ -133,12 +133,13 @@ Lecliss 是第一个走完全流程的角色，**新角色照此对齐即可**�
 > 折腾很久才定下来的关键：PixelLab 默认会给**侧身/扭胯/脚朝斜**的姿势，和 Lecliss 那张**正面对称母图**对不上。
 > 必须在提示词**最后追加这串"正面对称后缀"**，才能逼出正脸、对称、脚朝正前的母图（同 Lecliss 大小/风格）。
 
-**最终母图提示词 = `角色形容词`（见下表/上一节给的词）+ 正面对称后缀：**
+**最终母图提示词 = `角色形容词`（见下表/上一节给的词）+ 正面对称后缀（v2，实测锁定更稳）：**
 ```
-, perfectly symmetrical body, absolute symmetry, dead-on-forward perspective, symmetrical stance, feet pointing straight forward, central non-tilted pose, facing directly forward 90 degrees
+, PERFECTLY SYMMETRICAL FRONT VIEW, dead-on-forward perspective, axis-symmetrical composition, facing directly forward, looking directly at viewer, no side-turn, no 3/4 view, no isometric tilt, flat 2D projection
 ```
 - 大小 / 画风 / 一致性 → 用 **PixelLab 内部工具**（一致性参考图设定为 Lecliss 母图）即可，提示词里**不用**再写尺寸/风格约定。
-- 缺了这串后缀 → 出斜身/扭胯，没法当母图。**这是 PixelLab 出母图的硬性步骤，别省。**
+- 缺了这串后缀 → 出斜身/扭胯/3-4 视角，没法当母图。**这是 PixelLab 出母图的硬性步骤，别省。**
+- 旧版后缀（也能用，但 v2 锁正面更稳）：`perfectly symmetrical body, absolute symmetry, …, facing directly forward 90 degrees`。
 
 **通用风格后缀（每个都加）**：
 `, anime fantasy gacha RPG character splash art, full body head-to-toe, standing confident dynamic pose, ornate detailed fantasy outfit, soft cel shading, clean smooth lineart, vibrant colors, plain solid white background, character centered, 2.5D mobile gacha game art, masterpiece, best quality, high detail`
