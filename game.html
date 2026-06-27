@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=102">
+  <link rel="manifest" href="manifest.webmanifest?v=103">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=102">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=102">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=103">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=103">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2186,7 +2186,7 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=102" alt="" onerror="this.outerHTML='🎖️'"></span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=103" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
@@ -2236,7 +2236,7 @@ button.ac-circle:active { transform: scale(.92); }
     </div>
   </div>
 
-  <script>window.ASSET_VER = '102';</script>
+  <script>window.ASSET_VER = '103';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -10553,11 +10553,17 @@ const World = {
     return names[((i % 8) + 8) % 8];
   },
 
-  // 载入 PixelLab 主角序列帧（地图用）
+  // 载入 PixelLab 主角序列帧（地图用）——取出战队首位有 field sprite 的角色
   loadFieldSprite() {
-    if (this.sprite) return;
+    const reg = (window.BattleUI && window.BattleUI.FIELD_SPRITE) || { lecliss: 'art/05_pixellab/lecliss_field' };
+    let charId = null;
+    const team = (window.Game && Game.state && Game.state.team) || [];
+    for (const uid of team) { const o = Game.getOwned && Game.getOwned(uid); if (o && reg[o.charId]) { charId = o.charId; break; } }
+    if (!charId) charId = reg.lecliss ? 'lecliss' : Object.keys(reg)[0];
+    if (this.sprite && this._spriteCharId === charId) return;   // 队长没变则复用
+    this._spriteCharId = charId;
     const V = window.ASSET_VER || '1';
-    const BASE = 'art/05_pixellab/lecliss_field';
+    const BASE = reg[charId] || 'art/05_pixellab/lecliss_field';
     const sp = this.sprite = { ready: false, man: null, imgs: {} };
     fetch(BASE + '/manifest.json?v=' + V).then(r => r.json()).then(man => {
       sp.man = man;

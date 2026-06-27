@@ -529,11 +529,17 @@ const World = {
     return names[((i % 8) + 8) % 8];
   },
 
-  // 载入 PixelLab 主角序列帧（地图用）
+  // 载入 PixelLab 主角序列帧（地图用）——取出战队首位有 field sprite 的角色
   loadFieldSprite() {
-    if (this.sprite) return;
+    const reg = (window.BattleUI && window.BattleUI.FIELD_SPRITE) || { lecliss: 'art/05_pixellab/lecliss_field' };
+    let charId = null;
+    const team = (window.Game && Game.state && Game.state.team) || [];
+    for (const uid of team) { const o = Game.getOwned && Game.getOwned(uid); if (o && reg[o.charId]) { charId = o.charId; break; } }
+    if (!charId) charId = reg.lecliss ? 'lecliss' : Object.keys(reg)[0];
+    if (this.sprite && this._spriteCharId === charId) return;   // 队长没变则复用
+    this._spriteCharId = charId;
     const V = window.ASSET_VER || '1';
-    const BASE = 'art/05_pixellab/lecliss_field';
+    const BASE = reg[charId] || 'art/05_pixellab/lecliss_field';
     const sp = this.sprite = { ready: false, man: null, imgs: {} };
     fetch(BASE + '/manifest.json?v=' + V).then(r => r.json()).then(man => {
       sp.man = man;
