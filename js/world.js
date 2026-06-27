@@ -88,6 +88,7 @@ const World = {
     this.loadFieldSprite();
     this.buildDOM();
     this.buildMap(ch);
+    this.buildParty();
     this.active = true; this.busyTrigger = false;
     this.start();
     this.announceObjective(false);
@@ -294,6 +295,8 @@ const World = {
       p.step += dt;
     } else p.step = 0;
 
+    this.updateParty(dt);   // 队员沿队长足迹跟随
+
     // 镜头（顶视角，限制在地图范围内）
     const TS = this.TILE * this.SCALE;
     this.cam.x = this.clamp(p.x * TS - this.vw / 2, 0, Math.max(0, this.w * TS - this.vw));
@@ -441,14 +444,14 @@ const World = {
     (this.scatter || []).forEach(s => objs.push({ sy: s.y, kind: 'scatter', s }));
     this.nodes.forEach(n => objs.push({ sy: n.y, kind: 'node', node: n }));
     (this.mons || []).forEach(m => objs.push({ sy: m.y, kind: 'mon', m }));
-    objs.push({ sy: this.player.y, kind: 'player' });
+    (this.party || [this.player]).forEach(m => objs.push({ sy: m.y, kind: 'player', m }));
     objs.sort((a, b) => a.sy - b.sy);
     for (const o of objs) {
       if (o.kind === 'deco') this.drawDeco(o.gx, o.gy, o.tt);
       else if (o.kind === 'scatter') this.drawScatter(o.s);
       else if (o.kind === 'node') this.drawNodeTD(o.node);
       else if (o.kind === 'mon') this.drawMon(o.m);
-      else this.drawPlayer();
+      else this.drawPlayer(o.m);
     }
 
     // 纵深氛围：越往森林深处（屏上方）越阴冷
@@ -529,43 +532,80 @@ const World = {
     return names[((i % 8) + 8) % 8];
   },
 
-  // 载入 PixelLab 主角序列帧（地图用）——取出战队首位有 field sprite 的角色
+  // 载入 PixelLab 序列帧（地图用）——出战队每个有 field sprite 的角色都载入
   loadFieldSprite() {
     const reg = (window.BattleUI && window.BattleUI.FIELD_SPRITE) || { lecliss: 'art/05_pixellab/lecliss_field' };
-    let charId = null;
     const team = (window.Game && Game.state && Game.state.team) || [];
-    for (const uid of team) { const o = Game.getOwned && Game.getOwned(uid); if (o && reg[o.charId]) { charId = o.charId; break; } }
-    if (!charId) charId = reg.lecliss ? 'lecliss' : Object.keys(reg)[0];
-    if (this.sprite && this._spriteCharId === charId) return;   // 队长没变则复用
-    this._spriteCharId = charId;
+    const ids = [];
+    team.forEach(uid => { const o = Game.getOwned && Game.getOwned(uid); if (o && reg[o.charId] && !ids.includes(o.charId)) ids.push(o.charId); });
+    if (!ids.length) ids.push(reg.lecliss ? 'lecliss' : Object.keys(reg)[0]);
+    this._leaderCharId = ids[0];
+    this.sprites = this.sprites || {};
     const V = window.ASSET_VER || '1';
-    const BASE = reg[charId] || 'art/05_pixellab/lecliss_field';
-    const sp = this.sprite = { ready: false, man: null, imgs: {} };
-    fetch(BASE + '/manifest.json?v=' + V).then(r => r.json()).then(man => {
-      sp.man = man;
-      const mk = src => { const im = new Image(); im.src = src; return im; };
-      for (const anim in man.anims) {
-        sp.imgs[anim] = {};
-        for (const d of man.dirs) {
-          const n = man.anims[anim].frames[d] || 0, arr = [];
-          for (let i = 0; i < n; i++) arr.push(mk(`${BASE}/${anim}/${d}/${String(i).padStart(2, '0')}.png?v=${V}`));
-          sp.imgs[anim][d] = arr;
+    ids.forEach(charId => {
+      if (this.sprites[charId]) return;
+      const BASE = reg[charId]; const sp = this.sprites[charId] = { ready: false, man: null, imgs: {} };
+      fetch(BASE + '/manifest.json?v=' + V).then(r => r.json()).then(man => {
+        sp.man = man;
+        const mk = src => { const im = new Image(); im.src = src; return im; };
+        for (const anim in man.anims) {
+          sp.imgs[anim] = {};
+          for (const d of man.dirs) {
+            const n = man.anims[anim].frames[d] || 0, arr = [];
+            for (let i = 0; i < n; i++) arr.push(mk(`${BASE}/${anim}/${d}/${String(i).padStart(2, '0')}.png?v=${V}`));
+            sp.imgs[anim][d] = arr;
+          }
         }
-      }
-      sp.ready = true;
-    }).catch(() => { this.sprite = null; });
+        sp.ready = true;
+      }).catch(() => { this.sprites[charId] = null; });
+    });
   },
 
-  drawPlayer() {
-    const ctx = this.ctx, p = this.player;
+  // 组建队伍：队长(team[0])可操作，其余成员沿队长足迹跟随
+  buildParty() {
+    const team = (window.Game && Game.state && Game.state.team) || [];
+    const members = [];
+    team.forEach(uid => { const o = Game.getOwned && Game.getOwned(uid); if (o) members.push(o.charId); });
+    if (!members.length) members.push(this._leaderCharId || 'lecliss');
+    this.player.charId = members[0];                  // 队长 = 复用现有 player（移动/镜头/触发都基于它）
+    this.party = [this.player];
+    for (let i = 1; i < members.length; i++)
+      this.party.push({ charId: members[i], x: this.player.x, y: this.player.y, face: 'south', dir: 'down', step: 0, color: '#b06bff' });
+    this.trail = [{ x: this.player.x, y: this.player.y }];
+  },
+
+  // 跟随更新：队长走过的位置做面包屑，后续成员各落后若干面包屑
+  updateParty(dt) {
+    if (!this.party || this.party.length < 2) return;
+    const p = this.player, head = this.trail[0];
+    if (!head || Math.hypot(p.x - head.x, p.y - head.y) >= 0.16) {
+      this.trail.unshift({ x: p.x, y: p.y });
+      const maxLen = 8 * this.party.length + 8;
+      if (this.trail.length > maxLen) this.trail.length = maxLen;
+    }
+    const PER = 6;   // 每名成员间隔的面包屑数（≈0.96 格）
+    for (let i = 1; i < this.party.length; i++) {
+      const f = this.party[i], idx = Math.min(this.trail.length - 1, i * PER);
+      const tp = this.trail[idx]; if (!tp) continue;
+      const ahead = this.trail[Math.max(0, idx - 1)];   // 朝队长方向的前一个面包屑
+      f.x = tp.x; f.y = tp.y;
+      const fdx = ahead.x - tp.x, fdy = ahead.y - tp.y;
+      if (Math.hypot(fdx, fdy) > 0.001) { f.face = this.dir8(fdx, fdy); f.dir = Math.abs(fdx) >= Math.abs(fdy) ? (fdx > 0 ? 'right' : 'left') : (fdy > 0 ? 'down' : 'up'); }
+      f.step = p.step > 0 ? f.step + dt : 0;
+    }
+  },
+
+  drawPlayer(p) {
+    p = p || this.player;
+    const ctx = this.ctx;
     const TS = this.TILE * this.SCALE;
     const cx = p.x * TS - this.cam.x, cy = p.y * TS - this.cam.y;
     const moving = p.step > 0;
     // 阴影
     ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(cx, cy + TS * 0.34, TS * 0.26, TS * 0.11, 0, 0, 7); ctx.fill();
 
-    // —— PixelLab 序列帧主角 ——
-    const sp = this.sprite;
+    // —— PixelLab 序列帧 ——
+    const sp = (this.sprites && this.sprites[p.charId]) || null;
     if (sp && sp.ready) {
       const dir = p.face || 'south';
       const anim = moving ? 'run' : 'idle';

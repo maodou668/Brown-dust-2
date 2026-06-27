@@ -259,7 +259,7 @@ const BattleUI = {
   SKILL_VFX: {
     inferno: { castMs: 380, telegraphMs: 460, star: 'hexstar', burst: 'fire_explosion', tint: '#ff6a2a' },
     cls_arcane: { castMs: 340, telegraphMs: 240, star: 'hexstar', burst: 'arcane_burst', tint: '#a06bff' },
-    piercing_shot: { castMs: 340, telegraphMs: 220, star: 'hexstar', burst: 'shadow_burst', tint: '#a06bff' },
+    piercing_shot: { castMs: 320, telegraphMs: 180, star: 'hexstar', burst: 'shadow_pierce', tint: '#b58bff' },
     shadow_volley: { castMs: 360, telegraphMs: 260, star: 'hexstar', burst: 'shadow_burst', tint: '#9a5cff' },
   },
   fxCache: {},
