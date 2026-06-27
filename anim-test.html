@@ -71,6 +71,7 @@
 const ROOT = 'art/05_pixellab';
 // 可测试的角色注册表（与游戏 FIELD_SPRITE 对应；新增角色加一行即可）
 const CHARS = {
+  seir:    { name: 'Seir 希尔', base: 'seir_field' },
   justia:  { name: 'Justia 贾丝蒂亚', base: 'justia_field' },
   lecliss: { name: 'Lecliss 莉可莉丝', base: 'lecliss_field' },
 };
@@ -225,7 +226,7 @@ document.querySelectorAll('.compass button').forEach(b=>{
 });
 
 buildGrid();
-switchChar('justia');
+switchChar('seir');
 requestAnimationFrame(loop);
 requestAnimationFrame(gridLoop);
 </script>

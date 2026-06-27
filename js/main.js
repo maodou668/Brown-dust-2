@@ -180,6 +180,7 @@ const BattleUI = {
   FIELD_SPRITE: {                                    // charId → 资源目录
     lecliss: 'art/05_pixellab/lecliss_field',
     justia:  'art/05_pixellab/justia_field',
+    seir:    'art/05_pixellab/seir_field',
   },
   sprites: {}, spriteState: {}, _spriteRaf: 0,
 
