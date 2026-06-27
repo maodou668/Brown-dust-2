@@ -207,7 +207,15 @@ Lecliss 是第一个走完全流程的角色，**新角色照此对齐即可**�
 
 ## 八、PixelLab 直生产配方（Claude 用 MCP 全自动跑通，照走）
 
-> Seir 全程由 MCP 跑通验证。**风格一致性 = 固定这套参数**，不靠风格参考图。
+> Seir 全程由 MCP 跑通验证。
+
+### ⚠️ 0. 两条硬性纪律（实测踩坑总结，必守）
+- **并发 ≤4**：PixelLab 后端一次塞太多任务会**系统性卡在 95% 挂起**（实测一次发 10 个 → 全部卡死、互相堵）。**同时最多 4 个 job，出完再发下一批**；`run` 偶尔只出参考帧需重发。
+- **锁画风 / 锁头身比**（关键！否则逐角色头身比漂移、画风变）：
+  - 根因：`create_character` 的 **v3 模式忽略 `proportions`**（文档明示），所以头身比不可控、逐个漂移。
+  - **锁法 A（推荐，最强一致）**：用 **`create_character_state(参考角色, edit_description="新角色完整外观", use_color_palette_from_reference=false)`** —— 以一个已认可的锚角色（如 Lecliss/Seir）派生，**继承其头身比/体型/画风**，只改外观与配色。全员都从同一锚派生 → 整列统一。
+  - **锁法 B（备选）**：改 **`mode: standard` + 固定 `proportions`**（自定义如 `{"type":"custom","head_size":1.4,"legs_length":0.85,...}` 或 `preset chibi`）+ 固定 `outline/shading/detail/view/size`。standard **不忽略** proportions，头身比锁死；代价是细节略低于 v3。
+  - 落地前先 **A/B 各测 1 个**与现有 Seir 对比，选更贴的那条，全批统一用。
 
 **① 母图（create_character）**
 - `mode: v3`（最高质量，Lecliss-v3 同源）·`view: low top-down`·`outline: selective outline`·`detail: high detail`
