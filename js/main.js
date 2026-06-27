@@ -458,9 +458,9 @@ const BattleUI = {
     enemy_back:  { y: 14, s: 0.70, sp: 15 },
     enemy_mid:   { y: 24, s: 0.78, sp: 17 },
     enemy_front: { y: 35, s: 0.86, sp: 19 },
-    ally_front:  { y: 56, s: 0.94, sp: 22 },
-    ally_mid:    { y: 68, s: 1.02, sp: 25 },
-    ally_back:   { y: 80, s: 1.10, sp: 28 },
+    ally_front:  { y: 56, s: 0.94, sp: 22, x: 40 },
+    ally_mid:    { y: 68, s: 1.02, sp: 25, x: 50 },
+    ally_back:   { y: 80, s: 1.10, sp: 28, x: 60 },
   },
 
   unitHtml(c, side, pos, idx, count) {
@@ -478,7 +478,7 @@ const BattleUI = {
     const statusHtml = (c.statuses || []).filter(s => s.turns > 0)
       .map(s => `<span class="st-badge" title="${s.type}">${stIcon[s.type] || ''}</span>`).join('');
     const cfg = this.ROWCFG[side + '_' + pos];
-    const x = 50 + (idx - (count - 1) / 2) * cfg.sp;
+    const x = Math.max(12, Math.min(88, (cfg.x != null ? cfg.x : 50) + (idx - (count - 1) / 2) * cfg.sp));
     const z = Math.round(cfg.y * 10);
     const style = `left:${x}%; top:${cfg.y}%; --uscale:${cfg.s}; z-index:${z};`;
     return `
