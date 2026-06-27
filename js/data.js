@@ -91,6 +91,7 @@ const CHARACTERS = {
     base: { hp: 900, atk: 180, def: 65, spd: 120, crit: 0.30 },
     grow: { hp: 82, atk: 18, def: 5 },
     skills: ['piercing_shot', 'shadow_volley'],
+    art: 'art/01_splash/seir_bust.png',   // 半身像（佣兵/编队/招募小框）
     desc: '行动迅捷的神射手，对单体目标拥有恐怖的暴击爆发力。',
   },
   // ---------- 4★ ----------

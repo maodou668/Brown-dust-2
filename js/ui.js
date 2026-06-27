@@ -21,7 +21,7 @@ const UI = {
   rarityClass(r) { return 'r' + r; },
 
   // 动态立绘（佣兵详情大框）：charId → 视频基名（自动找 .mp4/.webm）
-  LIVE_SPLASH: { lecliss: 'art/01_splash/lecliss_live' },
+  LIVE_SPLASH: { lecliss: 'art/01_splash/lecliss_live', seir: 'art/01_splash/seir_live' },
 
   charAvatar(charId) {
     const c = window.GameData.CHARACTERS[charId];
