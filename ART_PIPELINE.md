@@ -147,23 +147,51 @@ Lecliss 是第一个走完全流程的角色，**新角色照此对齐即可**�
 **负面词**：
 `extra limbs, deformed hands, blurry, low quality, watermark, text, multiple characters, cluttered background, cropped, out of frame`
 
-| 角色 | 主体描述（接上面后缀） |
-|------|------------------------|
-| 贾丝蒂亚 5★ 光·坦克 | a noble female holy paladin knight, long golden blonde hair, golden eyes, ornate white-and-gold radiant plate armor, holding a large glowing holy shield, gold accents (#ffd35a), dignified protective aura, holy light particles |
-| 希尔 5★ 暗·游侠 | a sleek female dark ranger, long silver-violet hair, sharp purple eyes, dark violet hooded leather assassin outfit, holding an ornate black longbow, violet accents (#a06bff), cool deadly confidence, shadow wisps |
-| 萝 4★ 光·治疗 | a gentle young priestess, soft mint-green and white hair, kind teal eyes, flowing white-and-gold holy robe, holding a healing staff with a glowing orb, mint accents (#7affc4), warm caring smile, soft holy light |
-| 海莲娜 4★ 风·战士 | an agile female wind swordswoman, short cyan-blue hair, bright blue eyes, light blue-and-white swift armor, wielding a slender curved sword, cyan accents (#5ad1ff), swift energetic stance, wind gusts |
-| 黛安娜 4★ 水·法师 | a calm female water mage, long deep-blue hair, cool blue eyes, elegant blue-and-silver mage robe, holding a water staff orb, blue accents (#5a9fff), composed serene expression, flowing water magic |
-| 加西亚 4★ 地·坦克 | a sturdy male earth guardian, short brown hair, brown eyes, heavy rugged stone-plated brown armor, carrying a massive tower shield, earthy brown-gold accents (#c9a05a), rock-solid grounded stance, earth rock fragments |
-| 泰瑞德 3★ 火·战士 | a hopeful young male novice swordsman, messy orange-red hair, warm orange eyes, simple light leather warrior outfit with red accents, holding a steel sword, orange accents (#ff8b5a), eager balanced rookie vibe, faint fire sparks |
-| 莉亚 3★ 地·游侠 | a keen female plains hunter, green ponytail hair, green eyes, light leather ranger outfit with leaf nature motifs, holding a wooden longbow, green accents (#a0d15a), sharp focused gaze, earthy nature aura |
-| 米娜 3★ 风·治疗 | a cute petite young alchemist girl, short aqua-teal twin-tails, big teal eyes, light apothecary dress with potion pouches, holding a glowing potion flask, aqua accents (#7affe0), cheerful innocent expression, soft wind sparkles |
-| 蕾菲西亚 5★ 光·治疗 | a divine female saintess, long pale-gold hair, gentle golden eyes, elegant ornate white-and-gold holy dress with a radiant halo, holding a sacred staff, gold accents (#ffe7a0), serene graceful divine aura, miracle holy light |
-| 莉洁奈特 5★ 风·战士 | a noble female sky knight commander, long sky-blue hair, bright blue eyes, sleek azure-and-white elegant knight armor, wielding a slender longsword, sky-blue accents (#7ad6ff), commanding elegant poise, wind streaks |
-| 奥尔斯坦 5★ 地·坦克 | a massive veteran male fortress guardian, short grey-and-tan hair with a beard, stern eyes, immense heavy fortress plate armor, carrying an enormous tower shield, tan-gold accents (#d4a85a), immovable stoic stance, earth stone aura |
-| 格蕾西亚 4★ 水·法师 | a quiet female ice sorceress, long pale icy-blue and white hair, cold pale-blue eyes, frost-themed blue-and-white mage robe, holding an ice-crystal staff, icy accents (#9bd6ff), reserved cold expression, frost and ice crystals |
-| 莉亚特丽丝 4★ 火·游侠 | a sharp female crimson sniper, red-orange hair, fierce orange eyes, sleek crimson-and-black ranger outfit, holding an ornate flaming bow, crimson accents (#ff7a5a), confident deadly smirk, burning ember effects |
-| 罗恩 3★ 光·战士 | an upright passionate young male dawn knight, golden-blond hair, bright determined eyes, golden-and-white dawn knight armor, holding a longsword, gold accents (#ffd97a), heroic earnest determination, dawn light glow |
+> **深化提示词（Lecliss 同颗粒度，照抄）**：覆盖发型/眼睛/头饰 → 服装(配色+元素纹样+胸口/腰带宝石) → 手套/腿靴 → 表情/主题，
+> 末尾统一 `clean lineart, polished`。**生成时 = 下面整段 + 第七节 v2 正面对称后缀**；大小/画风/一致性交给 PixelLab 内部工具。
+> 已完成：**Lecliss**（参照模板）、**Justia**（来自 e558db3d）。以下为待生成的 14 个。
+
+**希尔 Seir · 5★ 暗·游侠**
+`Beautiful anime-style dark ranger huntress girl. Long sleek silver-violet hair in a high ponytail with side bangs, sharp piercing violet eyes, a small crescent-moon ornament with faint purple glow on the side of her head. Form-fitting black and deep-violet leather assassin outfit with a layered shoulder cloak, a glowing violet shadow gem on the chest and on the quiver strap, intricate dark-purple shadow patterns. Black fingerless leather gloves holding an ornate black longbow, black thigh-high leather boots with violet trim. Cool confident deadly expression, swirling dark shadow theme, clean lineart, polished.`
+
+**蕾菲西亚 Refithea · 5★ 光·治疗**
+`Beautiful anime-style holy saintess girl. Very long flowing pale-gold hair with soft waves, gentle radiant golden eyes, a glowing golden halo ring floating behind her head. Elegant floor-length white and gold ceremonial priestess robe with layered flowing sleeves and intricate gold sacred filigree, a glowing warm-gold light gem on the chest and on the waist sash. White lace gloves holding an ornate golden sacred staff topped with a radiant orb, white-gold trimmed shoes under the long robe. Serene graceful divine expression, soft holy light theme, clean lineart, polished.`
+
+**莉洁奈特 Rigenette · 5★ 风·战士**
+`Beautiful anime-style sky knight commander girl. Long sky-blue hair flowing as if caught in wind, bright confident cyan eyes, a small feathered wing ornament on the side of her head. Sleek azure and white elegant knight armor with layered shoulder pauldrons and a flowing white cape, a glowing pale-blue wind gem on the chest and on the belt buckle, delicate silver wind-swirl patterns. Black and silver armored gloves gripping a slender longsword, white armored thigh-high boots with cyan trim. Commanding elegant confident expression, swirling wind-streak theme, clean lineart, polished.`
+
+**奥尔斯坦 Olstein · 5★ 地·坦克（男）**
+`Powerful anime-style veteran male fortress guardian. Short greying tan hair with a thick well-groomed beard, stern steadfast amber eyes, a weathered scar across one cheek. Massive heavy bronze and tan fortress plate armor with thick layered pauldrons and earthen-gold engravings, a glowing amber earth gem set in the breastplate and on the belt, carrying an enormous tower shield. Heavy armored gauntlets, heavy tan armored greaves with stone-textured plating. Immovable stoic resolute expression, solid earth-stone theme, clean lineart, polished.`
+
+**萝 Rou · 4★ 光·治疗**
+`Beautiful anime-style gentle young priestess girl. Soft shoulder-length mint-green hair with a small side braid, kind warm teal eyes, a small glowing leaf-and-light ornament on the side of her head. Flowing white and mint-green healing robe with a soft layered skirt and gold trim, a glowing soft-green light gem on the chest and on the waist ribbon, delicate sacred patterns. White fingerless gloves holding a wooden healing staff topped with a glowing green orb, white-and-mint trimmed boots. Gentle caring warm-smiling expression, soft restorative light theme, clean lineart, polished.`
+
+**海莲娜 Helena · 4★ 风·战士**
+`Beautiful anime-style swift wind swordswoman girl. Short layered cyan-blue hair with windswept side bangs, bright lively blue eyes, a small glowing wind-feather ornament on the side of her head. Light teal and white agile battle outfit with a flowing scarf and a layered short skirt, a glowing cyan wind gem on the chest and on the belt, sleek silver wind-streak patterns. Black fingerless gloves wielding a slender curved sword, teal-trimmed thigh-high boots built for speed. Energetic spirited confident expression, fast wind-gust theme, clean lineart, polished.`
+
+**黛安娜 Diana · 4★ 水·法师**
+`Beautiful anime-style calm water mage girl. Long straight deep-blue hair with a single side braid, cool composed blue eyes, a small glowing water-droplet ornament on the side of her head. Elegant blue and silver mage robe with flowing layered sleeves and a long skirt, a glowing blue water gem on the chest and on the belt clasp, flowing wave patterns along the hem. Blue fingerless gloves holding a silver staff topped with a water-crystal orb, blue-and-silver trimmed boots under the robe. Serene cool intelligent expression, flowing water-magic theme, clean lineart, polished.`
+
+**加西亚 Garcia · 4★ 地·坦克（男）**
+`Sturdy anime-style young male earth guardian. Short rugged brown hair, determined earthy-brown eyes, a small stone-shard ornament on his shoulder guard. Heavy rugged brown plate armor with rocky textured plating and thick layered pauldrons, a glowing amber earth gem on the breastplate and on the belt, carrying a massive round tower shield. Heavy brown armored gauntlets, heavy stone-plated greaves. Rock-solid dependable steadfast expression, grounded earth-stone theme, clean lineart, polished.`
+
+**格蕾西亚 Glacia · 4★ 水(冰)·法师**
+`Beautiful anime-style quiet ice sorceress girl. Long pale icy-blue and white hair with crystalline strands, cold pale-blue eyes, a small glowing ice-crystal ornament on the side of her head. Elegant white and frost-blue mage robe with a layered snowflake-patterned skirt and fur-trimmed collar, a glowing pale-blue ice gem on the chest and on the belt, delicate frost patterns. White fingerless gloves holding an ice-crystal staff, white thigh-high boots with frost-blue trim. Reserved cool calm expression, freezing frost-and-ice theme, clean lineart, polished.`
+
+**莉亚特丽丝 Liatris · 4★ 火·游侠**
+`Beautiful anime-style crimson fire sniper girl. Long flowing red-orange hair tied back with loose side strands, fierce burning orange eyes, a small glowing ember ornament on the side of her head. Sleek crimson and black ranger outfit with a fitted bodice and a layered short skirt with flame trim, a glowing orange flame gem on the chest and on the belt, ember-spark patterns. Black fingerless gloves drawing an ornate flaming bow, black thigh-high boots with crimson flame trim. Confident sharp deadly-smirking expression, burning ember-fire theme, clean lineart, polished.`
+
+**泰瑞德 Teried · 3★ 火·战士（男）**
+`Spirited anime-style young male apprentice swordsman. Messy orange-red hair, warm eager orange eyes, a small flame-spark ornament on his collar. Simple but sturdy light leather warrior outfit with red and orange accents and a short shoulder cape, a small glowing orange flame gem on the chest belt, faint flame trim. Brown leather fingerless gloves gripping a polished steel sword, brown leather boots with orange trim. Eager hopeful determined rookie expression, faint warm-fire theme, clean lineart, polished.`
+
+**莉亚 Lia · 3★ 地·游侠**
+`Beautiful anime-style cheerful grassland huntress girl. Green hair in a practical braided ponytail with a few loose strands, bright lively green eyes, a small leaf ornament on the side of her head, light freckles. Light green and brown leather hunting outfit with nature-leaf motifs and a layered short skirt, a glowing green earth gem on the chest and on the belt, vine patterns. Brown fingerless gloves holding a wooden longbow, brown leather thigh-high boots with green trim. Cheerful sharp friendly expression, fresh nature-earth theme, clean lineart, polished.`
+
+**米娜 Mina · 3★ 风·治疗**
+`Cute anime-style petite young alchemist girl. Short aqua-teal hair in twin-tails with small clips, big round innocent teal eyes, a small bubble-and-leaf ornament on the side of her head. Light apothecary dress with an apron and many small potion pouches on the belt, a glowing aqua gem on the chest and on the belt, soft mint patterns. Short white gloves holding a glowing aqua potion flask, short aqua-teal boots with white trim. Cheerful innocent slightly-clumsy expression, soft wind-sparkle theme, clean lineart, polished.`
+
+**罗恩 Loen · 3★ 光·战士（男）**
+`Earnest anime-style young male dawn knight. Neat golden-blond hair, bright determined eyes, a small sunrise ornament on his shoulder pauldron. Polished golden and white knight armor with layered pauldrons and a flowing short cape, a glowing warm-gold light gem on the breastplate and on the belt, dawn-ray engravings. Gold and white armored gauntlets gripping a longsword, golden armored greaves with white trim. Upright heroic passionate expression, warm dawn-light theme, clean lineart, polished.`
 
 > 动态立绘视频：用同一套设定 + 你那套视频生成流程，做一个 ~10s 的循环展示（脸部→姿势揭示→施法特效），
 > 我从里面挑姿势帧裁头像/半身、把视频接进佣兵详情大框。
