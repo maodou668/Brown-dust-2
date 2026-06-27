@@ -74,6 +74,20 @@ const Game = {
     // 初始化当日任务/商店
     this.ensureDaily();
     this.ensureTasks();
+    // 预览模式（game.html?demo）：把已完成美术的角色直接塞进佣兵 + 出战队伍，
+    // 方便在游戏里直接看 idle / 施法 / 技能 VFX（仅本次进入生效，不主动落盘）。
+    try {
+      if (typeof location !== 'undefined' && /[?&]demo\b/.test(location.search)) {
+        const want = ['seir', 'lecliss', 'justia'];
+        want.forEach(cid => {
+          if (window.GameData && window.GameData.CHARACTERS[cid] && !this.state.roster.some(o => o.charId === cid))
+            this.state.roster.push(this.makeOwned(cid, 40));
+        });
+        this.state.team = want
+          .map(cid => { const o = this.state.roster.find(x => x.charId === cid); return o ? o.uid : null; })
+          .filter(Boolean);
+      }
+    } catch (e) {}
     return this.state;
   },
 

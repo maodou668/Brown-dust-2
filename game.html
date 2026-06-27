@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=100">
+  <link rel="manifest" href="manifest.webmanifest?v=101">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=100">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=100">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=101">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=101">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2186,7 +2186,7 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=100" alt="" onerror="this.outerHTML='🎖️'"></span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=101" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
@@ -2236,7 +2236,7 @@ button.ac-circle:active { transform: scale(.92); }
     </div>
   </div>
 
-  <script>window.ASSET_VER = '100';</script>
+  <script>window.ASSET_VER = '101';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -3766,6 +3766,20 @@ const Game = {
     // 初始化当日任务/商店
     this.ensureDaily();
     this.ensureTasks();
+    // 预览模式（game.html?demo）：把已完成美术的角色直接塞进佣兵 + 出战队伍，
+    // 方便在游戏里直接看 idle / 施法 / 技能 VFX（仅本次进入生效，不主动落盘）。
+    try {
+      if (typeof location !== 'undefined' && /[?&]demo\b/.test(location.search)) {
+        const want = ['seir', 'lecliss', 'justia'];
+        want.forEach(cid => {
+          if (window.GameData && window.GameData.CHARACTERS[cid] && !this.state.roster.some(o => o.charId === cid))
+            this.state.roster.push(this.makeOwned(cid, 40));
+        });
+        this.state.team = want
+          .map(cid => { const o = this.state.roster.find(x => x.charId === cid); return o ? o.uid : null; })
+          .filter(Boolean);
+      }
+    } catch (e) {}
     return this.state;
   },
 
