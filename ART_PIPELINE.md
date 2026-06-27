@@ -202,3 +202,32 @@ Lecliss 是第一个走完全流程的角色，**新角色照此对齐即可**�
 
 > 动态立绘视频：用同一套设定 + 你那套视频生成流程，做一个 ~10s 的循环展示（脸部→姿势揭示→施法特效），
 > 我从里面挑姿势帧裁头像/半身、把视频接进佣兵详情大框。
+
+---
+
+## 八、PixelLab 直生产配方（Claude 用 MCP 全自动跑通，照走）
+
+> Seir 全程由 MCP 跑通验证。**风格一致性 = 固定这套参数**，不靠风格参考图。
+
+**① 母图（create_character）**
+- `mode: v3`（最高质量，Lecliss-v3 同源）·`view: low top-down`·`outline: selective outline`·`detail: high detail`
+- ⚠️ **千万别用默认 `single color black outline`** —— 出粗黑块，和本作柔和立绘对不上（这就是 UI 里跑偏的元凶）。提示词里再写 `soft smooth shading, no black outline`。
+- `description` = 第七节深化提示词（**不加**正面对称后缀——8 向角色自己会转向）。
+- `size: 80`（→ 160 画布，细节足；field 归一到 64，半身/头像也够裁）。
+
+**② 动作（animate_character）—— 用 v3 自定义，别用模板**
+- 模板（template）套骨架，细节角色易崩（用户实测差）。**一律 `mode: v3` + `action_description`**（就是出好 idle 的同一引擎）。
+- 待机：`"standing idle, breathing gently with a subtle relaxed sway"`
+- 跑动：`"running forward, smooth natural run cycle, legs striding, arms bent and held steady close to the body, no crossing arms"`
+  - ⚠️ 别写 `arms swinging` —— 会让手臂往身体中间乱晃（南向尤其明显）。
+- `frame_count: 8`，**显式传 `directions` 全集**（v3 默认只出 south）。
+- 一次最多 ~10 个并发 job；8 向一发占满，第二个动作要等前一个出完再排。
+
+**③ 镜像省额度（在归一化这步做，不花 PixelLab 额度）**
+- 水平翻转可复用的 6 个方向：**东↔西、东北↔西北、东南↔西南**。南/北涉及正背面**不能**镜像。
+- 所以每个动作**只需生成 5 个方向**（south, north, + 每对取一侧，如 west/north-east/south-east 或 east/...），其余 3 个我翻转得到。约省 37% 动作额度。
+- 翻转在 64 画布上做（已居中+底对齐，翻转后脚线/居中不变）；注意翻转会把不对称细节（箭袋/披风偏侧）也镜像，上述 6 向可接受。
+
+**④ 归一接入**：每方向以该向**旋转图 contentBox** 为基线，缩放到 Lecliss `bbox(59×46)`、底对齐、居中 → 64 画布；写 manifest（`fps {idle:8, run:12}`）→ 注册 `BattleUI.FIELD_SPRITE[charId]` → 测试台 `anim-test.html` 验收。
+
+**成本参考**：v3 母图 ~2-9 gen；每个 v3 动作 = 4 gen/方向。母图+idle(5向)+run(5向) ≈ 45 gen/角色（用镜像后）。
