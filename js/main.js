@@ -238,10 +238,11 @@ const BattleUI = {
       const st = this.spriteState[uid] || (this.spriteState[uid] = { anim: 'idle', start: 0 });
       const dir = 'north';
       let anim = st.anim, frame = 0;
-      const castArr = sp.imgs.cast && sp.imgs.cast[dir];
-      if (anim === 'cast') {
+      const isCast = anim && anim.indexOf('cast') === 0;
+      const castArr = isCast && sp.imgs[anim] && sp.imgs[anim][dir];
+      if (isCast) {
         if (castArr && castArr.length) {                     // 该角色有施法帧
-          const fps = (sp.man.fps && sp.man.fps.cast) || 12;
+          const fps = (sp.man.fps && (sp.man.fps[anim] || sp.man.fps.cast)) || 12;
           frame = Math.floor((now - st.start) / 1000 * fps);
           if (frame >= castArr.length) { st.anim = 'idle'; anim = 'idle'; }
         } else { st.anim = 'idle'; anim = 'idle'; }           // 无施法帧→退回 idle
@@ -253,10 +254,17 @@ const BattleUI = {
       if (im && im.width) { ctx.imageSmoothingEnabled = false; ctx.drawImage(im, bb.x, bb.y, bb.w, bb.h, (W - dw) / 2, H - dh, dw, dh); }
     });
   },
-  triggerCast(uid) {
+  triggerCast(uid, skillId) {
     const c = Battle.combatants.find(x => x.uid === uid);
     if (!c || !this.FIELD_SPRITE[c.charId]) return;
-    this.spriteState[uid] = { anim: 'cast', start: performance.now() };
+    // 按技能选施法动画：职业技→cast_class，专属技→cast。缺则回退到存在的那个。
+    const sp = this.sprites[c.charId];
+    let anim = 'cast';
+    const cls = (window.GameData.CHARACTERS[c.charId] || {}).cls;
+    const classSkill = cls && window.GameData.CLASS_SKILL_OF && window.GameData.CLASS_SKILL_OF[cls];
+    if (skillId && skillId === classSkill) anim = 'cast_class';
+    if (sp && sp.man && !(sp.man.anims && sp.man.anims[anim])) anim = (sp.man.anims && sp.man.anims.cast) ? 'cast' : 'cast_class';
+    this.spriteState[uid] = { anim, start: performance.now() };
   },
 
   // ============================================================
@@ -274,6 +282,9 @@ const BattleUI = {
     cls_arcane: { castMs: 340, telegraphMs: 240, star: 'hexstar', burst: 'arcane_burst', tint: '#a06bff' },
     cls_aimshot: { castMs: 300, telegraphMs: 140, burst: 'shadow_pierce', tint: '#b58bff', projectile: true, spriteAngle: 0.785 },
     shadow_volley: { castMs: 360, telegraphMs: 260, star: 'hexstar', burst: 'shadow_burst', tint: '#9a5cff' },
+    // —— Teried（战士）：专属 烈焰斩 + 职业 横扫 ——
+    flame_slash: { castMs: 320, telegraphMs: 160, burst: 'flame_slash', tint: '#ff7a2a' },
+    cls_cleave: { castMs: 320, telegraphMs: 160, burst: 'cleave_slash', tint: '#8fe9ff' },
   },
   fxCache: {},
   _fxEmitters: null, _fxRaf: 0, _fxDefer: null, _fxFlushed: false, _fxDone: false, _fxSafety: 0,
@@ -829,7 +840,7 @@ const BattleUI = {
     this.selectedSkill = null;
 
     this._lunged = false;
-    this.triggerCast(c.uid);          // 我方序列帧单位：行动时播放放招动画
+    this.triggerCast(c.uid, skillId); // 我方序列帧单位：行动时播放该技能对应的放招动画
 
     const vfx = this.SKILL_VFX[skillId];
     if (vfx) {

@@ -48,9 +48,9 @@
 <div class="wrap">
   <div class="card">
     <h2>移动 + 施法测试（八向朝向 · 行走 · 技能特效）</h2>
-    <div class="row">
+    <div class="row" id="skillRow">
       <button class="act" id="castBtn">⚔ 施放技能（空格）</button>
-      <label><input type="checkbox" id="autoCast"> 每 1.6s 自动循环施放</label>
+      <label><input type="checkbox" id="autoCast"> 每 1.8s 自动循环施放</label>
     </div>
     <canvas id="stage" width="560" height="360"></canvas>
     <div class="compass">
@@ -92,7 +92,13 @@ const CHARS = {
   liatris:  { name:'Liatris 莉亚特丽丝',base:'liatris_field',  fx:'fire_explosion' },
   loen:     { name:'Loen 罗恩',        base:'loen_field',     fx:'fire_explosion' },
 };
-const FX_LIST = ['arcane_burst','fire_explosion','shadow_burst','shadow_pierce'];
+const FX_LIST = ['arcane_burst','fire_explosion','shadow_burst','shadow_pierce','cleave_slash','flame_slash'];
+// 每角色 2 技能（职业技+专属技）→ 对应 cast 动画 + 专属 VFX。
+// 已做完整施法的角色填这里；未填的回退到「通用 cast + 特效下拉」。
+const SKILLS = {
+  teried: [ {label:'横扫(职业)', cast:'cast_class', fx:'cleave_slash'},
+            {label:'烈焰斩(专属)', cast:'cast', fx:'flame_slash'} ],
+};
 const DIR_ORDER = ['south','south-east','east','north-east','north','north-west','west','south-west'];
 
 const state = { base:null, anim:'idle', scale:4, speed:120, fx:'arcane_burst' };
@@ -138,7 +144,7 @@ const player={ x:280, y:230, dir:'south' };
 const keys={}; let held='';
 // 施法状态
 let cast=null; // { t0, dur, fx:{man,frames}, fxT0 }
-let autoCastTimer=0;
+let autoCastTimer=0, autoSkillIdx=0;
 
 function dirFromVec(vx,vy){
   const a=(Math.atan2(vy,vx)*180/Math.PI+360)%360;
@@ -147,15 +153,16 @@ function dirFromVec(vx,vy){
   if(a<292.5) return 'north'; return 'north-east';
 }
 
-function triggerCast(){
+function triggerCast(castAnim, fxName){
   const cur=window.__sprites && window.__sprites[state.base]; if(!cur) return;
-  const hasCast = cur.man.anims.cast && cur.man.anims.cast.frames.north;
-  const fps = (cur.man.fps && cur.man.fps.cast) || 12;
-  const dur = hasCast ? (cur.man.anims.cast.frames.north/fps*1000) : 600;
-  const fx = fxCache[state.fx] || null;
-  // VFX 在 cast 中段（命中帧附近）爆发
-  const fxDelay = dur*0.35;
-  cast = { t0:performance.now(), dur, hasCast, fps, fx, fxDelay, fxStarted:false, fxT0:0 };
+  castAnim = castAnim || 'cast';
+  if(!(cur.man.anims[castAnim] && cur.man.anims[castAnim].frames.north)) castAnim = cur.man.anims.cast ? 'cast' : castAnim;
+  const hasCast = cur.man.anims[castAnim] && cur.man.anims[castAnim].frames.north;
+  const fps = (cur.man.fps && (cur.man.fps[castAnim]||cur.man.fps.cast)) || 12;
+  const dur = hasCast ? (cur.man.anims[castAnim].frames.north/fps*1000) : 600;
+  const fx = fxCache[fxName || state.fx] || null;
+  const fxDelay = dur*0.3;
+  cast = { t0:performance.now(), dur, hasCast, fps, castAnim, fx, fxDelay, fxStarted:false, fxT0:0 };
 }
 
 function drawCastFx(now){
@@ -189,17 +196,17 @@ function loop(now){
     player.x+=vx*state.speed*dt; player.y+=vy*state.speed*dt; player.dir=dirFromVec(vx,vy);
     player.x=Math.max(30,Math.min(stage.width-30,player.x)); player.y=Math.max(60,Math.min(stage.height-10,player.y)); }
   // 自动循环施放
-  if(document.getElementById('autoCast').checked){ autoCastTimer+=dt; if(autoCastTimer>=1.6 && !casting){ autoCastTimer=0; triggerCast(); } }
+  if(document.getElementById('autoCast').checked){ autoCastTimer+=dt; if(autoCastTimer>=1.8 && !casting){ autoCastTimer=0;
+    const sk=SKILLS[state.base]; if(sk&&sk.length){ const s=sk[autoSkillIdx%sk.length]; autoSkillIdx++; triggerCast(s.cast, s.fx); } else triggerCast(); } }
 
   sctx.clearRect(0,0,stage.width,stage.height);
   if(cur){
     sctx.fillStyle='rgba(0,0,0,.28)'; sctx.beginPath();
     sctx.ellipse(player.x, player.y-2, 16*state.scale/4, 5*state.scale/4, 0,0,Math.PI*2); sctx.fill();
     let anim, dir=player.dir;
-    if(casting && cur.man.anims.cast && cur.man.anims.cast.frames.north){
-      anim='cast'; dir='north';
+    if(casting && cast.hasCast){
       const f=Math.floor((now-cast.t0)/1000*cast.fps);
-      drawFrame(sctx, cur, 'cast', 'north', f, player.x, player.y, state.scale);
+      drawFrame(sctx, cur, cast.castAnim, 'north', f, player.x, player.y, state.scale);
     } else {
       const hasRun=cur.man.anims.run && cur.man.anims.run.frames[player.dir];
       anim=(moving&&hasRun)?'run':(cur.man.anims[state.anim]?state.anim:'idle');
@@ -234,7 +241,18 @@ Object.keys(CHARS).forEach(k=>{ const o=document.createElement('option'); o.valu
 FX_LIST.forEach(f=>{ const o=document.createElement('option'); o.value=f; o.textContent=f; fxSel.appendChild(o); });
 
 window.__sprites={};
-function switchChar(k){ state.base=k; state.fx=CHARS[k].fx||'arcane_burst'; fxSel.value=state.fx; cast=null;
+function buildSkillButtons(){
+  const row=document.getElementById('skillRow');
+  row.querySelectorAll('.skillBtn').forEach(b=>b.remove());
+  const sk=SKILLS[state.base];
+  const castBtn=document.getElementById('castBtn');
+  if(sk&&sk.length){ castBtn.style.display='none';
+    sk.forEach(s=>{ const b=document.createElement('button'); b.className='act skillBtn'; b.textContent='⚔ '+s.label;
+      b.onclick=()=>triggerCast(s.cast, s.fx); row.insertBefore(b, row.firstChild); });
+  } else { castBtn.style.display=''; }
+}
+function switchChar(k){ state.base=k; state.fx=CHARS[k].fx||'arcane_burst'; fxSel.value=state.fx; cast=null; autoSkillIdx=0;
+  buildSkillButtons();
   if(window.__sprites[k]){ refreshAnims(); return; }
   loadChar(CHARS[k].base).then(sp=>{ window.__sprites[k]=sp; refreshAnims(); }); }
 function refreshAnims(){
