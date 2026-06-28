@@ -281,7 +281,7 @@ const BattleUI = {
     inferno: { castMs: 380, telegraphMs: 460, star: 'hexstar', burst: 'fire_explosion', tint: '#ff6a2a' },
     cls_arcane: { castMs: 340, telegraphMs: 240, star: 'hexstar', burst: 'arcane_burst', tint: '#a06bff' },
     cls_aimshot: { castMs: 300, telegraphMs: 140, burst: 'shadow_pierce', tint: '#b58bff', projectile: true, spriteAngle: 0.785 },
-    shadow_volley: { castMs: 360, telegraphMs: 260, star: 'hexstar', burst: 'shadow_burst', tint: '#9a5cff' },
+    shadow_volley: { castMs: 460, telegraphMs: 220, burst: 'shadow_pierce', tint: '#9a5cff', projectile: true, spriteAngle: 0.785, repeat: 3, repeatGap: 150 },
     // —— 职业技 VFX ——
     cls_cleave: { castMs: 320, telegraphMs: 160, burst: 'cleave_slash', tint: '#8fe9ff' },
     cls_guard:  { castMs: 360, telegraphMs: 200, burst: 'guard_barrier', tint: '#ffd35a' },
@@ -492,21 +492,26 @@ const BattleUI = {
       hits.forEach(uid => { const p = this.unitStagePos(uid, 'feet'); if (p) this.spawnFx({ effect: vfx.star, x: p.x, y: p.y, anchor: 'feet', base: p.w, tint: vfx.tint }); });
     }, castMs);
     // 2) 预警后，居中爆炸；爆炸命中帧 flush 伤害；最后一个爆炸结束 → 收尾
-    let done = 0;
+    // repeat: 连发技能（如暗影连射）把爆炸/投射物重复 N 次，间隔 repeatGap，表现连续射击
+    const rep = Math.max(1, vfx.repeat || 1), gap = this.d(vfx.repeatGap || 160);
+    const total = hits.length * rep;
+    let done = 0, impacted = false;
     const cp = vfx.projectile ? this.unitStagePos(caster.uid, 'center') : null;   // 投射物起点=施法者
-    setTimeout(() => {
+    const fireWave = (k) => setTimeout(() => {
       if (window.Sound) Sound.sfx && Sound.sfx('skill');
       hits.forEach(uid => {
         const p = this.unitStagePos(uid, 'center');
-        if (!p) { if (++done >= hits.length) this.finishSkill(); return; }
+        if (!p) { if (++done >= total) this.finishSkill(); return; }
         const spec = { effect: vfx.burst, x: p.x, y: p.y, anchor: 'center', base: p.w, tint: vfx.tint,
-          onImpact, onDone: () => { if (++done >= hits.length) this.finishSkill(); } };
+          onImpact: () => { if (!impacted) { impacted = true; onImpact(); } },
+          onDone: () => { if (++done >= total) this.finishSkill(); } };
         if (cp) { spec.fromX = cp.x; spec.fromY = cp.y; spec.angle = Math.atan2(p.y - cp.y, p.x - cp.x) + (vfx.spriteAngle || 0); }
         this.spawnFx(spec);
       });
-    }, castMs + telMs);
+    }, castMs + telMs + k * gap);
+    for (let k = 0; k < rep; k++) fireWave(k);
     // 安全兜底：万一某帧/回调没触发，强制 flush + 收尾，绝不卡住战斗
-    this._fxSafety = setTimeout(() => { this.flushFxDefer(); this.finishSkill(); }, castMs + telMs + this.d(1800));
+    this._fxSafety = setTimeout(() => { this.flushFxDefer(); this.finishSkill(); }, castMs + telMs + rep * gap + this.d(1800));
   },
 
   // ---------- 渲染单位（斜俯视角舞台，近大远小） ----------
