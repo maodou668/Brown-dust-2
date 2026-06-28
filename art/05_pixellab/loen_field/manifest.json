@@ -49,12 +49,12 @@
     "south-west": 8
    }
   },
-  "cast": {
+  "cast_class": {
    "frames": {
     "north": 9
    }
   },
-  "cast_class": {
+  "cast": {
    "frames": {
     "north": 9
    }

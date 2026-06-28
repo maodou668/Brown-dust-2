@@ -49,6 +49,11 @@
     "south-west": 8
    }
   },
+  "cast_class": {
+   "frames": {
+    "north": 9
+   }
+  },
   "cast": {
    "frames": {
     "north": 9

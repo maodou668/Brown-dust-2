@@ -40,13 +40,23 @@
   "run": {
    "frames": {
     "south": 8,
-    "south-east": 0,
-    "east": 0,
-    "north-east": 0,
+    "south-east": 8,
+    "east": 8,
+    "north-east": 8,
     "north": 8,
-    "north-west": 0,
-    "west": 0,
-    "south-west": 0
+    "north-west": 8,
+    "west": 8,
+    "south-west": 8
+   }
+  },
+  "cast_class": {
+   "frames": {
+    "north": 9
+   }
+  },
+  "cast": {
+   "frames": {
+    "north": 9
    }
   }
  },
