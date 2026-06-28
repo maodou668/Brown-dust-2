@@ -241,6 +241,35 @@ Lecliss 是第一个走完全流程的角色，**新角色照此对齐即可**�
 3. **组装**：状态是独立 sibling 角色；归一化时把状态的 `walking_cycle*` 帧当作 run（**删掉原角色的旧 `running*` 文件夹**再并入），其余 idle/cast 仍取原角色。`gnorm` 照常**丢第 0 帧**（参考帧）即得干净循环——这就是 A/B 里你认可的那版。
 - 循环类（walk/run/idle）首尾要接得上；一次性类（attack/cast）不必。
 
+**②c 动画通用纪律 + 按动作类型速查（PixelLab 官方教程精华，必读，防重蹈覆辙）**
+> 来源：用户分析的 PixelLab 官方教程（YouTube `LcJQQwltQ2Q`）。核心思想：**起点干净 + 用「状态」锚定姿势 + 循环类保首尾 + 南向先验收再镜像**。
+
+**A. 五阶段总流程**（每做一个新角色都照此顺序，别跳步）
+1. **母图**：`create_character` 出 8 向静态。提示词具体，**加 `no held items / not holding any weapon`** 方便做通用动作。
+2. **风格一致性扩张**：不要逐个独立 `create_character` 重抽（v3 忽略 proportions→画风/头身比漂）。**用 `create_character_state` 从同一锚角色派生（锁法A）**——等效于教程的「从风格参考生成」，继承头身比/体型/画风/骨架。（教程的网页流还教：贴边裁参考图、可叠多张参考图增强风格、勾 Remove background；我们用 state 派生已覆盖此目的。）
+3. **拆成 8 向实体**：派生出的角色本身就是 8 向，跳过。
+4. **建状态（关键）**：动画前先用 `create_character_state` 定**该动作的静态起始姿势**（`mid-walk` / `mid-run` / `guard stance` 等），`use_color_palette_from_reference=true` 锁色。**这是修「腿朝别处/北向转头」的根治手段**——直接从 idle 让模型猜动作会跑偏。
+5. **做动画**：在状态上 `animate_character`。
+
+**B. 通用纪律（所有动作都适用）**
+- **模型**：永远 `mode=v3`（比 template/pro 更便宜、更好、帧数更多）。**绝不用 template**（套骨架，细节角色崩）。
+- **起点必须干净**：母图/状态若有噪点/瑕疵，先清理再做动画——**起点脏 → 后续所有帧全崩**。
+- **南向先行、验收、再扩展**：先只出 **south** → 看 → 不行就 **重抽(retry)** → south 满意后再出其余方向。**别一上来 8 向并发**（坏了浪费 8 份额度）。
+- **镜像红线**：只镜像**已验收干净**的帧。东↔西、东北↔西北、东南↔西南可镜像；南/北不可。**绝不对没清理的坏帧镜像**（坏帧翻倍）。
+- **frame_count**：6 或 8（9 也兼容）。
+- **手臂**：跑步写 `arms bent and held steady close to the body, no crossing arms`；**别写 `arms swinging`**（南向手臂往中间乱晃）。走路用「迈步状态」时 `arms swinging naturally` 可接受（状态已锚住姿势）。
+
+**C. 按动作类型速查（最重要：循环 vs 一次性 的"首帧"处理不同）**
+
+| 动作 | 类型 | 起始状态 | 提示词要点 | 首帧/循环处理 |
+|---|---|---|---|---|
+| **idle 待机** | 循环 | 可直接做 | `idle breathing, really subtle, no extra stuff, loop` | 保首尾衔接；gnorm 保留全帧 |
+| **walk/run 走跑** | 循环 | **必须先建 mid-stride/mid-run 状态** | `walking cycle loop, legs striding forward in the facing direction, smooth seamless loop` | 教程：循环类**保留第一帧**强制首尾相接；我们 gnorm 用 mid-state 后**丢参考帧第0帧**那版已 A/B 验收最顺，按此即可 |
+| **cast 施法** | 一次性 | 摆招起手姿势即可 | 具体招式动作，如 `swinging sword in a wide cleave` | **不保留第一帧**（一次性不必首尾接）；播完回 idle |
+| **attack 普攻** | 一次性 | 同上 | `slashing/thrusting forward` | 同 cast |
+
+> 一句话记忆：**循环动作（idle/walk/run）= 保首尾顺滑；一次性动作（attack/cast）= 不用管首尾，播完归位。**
+
 **③ 镜像省额度（在归一化这步做，不花 PixelLab 额度）**
 - 水平翻转可复用的 6 个方向：**东↔西、东北↔西北、东南↔西南**。南/北涉及正背面**不能**镜像。
 - 所以每个动作**只需生成 5 个方向**（south, north, + 每对取一侧，如 west/north-east/south-east 或 east/...），其余 3 个我翻转得到。约省 37% 动作额度。

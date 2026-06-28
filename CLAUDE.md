@@ -35,6 +35,7 @@
 - **用户出人物本体**：8 向 静态/idle/run、攻击施法(仅 north)、静态+动态立绘。
 - **我出**：技能/普攻 VFX(PixelLab) + 接入、头像自动裁切、manifest/播放器接入、怪物/BOSS/场景/道具图标(PixelLab)。
 - ⚠️ **PixelLab 母图硬规则**：角色形容词 **+ 正面对称后缀 v2**（`PERFECTLY SYMMETRICAL FRONT VIEW, …, no 3/4 view, no isometric tilt, flat 2D projection`）才出 Lecliss 同款正脸对称母图；缺了出斜身/3-4 视角。全文见 ART_PIPELINE 第七节"母图生成黄金公式"。
+- ⚠️ **动画硬规则（做任何角色动作前必读 ART_PIPELINE §八②b/②c）**：① 锁画风/头身比用 `create_character_state` 从锚角色派生(锁法A)；② **走/跑必须先建 `mid-stride` 状态再做循环**（否则南向迈腿朝别处、北向背身转头）；③ 循环动作(idle/walk/run)保首尾顺滑、一次性(attack/cast)不必；④ 南向先出验收再扩展、只镜像干净帧、`mode=v3` 别用 template。
 
 ## 5. 自测手法（沿用）
 - 无头浏览器：Playwright（`/opt/pw-browsers/.../chrome`，从 `/opt/node22/.../playwright-core` require），**横屏视口**(960×520)，开局先点几次"跳过"过剧情再截图。
