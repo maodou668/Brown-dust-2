@@ -27,14 +27,14 @@
  "anims": {
   "idle": {
    "frames": {
-    "south": 7,
-    "south-east": 7,
-    "east": 7,
-    "north-east": 1,
-    "north": 7,
-    "north-west": 1,
-    "west": 7,
-    "south-west": 7
+    "south": 9,
+    "south-east": 9,
+    "east": 9,
+    "north-east": 9,
+    "north": 9,
+    "north-west": 9,
+    "west": 9,
+    "south-west": 9
    }
   },
   "run": {
