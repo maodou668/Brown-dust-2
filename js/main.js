@@ -184,6 +184,10 @@ const BattleUI = {
     refithea: 'art/05_pixellab/refithea_field',
     rigenette:'art/05_pixellab/rigenette_field',
     olstein:  'art/05_pixellab/olstein_field',
+    rou:      'art/05_pixellab/rou_field',
+    helena:   'art/05_pixellab/helena_field',
+    diana:    'art/05_pixellab/diana_field',
+    garcia:   'art/05_pixellab/garcia_field',
   },
   sprites: {}, spriteState: {}, _spriteRaf: 0,
 
