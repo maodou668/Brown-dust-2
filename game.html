@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=111">
+  <link rel="manifest" href="manifest.webmanifest?v=112">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=111">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=111">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=112">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=112">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2186,7 +2186,7 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=111" alt="" onerror="this.outerHTML='🎖️'"></span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=112" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
@@ -2236,7 +2236,7 @@ button.ac-circle:active { transform: scale(.92); }
     </div>
   </div>
 
-  <script>window.ASSET_VER = '111';</script>
+  <script>window.ASSET_VER = '112';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -10982,9 +10982,25 @@ const BattleUI = {
     cls_arcane: { castMs: 340, telegraphMs: 240, star: 'hexstar', burst: 'arcane_burst', tint: '#a06bff' },
     cls_aimshot: { castMs: 300, telegraphMs: 140, burst: 'shadow_pierce', tint: '#b58bff', projectile: true, spriteAngle: 0.785 },
     shadow_volley: { castMs: 360, telegraphMs: 260, star: 'hexstar', burst: 'shadow_burst', tint: '#9a5cff' },
-    // —— Teried（战士）：专属 烈焰斩 + 职业 横扫 ——
-    flame_slash: { castMs: 320, telegraphMs: 160, burst: 'flame_slash', tint: '#ff7a2a' },
+    // —— 职业技 VFX ——
     cls_cleave: { castMs: 320, telegraphMs: 160, burst: 'cleave_slash', tint: '#8fe9ff' },
+    cls_guard:  { castMs: 360, telegraphMs: 200, burst: 'guard_barrier', tint: '#ffd35a' },
+    cls_mend:   { castMs: 340, telegraphMs: 200, burst: 'heal_bloom', tint: '#7affc4' },
+    // —— 专属技 VFX（每技能一个专属特效，正确对应）——
+    flame_slash:      { castMs: 320, telegraphMs: 160, burst: 'flame_slash', tint: '#ff7a2a' },
+    earth_slam:       { castMs: 360, telegraphMs: 240, star: 'hexstar', burst: 'earth_slam', tint: '#c9a05a' },
+    absolute_zero:    { castMs: 380, telegraphMs: 300, star: 'hexstar', burst: 'ice_nova', tint: '#8fdcff' },
+    galeblade_flurry: { castMs: 300, telegraphMs: 160, burst: 'gale_flurry', tint: '#7ad6ff' },
+    oath_aegis:       { castMs: 360, telegraphMs: 220, burst: 'aegis_holy', tint: '#ffd35a' },
+    blessing:         { castMs: 340, telegraphMs: 220, burst: 'blessing_aura', tint: '#ffe7a0' },
+    abyssal_prison:   { castMs: 380, telegraphMs: 300, star: 'hexstar', burst: 'water_vortex', tint: '#5a9fff' },
+    rooting_shot:     { castMs: 320, telegraphMs: 180, burst: 'root_snare', tint: '#7affc4' },
+    zephyr_mend:      { castMs: 320, telegraphMs: 180, burst: 'zephyr_heal', tint: '#9affd6' },
+    grand_heal:       { castMs: 400, telegraphMs: 260, star: 'hexstar', burst: 'grandheal_bloom', tint: '#ffe7a0' },
+    tempest_blade:    { castMs: 320, telegraphMs: 160, burst: 'tempest_slash', tint: '#7ad6ff' },
+    mountain_bulwark: { castMs: 400, telegraphMs: 260, burst: 'stone_wall', tint: '#c9a05a' },
+    blazing_arrow:    { castMs: 300, telegraphMs: 160, burst: 'fire_arrow', tint: '#ff7a2a', projectile: true, spriteAngle: 0.785 },
+    dawnblade:        { castMs: 320, telegraphMs: 160, burst: 'dawn_slash', tint: '#ffe7a0' },
   },
   fxCache: {},
   _fxEmitters: null, _fxRaf: 0, _fxDefer: null, _fxFlushed: false, _fxDone: false, _fxSafety: 0,

@@ -92,12 +92,28 @@ const CHARS = {
   liatris:  { name:'Liatris 莉亚特丽丝',base:'liatris_field',  fx:'fire_explosion' },
   loen:     { name:'Loen 罗恩',        base:'loen_field',     fx:'fire_explosion' },
 };
-const FX_LIST = ['arcane_burst','fire_explosion','shadow_burst','shadow_pierce','cleave_slash','flame_slash'];
+const FX_LIST = ['arcane_burst','fire_explosion','shadow_burst','shadow_pierce','cleave_slash','flame_slash',
+  'guard_barrier','heal_bloom','earth_slam','ice_nova','gale_flurry','aegis_holy','blessing_aura','water_vortex',
+  'root_snare','zephyr_heal','grandheal_bloom','tempest_slash','stone_wall','fire_arrow','dawn_slash'];
 // 每角色 2 技能（职业技+专属技）→ 对应 cast 动画 + 专属 VFX。
 // 已做完整施法的角色填这里；未填的回退到「通用 cast + 特效下拉」。
 const SKILLS = {
-  teried: [ {label:'横扫(职业)', cast:'cast_class', fx:'cleave_slash'},
-            {label:'烈焰斩(专属)', cast:'cast', fx:'flame_slash'} ],
+  lecliss:  [ {label:'奥术弹(职业)', cast:'cast_class', fx:'arcane_burst'},  {label:'炼狱业火(专属)', cast:'cast', fx:'fire_explosion'} ],
+  justia:   [ {label:'守护姿态(职业)', cast:'cast_class', fx:'guard_barrier'}, {label:'誓约圣盾(专属)', cast:'cast', fx:'aegis_holy'} ],
+  seir:     [ {label:'瞄准射击(职业)', cast:'cast_class', fx:'shadow_pierce'}, {label:'暗影连射(专属)', cast:'cast', fx:'shadow_burst'} ],
+  refithea: [ {label:'治愈术(职业)', cast:'cast_class', fx:'heal_bloom'},     {label:'圣光普照(专属)', cast:'cast', fx:'grandheal_bloom'} ],
+  rigenette:[ {label:'横扫(职业)', cast:'cast_class', fx:'cleave_slash'},     {label:'苍穹一闪(专属)', cast:'cast', fx:'tempest_slash'} ],
+  olstein:  [ {label:'守护姿态(职业)', cast:'cast_class', fx:'guard_barrier'}, {label:'山岳壁垒(专属)', cast:'cast', fx:'stone_wall'} ],
+  rou:      [ {label:'治愈术(职业)', cast:'cast_class', fx:'heal_bloom'},     {label:'祝福(专属)', cast:'cast', fx:'blessing_aura'} ],
+  helena:   [ {label:'横扫(职业)', cast:'cast_class', fx:'cleave_slash'},     {label:'疾风连斩(专属)', cast:'cast', fx:'gale_flurry'} ],
+  diana:    [ {label:'奥术弹(职业)', cast:'cast_class', fx:'arcane_burst'},   {label:'深渊水牢(专属)', cast:'cast', fx:'water_vortex'} ],
+  garcia:   [ {label:'守护姿态(职业)', cast:'cast_class', fx:'guard_barrier'}, {label:'大地践踏(专属)', cast:'cast', fx:'earth_slam'} ],
+  teried:   [ {label:'横扫(职业)', cast:'cast_class', fx:'cleave_slash'},     {label:'烈焰斩(专属)', cast:'cast', fx:'flame_slash'} ],
+  lia:      [ {label:'瞄准射击(职业)', cast:'cast_class', fx:'shadow_pierce'}, {label:'缚地穿杨(专属)', cast:'cast', fx:'root_snare'} ],
+  mina:     [ {label:'治愈术(职业)', cast:'cast_class', fx:'heal_bloom'},     {label:'微风治愈(专属)', cast:'cast', fx:'zephyr_heal'} ],
+  glacia:   [ {label:'奥术弹(职业)', cast:'cast_class', fx:'arcane_burst'},   {label:'绝对零度(专属)', cast:'cast', fx:'ice_nova'} ],
+  liatris:  [ {label:'瞄准射击(职业)', cast:'cast_class', fx:'shadow_pierce'}, {label:'红莲烈箭(专属)', cast:'cast', fx:'fire_arrow'} ],
+  loen:     [ {label:'横扫(职业)', cast:'cast_class', fx:'cleave_slash'},     {label:'黎明之刃(专属)', cast:'cast', fx:'dawn_slash'} ],
 };
 const DIR_ORDER = ['south','south-east','east','north-east','north','north-west','west','south-west'];
 
