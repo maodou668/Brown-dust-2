@@ -231,6 +231,16 @@ Lecliss 是第一个走完全流程的角色，**新角色照此对齐即可**�
 - `frame_count: 8`，**显式传 `directions` 全集**（v3 默认只出 south）。
 - 一次最多 ~10 个并发 job；8 向一发占满，第二个动作要等前一个出完再排。
 
+**②b 走/跑动画——先建「迈步状态」再做循环（关键！修走路怪异）**
+> 实测：直接从 idle 生成 walk/run，模型对「该朝向怎么迈腿」理解松散 → **南向迈腿朝别处、北向背身还回头**。
+> 解法（来自 PixelLab 官方教程，已 A/B 验证 loen 走路明显变好）：**先 `create_character_state` 定一个"迈步中"静态姿势，再在该状态上生成循环走**，腿脚被锚定在正确朝向。
+1. **建状态**：`create_character_state(角色, edit_description="mid-stride walking pose, one leg stepping forward, arms swinging naturally, <角色唯一标识词>", use_color_palette_from_reference=true)`。
+   - ⚠️ `edit_description` 末尾**加该角色唯一标识词**（如 `dark ranger huntress`/`bronze fortress guardian`）：① 强化身份保持画风 ② 让 group 下载里文件夹名唯一（否则全叫 `mid-stride_walking_p` 无法区分，同 Beau 重名坑）。
+   - `use_color_palette_from_reference=true` 锁色板，防衣服变色。
+2. **循环走**：在该状态上 `animate_character(mode=v3, action="walking cycle loop, legs striding forward in the facing direction, smooth seamless loop, subtle natural gait", frame_count=8)`，5 源向。
+3. **组装**：状态是独立 sibling 角色；归一化时把状态的 `walking_cycle*` 帧当作 run（**删掉原角色的旧 `running*` 文件夹**再并入），其余 idle/cast 仍取原角色。`gnorm` 照常**丢第 0 帧**（参考帧）即得干净循环——这就是 A/B 里你认可的那版。
+- 循环类（walk/run/idle）首尾要接得上；一次性类（attack/cast）不必。
+
 **③ 镜像省额度（在归一化这步做，不花 PixelLab 额度）**
 - 水平翻转可复用的 6 个方向：**东↔西、东北↔西北、东南↔西南**。南/北涉及正背面**不能**镜像。
 - 所以每个动作**只需生成 5 个方向**（south, north, + 每对取一侧，如 west/north-east/south-east 或 east/...），其余 3 个我翻转得到。约省 37% 动作额度。

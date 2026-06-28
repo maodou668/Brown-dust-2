@@ -53,6 +53,11 @@
    "frames": {
     "north": 9
    }
+  },
+  "cast_class": {
+   "frames": {
+    "north": 9
+   }
   }
  },
  "static": {
