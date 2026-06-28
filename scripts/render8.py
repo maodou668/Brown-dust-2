@@ -67,7 +67,7 @@ radius = max(size.x, size.y, size.z)
 
 # 相机(正交)，低俯视
 cam_data = bpy.data.cameras.new('cam'); cam_data.type='ORTHO'
-cam_data.ortho_scale = height*ORTHO_MARGIN*1.6
+cam_data.ortho_scale = max(height, size.x) * ORTHO_MARGIN
 cam = bpy.data.objects.new('cam', cam_data); scene.collection.objects.link(cam)
 scene.camera = cam
 elev = math.radians(CAM_ELEV_DEG)
@@ -78,14 +78,20 @@ cam.location = center + Vector((0, -dist*math.cos(elev), dist*math.sin(elev)))
 dirv = (center - cam.location).normalized()
 cam.rotation_euler = dirv.to_track_quat('-Z','Y').to_euler()
 
-# 灯光：太阳 + 环境
-sun_d = bpy.data.lights.new('sun','SUN'); sun_d.energy=SUN_ENERGY
-sun = bpy.data.objects.new('sun', sun_d); scene.collection.objects.link(sun)
-sun.rotation_euler = (math.radians(50), 0, math.radians(30))
+# 灯光：明亮 + 偏平（像立绘，不要重阴影）。强环境光打底 + 一盏正前上方柔光补面。
 world = bpy.data.worlds.new('w'); scene.world = world
 world.use_nodes = True
-try: world.node_tree.nodes['Background'].inputs[1].default_value = 0.6
+try: world.node_tree.nodes['Background'].inputs[1].default_value = 1.3   # 环境打底
 except Exception: pass
+# 关键光跟相机同向 → 永远照亮"朝镜头那一面"，8 个旋转受光一致、不会变剪影
+sun_d = bpy.data.lights.new('sun','SUN'); sun_d.energy=4.0
+sun_d.angle = math.radians(25)
+sun = bpy.data.objects.new('sun', sun_d); scene.collection.objects.link(sun)
+sun.rotation_euler = cam.rotation_euler.copy()   # 与相机同朝向
+# 顶部再补一盏弱光给头发/肩立体感
+top_d = bpy.data.lights.new('top','SUN'); top_d.energy=1.5
+top = bpy.data.objects.new('top', top_d); scene.collection.objects.link(top)
+top.rotation_euler = (math.radians(20), 0, 0)
 
 # 渲染设置：透明 PNG。用 CYCLES + CPU（无头服务器无 GPU/显示，EEVEE 跑不了）。
 scene.render.engine = 'CYCLES'
