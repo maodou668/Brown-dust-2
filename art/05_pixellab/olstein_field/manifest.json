@@ -43,10 +43,15 @@
     "south-east": 8,
     "east": 8,
     "north-east": 8,
-    "north": 1,
+    "north": 8,
     "north-west": 8,
     "west": 8,
     "south-west": 8
+   }
+  },
+  "cast": {
+   "frames": {
+    "north": 9
    }
   }
  },
