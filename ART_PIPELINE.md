@@ -263,12 +263,17 @@ Lecliss 是第一个走完全流程的角色，**新角色照此对齐即可**�
 
 | 动作 | 类型 | 起始状态 | 提示词要点 | 首帧/循环处理 |
 |---|---|---|---|---|
-| **idle 待机** | 循环 | 可直接做 | `idle breathing, really subtle, no extra stuff, loop` | 保首尾衔接；gnorm 保留全帧 |
+| **idle 待机** | 循环 | 可直接做 | `idle breathing, really subtle, no extra stuff, loop` | 保首尾衔接；gnorm 保留全帧。⚠️ **north-east idle 腿会乱动**（v3 quirk）：**改生成 north-west idle 作源，gnorm 用 IMIR 把 NW 镜像成 NE**（已全角色验收，见下「②d」） |
 | **walk/run 走跑** | 循环 | **必须先建 mid-stride/mid-run 状态** | `walking cycle loop, legs striding forward in the facing direction, smooth seamless loop` | 教程：循环类**保留第一帧**强制首尾相接；我们 gnorm 用 mid-state 后**丢参考帧第0帧**那版已 A/B 验收最顺，按此即可 |
 | **cast 施法** | 一次性 | 摆招起手姿势即可 | 具体招式动作，如 `swinging sword in a wide cleave` | **不保留第一帧**（一次性不必首尾接）；播完回 idle |
 | **attack 普攻** | 一次性 | 同上 | `slashing/thrusting forward` | 同 cast |
 
 > 一句话记忆：**循环动作（idle/walk/run）= 保首尾顺滑；一次性动作（attack/cast）= 不用管首尾，播完归位。**
+
+**②d north-east idle 修复 + 旧 run 弃用（本会话踩坑沉淀，必看）**
+- **NE idle 腿乱动**：v3 直接生成 north-east 的 idle，腿部会鬼畜抖动。解决：**只生成 north-west idle**（`directions:["north-west"]`，动作 `standing idle, breathing gently with a subtle relaxed sway`），归一化时 gnorm 用 `IMIR` 表把 NW 水平镜像成 NE（idle 专用镜像表，区别于 run 的 `MIR`）。东北↔西北本就是合法镜像对，画风一致、腿稳。全 16 角色已按此重做并线上验收。
+- **旧 run 弃用**：早期在「主角色」上直接做的 `run`（未用迈步状态）方向是错的（腿朝别处/背面转头）。新走路一律在 `mid-stride 状态`角色上做 `walking_cycle`。**gnorm 的 runFs 优先匹配文件夹名含 `walking_cycle` 的**（状态机走路），匹配不到才回退旧 `run/walk/march`——所以主角色上残留的旧 run 会被自动忽略，不必手删。
+- **组装消歧（md5 法，零歧义）**：Seir group 一次性下载含 ~30 个角色文件夹，名字泛化（`Transform_into_Beau` 等重名）。用**每个 charId 的 `rotations/south.png` 的 md5** 精确匹配「主角色 dir」与「mid-stride 走路状态 dir」（主/走状态姿势不同，md5 不同，天然区分）。脚本：`scratchpad/assemble.js`（主组）+ `assemble_std.js`（refithea/rigenette 独立组）。
 
 **③ 镜像省额度（在归一化这步做，不花 PixelLab 额度）**
 - 水平翻转可复用的 6 个方向：**东↔西、东北↔西北、东南↔西南**。南/北涉及正背面**不能**镜像。
