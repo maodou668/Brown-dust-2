@@ -32,10 +32,13 @@
 - ⚠️ **画风教训**：提示词**别写** `black outline`/`low detailed`（出粗黑块状，和本作精细柔和立绘对不上）；写 `soft smooth shading, fine detailed pixels, no black outline, anime fantasy spell effect`。
 
 ## 4. 美术分工 —— 详见 ART_PIPELINE.md
-- **用户出人物本体**：8 向 静态/idle/run、攻击施法(仅 north)、静态+动态立绘。
-- **我出**：技能/普攻 VFX(PixelLab) + 接入、头像自动裁切、manifest/播放器接入、怪物/BOSS/场景/道具图标(PixelLab)。
-- ⚠️ **PixelLab 母图硬规则**：角色形容词 **+ 正面对称后缀 v2**（`PERFECTLY SYMMETRICAL FRONT VIEW, …, no 3/4 view, no isometric tilt, flat 2D projection`）才出 Lecliss 同款正脸对称母图；缺了出斜身/3-4 视角。全文见 ART_PIPELINE 第七节"母图生成黄金公式"。
-- ⚠️ **动画硬规则（做任何角色动作前必读 ART_PIPELINE §八②b/②c）**：① 锁画风/头身比用 `create_character_state` 从锚角色派生(锁法A)；② **走/跑必须先建 `mid-stride` 状态再做循环**（否则南向迈腿朝别处、北向背身转头）；③ 循环动作(idle/walk/run)保首尾顺滑、一次性(attack/cast)不必；④ 南向先出验收再扩展、只镜像干净帧、`mode=v3` 别用 template。
+- **用户只给**：动态立绘(视频)。**其余美术我全包**(PixelLab)。
+- **我出(PixelLab全自动)**：每角色 field 序列帧(8向 idle/run + north 2施法,施法自带VFX) → gnorm归一 → 接入；头像/半身裁切；怪物/BOSS/场景/图标。
+- ⚠️ **成功路径(已由 Lecliss 一次过验证，做任何角色前读 ART_PIPELINE.md)**：
+  ① 一致性=**锁法A**：Lecliss 作锚，其余 `create_character_state` 从她派生(继承头身比/画风)。
+  ② 母图 `v3 / size64 / selective outline / soft shading no black outline / 手不持武器`；**不加**正面对称后缀。
+  ③ idle 用 **north-west 源**(gnorm IMIR 镜像出 NE，防抖腿)；走路**先建 mid-stride 状态**再做 walking_cycle(run 用 north-east 源)；施法描述**直接写技能内容**(自带火焰/奥术 VFX)。
+  ④ 自测闸门 `fd8.js` 脚漂移全向 ≲1.5px 才过；**一个一个做、不批量**，每个自测+用户验收后再下一个。
 
 ## 5. 自测手法（沿用）
 - 无头浏览器：Playwright（`/opt/pw-browsers/.../chrome`，从 `/opt/node22/.../playwright-core` require），**横屏视口**(960×520)，开局先点几次"跳过"过剧情再截图。
