@@ -2,7 +2,8 @@
 
 > **唯一可信流程**：一个角色一条龙做完 → 自测 → 用户验收 → 再下一个。**不批量**（避免失控）。
 > 此流程由 **Lecliss 一次过**验证（idle 脚漂移 0.2–1.3px、走路有步幅、施法自带特效）。
-> 配套脚本（在 scratchpad）：`gnorm.js`(归一器) · `fd8.js`(脚漂移自测) · `synthidle.js`(合成呼吸兜底)。
+> 配套脚本（在 `scripts/`，跑前置 `NODE_PATH=$(pwd)/node_modules`）：
+> `gnorm.js`(归一器) · `fd8.js`(脚漂移自测) · `synthidle.js`(合成呼吸兜底) · `skillcap.js`(游戏内技能配对自测)。
 > 上线循环见 `CLAUDE.md`。
 
 游戏 16 角色：`lecliss(锚) justia seir rou helena diana garcia teried lia mina refithea rigenette olstein glacia liatris loen`
@@ -77,9 +78,13 @@ node gnorm.js <char> <mergedDir> '{"cast_class":"class_skill","cast":"casting"}'
 ---
 
 ## 5. 自测闸门（过了才给用户/部署）
-- `node fd8.js <char> idle` → 脚部横向漂移**全 8 向 ≲1.5px** 才算站稳（Lecliss 0.2–1.3）。超标=该向抽腿 → 重 roll 那个源方向，或 `node synthidle.js <char>` 合成呼吸兜底（脚 0 位移，配色不变）。
-- 渲染验收 sheet（idle 8 向 + run 8 向 + cast）肉眼过：同一个人 / 不乱腿 / 施法有特效。
-- `node scripts/build.js`（数值闸门）→ bump `ASSET_VER`+`?v=` → commit/push → 轮询线上 → **发图给用户验收** → 过了再做下一个角色。
+1. **脚漂移**：`node fd8.js <char> idle` → 全 8 向 ≲1.5px 才算站稳（Lecliss 0.2–1.3）。超标=该向抽腿 → 重 roll 那个源方向，或 `node synthidle.js <char>` 合成呼吸兜底。
+2. **静态 sheet**：渲染 idle 8 向 + run 8 向 + cast 肉眼过：同一个人 / 不乱腿 / 施法有特效。
+3. **游戏内技能配对**（必做）：`node skillcap.js`（Playwright 驱动真实战斗）让该角色放**两个技能**（职业技 + 招牌技），截图验证：
+   - 招牌技 → `cast` 动画；职业技(`cls_*`) → `cast_class` 动画（triggerCast 按 `CLASS_SKILL_OF` 选）；
+   - VFX 元素与技能一致（招牌技 VFX = `BASE_SIG[char]` 那个；职业技 = `cls_*`）；不串、不缺。
+   - 角色的招牌技 id 见 `costumes.js > BASE_SIG`；务必确认该 id 在 `main.js > SKILL_VFX` 有对应项（全 16 + 5 职业技现已齐全）。
+4. `node scripts/build.js`（数值闸门）→ bump `ASSET_VER`+`?v=` → commit/push → 轮询线上 → **发图给用户验收** → 过了再做下一个角色。
 
 ---
 
