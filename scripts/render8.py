@@ -87,9 +87,12 @@ world.use_nodes = True
 try: world.node_tree.nodes['Background'].inputs[1].default_value = 0.6
 except Exception: pass
 
-# 渲染设置：透明 PNG
-scene.render.engine = 'BLENDER_EEVEE' if 'BLENDER_EEVEE' in [e.identifier for e in bpy.types.RenderEngine.__subclasses__()] else scene.render.engine
-try: scene.render.engine = 'BLENDER_EEVEE_NEXT'
+# 渲染设置：透明 PNG。用 CYCLES + CPU（无头服务器无 GPU/显示，EEVEE 跑不了）。
+scene.render.engine = 'CYCLES'
+try:
+    scene.cycles.device = 'CPU'
+    scene.cycles.samples = 48          # 角色平涂用不到高采样，48 够且快
+    scene.cycles.use_denoising = True
 except Exception: pass
 scene.render.resolution_x = RES; scene.render.resolution_y = RES
 scene.render.film_transparent = True
