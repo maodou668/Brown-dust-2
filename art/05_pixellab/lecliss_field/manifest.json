@@ -21,23 +21,11 @@
  ],
  "fps": {
   "idle": 8,
-  "run": 12,
+  "run": 10,
   "cast": 12
  },
  "anims": {
   "idle": {
-   "frames": {
-    "south": 9,
-    "south-east": 9,
-    "east": 9,
-    "north-east": 9,
-    "north": 9,
-    "north-west": 9,
-    "west": 9,
-    "south-west": 9
-   }
-  },
-  "run": {
    "frames": {
     "south": 8,
     "south-east": 8,
@@ -49,14 +37,26 @@
     "south-west": 8
    }
   },
-  "cast_class": {
+  "run": {
    "frames": {
-    "north": 9
+    "south": 1,
+    "south-east": 1,
+    "east": 1,
+    "north-east": 1,
+    "north": 1,
+    "north-west": 1,
+    "west": 1,
+    "south-west": 1
    }
   },
   "cast": {
    "frames": {
-    "north": 9
+    "north": 1
+   }
+  },
+  "cast_class": {
+   "frames": {
+    "north": 1
    }
   }
  },
