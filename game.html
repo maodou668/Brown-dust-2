@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=125">
+  <link rel="manifest" href="manifest.webmanifest?v=126">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=125">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=125">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=126">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=126">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2186,7 +2186,7 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=125" alt="" onerror="this.outerHTML='🎖️'"></span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=126" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
@@ -2236,7 +2236,7 @@ button.ac-circle:active { transform: scale(.92); }
     </div>
   </div>
 
-  <script>window.ASSET_VER = '125';</script>
+  <script>window.ASSET_VER = '126';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -10981,7 +10981,7 @@ const BattleUI = {
     inferno: { castMs: 380, telegraphMs: 460, star: 'hexstar', burst: 'fire_explosion', tint: '#ff6a2a' },
     cls_arcane: { castMs: 340, telegraphMs: 240, star: 'hexstar', burst: 'arcane_burst', tint: '#a06bff' },
     cls_aimshot: { castMs: 300, telegraphMs: 140, burst: 'shadow_pierce', tint: '#b58bff', projectile: true, spriteAngle: 0.785 },
-    shadow_volley: { castMs: 360, telegraphMs: 260, star: 'hexstar', burst: 'shadow_burst', tint: '#9a5cff' },
+    shadow_volley: { castMs: 460, telegraphMs: 220, burst: 'shadow_pierce', tint: '#9a5cff', projectile: true, spriteAngle: 0.785, repeat: 3, repeatGap: 150 },
     // —— 职业技 VFX ——
     cls_cleave: { castMs: 320, telegraphMs: 160, burst: 'cleave_slash', tint: '#8fe9ff' },
     cls_guard:  { castMs: 360, telegraphMs: 200, burst: 'guard_barrier', tint: '#ffd35a' },
@@ -11187,26 +11187,31 @@ const BattleUI = {
     }
     const castMs = this.d(vfx.castMs || 380), telMs = this.d(vfx.telegraphMs || 460);
     const onImpact = () => this.flushFxDefer();
-    // 1) 施法收招后，敌人脚下浮现六芒星
-    setTimeout(() => {
+    // 1) 施法收招后，敌人脚下浮现六芒星（仅当技能配了 star 预警；连发箭矢类无脚下星阵）
+    if (vfx.star) setTimeout(() => {
       hits.forEach(uid => { const p = this.unitStagePos(uid, 'feet'); if (p) this.spawnFx({ effect: vfx.star, x: p.x, y: p.y, anchor: 'feet', base: p.w, tint: vfx.tint }); });
     }, castMs);
     // 2) 预警后，居中爆炸；爆炸命中帧 flush 伤害；最后一个爆炸结束 → 收尾
-    let done = 0;
+    // repeat: 连发技能（如暗影连射）把爆炸/投射物重复 N 次，间隔 repeatGap，表现连续射击
+    const rep = Math.max(1, vfx.repeat || 1), gap = this.d(vfx.repeatGap || 160);
+    const total = hits.length * rep;
+    let done = 0, impacted = false;
     const cp = vfx.projectile ? this.unitStagePos(caster.uid, 'center') : null;   // 投射物起点=施法者
-    setTimeout(() => {
+    const fireWave = (k) => setTimeout(() => {
       if (window.Sound) Sound.sfx && Sound.sfx('skill');
       hits.forEach(uid => {
         const p = this.unitStagePos(uid, 'center');
-        if (!p) { if (++done >= hits.length) this.finishSkill(); return; }
+        if (!p) { if (++done >= total) this.finishSkill(); return; }
         const spec = { effect: vfx.burst, x: p.x, y: p.y, anchor: 'center', base: p.w, tint: vfx.tint,
-          onImpact, onDone: () => { if (++done >= hits.length) this.finishSkill(); } };
+          onImpact: () => { if (!impacted) { impacted = true; onImpact(); } },
+          onDone: () => { if (++done >= total) this.finishSkill(); } };
         if (cp) { spec.fromX = cp.x; spec.fromY = cp.y; spec.angle = Math.atan2(p.y - cp.y, p.x - cp.x) + (vfx.spriteAngle || 0); }
         this.spawnFx(spec);
       });
-    }, castMs + telMs);
+    }, castMs + telMs + k * gap);
+    for (let k = 0; k < rep; k++) fireWave(k);
     // 安全兜底：万一某帧/回调没触发，强制 flush + 收尾，绝不卡住战斗
-    this._fxSafety = setTimeout(() => { this.flushFxDefer(); this.finishSkill(); }, castMs + telMs + this.d(1800));
+    this._fxSafety = setTimeout(() => { this.flushFxDefer(); this.finishSkill(); }, castMs + telMs + rep * gap + this.d(1800));
   },
 
   // ---------- 渲染单位（斜俯视角舞台，近大远小） ----------

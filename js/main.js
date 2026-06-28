@@ -487,8 +487,8 @@ const BattleUI = {
     }
     const castMs = this.d(vfx.castMs || 380), telMs = this.d(vfx.telegraphMs || 460);
     const onImpact = () => this.flushFxDefer();
-    // 1) 施法收招后，敌人脚下浮现六芒星
-    setTimeout(() => {
+    // 1) 施法收招后，敌人脚下浮现六芒星（仅当技能配了 star 预警；连发箭矢类无脚下星阵）
+    if (vfx.star) setTimeout(() => {
       hits.forEach(uid => { const p = this.unitStagePos(uid, 'feet'); if (p) this.spawnFx({ effect: vfx.star, x: p.x, y: p.y, anchor: 'feet', base: p.w, tint: vfx.tint }); });
     }, castMs);
     // 2) 预警后，居中爆炸；爆炸命中帧 flush 伤害；最后一个爆炸结束 → 收尾
