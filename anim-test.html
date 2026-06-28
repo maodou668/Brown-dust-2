@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>角色动画测试（临时 · 完工后可删）</title>
+<title>角色动画 + 技能特效测试台（临时 · 完工后可删）</title>
 <style>
   :root{ --bg:#0e0b14; --panel:#1b1622; --line:#3a2f48; --txt:#e8e0f0; --accent:#ffd35a; }
   *{ box-sizing:border-box; }
@@ -17,6 +17,8 @@
   label{ font-size:12px; color:#b8acc8; display:inline-flex; gap:6px; align-items:center; }
   select,input[type=range]{ accent-color:var(--accent); }
   select{ background:#241d30; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:4px 8px; }
+  button.act{ background:var(--accent); color:#221; border:none; border-radius:8px; padding:6px 14px; font-size:13px; font-weight:600; cursor:pointer; }
+  button.act:active{ transform:translateY(1px); }
   #stage{ background:
       linear-gradient(0deg, rgba(0,0,0,.35), rgba(0,0,0,0) 40%),
       repeating-linear-gradient(0deg,#1d2a1c,#1d2a1c 28px,#223021 28px,#223021 56px); border-radius:10px; display:block; }
@@ -29,25 +31,27 @@
   .cell canvas{ background:#15101e; border:1px solid var(--line); border-radius:8px; }
   .cell div{ font-size:11px; color:#9a8fb0; margin-top:3px; }
   kbd{ background:#241d30; border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:11px; }
+  .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>角色动画测试台</h1>
-  <span class="tag">临时页面 · 游戏完工后可删除 anim-test.html</span>
-  <label>角色
-    <select id="charSel"></select>
-  </label>
-  <label>动作
-    <select id="animSel"></select>
-  </label>
+  <h1>角色动画 + 技能特效测试台</h1>
+  <span class="tag">临时页面 · 游戏完工后可删 anim-test.html</span>
+  <label>角色 <select id="charSel"></select></label>
+  <label>动作 <select id="animSel"></select></label>
+  <label>特效 <select id="fxSel"></select></label>
   <label>缩放 <input id="scale" type="range" min="2" max="8" step="1" value="4"></label>
   <label>速度 <input id="speed" type="range" min="40" max="240" step="10" value="120"></label>
 </header>
 
 <div class="wrap">
   <div class="card">
-    <h2>移动测试（八向朝向 + 行走动画）</h2>
+    <h2>移动 + 施法测试（八向朝向 · 行走 · 技能特效）</h2>
+    <div class="row">
+      <button class="act" id="castBtn">⚔ 施放技能（空格）</button>
+      <label><input type="checkbox" id="autoCast"> 每 1.6s 自动循环施放</label>
+    </div>
     <canvas id="stage" width="560" height="360"></canvas>
     <div class="compass">
       <button data-d="north-west">↖</button><button data-d="north">↑</button><button data-d="north-east">↗</button>
@@ -55,8 +59,8 @@
       <button data-d="south-west">↙</button><button data-d="south">↓</button><button data-d="south-east">↘</button>
     </div>
     <div class="hint">
-      键盘 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 或 <kbd>方向键</kbd> 移动；松开停下。<br>
-      朝向按移动方向自动切到最近的八向；移动中若该角色有 <code>run</code> 帧则播放行走、否则播放 idle。
+      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>/<kbd>方向键</kbd> 移动；<kbd>空格</kbd> 施放技能。<br>
+      施法时播放该角色的 <code>cast</code> 动画并叠加所选 VFX（在「命中帧」爆发）。
     </div>
   </div>
 
@@ -69,166 +73,194 @@
 
 <script>
 const ROOT = 'art/05_pixellab';
-// 可测试的角色注册表（与游戏 FIELD_SPRITE 对应；新增角色加一行即可）
+// 全部角色（与游戏 FIELD_SPRITE 对应）
 const CHARS = {
-  seir:    { name: 'Seir 希尔', base: 'seir_field' },
-  justia:  { name: 'Justia 贾丝蒂亚', base: 'justia_field' },
-  lecliss: { name: 'Lecliss 莉可莉丝', base: 'lecliss_field' },
+  lecliss:  { name:'Lecliss 莉可莉丝', base:'lecliss_field',  fx:'arcane_burst' },
+  justia:   { name:'Justia 贾丝蒂亚',  base:'justia_field',   fx:'arcane_burst' },
+  seir:     { name:'Seir 希尔',        base:'seir_field',     fx:'shadow_pierce' },
+  refithea: { name:'Refithea 蕾菲西娅',base:'refithea_field', fx:'arcane_burst' },
+  rigenette:{ name:'Rigenette 莉洁奈特',base:'rigenette_field',fx:'arcane_burst' },
+  olstein:  { name:'Olstein 奥尔斯坦',  base:'olstein_field',  fx:'fire_explosion' },
+  rou:      { name:'Rou 萝',           base:'rou_field',      fx:'arcane_burst' },
+  helena:   { name:'Helena 海莲娜',     base:'helena_field',   fx:'arcane_burst' },
+  diana:    { name:'Diana 黛安娜',      base:'diana_field',    fx:'arcane_burst' },
+  garcia:   { name:'Garcia 加西亚',     base:'garcia_field',   fx:'fire_explosion' },
+  teried:   { name:'Teried 泰瑞德',     base:'teried_field',   fx:'fire_explosion' },
+  lia:      { name:'Lia 莉亚',         base:'lia_field',      fx:'arcane_burst' },
+  mina:     { name:'Mina 米娜',        base:'mina_field',     fx:'arcane_burst' },
+  glacia:   { name:'Glacia 格蕾西亚',   base:'glacia_field',   fx:'arcane_burst' },
+  liatris:  { name:'Liatris 莉亚特丽丝',base:'liatris_field',  fx:'fire_explosion' },
+  loen:     { name:'Loen 罗恩',        base:'loen_field',     fx:'fire_explosion' },
 };
+const FX_LIST = ['arcane_burst','fire_explosion','shadow_burst','shadow_pierce'];
 const DIR_ORDER = ['south','south-east','east','north-east','north','north-west','west','south-west'];
 
-const state = { man:null, imgs:{}, base:null, anim:'idle', scale:4, speed:120 };
+const state = { base:null, anim:'idle', scale:4, speed:120, fx:'arcane_burst' };
 
 function loadChar(base){
   return fetch(`${ROOT}/${base}/manifest.json?cb=${Date.now()}`).then(r=>r.json()).then(man=>{
-    const imgs = {};
-    const jobs = [];
-    for(const a in man.anims){
-      imgs[a] = {};
-      for(const d of man.dirs){
-        const n = man.anims[a].frames[d] || 0; imgs[a][d] = [];
-        for(let i=0;i<n;i++){
-          const im = new Image();
-          const p = new Promise(res=>{ im.onload=res; im.onerror=res; });
-          im.src = `${ROOT}/${base}/${a}/${d}/${String(i).padStart(2,'0')}.png?cb=${man.__v||1}`;
-          imgs[a][d].push(im); jobs.push(p);
-        }
-      }
+    const imgs={}, jobs=[];
+    for(const a in man.anims){ imgs[a]={};
+      for(const d of man.dirs){ const n=man.anims[a].frames[d]||0; imgs[a][d]=[];
+        for(let i=0;i<n;i++){ const im=new Image(); const p=new Promise(res=>{im.onload=res;im.onerror=res;});
+          im.src=`${ROOT}/${base}/${a}/${d}/${String(i).padStart(2,'0')}.png?cb=1`; imgs[a][d].push(im); jobs.push(p); } }
     }
     return Promise.all(jobs).then(()=>({man,imgs}));
   });
 }
 
+// ---------- VFX 预载 ----------
+const fxCache = {};
+function loadFx(name){
+  if(fxCache[name]) return Promise.resolve(fxCache[name]);
+  return fetch(`${ROOT}/fx/${name}/manifest.json?cb=1`).then(r=>r.json()).then(man=>{
+    const frames=[], jobs=[];
+    for(let i=0;i<man.frames;i++){ const im=new Image(); const p=new Promise(res=>{im.onload=res;im.onerror=res;});
+      im.src=`${ROOT}/fx/${name}/frame_${String(i).padStart(3,'0')}.png?cb=1`; frames.push(im); jobs.push(p); }
+    return Promise.all(jobs).then(()=>{ fxCache[name]={man,frames}; return fxCache[name]; });
+  });
+}
+FX_LIST.forEach(loadFx);
+
 function drawFrame(ctx, sp, anim, dir, frame, dx, dy, scale){
-  const arr = (sp.imgs[anim] && sp.imgs[anim][dir] && sp.imgs[anim][dir].length)
-    ? sp.imgs[anim][dir] : sp.imgs.idle[dir] || sp.imgs.idle.south;
+  let arr = sp.imgs[anim] && sp.imgs[anim][dir] && sp.imgs[anim][dir].length ? sp.imgs[anim][dir] : null;
+  if(!arr) arr = sp.imgs.idle[dir] || sp.imgs.idle.south;
   if(!arr || !arr.length) return;
   const im = arr[frame % arr.length]; if(!im || !im.width) return;
-  const bb = sp.man.bbox, sw = bb.w*scale, sh = bb.h*scale;
-  ctx.imageSmoothingEnabled = false;
-  // 以脚底为锚点放置（dx,dy 为脚底中心）
-  ctx.drawImage(im, bb.x, bb.y, bb.w, bb.h, dx - sw/2, dy - sh, sw, sh);
+  const bb = sp.man.bbox, sw=bb.w*scale, sh=bb.h*scale;
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(im, bb.x, bb.y, bb.w, bb.h, dx-sw/2, dy-sh, sw, sh);
 }
 
-// ---------- 移动测试舞台 ----------
-const stage = document.getElementById('stage'), sctx = stage.getContext('2d');
-const player = { x:280, y:220, dir:'south', vx:0, vy:0 };
-const keys = {};
-let held = ''; // compass button held direction
+// ---------- 舞台 ----------
+const stage=document.getElementById('stage'), sctx=stage.getContext('2d');
+const player={ x:280, y:230, dir:'south' };
+const keys={}; let held='';
+// 施法状态
+let cast=null; // { t0, dur, fx:{man,frames}, fxT0 }
+let autoCastTimer=0;
 
 function dirFromVec(vx,vy){
-  const ang = Math.atan2(vy,vx)*180/Math.PI; // x→east, y→south(down)
-  const a = (ang+360)%360;
-  if(a<22.5||a>=337.5) return 'east';
-  if(a<67.5) return 'south-east';
-  if(a<112.5) return 'south';
-  if(a<157.5) return 'south-west';
-  if(a<202.5) return 'west';
-  if(a<247.5) return 'north-west';
-  if(a<292.5) return 'north';
-  return 'north-east';
+  const a=(Math.atan2(vy,vx)*180/Math.PI+360)%360;
+  if(a<22.5||a>=337.5) return 'east'; if(a<67.5) return 'south-east'; if(a<112.5) return 'south';
+  if(a<157.5) return 'south-west'; if(a<202.5) return 'west'; if(a<247.5) return 'north-west';
+  if(a<292.5) return 'north'; return 'north-east';
 }
 
-let last = performance.now();
+function triggerCast(){
+  const cur=window.__sprites && window.__sprites[state.base]; if(!cur) return;
+  const hasCast = cur.man.anims.cast && cur.man.anims.cast.frames.north;
+  const fps = (cur.man.fps && cur.man.fps.cast) || 12;
+  const dur = hasCast ? (cur.man.anims.cast.frames.north/fps*1000) : 600;
+  const fx = fxCache[state.fx] || null;
+  // VFX 在 cast 中段（命中帧附近）爆发
+  const fxDelay = dur*0.35;
+  cast = { t0:performance.now(), dur, hasCast, fps, fx, fxDelay, fxStarted:false, fxT0:0 };
+}
+
+function drawCastFx(now){
+  if(!cast || !cast.fx) return;
+  if(!cast.fxStarted){ if(now-cast.t0 >= cast.fxDelay){ cast.fxStarted=true; cast.fxT0=now; } else return; }
+  const {man,frames}=cast.fx; const fps=man.fps||18;
+  const fi=Math.floor((now-cast.fxT0)/1000*fps);
+  if(fi>=man.frames) return;
+  const im=frames[fi]; if(!im||!im.width) return;
+  const sc=(man.scale||1)*state.scale/4 * 1.4;
+  const w=im.width*sc, h=im.height*sc;
+  // 叠在角色中段偏上
+  const cx=player.x, cy=player.y - 24*state.scale/4;
+  sctx.imageSmoothingEnabled=false;
+  sctx.globalCompositeOperation='lighter';
+  sctx.drawImage(im, cx-w/2, cy-h/2, w, h);
+  sctx.globalCompositeOperation='source-over';
+}
+
+let last=performance.now();
 function loop(now){
-  const dt = Math.min(0.05,(now-last)/1000); last = now;
-  const sp = state.imgs[state.base] ? state.imgs : null;
-  const cur = window.__sprites && window.__sprites[state.base];
-  // velocity from keys + held compass
-  let vx=0, vy=0;
-  if(keys['w']||keys['arrowup']) vy-=1;
-  if(keys['s']||keys['arrowdown']) vy+=1;
-  if(keys['a']||keys['arrowleft']) vx-=1;
-  if(keys['d']||keys['arrowright']) vx+=1;
+  const dt=Math.min(0.05,(now-last)/1000); last=now;
+  const cur=window.__sprites && window.__sprites[state.base];
+  let vx=0,vy=0;
+  if(keys['w']||keys['arrowup'])vy-=1; if(keys['s']||keys['arrowdown'])vy+=1;
+  if(keys['a']||keys['arrowleft'])vx-=1; if(keys['d']||keys['arrowright'])vx+=1;
   if(held){ const m={north:[0,-1],south:[0,1],east:[1,0],west:[-1,0],'north-east':[1,-1],'north-west':[-1,-1],'south-east':[1,1],'south-west':[-1,1]}[held]; if(m){vx+=m[0];vy+=m[1];} }
-  const moving = (vx||vy);
-  if(moving){
-    const len = Math.hypot(vx,vy); vx/=len; vy/=len;
-    player.x += vx*state.speed*dt; player.y += vy*state.speed*dt;
-    player.dir = dirFromVec(vx,vy);
-    player.x = Math.max(30,Math.min(stage.width-30,player.x));
-    player.y = Math.max(50,Math.min(stage.height-10,player.y));
-  }
+  const casting = cast && (now-cast.t0 < cast.dur);
+  const moving=(vx||vy) && !casting;
+  if(moving){ const len=Math.hypot(vx,vy); vx/=len; vy/=len;
+    player.x+=vx*state.speed*dt; player.y+=vy*state.speed*dt; player.dir=dirFromVec(vx,vy);
+    player.x=Math.max(30,Math.min(stage.width-30,player.x)); player.y=Math.max(60,Math.min(stage.height-10,player.y)); }
+  // 自动循环施放
+  if(document.getElementById('autoCast').checked){ autoCastTimer+=dt; if(autoCastTimer>=1.6 && !casting){ autoCastTimer=0; triggerCast(); } }
+
   sctx.clearRect(0,0,stage.width,stage.height);
   if(cur){
-    // 影子
     sctx.fillStyle='rgba(0,0,0,.28)'; sctx.beginPath();
     sctx.ellipse(player.x, player.y-2, 16*state.scale/4, 5*state.scale/4, 0,0,Math.PI*2); sctx.fill();
-    const hasRun = cur.man.anims.run && cur.man.anims.run.frames[player.dir];
-    const anim = (moving && hasRun) ? 'run' : (cur.man.anims[state.anim] ? state.anim : 'idle');
-    const fps = (cur.man.fps && cur.man.fps[anim]) || 8;
-    const frame = Math.floor(now/1000*fps);
-    drawFrame(sctx, cur, anim, player.dir, frame, player.x, player.y, state.scale);
+    let anim, dir=player.dir;
+    if(casting && cur.man.anims.cast && cur.man.anims.cast.frames.north){
+      anim='cast'; dir='north';
+      const f=Math.floor((now-cast.t0)/1000*cast.fps);
+      drawFrame(sctx, cur, 'cast', 'north', f, player.x, player.y, state.scale);
+    } else {
+      const hasRun=cur.man.anims.run && cur.man.anims.run.frames[player.dir];
+      anim=(moving&&hasRun)?'run':(cur.man.anims[state.anim]?state.anim:'idle');
+      const fps=(cur.man.fps&&cur.man.fps[anim])||8;
+      drawFrame(sctx, cur, anim, player.dir, Math.floor(now/1000*fps), player.x, player.y, state.scale);
+    }
+    drawCastFx(now);
   }
   requestAnimationFrame(loop);
 }
 
 // ---------- 八向总览 ----------
-const grid8 = document.getElementById('grid8');
-const gridCanvases = {};
-function buildGrid(){
-  grid8.innerHTML='';
-  DIR_ORDER.forEach(d=>{
-    const wrap=document.createElement('div'); wrap.className='cell';
+const grid8=document.getElementById('grid8'); const gridCanvases={};
+function buildGrid(){ grid8.innerHTML='';
+  DIR_ORDER.forEach(d=>{ const wrap=document.createElement('div'); wrap.className='cell';
     const cv=document.createElement('canvas'); cv.width=80; cv.height=88;
     const lab=document.createElement('div'); lab.textContent=d;
-    wrap.appendChild(cv); wrap.appendChild(lab); grid8.appendChild(wrap);
-    gridCanvases[d]=cv.getContext('2d');
-  });
+    wrap.appendChild(cv); wrap.appendChild(lab); grid8.appendChild(wrap); gridCanvases[d]=cv.getContext('2d'); });
 }
 function gridLoop(now){
-  const cur = window.__sprites && window.__sprites[state.base];
-  if(cur){
-    const anim = cur.man.anims[state.anim] ? state.anim : 'idle';
-    const fps = (cur.man.fps && cur.man.fps[anim]) || 8;
-    const frame = Math.floor(now/1000*fps);
-    DIR_ORDER.forEach(d=>{
-      const ctx=gridCanvases[d]; if(!ctx) return;
-      ctx.clearRect(0,0,80,88);
-      drawFrame(ctx, cur, anim, d, frame, 40, 84, 3);
-    });
-  }
+  const cur=window.__sprites && window.__sprites[state.base];
+  if(cur){ const anim=cur.man.anims[state.anim]?state.anim:'idle'; const fps=(cur.man.fps&&cur.man.fps[anim])||8;
+    const frame=Math.floor(now/1000*fps);
+    DIR_ORDER.forEach(d=>{ const ctx=gridCanvases[d]; if(!ctx)return; ctx.clearRect(0,0,80,88);
+      drawFrame(ctx, cur, anim, d, frame, 40, 84, 3); }); }
   requestAnimationFrame(gridLoop);
 }
 
 // ---------- 控件 ----------
-const charSel=document.getElementById('charSel'), animSel=document.getElementById('animSel');
+const charSel=document.getElementById('charSel'), animSel=document.getElementById('animSel'), fxSel=document.getElementById('fxSel');
 Object.keys(CHARS).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=CHARS[k].name; charSel.appendChild(o); });
+FX_LIST.forEach(f=>{ const o=document.createElement('option'); o.value=f; o.textContent=f; fxSel.appendChild(o); });
 
-window.__sprites = {};
-function switchChar(k){
-  state.base = k;
+window.__sprites={};
+function switchChar(k){ state.base=k; state.fx=CHARS[k].fx||'arcane_burst'; fxSel.value=state.fx; cast=null;
   if(window.__sprites[k]){ refreshAnims(); return; }
-  loadChar(CHARS[k].base).then(sp=>{ window.__sprites[k]=sp; refreshAnims(); });
-}
+  loadChar(CHARS[k].base).then(sp=>{ window.__sprites[k]=sp; refreshAnims(); }); }
 function refreshAnims(){
-  const cur=window.__sprites[state.base]; if(!cur) return;
-  animSel.innerHTML='';
+  const cur=window.__sprites[state.base]; if(!cur) return; animSel.innerHTML='';
   Object.keys(cur.man.anims).forEach(a=>{ const o=document.createElement('option'); o.value=a; o.textContent=a; animSel.appendChild(o); });
-  if(!cur.man.anims[state.anim]) state.anim=Object.keys(cur.man.anims)[0];
-  animSel.value=state.anim;
-  document.getElementById('metaInfo').textContent =
-    `${CHARS[state.base].name} · 源 ${cur.man.srcSize.w}×${cur.man.srcSize.h} · 动作 [${Object.keys(cur.man.anims).join(', ')}] · idle ${cur.man.fps.idle||'?'}fps`;
+  if(!cur.man.anims[state.anim]) state.anim=Object.keys(cur.man.anims)[0]; animSel.value=state.anim;
+  const hasCast=cur.man.anims.cast?'有 cast':'无 cast(用idle兜底)';
+  document.getElementById('metaInfo').textContent=
+    `${CHARS[state.base].name} · 源 ${cur.man.srcSize.w}×${cur.man.srcSize.h} · 动作 [${Object.keys(cur.man.anims).join(', ')}] · ${hasCast}`;
 }
-charSel.onchange = e=>switchChar(e.target.value);
-animSel.onchange = e=>{ state.anim=e.target.value; };
-document.getElementById('scale').oninput = e=>state.scale=+e.target.value;
-document.getElementById('speed').oninput = e=>state.speed=+e.target.value;
+charSel.onchange=e=>switchChar(e.target.value);
+animSel.onchange=e=>{ state.anim=e.target.value; };
+fxSel.onchange=e=>{ state.fx=e.target.value; };
+document.getElementById('scale').oninput=e=>state.scale=+e.target.value;
+document.getElementById('speed').oninput=e=>state.speed=+e.target.value;
+document.getElementById('castBtn').onclick=triggerCast;
 
-addEventListener('keydown',e=>{ keys[e.key.toLowerCase()]=true; });
+addEventListener('keydown',e=>{ if(e.key===' '){ e.preventDefault(); triggerCast(); return; } keys[e.key.toLowerCase()]=true; });
 addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
-document.querySelectorAll('.compass button').forEach(b=>{
-  const d=b.dataset.d;
+document.querySelectorAll('.compass button').forEach(b=>{ const d=b.dataset.d;
   if(b.id==='stopBtn'){ b.onclick=()=>{held=''; for(const k in keys)keys[k]=false;}; return; }
   const set=v=>()=>{ held=v?d:''; };
-  b.addEventListener('pointerdown',set(true)); b.addEventListener('pointerup',set(false));
-  b.addEventListener('pointerleave',set(false));
-});
+  b.addEventListener('pointerdown',set(true)); b.addEventListener('pointerup',set(false)); b.addEventListener('pointerleave',set(false)); });
 
-buildGrid();
-switchChar('seir');
-requestAnimationFrame(loop);
-requestAnimationFrame(gridLoop);
+buildGrid(); switchChar('seir');
+requestAnimationFrame(loop); requestAnimationFrame(gridLoop);
 </script>
 </body>
 </html>
