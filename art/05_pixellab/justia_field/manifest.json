@@ -20,7 +20,9 @@
   "south-west"
  ],
  "fps": {
-  "idle": 8
+  "idle": 8,
+  "run": 12,
+  "cast": 12
  },
  "anims": {
   "idle": {
@@ -33,6 +35,28 @@
     "north-west": 9,
     "west": 9,
     "south-west": 9
+   }
+  },
+  "run": {
+   "frames": {
+    "south": 8,
+    "south-east": 8,
+    "east": 8,
+    "north-east": 8,
+    "north": 8,
+    "north-west": 8,
+    "west": 8,
+    "south-west": 8
+   }
+  },
+  "cast_class": {
+   "frames": {
+    "north": 9
+   }
+  },
+  "cast": {
+   "frames": {
+    "north": 9
    }
   }
  },

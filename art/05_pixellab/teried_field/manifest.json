@@ -30,9 +30,9 @@
     "south": 9,
     "south-east": 9,
     "east": 9,
-    "north-east": 1,
+    "north-east": 9,
     "north": 9,
-    "north-west": 1,
+    "north-west": 9,
     "west": 9,
     "south-west": 9
    }
@@ -49,12 +49,12 @@
     "south-west": 8
    }
   },
-  "cast": {
+  "cast_class": {
    "frames": {
     "north": 9
    }
   },
-  "cast_class": {
+  "cast": {
    "frames": {
     "north": 9
    }
