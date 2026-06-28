@@ -13,9 +13,28 @@
 | 角色 | PixelLab ID | 备注 |
 |---|---|---|
 | **Seir**（锚定母本/Anchor） | `5f48540d-f2b9-4708-9715-3e193a4d7f7d` | 锁法A 的派生源。18anim。group(+1) |
-| **Olstein**（新版,锁法A） | `714eda85-8cc3-4f1e-85ef-4478e387015b` | ⚠️ 名字显示为"Transform into: Powe"。Seir 派生,与 Seir 同 group。run 4向已好,**待回填 run(north)+cast(north)** |
 | Refithea | `11f13348-94a9-4a07-8086-c62bf53c3b53` | 已接入(idle+run) |
 | Rigenette | `7c54b215-be04-4001-8aad-1ce38e6aaa81` | 已接入(idle) |
+
+### 锁法A 派生角色（均 Seir 派生,同 group；名字显示为 "Transform into: …" 丑名,**一律按 ID 操作**）
+
+| 角色 | PixelLab ID | 状态 |
+|---|---|---|
+| Olstein | `714eda85-8cc3-4f1e-85ef-4478e387015b` | ✅ 完整(run8+cast),已接入 |
+| Rou | `b91599ac-752d-4696-b5b5-a425f698ba8c` | ✅ 完整,已接入 |
+| Helena | `86ce22e1-d8e5-4186-b083-8d7fc60a863d` | ✅ 完整,已接入 |
+| Diana | `55669573-e41e-41ff-8453-cecb2069734d` | ✅ 完整,已接入 |
+| Garcia | `840cd2e7-c0c6-4370-853e-7e98e8e254f9` | ✅ 完整,已接入 |
+| Teried | `551ca763-32f5-4173-a398-cff1449ae3a6` | ✅ 完整,已接入 |
+| Lia | `94181d7b-d16e-45c5-97d4-5e68b394c5bd` | ✅ 完整,已接入 |
+| Mina | `1807ef74-470e-44ed-ab58-a80a6a757d8a` | ✅ 完整,已接入 |
+| Glacia | `11f2ade0-272a-48e4-bba1-66913a18c16c` | ✅ 完整,已接入 |
+| Liatris | `835024bb-4529-4242-8aed-fcb83a3f269f` | ✅ 完整,已接入 |
+| Loen | `004441e3-c4d9-43ff-b599-355cd188c7cf` | ✅ 完整,已接入 |
+
+> ⚠️ 多角色同 group,**单角色下载的 zip 会打包全组**,且 "Beautiful…" 类名字截断后无法区分。
+> 重新提取某角色时,用其**唯一 cast 文件夹签名**定位(如 healing_light/wind_slash/water_spell/
+> ice_spell/flame_arrow/nature_arrow/potion_sparkle/fire_slash/holy_light),不要靠 "Transform_into_Beau_N" 文件夹名。
 
 ## ❌ 已废弃（请勿使用 / 待删）
 
