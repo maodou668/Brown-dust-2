@@ -188,6 +188,12 @@ const BattleUI = {
     helena:   'art/05_pixellab/helena_field',
     diana:    'art/05_pixellab/diana_field',
     garcia:   'art/05_pixellab/garcia_field',
+    teried:   'art/05_pixellab/teried_field',
+    lia:      'art/05_pixellab/lia_field',
+    mina:     'art/05_pixellab/mina_field',
+    glacia:   'art/05_pixellab/glacia_field',
+    liatris:  'art/05_pixellab/liatris_field',
+    loen:     'art/05_pixellab/loen_field',
   },
   sprites: {}, spriteState: {}, _spriteRaf: 0,
 
