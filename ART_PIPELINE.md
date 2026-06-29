@@ -79,6 +79,7 @@ node gnorm.js <char> <mergedDir> '{"cast_class":"class_skill","cast":"casting"}'
 
 ## 5. 自测闸门（过了才给用户/部署）
 1. **脚漂移**：`node fd8.js <char> idle` → 全 8 向 ≲1.5px 才算站稳（Lecliss 0.2–1.3）。超标=该向抽腿 → 重 roll 那个源方向，或 `node synthidle.js <char>` 合成呼吸兜底。
+   - ⚠️ **fd8 达标 ≠ 不抽腿**：背向斜角(NW 源 / NE 镜像)若两腿**对称交换**，质心几乎不动、fd8 照样 1.x px 过关，但肉眼明显乱动（Rou 踩过坑）。**必须额外目视 NW idle 序列帧**(渲成横条)，确认双脚钉地、只有上半身呼吸。抽腿就重 roll NW 源，提示词强调 `both feet firmly planted flat on the ground and motionless, legs and lower body perfectly still, only upper body and head sway gently with breathing`。
 2. **静态 sheet**：渲染 idle 8 向 + run 8 向 + cast 肉眼过：同一个人 / 不乱腿 / 施法有特效。
 3. **游戏内技能配对**（必做）：`node skillcap.js`（Playwright 驱动真实战斗）让该角色放**两个技能**（职业技 + 招牌技），截图验证：
    - 招牌技 → `cast` 动画；职业技(`cls_*`) → `cast_class` 动画（triggerCast 按 `CLASS_SKILL_OF` 选）；
