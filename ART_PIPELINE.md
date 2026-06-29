@@ -53,6 +53,7 @@ animate_character(walkstate, animation_name="walk",
   directions=["south","south-east","east","north-east","north"], frame_count=8)
 ```
 - ⚠️ 背向斜角用 **north-east 当源**（run 用 **MIR** 表，与 idle 的 IMIR 相反）。
+- ⚠️ **east/west 走路必须正侧面(Diana/Helena/Rou 踩坑)**：迈步状态的 east 旋转常漂成「3/4 正面(朝右下 SE)」，导致 run east/west 不是标准正侧面、和 idle 对不上。**根治**：east 走路别用迈步状态，改在**基础角色**(其 east 旋转是干净正侧面)上单独生成 `animate_character(基础角色, animation_name="walk_side", action="walking cycle loop in pure side-profile view facing directly to the right, the body stays in side view not turning toward the camera, legs striding forward and back along the ground, smooth seamless loop", directions=["east"], frame_count=8)`，再用 `scripts/rewalk_ew.js` 同款逻辑把 run/east(直取,丢首帧) + run/west(镜像) 重组进 `<char>_field`。组装后**目视 run east/west 横条要和 idle east/west 同朝向**(正侧面迈步,不转向镜头)。
 
 ### ③ casts（一次性，仅 north）—— 描述里直接写技能内容，PixelLab 把特效画进帧
 - 招牌技：`animation_name="castsig", action="casting a blazing inferno spell, raising both hands"`
