@@ -411,18 +411,26 @@ const BattleUI = {
   drawFxFrame(ctx, em, p) {
     const fr = em.rec.frames, idx = Math.min(fr.length - 1, Math.floor(p * fr.length)), im = fr[idx];
     if (!im || !im.width) return;
-    const size = em.base * 2.0 * em.scale, dw = size, dh = size * (im.height / im.width || 1);
+    const size = em.base * 2.8 * em.scale, dw = size, dh = size * (im.height / im.width || 1);  // 放大让特效更醒目
     const ox = em.x - dw / 2, oy = em.anchor === 'feet' ? em.y - dh : em.y - dh / 2;
+    const cyp = em.anchor === 'feet' ? em.y - dh / 2 : em.y;
     // 尾部淡出：最后 28% 渐隐到 0，确保不会自然消散的素材也能优雅收尾（不会硬切）
     const fade = p > 0.72 ? Math.max(0, (1 - p) / 0.28) : 1;
-    ctx.imageSmoothingEnabled = false; ctx.globalAlpha = fade;
-    if (em.angle != null) {   // 投射物：绕中心旋转，指向飞行方向
-      const cyp = em.anchor === 'feet' ? em.y - dh / 2 : em.y;
-      ctx.save(); ctx.translate(em.x, cyp); ctx.rotate(em.angle); ctx.drawImage(im, -dw / 2, -dh / 2, dw, dh); ctx.restore();
-    } else {
-      ctx.drawImage(im, ox, oy, dw, dh);
+    ctx.imageSmoothingEnabled = false;
+    const blit = () => {
+      if (em.angle != null) { ctx.save(); ctx.translate(em.x, cyp); ctx.rotate(em.angle); ctx.drawImage(im, -dw / 2, -dh / 2, dw, dh); ctx.restore(); }
+      else ctx.drawImage(im, ox, oy, dw, dh);
+    };
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = fade; blit();   // 本体
+    ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5 * fade; blit();  // 叠加辉光 → 更亮更跳
+    // 命中瞬间(前 22%)叠一圈径向高光闪，强调"打中了"
+    if (p < 0.22) {
+      const f = 1 - p / 0.22, R = size * 0.5 * (0.7 + 0.6 * (1 - f));
+      const g = ctx.createRadialGradient(em.x, cyp, 0, em.x, cyp, R);
+      g.addColorStop(0, em.tint || '#ffffff'); g.addColorStop(0.45, em.tint || '#ffffff'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.globalAlpha = 0.6 * f; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(em.x, cyp, R, 0, Math.PI * 2); ctx.fill();
     }
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   },
 
   // —— 程序化兜底特效（在真 PNG 到位前用来跑通握手）——
