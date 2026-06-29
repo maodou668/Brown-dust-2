@@ -102,6 +102,7 @@ node gnorm.js <char> <mergedDir> '{"cast_class":"class_skill","cast":"casting"}'
 | 2 | **east/west 走路**朝向偏成 3/4 正面(SE/SW) | 迈步状态的 east 旋转漂成正面 | 在**基础角色**(正侧面 east)上单独生成 `walk_side`，`rewalk_ew.js` 重组 run/east+west(镜像) | 走路组装后**目视 run east/west 必须和 idle east/west 同朝向**(正侧面) |
 | 3 | 移动时**头顶/光环被裁** | 渲染只裁固定 bbox(y 上界)，超出被切 | 渲染改**画整幅、脚对齐地线**(world.js 已改) | 量 `所有动作所有帧` 的最高内容，确认渲染不裁顶 |
 | 4 | 角色**大小不统一**(带大光环者偏小) | gnorm 按「整体外接框(含光环)」填满 → 光环吃高度、身体被压小 | `uniformsize.js` 按**身体高**(脚→头顶,排除光环)归一到统一值 + 高画布(64×72,脚 y=64) | 接入后跑 `uniformsize.js`；目视全队同框，身体等高 |
+| 4b | 宽体/头盔角色(如坦克)被**放大成"熊"** + 各角度被画布裁切 | uniformsize 的 contiguous 头顶检测对**窄头盔**误判体高过矮→过度放大 | `uniformsize.js <char>:<bodyPx>` 显式覆盖体高(Garcia 满幅内容高=46→`garcia:46` 即不缩放) | 跑完目视全队同框；**量该角色所有帧最大内容 spanX/spanY 必须 < 画布(64×72)**，超出说明放大过度，用满幅高覆盖 |
 | 5 | 技能名/动作/VFX **不对**(如水法师第2技能是通用奥术弹) | 通用职业技不贴人设 | `costumes.js > CLASS_SKILL_OVERRIDE` 给该角色换专属技；缺 VFX 用 `create_1_direction_object→animate_object` 做 | skillcap 验证两技能动画+VFX 配对；元素与人设一致 |
 
 **通用收尾**：`uniformsize.js` 是**全员归一**步骤——任何角色接入后都要跑一遍(它读各角色身体高、统一到同一值)，保证全队同框等高。
