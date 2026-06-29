@@ -295,7 +295,7 @@ const Game = {
     // 职业通用节奏技（sp2）：让每个单位都有「普攻 / 便宜技 / 大招」三档抉择
     const D = window.GameData;
     const cls = (D.CHARACTERS[owned.charId] || {}).cls;
-    const clsSkill = D.CLASS_SKILL_OF && D.CLASS_SKILL_OF[cls];
+    const clsSkill = (D.CLASS_SKILL_OVERRIDE && D.CLASS_SKILL_OVERRIDE[owned.charId]) || (D.CLASS_SKILL_OF && D.CLASS_SKILL_OF[cls]);
     if (clsSkill && !skills.includes(clsSkill)) skills.push(clsSkill);
     this.ownedCostumeIds(owned).forEach(cid => {
       const c = D.COSTUMES[cid];

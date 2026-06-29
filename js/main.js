@@ -261,7 +261,7 @@ const BattleUI = {
     const sp = this.sprites[c.charId];
     let anim = 'cast';
     const cls = (window.GameData.CHARACTERS[c.charId] || {}).cls;
-    const classSkill = cls && window.GameData.CLASS_SKILL_OF && window.GameData.CLASS_SKILL_OF[cls];
+    const classSkill = (window.GameData.CLASS_SKILL_OVERRIDE && window.GameData.CLASS_SKILL_OVERRIDE[c.charId]) || (cls && window.GameData.CLASS_SKILL_OF && window.GameData.CLASS_SKILL_OF[cls]);
     if (skillId && skillId === classSkill) anim = 'cast_class';
     if (sp && sp.man && !(sp.man.anims && sp.man.anims[anim])) anim = (sp.man.anims && sp.man.anims.cast) ? 'cast' : 'cast_class';
     this.spriteState[uid] = { anim, start: performance.now() };
@@ -294,6 +294,7 @@ const BattleUI = {
     oath_aegis:       { castMs: 360, telegraphMs: 220, burst: 'aegis_holy', tint: '#ffd35a' },
     blessing:         { castMs: 340, telegraphMs: 220, burst: 'blessing_aura', tint: '#ffe7a0' },
     abyssal_prison:   { castMs: 380, telegraphMs: 300, star: 'hexstar', burst: 'water_vortex', tint: '#5a9fff' },
+    water_lance:      { castMs: 320, telegraphMs: 180, burst: 'water_lance', tint: '#5a9fff', projectile: true, spriteAngle: 0.785 },
     rooting_shot:     { castMs: 320, telegraphMs: 180, burst: 'root_snare', tint: '#7affc4' },
     zephyr_mend:      { castMs: 320, telegraphMs: 180, burst: 'zephyr_heal', tint: '#9affd6' },
     grand_heal:       { castMs: 400, telegraphMs: 260, star: 'hexstar', burst: 'grandheal_bloom', tint: '#ffe7a0' },

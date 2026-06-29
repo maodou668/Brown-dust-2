@@ -3579,6 +3579,11 @@ Object.entries(CLASS_SKILL_SPECS).forEach(([cls, spec]) => {
 });
 window.GameData.CLASS_SKILL_OF = CLASS_SKILL_OF;
 
+// 个别角色用专属元素技替代通用职业技（更贴人设）。机制保持「便宜节奏技」定位。
+// 碧水法师 Diana：用「水矛」(单体穿透+降防) 替代通用「奥术弹」。
+const CLASS_SKILL_OVERRIDE = { diana: 'water_lance' };
+window.GameData.CLASS_SKILL_OVERRIDE = CLASS_SKILL_OVERRIDE;
+
 
 // 每个角色「初始服装」的专属招式（显式指定，16 个互不重复）
 const BASE_SIG = {
@@ -3987,7 +3992,7 @@ const Game = {
     // 职业通用节奏技（sp2）：让每个单位都有「普攻 / 便宜技 / 大招」三档抉择
     const D = window.GameData;
     const cls = (D.CHARACTERS[owned.charId] || {}).cls;
-    const clsSkill = D.CLASS_SKILL_OF && D.CLASS_SKILL_OF[cls];
+    const clsSkill = (D.CLASS_SKILL_OVERRIDE && D.CLASS_SKILL_OVERRIDE[owned.charId]) || (D.CLASS_SKILL_OF && D.CLASS_SKILL_OF[cls]);
     if (clsSkill && !skills.includes(clsSkill)) skills.push(clsSkill);
     this.ownedCostumeIds(owned).forEach(cid => {
       const c = D.COSTUMES[cid];
@@ -10961,7 +10966,7 @@ const BattleUI = {
     const sp = this.sprites[c.charId];
     let anim = 'cast';
     const cls = (window.GameData.CHARACTERS[c.charId] || {}).cls;
-    const classSkill = cls && window.GameData.CLASS_SKILL_OF && window.GameData.CLASS_SKILL_OF[cls];
+    const classSkill = (window.GameData.CLASS_SKILL_OVERRIDE && window.GameData.CLASS_SKILL_OVERRIDE[c.charId]) || (cls && window.GameData.CLASS_SKILL_OF && window.GameData.CLASS_SKILL_OF[cls]);
     if (skillId && skillId === classSkill) anim = 'cast_class';
     if (sp && sp.man && !(sp.man.anims && sp.man.anims[anim])) anim = (sp.man.anims && sp.man.anims.cast) ? 'cast' : 'cast_class';
     this.spriteState[uid] = { anim, start: performance.now() };
@@ -10994,6 +10999,7 @@ const BattleUI = {
     oath_aegis:       { castMs: 360, telegraphMs: 220, burst: 'aegis_holy', tint: '#ffd35a' },
     blessing:         { castMs: 340, telegraphMs: 220, burst: 'blessing_aura', tint: '#ffe7a0' },
     abyssal_prison:   { castMs: 380, telegraphMs: 300, star: 'hexstar', burst: 'water_vortex', tint: '#5a9fff' },
+    water_lance:      { castMs: 320, telegraphMs: 180, burst: 'water_lance', tint: '#5a9fff', projectile: true, spriteAngle: 0.785 },
     rooting_shot:     { castMs: 320, telegraphMs: 180, burst: 'root_snare', tint: '#7affc4' },
     zephyr_mend:      { castMs: 320, telegraphMs: 180, burst: 'zephyr_heal', tint: '#9affd6' },
     grand_heal:       { castMs: 400, telegraphMs: 260, star: 'hexstar', burst: 'grandheal_bloom', tint: '#ffe7a0' },

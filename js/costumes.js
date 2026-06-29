@@ -132,6 +132,11 @@ Object.entries(CLASS_SKILL_SPECS).forEach(([cls, spec]) => {
 });
 window.GameData.CLASS_SKILL_OF = CLASS_SKILL_OF;
 
+// 个别角色用专属元素技替代通用职业技（更贴人设）。机制保持「便宜节奏技」定位。
+// 碧水法师 Diana：用「水矛」(单体穿透+降防) 替代通用「奥术弹」。
+const CLASS_SKILL_OVERRIDE = { diana: 'water_lance' };
+window.GameData.CLASS_SKILL_OVERRIDE = CLASS_SKILL_OVERRIDE;
+
 
 // 每个角色「初始服装」的专属招式（显式指定，16 个互不重复）
 const BASE_SIG = {
