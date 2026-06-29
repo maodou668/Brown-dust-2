@@ -30,9 +30,9 @@
     "south": 7,
     "south-east": 7,
     "east": 7,
-    "north-east": 7,
+    "north-east": 8,
     "north": 7,
-    "north-west": 7,
+    "north-west": 8,
     "west": 7,
     "south-west": 7
    }
