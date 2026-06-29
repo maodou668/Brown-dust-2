@@ -7,7 +7,10 @@ const fs = require('fs'), path = require('path');
 const charId = process.argv[2], EX = process.argv[3];
 const ROT = path.join(EX, 'rotations'), AN = path.join(EX, 'animations');
 const OUT = `/home/user/Maodou/art/05_pixellab/${charId}_field`;
-const LEC = JSON.parse(fs.readFileSync('/home/user/Maodou/art/05_pixellab/lecliss_field/manifest.json', 'utf8'));
+// 固定归一基准（64 画布、脚线 53）。**不要**读 lecliss manifest——它已被 uniformsize 改成
+// v2(72 画布/脚线64)，会污染 gnorm 让新角色脚线错位。gnorm 永远输出 64 画布 v1，
+// 之后由 uniformsize 统一转 72 画布。
+const LEC = { srcSize: { w: 64, h: 64 }, bbox: { x: 1, y: 7, w: 59, h: 46 } };
 const BB = LEC.bbox, CAN = LEC.srcSize.w, baseY = BB.y + BB.h, cx = BB.x + BB.w / 2;
 const DIRS = ['south','south-east','east','north-east','north','north-west','west','south-west'];
 const folders = fs.readdirSync(AN);

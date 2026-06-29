@@ -4,7 +4,7 @@ const R3='/tmp/claude-0/-home-user-Maodou/ec2893cb-4d1d-5ee5-a770-feb89679eb2f/s
 const NEFRAME=path.join(R3,'animations/standing_in_place_the_entire_lower_body_legs_and_f/north-east/frame_000.png');
 const NEROT=path.join(R3,'rotations/north-east.png');
 const OUT='/home/user/Maodou/art/05_pixellab/rou_field';
-const LEC=JSON.parse(fs.readFileSync('/home/user/Maodou/art/05_pixellab/lecliss_field/manifest.json','utf8'));
+const LEC={srcSize:{w:64,h:64},bbox:{x:1,y:7,w:59,h:46}}; // 固定基准,勿读已被uniformsize改成v2的lecliss manifest
 const BB=LEC.bbox, CAN=LEC.srcSize.w, baseY=BB.y+BB.h, cx=BB.x+BB.w/2;
 function cbox(img){const c=createCanvas(img.width,img.height),x=c.getContext('2d');x.drawImage(img,0,0);
   const d=x.getImageData(0,0,img.width,img.height).data;let x0=img.width,y0=img.height,x1=-1,y1=-1;
