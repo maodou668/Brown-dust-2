@@ -6,7 +6,8 @@
 const { createCanvas, loadImage } = require('@napi-rs/canvas');
 const fs = require('fs'), path = require('path');
 const ART = '/home/user/Maodou/art/05_pixellab';
-const chars = ['lecliss','justia','seir','rou','helena','diana'];
+// 默认全员；传 char 参数则只处理该角色（新角色接入只跑它自己，避免把已归一的重复缩放）。
+const chars = process.argv.slice(2).length ? process.argv.slice(2) : ['lecliss','justia','seir','rou','helena','diana'];
 const BASE_Y = 53;          // current gnorm feet baseline in 64-canvas
 const NEW_W = 64, NEW_H = 72, NEW_FEET = 64, TARGET_BODY = 46;  // new canvas + uniform body
 async function headTop(img, run){const c=createCanvas(img.width,img.height),x=c.getContext('2d');x.drawImage(img,0,0);
