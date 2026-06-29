@@ -613,12 +613,14 @@ const World = {
       const fps = (sp.man.fps && sp.man.fps[anim]) || 8;
       const im = arr[Math.floor(this._spriteT / 1000 * fps) % arr.length];
       const bb = sp.man.bbox;
-      const targetH = TS * 1.55, scale = targetH / bb.h;
-      const dw = bb.w * scale, dh = bb.h * scale;
+      const targetH = TS * 1.55, scale = targetH / bb.h;     // 身体比例不变（仍以 bbox 高为准）
       const bob = moving ? Math.abs(Math.sin(p.step / 95)) * 3 : 0;
       if (im && im.width) {
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(im, bb.x, bb.y, bb.w, bb.h, cx - dw / 2, cy + TS * 0.30 - dh - bob, dw, dh);
+        // 画**整幅**而非只裁 bbox：脚(bbox 底)对齐地线，头顶以上(抬头/光环)不再被裁。
+        const groundY = cy + TS * 0.30 - bob, feetSrcY = bb.y + bb.h;
+        ctx.drawImage(im, 0, 0, im.width, im.height,
+          cx - (im.width * scale) / 2, groundY - feetSrcY * scale, im.width * scale, im.height * scale);
         ctx.imageSmoothingEnabled = true;
       }
       return;
