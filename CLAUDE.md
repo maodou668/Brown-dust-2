@@ -37,6 +37,7 @@
 - ⚠️ **成功路径(已由 Lecliss 一次过验证，做任何角色前读 ART_PIPELINE.md)**：
   ① 一致性=**锁法A**：Lecliss 作锚，其余 `create_character_state` 从她派生(继承头身比/画风)。
   ② 母图 `v3 / size64 / selective outline / soft shading no black outline / 手不持武器`；**不加**正面对称后缀。
+  ②.5 🚦 **母图姿势闸门(铁律)**：出 8 向母图后**先逐角度严格目视检测姿势标准再做动画**——east/west 必须正侧面(只露一条腿一条胳膊侧脸,露第二条腿=带角度不合格),不合格就锁法A换 seed 重派生;**绝不在坏母图上做动画**(加西亚返工三次的教训)。详见 ART_PIPELINE.md §5.5 #6。
   ③ idle 用 **north-west 源**(gnorm IMIR 镜像出 NE，防抖腿)；走路**先建 mid-stride 状态**再做 walking_cycle(run 用 north-east 源)；施法描述**直接写技能内容**(自带火焰/奥术 VFX)。
   ④ 自测闸门 `fd8.js` 脚漂移全向 ≲1.5px 才过；**但 fd8 过≠不抽腿**——背向斜角两腿对称交换时质心不动、fd8 照样过却肉眼乱动(Rou 踩坑)，**必须额外目视 NW+NE idle 横条**确认脚钉地。背向斜角源**别固定 NW**：NW/NE 两个源都生成、取脚稳那个作源镜像另一向。**v3 最多 re-roll 1-2 次还抽腿就上 `scripts/synthnwne.js` 合成呼吸兜底**(脚钉死 0.0px、只上半身起伏)，别无限 re-roll(Rou 定论)。**一个一个做、不批量**，每个自测+用户验收后再下一个。
   ⑤ 接入后必跑 `scripts/uniformsize.js`（按身体高全员归一到统一尺寸+高画布，防带光环角色偏小）；渲染画整幅脚对齐地线（不裁头顶/光环）。**问题→办法清单见 ART_PIPELINE.md §5.5 质量保障 Playbook，做每个角色都主动套用**。
