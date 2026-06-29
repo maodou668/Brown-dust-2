@@ -1,12 +1,12 @@
 {
  "srcSize": {
   "w": 64,
-  "h": 64
+  "h": 72
  },
  "bbox": {
   "x": 1,
-  "y": 7,
-  "w": 59,
+  "y": 18,
+  "w": 62,
   "h": 46
  },
  "dirs": [
@@ -27,14 +27,14 @@
  "anims": {
   "idle": {
    "frames": {
-    "south": 8,
-    "south-east": 8,
-    "east": 8,
-    "north-east": 8,
-    "north": 8,
-    "north-west": 8,
-    "west": 8,
-    "south-west": 8
+    "south": 7,
+    "south-east": 7,
+    "east": 7,
+    "north-east": 7,
+    "north": 7,
+    "north-west": 7,
+    "west": 7,
+    "south-west": 7
    }
   },
   "run": {
@@ -49,14 +49,14 @@
     "south-west": 8
    }
   },
-  "cast_class": {
-   "frames": {
-    "north": 9
-   }
-  },
   "cast": {
    "frames": {
-    "north": 9
+    "north": 7
+   }
+  },
+  "cast_class": {
+   "frames": {
+    "north": 7
    }
   }
  },
