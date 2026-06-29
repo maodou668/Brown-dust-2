@@ -294,7 +294,7 @@ const BattleUI = {
     oath_aegis:       { castMs: 360, telegraphMs: 220, burst: 'aegis_holy', tint: '#ffd35a' },
     blessing:         { castMs: 340, telegraphMs: 220, burst: 'blessing_aura', tint: '#ffe7a0' },
     abyssal_prison:   { castMs: 380, telegraphMs: 300, star: 'hexstar', burst: 'water_vortex', tint: '#5a9fff' },
-    water_lance:      { castMs: 320, telegraphMs: 180, burst: 'water_lance', tint: '#5a9fff', projectile: true, spriteAngle: 0.785 },
+    water_lance:      { castMs: 320, telegraphMs: 180, burst: 'water_lance', tint: '#5a9fff', projectile: true, spriteAngle: 0 },
     rooting_shot:     { castMs: 320, telegraphMs: 180, burst: 'root_snare', tint: '#7affc4' },
     zephyr_mend:      { castMs: 320, telegraphMs: 180, burst: 'zephyr_heal', tint: '#9affd6' },
     grand_heal:       { castMs: 400, telegraphMs: 260, star: 'hexstar', burst: 'grandheal_bloom', tint: '#ffe7a0' },
