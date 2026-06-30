@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=156">
+  <link rel="manifest" href="manifest.webmanifest?v=157">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=156">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=156">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=157">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=157">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2179,6 +2179,28 @@ button.ac-circle:active { transform: scale(.92); }
 .abyss-mod { font-size: 10px; font-weight: 700; color: #ffb15c; background: rgba(255,107,61,.16);
   border: 1px solid rgba(255,140,60,.35); padding: 1px 6px; border-radius: 6px; }
 
+/* ===================== PixelLab UI 皮肤 v1 ===================== */
+/* 锚点风格: 暗炭紫石板 + 冷铁框 + 炉火橙宝石 + 暖金描边。九宫格 border-image。*/
+/* 右侧活动卡: 保留各自渐变配色, 外加铁框宝石 (border-image 不带 fill, 渐变透出中心) */
+.lr-banner {
+  border: 13px solid transparent;
+  border-image: url('art/05_pixellab/ui/panel.png') 38 stretch;
+  border-radius: 10px;
+  padding: 3px 8px;
+  image-rendering: pixelated;
+}
+/* 底部功能按钮: 用按钮九宫格做底 (带 fill = 炭色面), 图标/文字浮于其上 */
+.lobby-btn {
+  border: 11px solid transparent;
+  border-image: url('art/05_pixellab/ui/button.png') 30 fill stretch;
+  background: none;
+  border-radius: 0;
+  backdrop-filter: none;
+  image-rendering: pixelated;
+}
+.lobby-btn:hover { border-color: transparent; }
+/* ============================================================= */
+
 </style>
 </head>
 <body>
@@ -2186,7 +2208,7 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=156" alt="" onerror="this.outerHTML='🎖️'"></span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=157" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
@@ -2236,7 +2258,7 @@ button.ac-circle:active { transform: scale(.92); }
     </div>
   </div>
 
-  <script>window.ASSET_VER = '156';</script>
+  <script>window.ASSET_VER = '157';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
