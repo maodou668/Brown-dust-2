@@ -133,15 +133,43 @@
 
 ---
 
-## §D. UI 资产（⬜ 待实战 · 骨架已就位）
-- **PixelLab 工具**：`create_ui_asset`（按钮/边框/面板/血条底/图标底）；小图标也可 `create_1_direction_object` 出候选再挑。
-- **一致性**：UI 自成一族 —— **设一个 UI 锚风格**（边框圆角/描边/高光规则），其余控件沿用同规则；贴 §1 风格后缀。
-- **通用闸门 → UI 版**：
-  - 🚦 **九宫格闸门**：可拉伸控件（按钮/面板）确认中间可平铺、四角不变形（若做 9-slice）。
-  - 🚦 **像素对齐闸门**：@1x 下边缘锐利不发虚；多分辨率缩放整数倍。
-- **接入**：图标/控件切图 + CSS/引擎样式注册。
+## §D. UI 资产（✅ 已实战跑通 —— 全套套装 + 全局接入）
+> 本作已用 PixelLab 生成整套 UI（面板/标题栏/三级按钮/标签页/条框/头像框/稀有度框/功能·资源·元素图标）并全游戏接入。下为踩平的坑与定法。本作设计系统见 `dev/UI_DESIGN.md`。
 
-📝 **实战补充区（UI）**：待补 —— 控件清单、9-slice 切分参数、图标命名规范。
+### D.1 工具与批量（省额度是第一原则）
+- **`create_ui_asset`**：面板/按钮/边框/条框/标签页等"控件"。一次 20–40 generations，**出一张**（非候选制），所以提示词要一次到位。
+- **`create_1_direction_object`**：图标。`size` 决定候选数（≤42→64，≤85→16，≤170→4）——**一次调用内的 16 个候选不额外收费**，`get_object` 看候选挑最佳。
+- **🟢 批量定法**：`item_descriptions` 数组在**一次调用**里出**多个不同**图标（如一次出火/水/风/地/光/暗 6 元素），是省额度的关键。别一个图标一次调用。
+- **能 CSS 就别生成**：稀有度辉光、凹槽物品格、三级轻钮、红点/NEW、星级、卡片染色、平滑底辉——纯 CSS 兜，绝不烧 generation。已生成的图能复用就复用（如从角色表里裁一个圆头像框）。
+
+### D.2 🚦 像素感闸门（铁律 · 本作返工教训）
+- **分辨率 = 像素颗粒感**。`create_ui_asset` 出图**越大越"高清"**，颗粒越细 → **不像像素风**。把边框做成 384×512 + "engraved/embossed/filigree/fine detail"提示词 → 出来是 HD 雕花，和像素游戏违和（用户一眼看穿）。
+- **定法**：UI 控件**尺寸对齐本套其他件**（本作 panel≈358、button≈262、tab≈215、frame 用 **192×256**）；提示词写 **`chunky pixel art, bold thick, limited palette, hard pixel edges, flat shading, no anti-aliasing`**，**别写** `engraved/embossed/filigree/fine/HD/smooth`。
+- CSS 侧所有 PixelLab UI 元素加 **`image-rendering: pixelated`**，缩放时保持硬边不发虚。
+
+### D.3 九宫格接入（border-image）
+- 边框/面板/按钮/条框 → CSS `border-image: url('../art/...') <slice> fill stretch` + `border-width`。`slice` = 源图四角不拉伸区的像素宽。
+- **空心框**（稀有度框/头像框）：`fill` 仍会铺中心 → 若要透出内容，去掉 `fill` 或让中心透明。
+- **居中陷阱**：border-image 的边框吃掉内容框（如 30px 钮 −2×7px 边 = 16px 内容框）→ 里面的图标必须 **flex 居中 + 尺寸 ≤ 内容框**，否则溢出/偏位（系统图标返工教训）。
+
+### D.4 🚦 路径闸门（线上必测 index.html）
+- **外链 `css/style.css` 的 `url()` 相对 `css/` 目录解析** → 引 `art/` 必须写 **`url('../art/...')`**；`build.js` 内联进根目录 `game.html` 时自动去掉 `../`。
+- **自测必测 `index.html`（线上入口），不是 `game.html`**——内联版路径不同会**掩盖** 404 路径 bug（"打开链接没 UI"的根因）。
+
+### D.5 字体全局（像素字体）
+- **`body` 的 `font-family` 不会传到 `<button>/<input>/<select>/<textarea>`**（表单元素默认不继承）→ 必须显式 `button,input,select,textarea{font-family:inherit}`，否则功能按钮文字回退系统字、与像素 UI 违和（本作真实漏接）。
+- 中文像素字（如 Zpix）用 `pyftsubset` 按**实际用到的字**子集化（→ ~68KB woff2）。**缺字会按字逐个回退**系统字 → 子集必须覆盖所有 UI 文案，接入后目视确认无回退字形。
+
+### D.6 颜色/纹理陷阱（本作两次返工）
+- **别用角色主题色染套框卡的空心中心**：立绘 `object-fit:contain` 会留白，主题色从留白处透出成"色条"（红条 bug）。改**暗中性底**（与立绘深色背景融合）。
+- **别在卡背景铺斜条 `repeating-linear-gradient`**：若卡面立绘渐变 fade 到 transparent，条纹会透上来铺满整卡、显脏。**平滑径向微辉**即可。
+
+### D.7 图标可读性
+- 图标按**形状**辨识、不靠颜色（火=一团火、水=水滴、风=旋风…），简约一眼可辨。占位 emoji（顶栏系统钮等）必须全部换掉，别遗留。
+
+### D.8 接入闸门（部署前）
+- 无头浏览器（Playwright，**横屏 960×520**，开局跳过剧情）截图**前后对比**；3× 缩放细看边缘锐度/图标居中/无 emoji 泄漏。
+- 部署循环：bump `ASSET_VER` + 全 `?v=N` → `build.js` → commit/push → 轮询线上 `ASSET_VER`。
 
 ---
 

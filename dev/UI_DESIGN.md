@@ -95,4 +95,11 @@
 - ✅ 全局像素字体 Zpix（68KB 子集）
 - 略：活动卡 ribbon（已套 panel 框够用）、tooltip、开关、★（CSS 兜，按需再补）
 
-省额度要点：元素用 `item_descriptions` 一次出 4；稀有度/物品格/三级钮/红点用 CSS；头像框复用已生成 avatar 表。
+省额度要点：元素用 `item_descriptions` 一次出 4；物品格/三级钮/红点用 CSS；头像框复用已生成 avatar 表。
+
+## 7. 后续修复 (v175–v179)
+- v175：顶栏系统钮 emoji→像素图标；元素图标重做（形状一眼可辨：火=焰/水=滴/风=旋/地=岩/光=日/暗=月）。
+- v176：系统图标 border-image 内容框居中（flex + 尺寸贴合内容框）。
+- v177→v178：字体**真全局**（`button/input` 不继承 `font-family` → 显式 `inherit`）；钻石图标重做成钻石形；稀有度框升级为 PixelLab 真·边框。去掉套框大卡的红色边条（暗底替角色色）；删卡面斜条纹理（改平滑径向微辉）。
+- **v179：稀有度框改"像素感"**（教训：`create_ui_asset` 出 384×512 + engraved/embossed 提示词 → HD 雕花不像像素。改 **192×256 + chunky/limited palette/hard edges/no-AA** 提示词，CSS 加 `image-rendering:pixelated`、`border-image-slice` 从 80 调到 50 贴合新尺寸角宝石）。R蓝/SR紫/SSR金三框真·像素边框。
+> 以上踩坑已回填 `dev/GENERIC_ART_PIPELINE.md §D`（通用 UI 流水线）。
