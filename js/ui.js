@@ -1203,8 +1203,8 @@ const UI = {
         </div>
         <div class="gf-pull">
           <button class="btn secondary sm" id="gacha-rates">概率公示</button>
-          <button class="btn gold gf-pull-btn" id="pull1"><b>抽 1 次</b><span>💎${g.cost}</span></button>
-          <button class="btn gf-pull-btn" id="pull10"><span class="gf-guar-badge">5★保底</span><b>抽 10 次</b><span>💎${g.cost * 10}</span></button>
+          <button class="btn gf-pull-btn" id="pull1"><b>抽 1 次</b><span>💎${g.cost}</span></button>
+          <button class="btn gold gf-pull-btn" id="pull10"><span class="gf-guar-badge">5★保底</span><b>抽 10 次</b><span>💎${g.cost * 10}</span></button>
         </div>`;
     } else {
       const pickups = (exPool[5] || []).slice(0, 8).map(id => {
@@ -1223,8 +1223,8 @@ const UI = {
         <div class="gf-pool"><div class="gf-pool-label">传说武器 UR</div><div class="gf-pick-row">${pickups}</div></div>
         <div class="gf-pull">
           <button class="btn secondary sm" id="gacha-rates">概率公示</button>
-          <button class="btn gold gf-pull-btn" id="ex-pull1"><b>抽 1 次</b><span>💎${eg.cost}</span></button>
-          <button class="btn gf-pull-btn" id="ex-pull10"><b>抽 10 次</b><span>💎${eg.cost * 10}</span></button>
+          <button class="btn gf-pull-btn" id="ex-pull1"><b>抽 1 次</b><span>💎${eg.cost}</span></button>
+          <button class="btn gold gf-pull-btn" id="ex-pull10"><b>抽 10 次</b><span>💎${eg.cost * 10}</span></button>
         </div>`;
     }
 
