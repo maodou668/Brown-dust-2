@@ -2292,3 +2292,10 @@ button.ac-circle:active { transform: scale(.92); }
   filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
 .lb-icon, .ll-ico { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; }
 /* ============================================================= */
+
+/* 资源胶囊小图标 */
+.px-ico-sm { width: 19px; height: 19px; image-rendering: pixelated; object-fit: contain; vertical-align: middle; display: block;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+.res-icon { display: inline-flex; align-items: center; }
+.lr-ico .px-ico { width: 30px; height: 30px; }
+/* ============================================================= */

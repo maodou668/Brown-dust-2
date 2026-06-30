@@ -105,13 +105,14 @@ const UI = {
     ];
     // emoji → PixelLab 像素图标映射（按 go/act 键）；无映射回退 emoji
     const UI_ICON = { tasks:'quest', codex:'codex', forge:'forge', ach:'medal', story:'story',
-      gacha:'summon', roster:'merc', team:'team', inventory:'bag', welfare:'gift', shop:'shop' };
+      gacha:'summon', roster:'merc', team:'team', inventory:'bag', welfare:'gift', shop:'shop',
+      arena:'arena', dispatch:'expd' };
     const icoHtml = a => { const k = UI_ICON[a.go || a.act];
       return k ? `<img class="px-ico" src="art/05_pixellab/ui/icons/${k}.png" alt="">` : a.icon; };
     const clusterBtn = a => `<button class="ll-tile" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
       <span class="ll-ico">${icoHtml(a)}</span><span class="ll-lab">${a.label}</span>${a.dot ? `<span class="lb-dot">${a.dot}</span>` : ''}</button>`;
     const bannerBtn = a => `<button class="lr-banner ${a.cls}" data-go="${a.go}">
-      <span class="lr-ico">${a.icon}</span>
+      <span class="lr-ico">${icoHtml(a)}</span>
       <span class="lr-text"><span class="lr-name">${a.name}</span><span class="lr-tag">${a.tag}</span></span></button>`;
     const funcBtn = a => `<button class="lobby-btn" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
       <span class="lb-icon">${icoHtml(a)}</span><span class="lb-label">${a.label}</span>${a.dot ? `<span class="lb-dot">${a.dot}</span>` : ''}</button>`;
