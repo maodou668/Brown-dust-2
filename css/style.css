@@ -2,6 +2,13 @@
    棕色尘埃 2 风格 UI — 暗色奇幻风格
    ============================================================ */
 
+/* 全局像素字体 (Zpix 最像素, 已按游戏用字子集化为 ~68KB woff2) */
+@font-face {
+  font-family: 'Zpix';
+  src: url('../assets/fonts/zpix-subset.woff2') format('woff2');
+  font-weight: normal; font-style: normal; font-display: swap;
+}
+
 :root {
   --bg: #14101a;
   --bg2: #1d1726;
@@ -29,7 +36,7 @@
 html, body { height: 100%; }
 
 body {
-  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  font-family: 'Zpix', -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
   background: radial-gradient(circle at 50% -10%, #2a2038 0%, var(--bg) 60%);
   color: var(--text);
   overflow: hidden;
