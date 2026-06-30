@@ -2215,3 +2215,16 @@ button.ac-circle:active { transform: scale(.92); }
   background: none; border-radius: 0;
 }
 /* ============================================================= */
+
+/* 战斗 HUD: 技能/连携/自动 按钮 + 控制台面板 */
+.skill-btn, .combo-btn, .auto-btn {
+  border: 9px solid transparent;
+  border-image: url('../art/05_pixellab/ui/button.png') 30 fill stretch;
+  background: none; border-radius: 0;
+}
+.battle-ctrl {
+  border: 14px solid transparent;
+  border-image: url('../art/05_pixellab/ui/panel.png') 38 fill stretch;
+  background: none; border-top: none;
+}
+/* ============================================================= */
