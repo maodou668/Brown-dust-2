@@ -1613,10 +1613,15 @@ body {
 .lobby-right::-webkit-scrollbar { width: 0; }
 .lr-banner { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; text-align: left; padding: 9px 10px; border-radius: 12px; cursor: pointer; color: #fff; border: 1px solid rgba(255,255,255,.12); overflow: hidden; position: relative; }
 .lr-banner:active { transform: scale(.97); }
-.lr-banner.bn-arena { background: linear-gradient(120deg, #b06bff, #6a3aa0); }
-.lr-banner.bn-dungeon { background: linear-gradient(120deg, #4a90ff, #2a5aa0); }
-.lr-banner.bn-dispatch { background: linear-gradient(120deg, #3aa86a, #1f6a44); }
-.lr-banner.bn-event { background: linear-gradient(120deg, #ff8b4a, #c0502a); }
+/* 暗炭底 + 该功能色仅做内辉光点缀(与铁框统一, 去高饱和违和) */
+.lr-banner.bn-arena   { background: linear-gradient(110deg, #241a3a, #16101f) !important; box-shadow: inset 0 0 22px -6px rgba(176,107,255,.6); }
+.lr-banner.bn-dungeon { background: linear-gradient(110deg, #16263f, #101620) !important; box-shadow: inset 0 0 22px -6px rgba(74,144,255,.55); }
+.lr-banner.bn-dispatch{ background: linear-gradient(110deg, #163020, #101a14) !important; box-shadow: inset 0 0 22px -6px rgba(58,168,106,.55); }
+.lr-banner.bn-event   { background: linear-gradient(110deg, #3a1f12, #1f120c) !important; box-shadow: inset 0 0 22px -6px rgba(255,139,74,.6); }
+.lr-banner.bn-arena   .lr-name { color: #d9b6ff; }
+.lr-banner.bn-dungeon .lr-name { color: #aacdff; }
+.lr-banner.bn-dispatch .lr-name { color: #a6e8bf; }
+.lr-banner.bn-event   .lr-name { color: #ffc59a; }
 .lr-ico { font-size: 22px; }
 .lr-text { display: flex; flex-direction: column; min-width: 0; }
 .lr-name { font-size: 13px; font-weight: 800; }
