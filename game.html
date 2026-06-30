@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=180">
+  <link rel="manifest" href="manifest.webmanifest?v=181">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=180">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=180">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=181">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=181">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2302,10 +2302,11 @@ button.ac-circle:active { transform: scale(.92); }
   background: linear-gradient(180deg,#e6bcff,#9a5bff 58%,#7233dd) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 0 8px rgba(165,105,255,.75);
 }
-/* 单位小血条: 深槽 + 光泽亮填充 (太小不套框) */
+/* 单位小血条(6px): 像素描边深槽 + 光泽亮填充 (这种微型条用细描边比套厚框更清晰, 厚框缩到 6px 会糊) */
 .bar {
-  background:#0d0a13 !important; border:1px solid rgba(255,205,140,.4);
-  box-shadow: inset 0 1px 2px rgba(0,0,0,.85); height:6px; border-radius:2px;
+  background:#0d0a13 !important; border:1px solid rgba(255,205,140,.45);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.85); height:6px; border-radius:0;
+  image-rendering: pixelated;
 }
 .bar .fill { box-shadow: inset 0 1px 0 rgba(255,255,255,.6), inset 0 -2px 3px rgba(0,0,0,.35); }
 .bar .fill.hp { background: linear-gradient(180deg,#c2ffd4,#34d266 48%,#179a47) !important; }
@@ -2316,6 +2317,9 @@ button.ac-circle:active { transform: scale(.92); }
 .px-ico { width: 30px; height: 30px; image-rendering: pixelated; object-fit: contain; display: block;
   filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
 .lb-icon, .ll-ico { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; }
+/* 内联 emoji→图标 (全局替换): em 尺寸随容器字号缩放, 模拟 emoji 行为 (格大/行内小) */
+.px-ico-in { width: 1.15em; height: 1.15em; image-rendering: pixelated; object-fit: contain;
+  vertical-align: -0.18em; display: inline-block; }
 /* ============================================================= */
 
 /* 资源胶囊小图标 */
@@ -2414,24 +2418,24 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=180" alt="" onerror="this.outerHTML='🎖️'"></span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=181" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
         </span>
       </button>
       <div class="resources">
-        <div class="res" title="金币"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/coin.png?v=180" alt="金"></span><span id="res-gold">0</span></div>
-        <div class="res" title="宝石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/gem.png?v=180" alt="钻"></span><span id="res-gem">0</span></div>
-        <div class="res" title="觉醒石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/awaken.png?v=180" alt="石"></span><span id="res-stone">0</span></div>
-        <div class="res" title="体力"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/stamina.png?v=180" alt="力"></span><span id="res-stam">0</span></div>
+        <div class="res" title="金币"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/coin.png?v=181" alt="金"></span><span id="res-gold">0</span></div>
+        <div class="res" title="宝石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/gem.png?v=181" alt="钻"></span><span id="res-gem">0</span></div>
+        <div class="res" title="觉醒石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/awaken.png?v=181" alt="石"></span><span id="res-stone">0</span></div>
+        <div class="res" title="体力"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/stamina.png?v=181" alt="力"></span><span id="res-stam">0</span></div>
       </div>
       <div class="topbar-sys">
-        <button id="btn-notice" class="ghost-btn" title="公告"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/notice.png?v=180" alt="公告"></button>
-        <button id="btn-mail" class="ghost-btn" title="邮件"><span class="dot-wrap"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/mail.png?v=180" alt="邮件"><span id="mail-dot" class="red-dot" style="display:none;"></span></span></button>
-        <button id="btn-settings" class="ghost-btn" title="设置"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/settings.png?v=180" alt="设置"></button>
-        <button id="btn-fullscreen" class="ghost-btn" title="全屏"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/fullscreen.png?v=180" alt="全屏"></button>
-        <button id="btn-mute" class="ghost-btn" title="音效开关"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/sound.png?v=180" alt="音效"></button>
+        <button id="btn-notice" class="ghost-btn" title="公告"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/notice.png?v=181" alt="公告"></button>
+        <button id="btn-mail" class="ghost-btn" title="邮件"><span class="dot-wrap"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/mail.png?v=181" alt="邮件"><span id="mail-dot" class="red-dot" style="display:none;"></span></span></button>
+        <button id="btn-settings" class="ghost-btn" title="设置"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/settings.png?v=181" alt="设置"></button>
+        <button id="btn-fullscreen" class="ghost-btn" title="全屏"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/fullscreen.png?v=181" alt="全屏"></button>
+        <button id="btn-mute" class="ghost-btn" title="音效开关"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/sound.png?v=181" alt="音效"></button>
         <button id="btn-reset" class="ghost-btn" title="重置存档" style="display:none;">↺</button>
       </div>
     </header>
@@ -2464,7 +2468,7 @@ button.ac-circle:active { transform: scale(.92); }
     </div>
   </div>
 
-  <script>window.ASSET_VER = '180';</script>
+  <script>window.ASSET_VER = '181';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -6720,13 +6724,71 @@ const UI = {
   init() {
     this.screenEl = document.getElementById('screen');
     this.modalRoot = document.getElementById('modal-root');
+    this._initIconSwap();
+  },
+
+  // ---------- emoji → 像素图标 (全局文本节点替换, 不碰属性, em 尺寸随字号缩放如 emoji) ----------
+  EMOJI2ICON: {
+    // 资源/货币
+    '🪙':'coin','💎':'gem','🎟':'ticket','🎫':'ticket','🔑':'key','🔒':'lock','🎁':'gift',
+    // 属性/装备
+    '⚔':'atk','🛡':'def','❤':'hp','🗡':'dagger','🏹':'bow','🔨':'hammer','⛏':'pickaxe','💍':'ring','🔮':'mag','🎯':'crit',
+    // 消耗品/食物
+    '🍞':'bread','🍲':'stew','🍵':'tea','🍷':'wine','🍰':'cake','🍡':'dango','🍯':'honey','🍱':'bento','🥃':'liquor',
+    // 世界/敌人
+    '🌲':'tree','🪨':'rock','🏰':'castle','🗼':'tower','🏛':'temple','🌋':'volcano','👹':'ogre','👺':'goblin','💀':'skeleton','☠':'skeleton','🐺':'wolf','🐎':'horse',
+    // 功能/菜单
+    '🎬':'film','🗺':'map','💾':'save','🎵':'music','👗':'costume','📜':'scroll','🏆':'arena','🧭':'expd','📖':'codex','📘':'codex','🎖':'medal','🔍':'search','🔎':'search',
+    // 状态
+    '🔥':'burn','❄':'freeze','💫':'stun','☣':'poison',
+  },
+  _initIconSwap() {
+    const keys = Object.keys(this.EMOJI2ICON).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\</body>'));
+    // 可选变体选择符 U+FE0F
+    this._iconRe = new RegExp('(' + keys.join('|') + ')\\uFE0F?', 'u');
+    const obs = new MutationObserver(muts => {
+      for (const m of muts) for (const n of m.addedNodes) this.iconizeNode(n);
+    });
+    obs.observe(this.screenEl, { childList: true, subtree: true });
+    obs.observe(this.modalRoot, { childList: true, subtree: true });
+    this.iconizeNode(this.screenEl);
+  },
+  iconizeNode(root) {
+    if (!root || !this._iconRe) return;
+    if (root.nodeType === 3) { this._swapText(root); return; }
+    if (root.nodeType !== 1) return;
+    // 只走文本节点, 永不碰属性
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    const hits = [];
+    let tn; while ((tn = walker.nextNode())) { if (this._iconRe.test(tn.nodeValue)) hits.push(tn); }
+    hits.forEach(t => this._swapText(t));
+  },
+  _swapText(textNode) {
+    const re = new RegExp(this._iconRe.source, 'gu');
+    const s = textNode.nodeValue;
+    if (!re.test(s)) return;
+    re.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let last = 0, mm;
+    while ((mm = re.exec(s))) {
+      if (mm.index > last) frag.appendChild(document.createTextNode(s.slice(last, mm.index)));
+      const name = this.EMOJI2ICON[mm[1]];
+      const img = document.createElement('img');
+      img.className = 'px-ico-in'; img.src = `art/05_pixellab/ui/icons/${name}.png`; img.alt = '';
+      frag.appendChild(img);
+      last = mm.index + mm[0].length;
+    }
+    if (last < s.length) frag.appendChild(document.createTextNode(s.slice(last)));
+    textNode.parentNode && textNode.parentNode.replaceChild(frag, textNode);
   },
 
   // ---------- 工具 ----------
   el(html) {
     const t = document.createElement('template');
     t.innerHTML = html.trim();
-    return t.content.firstElementChild;
+    const node = t.content.firstElementChild;
+    this.iconizeNode(node);
+    return node;
   },
 
   rarityClass(r) { return 'r' + r; },
@@ -7660,11 +7722,11 @@ const UI = {
       </div>
       <p class="muted" style="line-height:1.6;">${c.desc}</p>
       <div class="stat-grid">
-        <div class="stat-item"><span>❤️ 生命</span><span class="sv">${st.maxHp}</span></div>
-        <div class="stat-item"><span>⚔️ 攻击</span><span class="sv">${st.atk}</span></div>
-        <div class="stat-item"><span>🛡️ 防御</span><span class="sv">${st.def}</span></div>
-        <div class="stat-item"><span>⚡ 速度</span><span class="sv">${st.spd}</span></div>
-        <div class="stat-item"><span>💥 暴击</span><span class="sv">${Math.round(st.crit*100)}%</span></div>
+        <div class="stat-item"><span><img class="px-ico-in" src="art/05_pixellab/ui/icons/hp.png"> 生命</span><span class="sv">${st.maxHp}</span></div>
+        <div class="stat-item"><span><img class="px-ico-in" src="art/05_pixellab/ui/icons/atk.png"> 攻击</span><span class="sv">${st.atk}</span></div>
+        <div class="stat-item"><span><img class="px-ico-in" src="art/05_pixellab/ui/icons/def.png"> 防御</span><span class="sv">${st.def}</span></div>
+        <div class="stat-item"><span><img class="px-ico-in" src="art/05_pixellab/ui/icons/spd.png"> 速度</span><span class="sv">${st.spd}</span></div>
+        <div class="stat-item"><span><img class="px-ico-in" src="art/05_pixellab/ui/icons/crit.png"> 暴击</span><span class="sv">${Math.round(st.crit*100)}%</span></div>
         <div class="stat-item"><span>✦ 突破</span><span class="sv">+${o.plus || 0}${o.plus ? ` (属性+${o.plus * 8}%)` : ''}</span></div>
       </div>
       <p class="muted" style="margin:-4px 0 8px;font-size:11px;">突破说明：在「招募」中再次获得该佣兵可提升突破等级（最高 +5），每级 +8% 基础属性。</p>
@@ -8982,7 +9044,12 @@ const UI = {
     this.screenEl.querySelectorAll('.bag-cell[data-mat]').forEach(c => c.onclick = () => this.showMaterialDetail(c.dataset.mat));
   },
 
-  STAT_LAB: { atk: '⚔️ 攻击', def: '🛡️ 防御', hp: '❤️ 生命', crit: '💥 暴击', spd: '⚡ 速度' },
+  STAT_LAB: {
+    atk: '<img class="px-ico-in" src="art/05_pixellab/ui/icons/atk.png"> 攻击',
+    def: '<img class="px-ico-in" src="art/05_pixellab/ui/icons/def.png"> 防御',
+    hp:  '<img class="px-ico-in" src="art/05_pixellab/ui/icons/hp.png"> 生命',
+    crit:'<img class="px-ico-in" src="art/05_pixellab/ui/icons/crit.png"> 暴击',
+    spd: '<img class="px-ico-in" src="art/05_pixellab/ui/icons/spd.png"> 速度' },
   fmtStat(k, v) { return k === 'crit' ? '+' + (v * 100).toFixed(1) + '%' : '+' + Math.round(v); },
 
   /** 装备详情（点击背包装备格） */

@@ -9,13 +9,71 @@ const UI = {
   init() {
     this.screenEl = document.getElementById('screen');
     this.modalRoot = document.getElementById('modal-root');
+    this._initIconSwap();
+  },
+
+  // ---------- emoji → 像素图标 (全局文本节点替换, 不碰属性, em 尺寸随字号缩放如 emoji) ----------
+  EMOJI2ICON: {
+    // 资源/货币
+    '🪙':'coin','💎':'gem','🎟':'ticket','🎫':'ticket','🔑':'key','🔒':'lock','🎁':'gift',
+    // 属性/装备
+    '⚔':'atk','🛡':'def','❤':'hp','🗡':'dagger','🏹':'bow','🔨':'hammer','⛏':'pickaxe','💍':'ring','🔮':'mag','🎯':'crit',
+    // 消耗品/食物
+    '🍞':'bread','🍲':'stew','🍵':'tea','🍷':'wine','🍰':'cake','🍡':'dango','🍯':'honey','🍱':'bento','🥃':'liquor',
+    // 世界/敌人
+    '🌲':'tree','🪨':'rock','🏰':'castle','🗼':'tower','🏛':'temple','🌋':'volcano','👹':'ogre','👺':'goblin','💀':'skeleton','☠':'skeleton','🐺':'wolf','🐎':'horse',
+    // 功能/菜单
+    '🎬':'film','🗺':'map','💾':'save','🎵':'music','👗':'costume','📜':'scroll','🏆':'arena','🧭':'expd','📖':'codex','📘':'codex','🎖':'medal','🔍':'search','🔎':'search',
+    // 状态
+    '🔥':'burn','❄':'freeze','💫':'stun','☣':'poison',
+  },
+  _initIconSwap() {
+    const keys = Object.keys(this.EMOJI2ICON).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    // 可选变体选择符 U+FE0F
+    this._iconRe = new RegExp('(' + keys.join('|') + ')\\uFE0F?', 'u');
+    const obs = new MutationObserver(muts => {
+      for (const m of muts) for (const n of m.addedNodes) this.iconizeNode(n);
+    });
+    obs.observe(this.screenEl, { childList: true, subtree: true });
+    obs.observe(this.modalRoot, { childList: true, subtree: true });
+    this.iconizeNode(this.screenEl);
+  },
+  iconizeNode(root) {
+    if (!root || !this._iconRe) return;
+    if (root.nodeType === 3) { this._swapText(root); return; }
+    if (root.nodeType !== 1) return;
+    // 只走文本节点, 永不碰属性
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    const hits = [];
+    let tn; while ((tn = walker.nextNode())) { if (this._iconRe.test(tn.nodeValue)) hits.push(tn); }
+    hits.forEach(t => this._swapText(t));
+  },
+  _swapText(textNode) {
+    const re = new RegExp(this._iconRe.source, 'gu');
+    const s = textNode.nodeValue;
+    if (!re.test(s)) return;
+    re.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let last = 0, mm;
+    while ((mm = re.exec(s))) {
+      if (mm.index > last) frag.appendChild(document.createTextNode(s.slice(last, mm.index)));
+      const name = this.EMOJI2ICON[mm[1]];
+      const img = document.createElement('img');
+      img.className = 'px-ico-in'; img.src = `art/05_pixellab/ui/icons/${name}.png`; img.alt = '';
+      frag.appendChild(img);
+      last = mm.index + mm[0].length;
+    }
+    if (last < s.length) frag.appendChild(document.createTextNode(s.slice(last)));
+    textNode.parentNode && textNode.parentNode.replaceChild(frag, textNode);
   },
 
   // ---------- 工具 ----------
   el(html) {
     const t = document.createElement('template');
     t.innerHTML = html.trim();
-    return t.content.firstElementChild;
+    const node = t.content.firstElementChild;
+    this.iconizeNode(node);
+    return node;
   },
 
   rarityClass(r) { return 'r' + r; },
@@ -949,11 +1007,11 @@ const UI = {
       </div>
       <p class="muted" style="line-height:1.6;">${c.desc}</p>
       <div class="stat-grid">
-        <div class="stat-item"><span>❤️ 生命</span><span class="sv">${st.maxHp}</span></div>
-        <div class="stat-item"><span>⚔️ 攻击</span><span class="sv">${st.atk}</span></div>
-        <div class="stat-item"><span>🛡️ 防御</span><span class="sv">${st.def}</span></div>
-        <div class="stat-item"><span>⚡ 速度</span><span class="sv">${st.spd}</span></div>
-        <div class="stat-item"><span>💥 暴击</span><span class="sv">${Math.round(st.crit*100)}%</span></div>
+        <div class="stat-item"><span><img class="px-ico-in" src="art/05_pixellab/ui/icons/hp.png"> 生命</span><span class="sv">${st.maxHp}</span></div>
+        <div class="stat-item"><span><img class="px-ico-in" src="art/05_pixellab/ui/icons/atk.png"> 攻击</span><span class="sv">${st.atk}</span></div>
+        <div class="stat-item"><span><img class="px-ico-in" src="art/05_pixellab/ui/icons/def.png"> 防御</span><span class="sv">${st.def}</span></div>
+        <div class="stat-item"><span><img class="px-ico-in" src="art/05_pixellab/ui/icons/spd.png"> 速度</span><span class="sv">${st.spd}</span></div>
+        <div class="stat-item"><span><img class="px-ico-in" src="art/05_pixellab/ui/icons/crit.png"> 暴击</span><span class="sv">${Math.round(st.crit*100)}%</span></div>
         <div class="stat-item"><span>✦ 突破</span><span class="sv">+${o.plus || 0}${o.plus ? ` (属性+${o.plus * 8}%)` : ''}</span></div>
       </div>
       <p class="muted" style="margin:-4px 0 8px;font-size:11px;">突破说明：在「招募」中再次获得该佣兵可提升突破等级（最高 +5），每级 +8% 基础属性。</p>
@@ -2271,7 +2329,12 @@ const UI = {
     this.screenEl.querySelectorAll('.bag-cell[data-mat]').forEach(c => c.onclick = () => this.showMaterialDetail(c.dataset.mat));
   },
 
-  STAT_LAB: { atk: '⚔️ 攻击', def: '🛡️ 防御', hp: '❤️ 生命', crit: '💥 暴击', spd: '⚡ 速度' },
+  STAT_LAB: {
+    atk: '<img class="px-ico-in" src="art/05_pixellab/ui/icons/atk.png"> 攻击',
+    def: '<img class="px-ico-in" src="art/05_pixellab/ui/icons/def.png"> 防御',
+    hp:  '<img class="px-ico-in" src="art/05_pixellab/ui/icons/hp.png"> 生命',
+    crit:'<img class="px-ico-in" src="art/05_pixellab/ui/icons/crit.png"> 暴击',
+    spd: '<img class="px-ico-in" src="art/05_pixellab/ui/icons/spd.png"> 速度' },
   fmtStat(k, v) { return k === 'crit' ? '+' + (v * 100).toFixed(1) + '%' : '+' + Math.round(v); },
 
   /** 装备详情（点击背包装备格） */
