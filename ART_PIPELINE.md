@@ -3,7 +3,10 @@
 > **唯一可信流程**：一个角色一条龙做完 → 自测 → 用户验收 → 再下一个。**不批量**（避免失控）。
 > 此流程由 **Lecliss 一次过**验证（idle 脚漂移 0.2–1.3px、走路有步幅、施法自带特效）。
 > 配套脚本（在 `scripts/`，跑前置 `NODE_PATH=$(pwd)/node_modules`）：
-> `gnorm.js`(归一器) · `fd8.js`(脚漂移自测) · `synthidle.js`(合成呼吸兜底) · `skillcap.js`(游戏内技能配对自测)。
+> **归一/组装**：`gnorm.js`(主归一器) · `uniformsize.js`(全员身体高归一，**收尾必跑**)。
+> **东西向覆盖**：`rewalk_generic.js`(run E/W 用侧面源重组) · `reidle_generic.js`/`reidle2.js`(idle E/W 用侧面源重组)。
+> **自测闸门**：`fd8.js`(脚漂移) · `rundiag.js`(**走路朝向闸门**渲染) · `skillcap.js`(游戏内技能+VFX 配对)。
+> **抽腿兜底**：`synthnwne.js`(背向斜角合成呼吸，脚钉死 0px) · `synthidle.js`(整向合成呼吸)。
 > 上线循环见 `CLAUDE.md`。
 
 游戏 16 角色：`lecliss(锚) justia seir rou helena diana garcia teried lia mina refithea rigenette olstein glacia liatris loen`
@@ -53,7 +56,7 @@ animate_character(walkstate, animation_name="walk",
   directions=["south","south-east","east","north-east","north"], frame_count=8)
 ```
 - ⚠️ 背向斜角用 **north-east 当源**（run 用 **MIR** 表，与 idle 的 IMIR 相反）。
-- ⚠️ **east/west 走路必须正侧面(Diana/Helena/Rou 踩坑)**：迈步状态的 east 旋转常漂成「3/4 正面(朝右下 SE)」，导致 run east/west 不是标准正侧面、和 idle 对不上。**根治**：east 走路别用迈步状态，改在**基础角色**(其 east 旋转是干净正侧面)上单独生成 `animate_character(基础角色, animation_name="walk_side", action="walking cycle loop in pure side-profile view facing directly to the right, the body stays in side view not turning toward the camera, legs striding forward and back along the ground, smooth seamless loop", directions=["east"], frame_count=8)`，再用 `scripts/rewalk_ew.js` 同款逻辑把 run/east(直取,丢首帧) + run/west(镜像) 重组进 `<char>_field`。组装后**目视 run east/west 横条要和 idle east/west 同朝向**(正侧面迈步,不转向镜头)。
+- ⚠️ **east/west 走路必须正侧面(Diana/Helena/Rou 踩坑)**：迈步状态的 east 旋转常漂成「3/4 正面(朝右下 SE)」，导致 run east/west 不是标准正侧面、和 idle 对不上。**根治**：east 走路别用迈步状态，改在**基础角色**(其 east 旋转是干净正侧面)上单独生成 `animate_character(基础角色, animation_name="walk_side", action="walking cycle loop in pure side-profile view facing directly to the right, the body stays in side view not turning toward the camera, legs striding forward and back along the ground, smooth seamless loop", directions=["east"], frame_count=8)`，再用 `scripts/rewalk_generic.js <char> <eastRotationPng> <walk_side_east_dir>` 把 run/east(直取,丢首帧) + run/west(镜像) 重组进 `<char>_field`。组装后**跑 `node scripts/rundiag.js <char>` 过走路朝向闸门**(run east/west 和 idle east/west 同朝向、正侧面迈步、不转向镜头)。
 
 ### ③ casts（一次性，仅 north）—— 描述里直接写技能内容，PixelLab 把特效画进帧
 - 招牌技：`animation_name="castsig", action="casting a blazing inferno spell, raising both hands"`
@@ -61,7 +64,19 @@ animate_character(walkstate, animation_name="walk",
 - **命名约定**（让 gnorm 的 CASTMAP 通用）：招牌技动作**以 `casting` 开头**、职业技**以 `class_skill` 开头**。
 - 动作含元素/技能内容 → 帧里**自带火焰/奥术 VFX**，省去单独做特效。`directions=["north"], frame_count=6`。
 
-> 并发：PixelLab 一次塞太多会卡死，**同时 ≤4 个 job**；任务偶尔静默掉，下载发现缺帧就重发。
+> 并发：PixelLab **同时在跑的 job 有约 10 个的硬上限**，塞满后新 job 静默排队甚至丢失(米娜/泰瑞德踩过：一个方向悄悄没生成)。**稳妥做法：一次只 fire ≤4 个 job，等回收再发下一批**；下载后逐方向核对帧数，缺哪个方向就**单独以 `_v2` 动画名重发那一个方向**(整套重发浪费额度)。
+
+---
+
+## 3.5 施法表现 = 两层（无教程，自摸总结，照此理解）
+> 用户**没给**施法动作/VFX 的教程，这套是我们做 16 人摸出来的，单列说清两层关系，避免以后混淆。
+
+施法的画面 = **角色层** + **特效层**，二者独立、靠时间线对齐：
+1. **角色层（cast 动画，§3③）**：在 north 向生成 `cast`(招牌技) + `cast_class`(职业技) 两段动画，描述里**直接写技能内容**(如 "casting a blazing inferno")，PixelLab 把火焰/奥术**烤进角色帧**——角色自身有施法挥手 + 轻微元素光。这是**贴在角色身上**的表现。
+2. **特效层（SKILL_VFX burst，见 `fx/README.md`）**：独立的逐帧爆炸/预警 PNG(`art/05_pixellab/fx/<effect>/`)，由 `create_1_direction_object→animate_object` 生成，挂在 `js/main.js > BattleUI.SKILL_VFX`，**打在目标身上**(脚下六芒星预警 + 命中爆闪)。
+3. **握手**：战斗逻辑瞬时算完且权威；掉血/飘字**缓存**，等特效 `impactFrame`(最亮爆发帧)再 flush → 画面与扣血严丝合缝(`fx/README.md` 详述)。
+4. **配对铁律**：招牌技 → `cast` 动画 + `BASE_SIG[char]` 那个 burst；职业技(`cls_*`) → `cast_class` 动画 + `cls_*` burst。靠 `node scripts/skillcap.js` 在真实战斗里验证不串、不缺(§5.3)。
+> 取舍：cast 动画**自带**元素光时，特效层只需补"打在目标上的命中爆闪"；若想要更夸张的范围表现，全靠特效层 burst。两层都齐 = 现在 16 人的标准。
 
 ---
 
@@ -101,7 +116,7 @@ node gnorm.js <char> <mergedDir> '{"cast_class":"class_skill","cast":"casting"}'
 | 1 | 背向斜角 idle **抽腿/乱动**（NW/NE） | v3 对背向斜角两腿对称交换；fd8 质心不动照样过 | NW、NE **两源都生成**取脚稳者镜像(`reidle2.js`)；**v3 最多 roll 1-2 次**还抖就 `synthnwne.js` 合成呼吸(脚钉死 0.0px) | 生成 idle 时 NW+NE 都出；**目视横条**确认脚钉地，不只看 fd8 |
 | 2 | **east/west 走路**朝向偏成 3/4 正面(SE/SW) | 迈步状态的 east 旋转漂成正面 | 在**基础角色**(正侧面 east)上单独生成 `walk_side`，`rewalk_ew.js`/`rewalk_generic.js` 重组 run/east+west(镜像) | 走路组装后**目视 run east/west 必须和 idle east/west 同朝向**(正侧面) |
 | 2b | **east/west 待机(idle)**也带角度(非正侧面) | **母图静态 east 旋转本身带轻微 3/4**→idle/walk 各方向动画都继承它；改 walk 不够,idle 也要改 | 同 #2 思路: base 角色生成纯侧面 `idle_side`(强提示词 strict pure side-profile)，`reidle_generic.js` 重组 idle/east+west(镜像) | 做 east/west 时 **walk 和 idle 都要用侧面源覆盖**(只覆盖 run 会漏掉 idle)；母图旋转的角度无法直接改,只能用侧面源覆盖 east/west |
-| 2c | **走路方向接反**(东接西/SE接SW) + 东西带角度 | mid-stride **walk-state 偶发把斜角朝向画反**(SE 画成朝 SW);walking_cycle 东西也会漂成 3/4 | 用法(用户定):仍走 walk-state→walking_cycle(迈步自然);东西另出 `walk_side` 纯侧面经 `rewalk_generic` 覆盖;**靠下方走路朝向闸门兜底**——接反就重生成 walk-state(换 seed)或把该向 frames 水平镜像修正 | **🚦 走路朝向闸门(必过)**:组装后渲染 run 8 向与 idle 8 向逐列对照,**每个方向 run 必须和 idle 同朝向**;不一致(接反/源朝向错)就修到一致再上线 |
+| 2c | **走路方向接反**(东接西/SE接SW) + 东西带角度 | mid-stride **walk-state 偶发把斜角朝向画反**(SE 画成朝 SW);walking_cycle 东西也会漂成 3/4 | 用法(用户定):仍走 walk-state→walking_cycle(迈步自然);东西另出 `walk_side` 纯侧面经 `rewalk_generic` 覆盖;**靠下方走路朝向闸门兜底**——接反就重生成 walk-state(换 seed)或把该向 frames 水平镜像修正 | **🚦 走路朝向闸门(必过)**:`node scripts/rundiag.js <char>` 渲染 run 8 向与 idle 8 向逐列对照,**每个方向 run 必须和 idle 同朝向**;不一致(接反/源朝向错)就修到一致再上线 |
 | 3 | 移动时**头顶/光环被裁** | 渲染只裁固定 bbox(y 上界)，超出被切 | 渲染改**画整幅、脚对齐地线**(world.js 已改) | 量 `所有动作所有帧` 的最高内容，确认渲染不裁顶 |
 | 4 | 角色**大小不统一**(带大光环者偏小) | gnorm 按「整体外接框(含光环)」填满 → 光环吃高度、身体被压小 | `uniformsize.js` 按**身体高**(脚→头顶,排除光环)归一到统一值 + 高画布(64×72,脚 y=64) | 接入后跑 `uniformsize.js`；目视全队同框，身体等高 |
 | 4b | 宽体/头盔角色(如坦克)被**放大成"熊"** + 各角度被画布裁切 | uniformsize 的 contiguous 头顶检测对**窄头盔**误判体高过矮→过度放大 | `uniformsize.js <char>:<bodyPx>` 显式覆盖体高(Garcia 满幅内容高=46→`garcia:46` 即不缩放) | 跑完目视全队同框；**量该角色所有帧最大内容 spanX/spanY 必须 < 画布(64×72)**，超出说明放大过度，用满幅高覆盖 |
@@ -182,6 +197,7 @@ art/01_splash/<char>_live.{mp4,webm}  动态立绘视频（你给）→ 我裁�
 ---
 
 ## 8. 现状
-- ✅ **Lecliss** —— 锚角色，全套完成并线上验收（v122）。新角色照此对齐。
-- ⬜ 其余 15 个：逐个派生（§1 锁法A）→ §3 动作 → §4 组装 → §5 自测 → 用户验收 → 下一个。
-- 待优化（非美术，记录）：剧情/漫画/角色文案润色。
+- ✅ **全 16 角色 field 美术完成并线上验收**（lecliss 锚 → justia/seir/rou/helena/diana/garcia/teried/lia/mina/refithea/rigenette/olstein/glacia/liatris/loen 全部派生完成，末位 Loen 上线 v156）。
+- 🔑 **闸门生效后零返工**：自 Refithea 起，凡先过**母图姿势闸门**(§5.5 铁律) + **走路朝向闸门**(`scripts/rundiag.js`)的角色，均一遍过、无返工。早期(Garcia/Mina)的反复返工根因都是**跳过了这两个闸门**——务必照做，别图快。
+- 🔑 **uniformsize 体高覆盖**：头盔/宽体角色 contiguous 头顶检测会误判 → 需显式覆盖，已用：`garcia:46`（其余角色默认即可）。新增宽体角色若目视偏大，量满幅内容高后同法覆盖。
+- 待优化（非美术，记录）：剧情/漫画/角色文案润色；VFX 命中爆闪明显度(v152 已试调一版，待挑技能验收)；用户动态立绘视频接入 + 头像/半身裁切。
