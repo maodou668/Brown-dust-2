@@ -2263,3 +2263,23 @@ button.ac-circle:active { transform: scale(.92); }
   color: #ffe6b8; text-shadow: 0 1px 2px rgba(0,0,0,.6);
 }
 /* ============================================================= */
+
+/* ===== 批3 · 进度条 (暗槽+金边+高光+分段刻度+类型染色) ===== */
+.bar, .combo-gauge, .gf-pity-bar, .pity-bar {
+  background: #15111c !important;
+  border: 1px solid rgba(255,200,130,.28);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.7);
+}
+.combo-gauge, .gf-pity-bar, .pity-bar { position: relative; }
+.bar .fill { box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
+.bar .fill.hp { background: linear-gradient(180deg,#8effad,#39c25e 55%,#249a4c); }
+.bar .fill.sp { background: linear-gradient(180deg,#aee4ff,#4aa6e0); }
+.combo-gauge .combo-fill {
+  background: linear-gradient(180deg,#d4a8ff,#7a4be0) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 0 8px rgba(150,90,255,.6);
+}
+.combo-gauge::after, .gf-pity-bar::after, .pity-bar::after {
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:3;
+  background: repeating-linear-gradient(90deg, transparent 0 17px, rgba(0,0,0,.5) 17px 18px);
+}
+/* ============================================================= */
