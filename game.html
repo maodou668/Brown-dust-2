@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=171">
+  <link rel="manifest" href="manifest.webmanifest?v=172">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=171">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=171">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=172">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=172">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2321,6 +2321,24 @@ button.ac-circle:active { transform: scale(.92); }
 .u-elem .px-ico-el { width: 18px; height: 18px; }
 /* ============================================================= */
 
+/* ===== 套装: 标签页 (像素 tab) + 物品格 (凹槽) ===== */
+.gacha-tab, .bag-tab, .ac-tab {
+  border: 9px solid transparent; border-radius: 0;
+  border-image: url('art/05_pixellab/ui/tab_off.png') 26 fill stretch;
+  background: none !important; color: var(--text-dim); box-shadow: none;
+}
+.gacha-tab.active, .bag-tab.on, .ac-tab.on {
+  border-image: url('art/05_pixellab/ui/tab_on.png') 26 fill stretch;
+  color: #fff; border-color: transparent;
+}
+.gear-slot, .disp-slot {
+  background: radial-gradient(circle at 50% 32%, #221b2e, #0f0b16) !important;
+  border: 1px solid rgba(255,200,130,.32) !important; border-radius: 6px;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,.75);
+}
+.gear-slot.empty { border-style: solid !important; }
+/* ============================================================= */
+
 </style>
 </head>
 <body>
@@ -2328,17 +2346,17 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=171" alt="" onerror="this.outerHTML='🎖️'"></span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=172" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
         </span>
       </button>
       <div class="resources">
-        <div class="res" title="金币"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/coin.png?v=171" alt="金"></span><span id="res-gold">0</span></div>
-        <div class="res" title="宝石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/gem.png?v=171" alt="钻"></span><span id="res-gem">0</span></div>
-        <div class="res" title="觉醒石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/awaken.png?v=171" alt="石"></span><span id="res-stone">0</span></div>
-        <div class="res" title="体力"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/stamina.png?v=171" alt="力"></span><span id="res-stam">0</span></div>
+        <div class="res" title="金币"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/coin.png?v=172" alt="金"></span><span id="res-gold">0</span></div>
+        <div class="res" title="宝石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/gem.png?v=172" alt="钻"></span><span id="res-gem">0</span></div>
+        <div class="res" title="觉醒石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/awaken.png?v=172" alt="石"></span><span id="res-stone">0</span></div>
+        <div class="res" title="体力"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/stamina.png?v=172" alt="力"></span><span id="res-stam">0</span></div>
       </div>
       <div class="topbar-sys">
         <button id="btn-notice" class="ghost-btn" title="公告">📢</button>
@@ -2378,7 +2396,7 @@ button.ac-circle:active { transform: scale(.92); }
     </div>
   </div>
 
-  <script>window.ASSET_VER = '171';</script>
+  <script>window.ASSET_VER = '172';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
