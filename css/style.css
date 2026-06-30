@@ -2286,3 +2286,9 @@ button.ac-circle:active { transform: scale(.92); }
 .bar .fill.hp { background: linear-gradient(180deg,#c2ffd4,#34d266 48%,#179a47) !important; }
 .bar .fill.sp { background: linear-gradient(180deg,#d2efff,#52b2ee 48%,#2b7ec2) !important; }
 /* ============================================================= */
+
+/* ===== 像素图标 (替 emoji, 功能/资源) ===== */
+.px-ico { width: 30px; height: 30px; image-rendering: pixelated; object-fit: contain; display: block;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+.lb-icon, .ll-ico { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; }
+/* ============================================================= */
