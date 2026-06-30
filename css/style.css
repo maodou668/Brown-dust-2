@@ -2235,3 +2235,20 @@ button.ac-circle:active { transform: scale(.92); }
   background: none; border-top: none;
 }
 /* ============================================================= */
+
+/* ===== 批1 · 按钮层次 (主金 / 次铁 / 三轻) ===== */
+.lobby-cta, .lb-cta, .btn.gold {
+  border: 13px solid transparent;
+  border-image: url('../art/05_pixellab/ui/btn_gold.png') 36 fill stretch;
+  background: none !important; box-shadow: none; border-radius: 0;
+}
+.btn {
+  border: 10px solid transparent;
+  border-image: url('../art/05_pixellab/ui/button.png') 30 fill stretch;
+  background: none; box-shadow: none; border-radius: 0; color: #fff;
+}
+.back-btn {
+  background: rgba(20,16,26,.72); border: 1px solid rgba(255,196,120,.3);
+  border-radius: 4px; box-shadow: none;
+}
+/* ============================================================= */
