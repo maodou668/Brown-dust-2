@@ -81,3 +81,18 @@
 - **波3**：`tab`、`slot`、`avatar_frame`。
 - **波4**：稀有度框、活动卡 ribbon、圆钮、tooltip、开关、星。
 - 每波：生成→挑候选→去背景/切片→接入对应 class→无头自测→部署→验收。
+
+---
+
+## 6. 套装完成状态 (v174)
+全 PixelLab 真资产 + CSS 收尾，主流程 UI 全部挂上、基本零 emoji：
+- ✅ 面板 `panel` / 标题栏 `panel_header`（.modal/.lr-banner/.battle-ctrl/.modal h2）
+- ✅ 按钮三级：主金 `btn_gold`（出战/抽10次）· 次铁 `button`（.btn/.lobby-btn/.skill-btn/.res/.ghost-btn）· 三轻（.back-btn）· 圆金（.act-btn）
+- ✅ 真条槽 `bar_frame`（.combo-gauge/.pity）+ 单位血条/SP（CSS 凹槽亮填充）
+- ✅ 标签页 `tab_on/off`（.gacha-tab/.bag-tab/.ac-tab）
+- ✅ 图标：功能×11 + 资源×4 + 元素×6（全 emoji→像素，data.js ELEMENTS 单点改）
+- ✅ 物品格 `.gear-slot`（CSS 凹槽）· 稀有度框 R蓝/SR紫/SSR金（CSS 辉光）· 玩家头像圆框 `avatar_frame`
+- ✅ 全局像素字体 Zpix（68KB 子集）
+- 略：活动卡 ribbon（已套 panel 框够用）、tooltip、开关、★（CSS 兜，按需再补）
+
+省额度要点：元素用 `item_descriptions` 一次出 4；稀有度/物品格/三级钮/红点用 CSS；头像框复用已生成 avatar 表。
