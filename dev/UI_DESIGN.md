@@ -46,3 +46,38 @@
 ## 4. 自测要点（沿用）
 - 改 CSS 用 `../art/...`（外链）；必测 **index.html**（线上入口），不是 game.html。
 - 每批无头截图前后对比；border-image/字体资源回 200；部署后轮询线上 ASSET_VER。
+
+---
+
+# 5. 完整 UI 套装清单 (全 PixelLab 资产 · 覆盖 checklist)
+
+> 用户要求：**全部 UI 元素改用 PixelLab 生成的统一套装**，现有游戏所有涉及 UI 处全部挂上。
+> 下表是套装资产全集 + 接入目标 + 状态。分波生成→接入→部署→验收，直到全勾。
+
+| 组 | 资产 | 接入 class | 状态 |
+|---|---|---|---|
+| 框架 | `panel.png` 大面板 | .modal/.lr-banner/.battle-ctrl | ✅ |
+| 框架 | `panel_header.png` 标题栏 | .modal h2 | ✅ |
+| 框架 | `tooltip` 小提示框 | tooltip/小弹层 | ⬜ |
+| 按钮 | `btn_gold.png` 主金钮 | .lobby-cta/.btn.gold | ✅ |
+| 按钮 | `button.png` 次铁钮 | .btn/.lobby-btn/.skill-btn/.res/.ghost-btn | ✅ |
+| 按钮 | `tab_on/off` 标签页 | .bag-tab/.gacha-tab/.ac-tab/.col-cat-bar | ⬜ |
+| 按钮 | `btn_round` 圆钮 | .act-btn(76圆) | ⬜ |
+| 条槽 | `bar_frame` 状态条框 | .bar/.combo-gauge/.pity-bar(替CSS) | 🔄生成中 |
+| 格框 | `slot` 物品格 | .gear-slot/.disp-slot/.gcard | ⬜ |
+| 格框 | `frame_R/SR/SSR` 稀有度框 | 卡/格 稀有度描边 | ⬜ |
+| 格框 | `avatar_frame` 头像框 | .pc-avatar/.u-art/.port-icon | ⬜ |
+| 卡片 | `card_ribbon` 活动卡 | .lr-banner(升级) | ⬜ |
+| 图标 | 功能×11 任务/珍藏集/锻造/成就/剧情/招募/佣兵/编队/背包/福利/商店 | 各 emoji | 🔄生成中 |
+| 图标 | 资源×4 金币/宝石/觉醒石/体力 | .res-icon | ⬜ |
+| 图标 | 元素×6 火/水/风/地/光/暗 | .u-elem 等 | ⬜ |
+| 杂项 | 红点/NEW/保底 角标 | .red-dot/.gf-guar-badge | ⬜(CSS可) |
+| 杂项 | 开关/勾选 | 设置项 | ⬜ |
+| 杂项 | 稀有度星 ★ | 卡星级 | ⬜ |
+
+## 生成波次
+- **波1**(进行中)：`bar_frame` + 功能图标首批(任务/商店/编队)。
+- **波2**：图标补全(功能剩余 + 资源×4 + 元素×6)。
+- **波3**：`tab`、`slot`、`avatar_frame`。
+- **波4**：稀有度框、活动卡 ribbon、圆钮、tooltip、开关、星。
+- 每波：生成→挑候选→去背景/切片→接入对应 class→无头自测→部署→验收。
