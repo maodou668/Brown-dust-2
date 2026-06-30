@@ -2337,3 +2337,13 @@ button.ac-circle:active { transform: scale(.92); }
 }
 .pc-avatar img { position: absolute; inset: 19%; width: 62%; height: 62%; border-radius: 50%; object-fit: cover; image-rendering: auto; }
 /* ============================================================= */
+
+/* ===== 套装: 圆形确认钮 (金) ===== */
+.act-btn {
+  background: radial-gradient(circle at 50% 34%, #ffe9ac, #f1ad3e 55%, #c87a1e) !important;
+  border: none !important; color: #3a2400 !important;
+  box-shadow: 0 0 0 3px #241a30, 0 0 0 5px rgba(255,200,90,.45), 0 4px 14px rgba(240,160,60,.5) !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,.3);
+}
+.act-btn:active { transform: scale(.94); }
+/* ============================================================= */
