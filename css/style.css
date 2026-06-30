@@ -2168,7 +2168,7 @@ button.ac-circle:active { transform: scale(.92); }
 /* 右侧活动卡: 保留各自渐变配色, 外加铁框宝石 (border-image 不带 fill, 渐变透出中心) */
 .lr-banner {
   border: 13px solid transparent;
-  border-image: url('art/05_pixellab/ui/panel.png') 38 stretch;
+  border-image: url('../art/05_pixellab/ui/panel.png') 38 stretch;
   border-radius: 10px;
   padding: 3px 8px;
   image-rendering: pixelated;
@@ -2176,7 +2176,7 @@ button.ac-circle:active { transform: scale(.92); }
 /* 底部功能按钮: 用按钮九宫格做底 (带 fill = 炭色面), 图标/文字浮于其上 */
 .lobby-btn {
   border: 11px solid transparent;
-  border-image: url('art/05_pixellab/ui/button.png') 30 fill stretch;
+  border-image: url('../art/05_pixellab/ui/button.png') 30 fill stretch;
   background: none;
   border-radius: 0;
   backdrop-filter: none;

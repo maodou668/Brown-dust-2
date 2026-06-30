@@ -23,7 +23,9 @@ const jsFiles = ['audio.js', 'data.js', 'balance.js', 'budget.js', 'lore.js', 'g
 const js = jsFiles.map(f => fs.readFileSync(path.join(root, 'js', f), 'utf8')).join('\n\n');
 
 // 兼容资源引用上的 ?v= 版本号查询串
-html = html.replace(/<link rel="stylesheet" href="css\/style\.css[^"]*">/, '<style>\n' + css + '\n</style>');
+// 内联进根目录的 game.html 时, CSS 里相对 css/ 目录的 '../art/' 需改回相对根的 'art/'
+const cssInline = css.replace(/url\((['"]?)\.\.\/art\//g, 'url($1art/');
+html = html.replace(/<link rel="stylesheet" href="css\/style\.css[^"]*">/, '<style>\n' + cssInline + '\n</style>');
 html = html.replace(/\s*<script src="js\/[^"]+"><\/script>/g, '');
 html = html.replace(/<\/body>/, '<script>\n' + js + '\n</script>\n</body>');
 

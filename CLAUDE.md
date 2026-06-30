@@ -13,7 +13,8 @@
 
 ## 1. 架构与构建
 - 源码：`js/`（audio, data, balance, budget, lore, gear, costumes, game, battle, ui, story, comic, world, main）+ `css/style.css` + `index.html`。
-- `scripts/build.js` 把 CSS+JS 内联进**自包含的 `game.html`**（线上实际加载它）。加载顺序见 build.js 的 `jsFiles`。
+- **线上 web 入口是 `index.html`**（外链 `css/style.css?v=N` + `js/*.js?v=N`）。`scripts/build.js` 另把 CSS+JS 内联成**自包含的 `game.html`**（用于离线/原生壳/单文件分发，非 web 入口）。加载顺序见 build.js 的 `jsFiles`。
+  - ⚠️ **CSS 里引用图片用相对路径要小心**：外链的 `css/style.css` 里相对路径相对 `css/` 目录解析 → 引 `art/` 资源要写 `url('../art/...')`；build.js 内联进根目录 `game.html` 时会自动改回 `art/`。**自测 UI 必须测 `index.html`**（线上入口），别只测 `game.html`（内联版会掩盖路径 bug）。
 - 本地预览：`python3 -m http.server PORT` 后开 `game.html`（横屏视口，竖屏会显示"请横屏"）。
 - 部署：`.github/workflows/pages.yml` —— `validate` job（数值校验+回归）通过后才 `deploy`。**不过不上线**。
 
