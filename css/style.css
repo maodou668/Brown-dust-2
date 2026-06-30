@@ -2322,3 +2322,18 @@ button.ac-circle:active { transform: scale(.92); }
 }
 .gear-slot.empty { border-style: solid !important; }
 /* ============================================================= */
+
+/* ===== 套装: 稀有度发光框 (R蓝/SR紫/SSR金) ===== */
+.border-r3 { border-width:2px !important; border-color: var(--r3) !important; box-shadow: 0 0 8px rgba(108,159,255,.5), inset 0 0 7px rgba(108,159,255,.22); }
+.border-r4 { border-width:2px !important; border-color: var(--r4) !important; box-shadow: 0 0 11px rgba(176,107,255,.62), inset 0 0 8px rgba(176,107,255,.28); }
+.border-r5 { border-width:2px !important; border-color: var(--r5) !important; box-shadow: 0 0 15px rgba(255,200,80,.8), inset 0 0 10px rgba(255,180,60,.38); }
+/* ============================================================= */
+
+/* ===== 套装: 玩家头像圆框 ===== */
+.pc-avatar {
+  background: url('../art/05_pixellab/ui/avatar_frame.png') no-repeat center / 100% 100% !important;
+  width: 36px !important; height: 36px !important; border-radius: 0 !important;
+  position: relative; overflow: visible; image-rendering: pixelated;
+}
+.pc-avatar img { position: absolute; inset: 19%; width: 62%; height: 62%; border-radius: 50%; object-fit: cover; image-rendering: auto; }
+/* ============================================================= */
