@@ -2303,6 +2303,9 @@ button.ac-circle:active { transform: scale(.92); }
   filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
 .res-icon { display: inline-flex; align-items: center; }
 .lr-ico .px-ico { width: 30px; height: 30px; }
+/* 顶栏系统图标 (公告/邮件/设置/全屏/音效) */
+.px-ico-sys { width: 20px; height: 20px; image-rendering: pixelated; object-fit: contain; vertical-align: middle; display: block;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
 /* ============================================================= */
 
 /* 元素图标 (替元素 emoji) */

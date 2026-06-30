@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=174">
+  <link rel="manifest" href="manifest.webmanifest?v=175">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=174">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=174">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=175">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=175">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -1629,10 +1629,15 @@ body {
 .lobby-right::-webkit-scrollbar { width: 0; }
 .lr-banner { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; text-align: left; padding: 9px 10px; border-radius: 12px; cursor: pointer; color: #fff; border: 1px solid rgba(255,255,255,.12); overflow: hidden; position: relative; }
 .lr-banner:active { transform: scale(.97); }
-.lr-banner.bn-arena { background: linear-gradient(120deg, #b06bff, #6a3aa0); }
-.lr-banner.bn-dungeon { background: linear-gradient(120deg, #4a90ff, #2a5aa0); }
-.lr-banner.bn-dispatch { background: linear-gradient(120deg, #3aa86a, #1f6a44); }
-.lr-banner.bn-event { background: linear-gradient(120deg, #ff8b4a, #c0502a); }
+/* 暗炭底 + 该功能色仅做内辉光点缀(与铁框统一, 去高饱和违和) */
+.lr-banner.bn-arena   { background: linear-gradient(110deg, #241a3a, #16101f) !important; box-shadow: inset 0 0 22px -6px rgba(176,107,255,.6); }
+.lr-banner.bn-dungeon { background: linear-gradient(110deg, #16263f, #101620) !important; box-shadow: inset 0 0 22px -6px rgba(74,144,255,.55); }
+.lr-banner.bn-dispatch{ background: linear-gradient(110deg, #163020, #101a14) !important; box-shadow: inset 0 0 22px -6px rgba(58,168,106,.55); }
+.lr-banner.bn-event   { background: linear-gradient(110deg, #3a1f12, #1f120c) !important; box-shadow: inset 0 0 22px -6px rgba(255,139,74,.6); }
+.lr-banner.bn-arena   .lr-name { color: #d9b6ff; }
+.lr-banner.bn-dungeon .lr-name { color: #aacdff; }
+.lr-banner.bn-dispatch .lr-name { color: #a6e8bf; }
+.lr-banner.bn-event   .lr-name { color: #ffc59a; }
 .lr-ico { font-size: 22px; }
 .lr-text { display: flex; flex-direction: column; min-width: 0; }
 .lr-name { font-size: 13px; font-weight: 800; }
@@ -2314,6 +2319,9 @@ button.ac-circle:active { transform: scale(.92); }
   filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
 .res-icon { display: inline-flex; align-items: center; }
 .lr-ico .px-ico { width: 30px; height: 30px; }
+/* 顶栏系统图标 (公告/邮件/设置/全屏/音效) */
+.px-ico-sys { width: 20px; height: 20px; image-rendering: pixelated; object-fit: contain; vertical-align: middle; display: block;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
 /* ============================================================= */
 
 /* 元素图标 (替元素 emoji) */
@@ -2371,24 +2379,24 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=174" alt="" onerror="this.outerHTML='🎖️'"></span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=175" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
         </span>
       </button>
       <div class="resources">
-        <div class="res" title="金币"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/coin.png?v=174" alt="金"></span><span id="res-gold">0</span></div>
-        <div class="res" title="宝石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/gem.png?v=174" alt="钻"></span><span id="res-gem">0</span></div>
-        <div class="res" title="觉醒石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/awaken.png?v=174" alt="石"></span><span id="res-stone">0</span></div>
-        <div class="res" title="体力"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/stamina.png?v=174" alt="力"></span><span id="res-stam">0</span></div>
+        <div class="res" title="金币"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/coin.png?v=175" alt="金"></span><span id="res-gold">0</span></div>
+        <div class="res" title="宝石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/gem.png?v=175" alt="钻"></span><span id="res-gem">0</span></div>
+        <div class="res" title="觉醒石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/awaken.png?v=175" alt="石"></span><span id="res-stone">0</span></div>
+        <div class="res" title="体力"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/stamina.png?v=175" alt="力"></span><span id="res-stam">0</span></div>
       </div>
       <div class="topbar-sys">
-        <button id="btn-notice" class="ghost-btn" title="公告">📢</button>
-        <button id="btn-mail" class="ghost-btn" title="邮件"><span class="dot-wrap">📧<span id="mail-dot" class="red-dot" style="display:none;"></span></span></button>
-        <button id="btn-settings" class="ghost-btn" title="设置">⚙️</button>
-        <button id="btn-fullscreen" class="ghost-btn" title="全屏">⛶</button>
-        <button id="btn-mute" class="ghost-btn" title="音效开关">🔊</button>
+        <button id="btn-notice" class="ghost-btn" title="公告"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/notice.png?v=175" alt="公告"></button>
+        <button id="btn-mail" class="ghost-btn" title="邮件"><span class="dot-wrap"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/mail.png?v=175" alt="邮件"><span id="mail-dot" class="red-dot" style="display:none;"></span></span></button>
+        <button id="btn-settings" class="ghost-btn" title="设置"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/settings.png?v=175" alt="设置"></button>
+        <button id="btn-fullscreen" class="ghost-btn" title="全屏"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/fullscreen.png?v=175" alt="全屏"></button>
+        <button id="btn-mute" class="ghost-btn" title="音效开关"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/sound.png?v=175" alt="音效"></button>
         <button id="btn-reset" class="ghost-btn" title="重置存档" style="display:none;">↺</button>
       </div>
     </header>
@@ -2421,7 +2429,7 @@ button.ac-circle:active { transform: scale(.92); }
     </div>
   </div>
 
-  <script>window.ASSET_VER = '174';</script>
+  <script>window.ASSET_VER = '175';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -2656,12 +2664,12 @@ const CLASSES = {
 
 // 元素克制：火 > 风 > 地 > 水 > 火（克制造成 1.3 倍伤害）
 const ELEMENTS = {
-  fire:  { name: '火', emoji: '🔥', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/fire.png" alt="火">',  strong: 'wind'  },
-  wind:  { name: '风', emoji: '🌪️', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/wind.png" alt="风">',  strong: 'earth' },
-  earth: { name: '地', emoji: '⛰️', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/earth.png" alt="地">', strong: 'water' },
-  water: { name: '水', emoji: '💧', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/water.png" alt="水">', strong: 'fire'  },
-  light: { name: '光', emoji: '☀️', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/light.png" alt="光">', strong: 'dark'  },
-  dark:  { name: '暗', emoji: '🌑', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/dark.png" alt="暗">',  strong: 'light' },
+  fire:  { name: '火', emoji: '🔥', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/fire.png?v=175" alt="火">',  strong: 'wind'  },
+  wind:  { name: '风', emoji: '🌪️', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/wind.png?v=175" alt="风">',  strong: 'earth' },
+  earth: { name: '地', emoji: '⛰️', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/earth.png?v=175" alt="地">', strong: 'water' },
+  water: { name: '水', emoji: '💧', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/water.png?v=175" alt="水">', strong: 'fire'  },
+  light: { name: '光', emoji: '☀️', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/light.png?v=175" alt="光">', strong: 'dark'  },
+  dark:  { name: '暗', emoji: '🌑', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/dark.png?v=175" alt="暗">',  strong: 'light' },
 };
 
 /**

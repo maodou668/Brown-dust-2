@@ -36,12 +36,12 @@ const CLASSES = {
 
 // 元素克制：火 > 风 > 地 > 水 > 火（克制造成 1.3 倍伤害）
 const ELEMENTS = {
-  fire:  { name: '火', emoji: '🔥', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/fire.png" alt="火">',  strong: 'wind'  },
-  wind:  { name: '风', emoji: '🌪️', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/wind.png" alt="风">',  strong: 'earth' },
-  earth: { name: '地', emoji: '⛰️', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/earth.png" alt="地">', strong: 'water' },
-  water: { name: '水', emoji: '💧', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/water.png" alt="水">', strong: 'fire'  },
-  light: { name: '光', emoji: '☀️', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/light.png" alt="光">', strong: 'dark'  },
-  dark:  { name: '暗', emoji: '🌑', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/dark.png" alt="暗">',  strong: 'light' },
+  fire:  { name: '火', emoji: '🔥', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/fire.png?v=175" alt="火">',  strong: 'wind'  },
+  wind:  { name: '风', emoji: '🌪️', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/wind.png?v=175" alt="风">',  strong: 'earth' },
+  earth: { name: '地', emoji: '⛰️', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/earth.png?v=175" alt="地">', strong: 'water' },
+  water: { name: '水', emoji: '💧', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/water.png?v=175" alt="水">', strong: 'fire'  },
+  light: { name: '光', emoji: '☀️', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/light.png?v=175" alt="光">', strong: 'dark'  },
+  dark:  { name: '暗', emoji: '🌑', icon: '<img class="px-ico-el" src="art/05_pixellab/ui/icons/dark.png?v=175" alt="暗">',  strong: 'light' },
 };
 
 /**
