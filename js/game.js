@@ -481,7 +481,7 @@ const Game = {
     // 服装（非基础装）
     const ownedCos = new Set(); s.roster.forEach(o => (o.costumes || []).forEach(c => { if (!c.startsWith('base_')) ownedCos.add(c); }));
     const cosIds = Object.keys(G.COSTUMES);
-    const cosItems = cosIds.map(id => ({ name: G.COSTUMES[id].name, icon: '👗', owned: ownedCos.has(id) }));
+    const cosItems = cosIds.map(id => ({ name: G.COSTUMES[id].name, icon: I('costume'), owned: ownedCos.has(id) }));
     // 装备（图鉴：见过的模板）
     const seenGear = new Set(s.inventory.map(g => g.tpl));
     const gearAll = [...Object.keys(G.GEAR.common), ...Object.keys(G.GEAR.ex)];
@@ -1149,7 +1149,7 @@ const Game = {
   //  多货币 + 限购周期（日 / 周 / 月 / 永久）
   // ============================================================
   SHOP_HUB: [
-    { id: 'item', name: '道具', icon: I('bag'), cur: 'gem', merchant: '🧝‍♀️', cd: 0,
+    { id: 'item', name: '道具', icon: I('bag'), cur: 'gem', merchant: I('merchant_item'), cd: 0,
       npc: '这里出售各种有用的道具，也只有我才有能力找到这些物品。',
       items: [
         { id: 'it_stam',   name: '体力补给',     icon: I('stamina_potion'), price: 50,  cur: 'gem', limit: 5, period: 'day',  give: { stam: 60 } },
@@ -1160,14 +1160,14 @@ const Game = {
         { id: 'it_gearbox',name: '装备宝箱',     icon: I('equip_chest'), price: 120, cur: 'gem', limit: 3, period: 'week', give: { gearScale: 1.6 } },
         { id: 'it_contract',name:'高级招募契约', icon: I('scroll'), price: 10,  cur: 'gem', limit: 1, period: 'day',  give: { powder: 10 } },
       ] },
-    { id: 'gold', name: '金币商店', icon: '🪙', cur: 'gold', merchant: '👩‍🦱', daily: true, cd: 0,
+    { id: 'gold', name: '金币商店', icon: '🪙', cur: 'gold', merchant: I('merchant_gold'), daily: true, cd: 0,
       npc: '你想要装备？那你可算是找对地方啦！每日都有新货色。',
       items: [
         { id: 'gd_stam',   name: '体力补给',   icon: I('stamina_potion'), price: 8000,  cur: 'gold', limit: 3, period: 'day',  give: { stam: 30 } },
         { id: 'gd_powder', name: '希望之粉',   icon: '✨', price: 20000, cur: 'gold', limit: 3, period: 'week', give: { powder: 20 } },
         { id: 'gd_stone',  name: '觉醒石',     icon: I('awaken'), price: 30000, cur: 'gold', limit: 3, period: 'week', give: { stone: 3 } },
       ] },
-    { id: 'points', name: '点数', icon: I('points_coin'), cur: 'coin', merchant: '🧙‍♀️', cd: 8,
+    { id: 'points', name: '点数', icon: I('points_coin'), cur: 'coin', merchant: I('merchant_points'), cd: 8,
       npc: '这里有看见您希望但还没钱购买的物品，别光顾着参观，赶快购买吧！',
       items: [
         { id: 'pt_refine',  name: '精炼石',       icon: I('refine_crystal'), price: 50,  cur: 'coin', limit: 5, period: 'week',  give: { stone: 3 } },
@@ -1177,7 +1177,7 @@ const Game = {
         { id: 'pt_powder',  name: '希望之粉',     icon: '✨', price: 200, cur: 'coin', limit: 2, period: 'month', give: { powder: 30 } },
         { id: 'pt_water',   name: '精炼水晶',     icon: I('refine_crystal'), price: 67,  cur: 'coin', limit: 3, period: 'week',  give: { stone: 4 } },
       ] },
-    { id: 'recharge', name: '充值商店', icon: I('gem'), cur: 'gem', merchant: '💁‍♀️', cd: 0,
+    { id: 'recharge', name: '充值商店', icon: I('gem'), cur: 'gem', merchant: I('merchant_recharge'), cd: 0,
       npc: '欢迎光临！看看今天的超值特惠礼包吧，机会难得哦。',
       items: [
         { id: 'rc_ap',     name: 'AP 恢复礼盒',  icon: I('stamina_potion'), price: 170, cur: 'gem', limit: 5, period: 'day',  give: { stam: 120 } },
@@ -1896,7 +1896,7 @@ const Game = {
     const D = window.GameData;
     // 剧情游戏卡：按主线章节
     const storyCards = window.World.CHAPTERS.map((ch, i) => ({
-      id: ch.id, name: ch.name, icon: { forest: I('tree'), cave: I('pickaxe'), castle: I('castle') }[ch.theme] || '🗺️',
+      id: ch.id, name: ch.name, icon: { forest: I('loc_forest'), cave: I('loc_mine'), castle: I('loc_castle') }[ch.theme] || '🗺️',
       owned: window.World.isChapterUnlocked(i), done: window.World.isChapterDone(ch),
       go: 'stages', vol: i + 1,
     }));

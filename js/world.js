@@ -33,7 +33,7 @@ const World = {
       desc: '初出茅庐的佣兵团，从森林边缘启程。',
       steps: [
         { type: 'story', story: 'stage1', label: '查看森林入口' },
-        { type: 'npc', label: '与老猎人交谈', icon: '🧓',
+        { type: 'npc', label: '与老猎人交谈', icon: I('npc_hunter'),
           text: '老猎人：「森林里的哥布林最近不太安分。年轻人，先帮我清掉它们，深处的狼群就交给你了。」' },
         { type: 'battle', stage: 1, label: '击退哥布林群' },
         { type: 'story', story: 'stage2', label: '深入森林' },

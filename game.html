@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=185">
+  <link rel="manifest" href="manifest.webmanifest?v=186">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=185">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=185">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=186">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=186">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2320,6 +2320,8 @@ button.ac-circle:active { transform: scale(.92); }
 /* 内联 emoji→图标 (全局替换): em 尺寸随容器字号缩放, 模拟 emoji 行为 (格大/行内小) */
 .px-ico-in { width: 1.15em; height: 1.15em; image-rendering: pixelated; object-fit: contain;
   vertical-align: -0.18em; display: inline-block; }
+/* 角色立绘加载失败 → 换成职业像素图标兜底 */
+.char-img.cls-fallback { object-fit: contain; image-rendering: pixelated; padding: 12%; }
 /* ============================================================= */
 
 /* 资源胶囊小图标 */
@@ -2418,24 +2420,24 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=185" alt="" onerror="this.outerHTML='🎖️'"></span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=186" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
         </span>
       </button>
       <div class="resources">
-        <div class="res" title="金币"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/coin.png?v=185" alt="金"></span><span id="res-gold">0</span></div>
-        <div class="res" title="宝石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/gem.png?v=185" alt="钻"></span><span id="res-gem">0</span></div>
-        <div class="res" title="觉醒石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/awaken.png?v=185" alt="石"></span><span id="res-stone">0</span></div>
-        <div class="res" title="体力"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/stamina.png?v=185" alt="力"></span><span id="res-stam">0</span></div>
+        <div class="res" title="金币"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/coin.png?v=186" alt="金"></span><span id="res-gold">0</span></div>
+        <div class="res" title="宝石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/gem.png?v=186" alt="钻"></span><span id="res-gem">0</span></div>
+        <div class="res" title="觉醒石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/awaken.png?v=186" alt="石"></span><span id="res-stone">0</span></div>
+        <div class="res" title="体力"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/stamina.png?v=186" alt="力"></span><span id="res-stam">0</span></div>
       </div>
       <div class="topbar-sys">
-        <button id="btn-notice" class="ghost-btn" title="公告"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/notice.png?v=185" alt="公告"></button>
-        <button id="btn-mail" class="ghost-btn" title="邮件"><span class="dot-wrap"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/mail.png?v=185" alt="邮件"><span id="mail-dot" class="red-dot" style="display:none;"></span></span></button>
-        <button id="btn-settings" class="ghost-btn" title="设置"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/settings.png?v=185" alt="设置"></button>
-        <button id="btn-fullscreen" class="ghost-btn" title="全屏"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/fullscreen.png?v=185" alt="全屏"></button>
-        <button id="btn-mute" class="ghost-btn" title="音效开关"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/sound.png?v=185" alt="音效"></button>
+        <button id="btn-notice" class="ghost-btn" title="公告"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/notice.png?v=186" alt="公告"></button>
+        <button id="btn-mail" class="ghost-btn" title="邮件"><span class="dot-wrap"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/mail.png?v=186" alt="邮件"><span id="mail-dot" class="red-dot" style="display:none;"></span></span></button>
+        <button id="btn-settings" class="ghost-btn" title="设置"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/settings.png?v=186" alt="设置"></button>
+        <button id="btn-fullscreen" class="ghost-btn" title="全屏"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/fullscreen.png?v=186" alt="全屏"></button>
+        <button id="btn-mute" class="ghost-btn" title="音效开关"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/sound.png?v=186" alt="音效"></button>
         <button id="btn-reset" class="ghost-btn" title="重置存档" style="display:none;">↺</button>
       </div>
     </header>
@@ -2468,7 +2470,7 @@ button.ac-circle:active { transform: scale(.92); }
     </div>
   </div>
 
-  <script>window.ASSET_VER = '185';</script>
+  <script>window.ASSET_VER = '186';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -2679,11 +2681,11 @@ const I = n => `<img class="px-ico-in" src="art/05_pixellab/ui/icons/${n}.png">`
  * 每个职业有不同的定位与站位偏好
  */
 const CLASSES = {
-  warrior:  { name: '战士',   icon: '⚔️', role: '前排物理输出' },
-  defender: { name: '守护者', icon: '🛡️', role: '前排坦克' },
-  mage:     { name: '法师',   icon: '🔮', role: '后排范围法术' },
-  archer:   { name: '游侠',   icon: '🏹', role: '后排单体爆发' },
-  healer:   { name: '治愈者', icon: '✨', role: '后排辅助治疗' },
+  warrior:  { name: '战士',   icon: I('cls_warrior'), role: '前排物理输出' },
+  defender: { name: '守护者', icon: I('cls_defender'), role: '前排坦克' },
+  mage:     { name: '法师',   icon: I('cls_mage'), role: '后排范围法术' },
+  archer:   { name: '游侠',   icon: I('cls_archer'), role: '后排单体爆发' },
+  healer:   { name: '治愈者', icon: I('cls_healer'), role: '后排辅助治疗' },
 };
 
 /**
@@ -4414,7 +4416,7 @@ const Game = {
     // 服装（非基础装）
     const ownedCos = new Set(); s.roster.forEach(o => (o.costumes || []).forEach(c => { if (!c.startsWith('base_')) ownedCos.add(c); }));
     const cosIds = Object.keys(G.COSTUMES);
-    const cosItems = cosIds.map(id => ({ name: G.COSTUMES[id].name, icon: '👗', owned: ownedCos.has(id) }));
+    const cosItems = cosIds.map(id => ({ name: G.COSTUMES[id].name, icon: I('costume'), owned: ownedCos.has(id) }));
     // 装备（图鉴：见过的模板）
     const seenGear = new Set(s.inventory.map(g => g.tpl));
     const gearAll = [...Object.keys(G.GEAR.common), ...Object.keys(G.GEAR.ex)];
@@ -5082,7 +5084,7 @@ const Game = {
   //  多货币 + 限购周期（日 / 周 / 月 / 永久）
   // ============================================================
   SHOP_HUB: [
-    { id: 'item', name: '道具', icon: I('bag'), cur: 'gem', merchant: '🧝‍♀️', cd: 0,
+    { id: 'item', name: '道具', icon: I('bag'), cur: 'gem', merchant: I('merchant_item'), cd: 0,
       npc: '这里出售各种有用的道具，也只有我才有能力找到这些物品。',
       items: [
         { id: 'it_stam',   name: '体力补给',     icon: I('stamina_potion'), price: 50,  cur: 'gem', limit: 5, period: 'day',  give: { stam: 60 } },
@@ -5093,14 +5095,14 @@ const Game = {
         { id: 'it_gearbox',name: '装备宝箱',     icon: I('equip_chest'), price: 120, cur: 'gem', limit: 3, period: 'week', give: { gearScale: 1.6 } },
         { id: 'it_contract',name:'高级招募契约', icon: I('scroll'), price: 10,  cur: 'gem', limit: 1, period: 'day',  give: { powder: 10 } },
       ] },
-    { id: 'gold', name: '金币商店', icon: '🪙', cur: 'gold', merchant: '👩‍🦱', daily: true, cd: 0,
+    { id: 'gold', name: '金币商店', icon: '🪙', cur: 'gold', merchant: I('merchant_gold'), daily: true, cd: 0,
       npc: '你想要装备？那你可算是找对地方啦！每日都有新货色。',
       items: [
         { id: 'gd_stam',   name: '体力补给',   icon: I('stamina_potion'), price: 8000,  cur: 'gold', limit: 3, period: 'day',  give: { stam: 30 } },
         { id: 'gd_powder', name: '希望之粉',   icon: '✨', price: 20000, cur: 'gold', limit: 3, period: 'week', give: { powder: 20 } },
         { id: 'gd_stone',  name: '觉醒石',     icon: I('awaken'), price: 30000, cur: 'gold', limit: 3, period: 'week', give: { stone: 3 } },
       ] },
-    { id: 'points', name: '点数', icon: I('points_coin'), cur: 'coin', merchant: '🧙‍♀️', cd: 8,
+    { id: 'points', name: '点数', icon: I('points_coin'), cur: 'coin', merchant: I('merchant_points'), cd: 8,
       npc: '这里有看见您希望但还没钱购买的物品，别光顾着参观，赶快购买吧！',
       items: [
         { id: 'pt_refine',  name: '精炼石',       icon: I('refine_crystal'), price: 50,  cur: 'coin', limit: 5, period: 'week',  give: { stone: 3 } },
@@ -5110,7 +5112,7 @@ const Game = {
         { id: 'pt_powder',  name: '希望之粉',     icon: '✨', price: 200, cur: 'coin', limit: 2, period: 'month', give: { powder: 30 } },
         { id: 'pt_water',   name: '精炼水晶',     icon: I('refine_crystal'), price: 67,  cur: 'coin', limit: 3, period: 'week',  give: { stone: 4 } },
       ] },
-    { id: 'recharge', name: '充值商店', icon: I('gem'), cur: 'gem', merchant: '💁‍♀️', cd: 0,
+    { id: 'recharge', name: '充值商店', icon: I('gem'), cur: 'gem', merchant: I('merchant_recharge'), cd: 0,
       npc: '欢迎光临！看看今天的超值特惠礼包吧，机会难得哦。',
       items: [
         { id: 'rc_ap',     name: 'AP 恢复礼盒',  icon: I('stamina_potion'), price: 170, cur: 'gem', limit: 5, period: 'day',  give: { stam: 120 } },
@@ -5829,7 +5831,7 @@ const Game = {
     const D = window.GameData;
     // 剧情游戏卡：按主线章节
     const storyCards = window.World.CHAPTERS.map((ch, i) => ({
-      id: ch.id, name: ch.name, icon: { forest: I('tree'), cave: I('pickaxe'), castle: I('castle') }[ch.theme] || '🗺️',
+      id: ch.id, name: ch.name, icon: { forest: I('loc_forest'), cave: I('loc_mine'), castle: I('loc_castle') }[ch.theme] || '🗺️',
       owned: window.World.isChapterUnlocked(i), done: window.World.isChapterDone(ch),
       go: 'stages', vol: i + 1,
     }));
@@ -6794,11 +6796,12 @@ const UI = {
 
   charAvatar(charId) {
     const c = window.GameData.CHARACTERS[charId];
-    const clsIcon = window.GameData.CLASSES[c.cls].icon;
+    const clsIcon = window.GameData.CLASSES[c.cls].icon;  // 职业像素图标 (img html)
     if (c.art) {
-      // 图片优先：加载失败自动回退到职业图标占位
+      // 图片优先：加载失败时把 src 换成职业像素图标(不能往属性里塞 img 标签)
+      const fb = `art/05_pixellab/ui/icons/cls_${c.cls}.png`;
       return `<img class="char-img" src="${c.art}" alt="${c.name}" loading="lazy"
-        onerror="this.outerHTML='<span class=&quot;char-emoji&quot;>${clsIcon}</span>'">`;
+        onerror="this.onerror=null;this.src='${fb}';this.classList.add('cls-fallback');">`;
     }
     return clsIcon;
   },
@@ -7050,16 +7053,16 @@ const UI = {
     ];
     // 各分类剧集
     const mainEps = [
-      { id: 'prologue', title: '序章 · 启程', src: '主线剧情 · 序章', tags: ['烬火', '相遇'], icon: I('story') },
-      { id: 'stage1', title: '第一章 · 艾尔玛森林入口', src: '主线剧情 · 第一章', tags: ['哥布林', '褐尘'], icon: I('tree') },
-      { id: 'stage2', title: '第二章 · 森林深处', src: '主线剧情 · 第二章', tags: ['暗影狼', '深林'], icon: I('tree') },
-      { id: 'stage3', title: '第三章 · 废弃矿洞', src: '主线剧情 · 第三章', tags: ['巨魔', '矿洞'], icon: I('pickaxe') },
-      { id: 'stage4', title: '第四章 · 诅咒山脊', src: '主线剧情 · 第四章', tags: ['BOSS', '山脊'], icon: I('rock') },
-      { id: 'stage5', title: '第五章 · 魔王城', src: '主线剧情 · 第五章', tags: ['魔王', '决战'], icon: I('castle') },
-      { id: 'epilogue', title: '第一部终章 · 魔王陨落', src: '主线剧情 · 终章', tags: ['终章', '真相'], icon: I('brokencrown') },
-      { id: 'stage6', title: '第二部 · 破碎边境', src: '主线剧情 · 第二部', tags: ['边境', '永夜'], icon: I('tower') },
-      { id: 'stage7', title: '第二部 · 永夜回廊', src: '主线剧情 · 第二部', tags: ['回廊', '女皇'], icon: I('temple') },
-      { id: 'epilogue2', title: '第二部终章 · 曙光', src: '主线剧情 · 终章', tags: ['曙光', '希望'], icon: I('story') },
+      { id: 'prologue', title: '序章 · 启程', src: '主线剧情 · 序章', tags: ['烬火', '相遇'], icon: I('loc_prologue') },
+      { id: 'stage1', title: '第一章 · 艾尔玛森林入口', src: '主线剧情 · 第一章', tags: ['哥布林', '褐尘'], icon: I('loc_forest') },
+      { id: 'stage2', title: '第二章 · 森林深处', src: '主线剧情 · 第二章', tags: ['暗影狼', '深林'], icon: I('loc_forest') },
+      { id: 'stage3', title: '第三章 · 废弃矿洞', src: '主线剧情 · 第三章', tags: ['巨魔', '矿洞'], icon: I('loc_mine') },
+      { id: 'stage4', title: '第四章 · 诅咒山脊', src: '主线剧情 · 第四章', tags: ['BOSS', '山脊'], icon: I('loc_ridge') },
+      { id: 'stage5', title: '第五章 · 魔王城', src: '主线剧情 · 第五章', tags: ['魔王', '决战'], icon: I('loc_castle') },
+      { id: 'epilogue', title: '第一部终章 · 魔王陨落', src: '主线剧情 · 终章', tags: ['终章', '真相'], icon: I('loc_fallen') },
+      { id: 'stage6', title: '第二部 · 破碎边境', src: '主线剧情 · 第二部', tags: ['边境', '永夜'], icon: I('loc_frontier') },
+      { id: 'stage7', title: '第二部 · 永夜回廊', src: '主线剧情 · 第二部', tags: ['回廊', '女皇'], icon: I('loc_night') },
+      { id: 'epilogue2', title: '第二部终章 · 曙光', src: '主线剧情 · 终章', tags: ['曙光', '希望'], icon: I('loc_prologue') },
     ];
     const sideSeen = new Set(); const charEps = [];
     Game.state.roster.forEach(o => {
@@ -10359,7 +10362,7 @@ const World = {
       desc: '初出茅庐的佣兵团，从森林边缘启程。',
       steps: [
         { type: 'story', story: 'stage1', label: '查看森林入口' },
-        { type: 'npc', label: '与老猎人交谈', icon: '🧓',
+        { type: 'npc', label: '与老猎人交谈', icon: I('npc_hunter'),
           text: '老猎人：「森林里的哥布林最近不太安分。年轻人，先帮我清掉它们，深处的狼群就交给你了。」' },
         { type: 'battle', stage: 1, label: '击退哥布林群' },
         { type: 'story', story: 'stage2', label: '深入森林' },

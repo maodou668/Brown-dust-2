@@ -2304,6 +2304,8 @@ button.ac-circle:active { transform: scale(.92); }
 /* 内联 emoji→图标 (全局替换): em 尺寸随容器字号缩放, 模拟 emoji 行为 (格大/行内小) */
 .px-ico-in { width: 1.15em; height: 1.15em; image-rendering: pixelated; object-fit: contain;
   vertical-align: -0.18em; display: inline-block; }
+/* 角色立绘加载失败 → 换成职业像素图标兜底 */
+.char-img.cls-fallback { object-fit: contain; image-rendering: pixelated; padding: 12%; }
 /* ============================================================= */
 
 /* 资源胶囊小图标 */

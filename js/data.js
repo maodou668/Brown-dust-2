@@ -12,11 +12,11 @@ const I = n => `<img class="px-ico-in" src="art/05_pixellab/ui/icons/${n}.png">`
  * 每个职业有不同的定位与站位偏好
  */
 const CLASSES = {
-  warrior:  { name: '战士',   icon: '⚔️', role: '前排物理输出' },
-  defender: { name: '守护者', icon: '🛡️', role: '前排坦克' },
-  mage:     { name: '法师',   icon: '🔮', role: '后排范围法术' },
-  archer:   { name: '游侠',   icon: '🏹', role: '后排单体爆发' },
-  healer:   { name: '治愈者', icon: '✨', role: '后排辅助治疗' },
+  warrior:  { name: '战士',   icon: I('cls_warrior'), role: '前排物理输出' },
+  defender: { name: '守护者', icon: I('cls_defender'), role: '前排坦克' },
+  mage:     { name: '法师',   icon: I('cls_mage'), role: '后排范围法术' },
+  archer:   { name: '游侠',   icon: I('cls_archer'), role: '后排单体爆发' },
+  healer:   { name: '治愈者', icon: I('cls_healer'), role: '后排辅助治疗' },
 };
 
 /**

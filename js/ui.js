@@ -75,11 +75,12 @@ const UI = {
 
   charAvatar(charId) {
     const c = window.GameData.CHARACTERS[charId];
-    const clsIcon = window.GameData.CLASSES[c.cls].icon;
+    const clsIcon = window.GameData.CLASSES[c.cls].icon;  // 职业像素图标 (img html)
     if (c.art) {
-      // 图片优先：加载失败自动回退到职业图标占位
+      // 图片优先：加载失败时把 src 换成职业像素图标(不能往属性里塞 img 标签)
+      const fb = `art/05_pixellab/ui/icons/cls_${c.cls}.png`;
       return `<img class="char-img" src="${c.art}" alt="${c.name}" loading="lazy"
-        onerror="this.outerHTML='<span class=&quot;char-emoji&quot;>${clsIcon}</span>'">`;
+        onerror="this.onerror=null;this.src='${fb}';this.classList.add('cls-fallback');">`;
     }
     return clsIcon;
   },
@@ -331,16 +332,16 @@ const UI = {
     ];
     // 各分类剧集
     const mainEps = [
-      { id: 'prologue', title: '序章 · 启程', src: '主线剧情 · 序章', tags: ['烬火', '相遇'], icon: I('story') },
-      { id: 'stage1', title: '第一章 · 艾尔玛森林入口', src: '主线剧情 · 第一章', tags: ['哥布林', '褐尘'], icon: I('tree') },
-      { id: 'stage2', title: '第二章 · 森林深处', src: '主线剧情 · 第二章', tags: ['暗影狼', '深林'], icon: I('tree') },
-      { id: 'stage3', title: '第三章 · 废弃矿洞', src: '主线剧情 · 第三章', tags: ['巨魔', '矿洞'], icon: I('pickaxe') },
-      { id: 'stage4', title: '第四章 · 诅咒山脊', src: '主线剧情 · 第四章', tags: ['BOSS', '山脊'], icon: I('rock') },
-      { id: 'stage5', title: '第五章 · 魔王城', src: '主线剧情 · 第五章', tags: ['魔王', '决战'], icon: I('castle') },
-      { id: 'epilogue', title: '第一部终章 · 魔王陨落', src: '主线剧情 · 终章', tags: ['终章', '真相'], icon: I('brokencrown') },
-      { id: 'stage6', title: '第二部 · 破碎边境', src: '主线剧情 · 第二部', tags: ['边境', '永夜'], icon: I('tower') },
-      { id: 'stage7', title: '第二部 · 永夜回廊', src: '主线剧情 · 第二部', tags: ['回廊', '女皇'], icon: I('temple') },
-      { id: 'epilogue2', title: '第二部终章 · 曙光', src: '主线剧情 · 终章', tags: ['曙光', '希望'], icon: I('story') },
+      { id: 'prologue', title: '序章 · 启程', src: '主线剧情 · 序章', tags: ['烬火', '相遇'], icon: I('loc_prologue') },
+      { id: 'stage1', title: '第一章 · 艾尔玛森林入口', src: '主线剧情 · 第一章', tags: ['哥布林', '褐尘'], icon: I('loc_forest') },
+      { id: 'stage2', title: '第二章 · 森林深处', src: '主线剧情 · 第二章', tags: ['暗影狼', '深林'], icon: I('loc_forest') },
+      { id: 'stage3', title: '第三章 · 废弃矿洞', src: '主线剧情 · 第三章', tags: ['巨魔', '矿洞'], icon: I('loc_mine') },
+      { id: 'stage4', title: '第四章 · 诅咒山脊', src: '主线剧情 · 第四章', tags: ['BOSS', '山脊'], icon: I('loc_ridge') },
+      { id: 'stage5', title: '第五章 · 魔王城', src: '主线剧情 · 第五章', tags: ['魔王', '决战'], icon: I('loc_castle') },
+      { id: 'epilogue', title: '第一部终章 · 魔王陨落', src: '主线剧情 · 终章', tags: ['终章', '真相'], icon: I('loc_fallen') },
+      { id: 'stage6', title: '第二部 · 破碎边境', src: '主线剧情 · 第二部', tags: ['边境', '永夜'], icon: I('loc_frontier') },
+      { id: 'stage7', title: '第二部 · 永夜回廊', src: '主线剧情 · 第二部', tags: ['回廊', '女皇'], icon: I('loc_night') },
+      { id: 'epilogue2', title: '第二部终章 · 曙光', src: '主线剧情 · 终章', tags: ['曙光', '希望'], icon: I('loc_prologue') },
     ];
     const sideSeen = new Set(); const charEps = [];
     Game.state.roster.forEach(o => {
