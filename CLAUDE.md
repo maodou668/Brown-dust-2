@@ -2,7 +2,7 @@
 
 > 这是一个 **Brown Dust 2 风格的横版抽卡 RPG**，纯原生 HTML/CSS/JS，部署到 GitHub Pages。
 > 本文件让任何一次会话（即使零上下文）都能立刻按既定方法论工作，**不必从头摸索**。
-> 配套深入文档：`BALANCE.md`(数值契约) · `ART_PIPELINE.md`(美术分工) · `art/05_pixellab/fx/README.md`(VFX 流程)。
+> 配套深入文档：`BALANCE.md`(数值契约) · `ART_PIPELINE.md`(本作美术分工/实例细节) · `GENERIC_ART_PIPELINE.md`(**全美术资产通用流水线**：角色/怪物/地图/UI/特效/立绘，跨游戏可复用) · `art/05_pixellab/fx/README.md`(VFX 流程)。
 
 ## 0. 铁律（先记住这几条）
 - **分支**：只在 `claude/brown-dust-2-dev-ma6cog` 开发与推送；不开 PR（除非明确要求）。
