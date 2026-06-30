@@ -3,6 +3,10 @@
 //  角色、技能、敌人、关卡、抽卡池定义
 // ============================================================
 
+// 图标助手：把"真实游戏元素"锚定到自己的像素图标 (em 尺寸随字号缩放, 同 emoji 行为)
+// 全局共享 (经典 script 顶层 const 跨文件可见), 各数据文件按元素用途调用 I('xxx')
+const I = n => `<img class="px-ico-in" src="art/05_pixellab/ui/icons/${n}.png">`;
+
 /**
  * 职业定义
  * 每个职业有不同的定位与站位偏好
@@ -214,102 +218,102 @@ const SKILLS = {
   // ----- 攻击 -----
   slash: {
     name: '斩击', target: 'enemySingle', effect: 'damage',
-    power: 1.2, sp: 0, icon: '🗡️',
+    power: 1.2, sp: 0, icon: I('sk_slash'),
     desc: '对单个敌人造成 120% 攻击力的伤害。',
   },
   power_strike: {
     name: '强力一击', target: 'enemySingle', effect: 'damage',
-    power: 2.0, sp: 2, icon: '💥', knockback: true,
+    power: 2.0, sp: 2, icon: I('sk_power'), knockback: true,
     desc: '蓄力后对单个敌人造成 200% 攻击力的伤害，并将其击退到后排。',
   },
   gale_strike: {
     name: '疾风斩', target: 'enemyRow', effect: 'damage',
-    power: 1.4, sp: 3, icon: '🌪️', knockback: true,
+    power: 1.4, sp: 3, icon: I('sk_gale'), knockback: true,
     desc: '对敌方一整排造成 140% 攻击力的风属性伤害，并将其击退。',
   },
   fireball: {
     name: '火球术', target: 'enemySingle', effect: 'damage',
-    power: 1.8, sp: 0, icon: '☄️', pierce: true,
+    power: 1.8, sp: 0, icon: I('sk_fireball'), pierce: true,
     desc: '投掷火球对单个敌人造成 180% 攻击力的火焰伤害（无视前排，可直击后排）。',
   },
   inferno: {
     name: '炼狱业火', target: 'enemyAll', effect: 'damage',
-    power: 1.6, sp: 4, icon: '🔥',
+    power: 1.6, sp: 4, icon: I('sk_inferno'),
     inflict: { type: 'burn', turns: 2, power: 0.5 },
     desc: '召唤业火对敌方全体造成 160% 火焰伤害，并使其灼烧 2 回合。',
   },
   water_lance: {
     name: '水矛', target: 'enemySingle', effect: 'damage',
-    power: 1.5, sp: 0, icon: '🔱', pierce: true,
+    power: 1.5, sp: 0, icon: I('sk_waterlance'), pierce: true,
     desc: '凝聚水矛刺穿敌人，造成 150% 伤害并降低其 20% 防御（无视前排）。',
     extra: { type: 'debuffDef', power: 0.20, duration: 2 },
   },
   frost_nova: {
     name: '霜冻新星', target: 'enemyAll', effect: 'damage',
-    power: 1.3, sp: 4, icon: '❄️',
+    power: 1.3, sp: 4, icon: I('sk_frost'),
     desc: '冰霜爆发对敌方全体造成 130% 攻击力的水属性伤害。',
   },
   piercing_shot: {
     name: '穿透射击', target: 'enemySingle', effect: 'damage',
-    power: 1.6, sp: 0, icon: '🎯', pierce: true,
+    power: 1.6, sp: 0, icon: I('sk_pierce'), pierce: true,
     desc: '精准射击单个敌人，造成 160% 攻击力的伤害（无视前排，直击后排）。',
   },
   shadow_volley: {
     name: '暗影连射', target: 'enemySingle', effect: 'damage',
-    power: 3.2, sp: 4, icon: '🌌', pierce: true,
+    power: 3.2, sp: 4, icon: I('sk_shadow'), pierce: true,
     desc: '倾泻暗影箭雨，对单个敌人造成 320% 攻击力的恐怖伤害（无视前排）。',
   },
   holy_smite: {
     name: '圣光裁决', target: 'enemyRow', effect: 'damage',
-    power: 1.5, sp: 3, icon: '⚡',
+    power: 1.5, sp: 3, icon: I('sk_smite'),
     desc: '降下圣光，对敌方一排造成 150% 攻击力的光属性伤害。',
   },
   earth_slam: {
     name: '大地践踏', target: 'enemyAll', effect: 'damage',
-    power: 1.1, sp: 3, icon: '⛰️', knockback: true,
+    power: 1.1, sp: 3, icon: I('sk_earthslam'), knockback: true,
     desc: '震动大地，对敌方全体造成 110% 攻击力的伤害，并击退前排。',
   },
   rock_guard: {
     name: '磐石守护', target: 'self', effect: 'buffDef',
-    power: 0.50, duration: 3, sp: 2, icon: '🪨',
+    power: 0.50, duration: 3, sp: 2, icon: I('sk_rockguard'),
     desc: '提升自身 50% 防御，持续 3 回合。',
   },
   // ----- 治疗 / 辅助 -----
   heal_wave: {
     name: '治愈波动', target: 'allyAll', effect: 'heal',
-    power: 1.2, sp: 0, icon: '💚',
+    power: 1.2, sp: 0, icon: I('sk_healwave'),
     desc: '为全体友方恢复 120% 攻击力的生命值。',
   },
   blessing: {
     name: '祝福', target: 'allyAll', effect: 'buffAtk',
-    power: 0.30, duration: 3, sp: 3, icon: '🌟',
+    power: 0.30, duration: 3, sp: 3, icon: I('sk_blessing'),
     desc: '为全体友方提升 30% 攻击力，持续 3 回合。',
   },
   taunt_shield: {
     name: '守护壁垒', target: 'allyAll', effect: 'shield',
-    power: 0.80, sp: 2, icon: '🛡️',
+    power: 0.80, sp: 2, icon: I('sk_taunt'),
     desc: '为全体友方提供等同于自身 80% 攻击力的护盾，并嘲讽敌人。',
     extra: { type: 'taunt' },
   },
   // ----- 第二部新增技能 -----
   grand_heal: {
     name: '圣光普照', target: 'allyAll', effect: 'heal',
-    power: 1.9, sp: 4, icon: '🌈',
+    power: 1.9, sp: 4, icon: I('sk_grandheal'),
     desc: '降下圣光，为全体友方恢复 190% 攻击力的大量生命值。',
   },
   holy_light: {
     name: '愈光术', target: 'allySingle', effect: 'heal',
-    power: 2.4, sp: 0, icon: '💗',
+    power: 2.4, sp: 0, icon: I('heal'),
     desc: '为单个友方恢复 240% 攻击力的生命值。',
   },
   tempest_blade: {
     name: '苍穹一闪', target: 'enemySingle', effect: 'damage',
-    power: 2.8, sp: 4, icon: '🌀', knockback: true,
+    power: 2.8, sp: 4, icon: I('sk_tempest'), knockback: true,
     desc: '以极致剑速对单个敌人造成 280% 攻击力的风属性爆发伤害，并将其击退。',
   },
   blazing_arrow: {
     name: '红莲烈箭', target: 'enemySingle', effect: 'damage',
-    power: 2.3, sp: 3, icon: '🔥', pierce: true,
+    power: 2.3, sp: 3, icon: I('sk_blazing'), pierce: true,
     desc: '点燃箭矢射穿目标，造成 230% 攻击力的火焰伤害（无视前排，直击后排）。',
   },
 };

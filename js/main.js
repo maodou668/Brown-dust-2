@@ -545,7 +545,7 @@ const BattleUI = {
         : fallback);
     const hpPct = Math.max(0, (c.hp / c.maxHp) * 100);
     const spPct = (c.sp / c.maxSp) * 100;
-    const stIcon = { poison: '☠️', burn: '🔥', stun: '💫', silence: '🔇' };
+    const stIcon = { poison: I('poison'), burn: I('burn'), stun: I('stun'), silence: I('blind') };
     const statusHtml = (c.statuses || []).filter(s => s.turns > 0)
       .map(s => `<span class="st-badge" title="${s.type}">${stIcon[s.type] || ''}</span>`).join('');
     const cfg = this.ROWCFG[side + '_' + pos];
@@ -606,7 +606,7 @@ const BattleUI = {
     if (c.shield > 0) { if (!sh) { sh = UI.el('<span class="shield-tag"></span>'); el.appendChild(sh); } sh.textContent = '🛡' + c.shield; }
     else if (sh) sh.remove();
     // 状态图标
-    const stIcon = { poison: '☠️', burn: '🔥', stun: '💫', silence: '🔇' };
+    const stIcon = { poison: I('poison'), burn: I('burn'), stun: I('stun'), silence: I('blind') };
     const active = (c.statuses || []).filter(s => s.turns > 0);
     let su = el.querySelector('.u-status');
     if (active.length) {

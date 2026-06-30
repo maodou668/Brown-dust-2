@@ -13,19 +13,11 @@ const UI = {
   },
 
   // ---------- emoji → 像素图标 (全局文本节点替换, 不碰属性, em 尺寸随字号缩放如 emoji) ----------
+  // 注意: 具体游戏元素(装备/食谱/炼金/收集品/任务/技能/状态…)的图标已"按用途锚定"在各自数据定义里(用 I('xxx'))。
+  // 此处仅保留 emoji 本身即代表该物、且会内联出现在文本里的通用符号 —— 资源货币 + 属性/职业 chip 兜底。
   EMOJI2ICON: {
-    // 资源/货币
     '🪙':'coin','💎':'gem','🎟':'ticket','🎫':'ticket','🔑':'key','🔒':'lock','🎁':'gift',
-    // 属性/装备
-    '⚔':'atk','🛡':'def','❤':'hp','🗡':'dagger','🏹':'bow','🔨':'hammer','⛏':'pickaxe','💍':'ring','🔮':'mag','🎯':'crit',
-    // 消耗品/食物
-    '🍞':'bread','🍲':'stew','🍵':'tea','🍷':'wine','🍰':'cake','🍡':'dango','🍯':'honey','🍱':'bento','🥃':'liquor',
-    // 世界/敌人
-    '🌲':'tree','🪨':'rock','🏰':'castle','🗼':'tower','🏛':'temple','🌋':'volcano','👹':'ogre','👺':'goblin','💀':'skeleton','☠':'skeleton','🐺':'wolf','🐎':'horse',
-    // 功能/菜单
-    '🎬':'film','🗺':'map','💾':'save','🎵':'music','👗':'costume','📜':'scroll','🏆':'arena','🧭':'expd','📖':'codex','📘':'codex','🎖':'medal','🔍':'search','🔎':'search',
-    // 状态
-    '🔥':'burn','❄':'freeze','💫':'stun','☣':'poison',
+    '⚔':'atk','🛡':'def','❤':'hp','🔮':'mag','🏹':'bow',
   },
   _initIconSwap() {
     const keys = Object.keys(this.EMOJI2ICON).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
@@ -339,16 +331,16 @@ const UI = {
     ];
     // 各分类剧集
     const mainEps = [
-      { id: 'prologue', title: '序章 · 启程', src: '主线剧情 · 序章', tags: ['烬火', '相遇'], icon: '🌅' },
-      { id: 'stage1', title: '第一章 · 艾尔玛森林入口', src: '主线剧情 · 第一章', tags: ['哥布林', '褐尘'], icon: '🌲' },
-      { id: 'stage2', title: '第二章 · 森林深处', src: '主线剧情 · 第二章', tags: ['暗影狼', '深林'], icon: '🌑' },
-      { id: 'stage3', title: '第三章 · 废弃矿洞', src: '主线剧情 · 第三章', tags: ['巨魔', '矿洞'], icon: '⛏️' },
-      { id: 'stage4', title: '第四章 · 诅咒山脊', src: '主线剧情 · 第四章', tags: ['BOSS', '山脊'], icon: '🏔️' },
-      { id: 'stage5', title: '第五章 · 魔王城', src: '主线剧情 · 第五章', tags: ['魔王', '决战'], icon: '🏰' },
-      { id: 'epilogue', title: '第一部终章 · 魔王陨落', src: '主线剧情 · 终章', tags: ['终章', '真相'], icon: '👑' },
-      { id: 'stage6', title: '第二部 · 破碎边境', src: '主线剧情 · 第二部', tags: ['边境', '永夜'], icon: '🌫️' },
-      { id: 'stage7', title: '第二部 · 永夜回廊', src: '主线剧情 · 第二部', tags: ['回廊', '女皇'], icon: '🌙' },
-      { id: 'epilogue2', title: '第二部终章 · 曙光', src: '主线剧情 · 终章', tags: ['曙光', '希望'], icon: '🌄' },
+      { id: 'prologue', title: '序章 · 启程', src: '主线剧情 · 序章', tags: ['烬火', '相遇'], icon: I('story') },
+      { id: 'stage1', title: '第一章 · 艾尔玛森林入口', src: '主线剧情 · 第一章', tags: ['哥布林', '褐尘'], icon: I('tree') },
+      { id: 'stage2', title: '第二章 · 森林深处', src: '主线剧情 · 第二章', tags: ['暗影狼', '深林'], icon: I('tree') },
+      { id: 'stage3', title: '第三章 · 废弃矿洞', src: '主线剧情 · 第三章', tags: ['巨魔', '矿洞'], icon: I('pickaxe') },
+      { id: 'stage4', title: '第四章 · 诅咒山脊', src: '主线剧情 · 第四章', tags: ['BOSS', '山脊'], icon: I('rock') },
+      { id: 'stage5', title: '第五章 · 魔王城', src: '主线剧情 · 第五章', tags: ['魔王', '决战'], icon: I('castle') },
+      { id: 'epilogue', title: '第一部终章 · 魔王陨落', src: '主线剧情 · 终章', tags: ['终章', '真相'], icon: I('brokencrown') },
+      { id: 'stage6', title: '第二部 · 破碎边境', src: '主线剧情 · 第二部', tags: ['边境', '永夜'], icon: I('tower') },
+      { id: 'stage7', title: '第二部 · 永夜回廊', src: '主线剧情 · 第二部', tags: ['回廊', '女皇'], icon: I('temple') },
+      { id: 'epilogue2', title: '第二部终章 · 曙光', src: '主线剧情 · 终章', tags: ['曙光', '希望'], icon: I('story') },
     ];
     const sideSeen = new Set(); const charEps = [];
     Game.state.roster.forEach(o => {
