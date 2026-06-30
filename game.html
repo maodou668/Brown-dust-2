@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=166">
+  <link rel="manifest" href="manifest.webmanifest?v=167">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=166">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=166">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=167">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=167">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2280,24 +2280,27 @@ button.ac-circle:active { transform: scale(.92); }
 }
 /* ============================================================= */
 
-/* ===== 批3 · 进度条 (暗槽+金边+高光+分段刻度+类型染色) ===== */
-.bar, .combo-gauge, .gf-pity-bar, .pity-bar {
-  background: #15111c !important;
-  border: 1px solid rgba(255,200,130,.28);
-  box-shadow: inset 0 1px 2px rgba(0,0,0,.7);
+/* ===== 批3 · 进度条 (PixelLab 真条槽 bar_frame + 发光填充) ===== */
+/* 大槽: 连携/pity 用像素条框(九宫格, 保留宝石端帽), 去掉密集刻度 */
+.combo-gauge, .gf-pity-bar, .pity-bar {
+  height: 22px; border: 7px solid transparent; border-radius: 0;
+  border-image: url('art/05_pixellab/ui/bar_frame.png') 10 36 stretch;
+  background: #0c0912 !important; box-shadow: inset 0 1px 3px rgba(0,0,0,.9);
+  position: relative; overflow: hidden;
 }
-.combo-gauge, .gf-pity-bar, .pity-bar { position: relative; }
-.bar .fill { box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
-.bar .fill.hp { background: linear-gradient(180deg,#8effad,#39c25e 55%,#249a4c); }
-.bar .fill.sp { background: linear-gradient(180deg,#aee4ff,#4aa6e0); }
 .combo-gauge .combo-fill {
-  background: linear-gradient(180deg,#d4a8ff,#7a4be0) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 0 8px rgba(150,90,255,.6);
+  border-radius: 0; height: 100%;
+  background: linear-gradient(180deg,#e6bcff,#9a5bff 58%,#7233dd) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 0 8px rgba(165,105,255,.75);
 }
-.combo-gauge::after, .gf-pity-bar::after, .pity-bar::after {
-  content:''; position:absolute; inset:0; pointer-events:none; z-index:3;
-  background: repeating-linear-gradient(90deg, transparent 0 17px, rgba(0,0,0,.5) 17px 18px);
+/* 单位小血条: 深槽 + 光泽亮填充 (太小不套框) */
+.bar {
+  background:#0d0a13 !important; border:1px solid rgba(255,205,140,.4);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.85); height:6px; border-radius:2px;
 }
+.bar .fill { box-shadow: inset 0 1px 0 rgba(255,255,255,.6), inset 0 -2px 3px rgba(0,0,0,.35); }
+.bar .fill.hp { background: linear-gradient(180deg,#c2ffd4,#34d266 48%,#179a47) !important; }
+.bar .fill.sp { background: linear-gradient(180deg,#d2efff,#52b2ee 48%,#2b7ec2) !important; }
 /* ============================================================= */
 
 </style>
@@ -2307,7 +2310,7 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=166" alt="" onerror="this.outerHTML='🎖️'"></span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=167" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
@@ -2357,7 +2360,7 @@ button.ac-circle:active { transform: scale(.92); }
     </div>
   </div>
 
-  <script>window.ASSET_VER = '166';</script>
+  <script>window.ASSET_VER = '167';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
