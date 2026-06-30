@@ -2194,3 +2194,24 @@ button.ac-circle:active { transform: scale(.92); }
   padding: 10px 14px 14px;
 }
 /* ============================================================= */
+
+/* 顶部资源胶囊 + 系统图标按钮: 复用按钮九宫格(带 fill=炭色面) */
+.res {
+  border: 7px solid transparent;
+  border-image: url('../art/05_pixellab/ui/button.png') 30 fill stretch;
+  background: none; border-radius: 0; padding: 2px 9px;
+}
+.topbar-sys .ghost-btn {
+  border: 7px solid transparent;
+  border-image: url('../art/05_pixellab/ui/button.png') 30 fill stretch;
+  background: none; border-radius: 0;
+}
+/* ============================================================= */
+
+/* 玩家资料胶囊: 同款按钮九宫格 */
+.profile-chip {
+  border: 7px solid transparent;
+  border-image: url('../art/05_pixellab/ui/button.png') 30 fill stretch;
+  background: none; border-radius: 0;
+}
+/* ============================================================= */
