@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=158">
+  <link rel="manifest" href="manifest.webmanifest?v=159">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=158">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=158">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=159">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=159">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2201,6 +2201,16 @@ button.ac-circle:active { transform: scale(.92); }
 .lobby-btn:hover { border-color: transparent; }
 /* ============================================================= */
 
+/* 通用弹窗面板框: 所有 openModal 弹窗共用九宫格大面板 (带 fill = 炭色面板背景) */
+.modal {
+  border: 15px solid transparent;
+  border-image: url('art/05_pixellab/ui/panel.png') 38 fill stretch;
+  background: none;
+  border-radius: 0;
+  padding: 10px 14px 14px;
+}
+/* ============================================================= */
+
 </style>
 </head>
 <body>
@@ -2208,7 +2218,7 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=158" alt="" onerror="this.outerHTML='🎖️'"></span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=159" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
@@ -2258,7 +2268,7 @@ button.ac-circle:active { transform: scale(.92); }
     </div>
   </div>
 
-  <script>window.ASSET_VER = '158';</script>
+  <script>window.ASSET_VER = '159';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）

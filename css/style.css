@@ -2184,3 +2184,13 @@ button.ac-circle:active { transform: scale(.92); }
 }
 .lobby-btn:hover { border-color: transparent; }
 /* ============================================================= */
+
+/* 通用弹窗面板框: 所有 openModal 弹窗共用九宫格大面板 (带 fill = 炭色面板背景) */
+.modal {
+  border: 15px solid transparent;
+  border-image: url('../art/05_pixellab/ui/panel.png') 38 fill stretch;
+  background: none;
+  border-radius: 0;
+  padding: 10px 14px 14px;
+}
+/* ============================================================= */
