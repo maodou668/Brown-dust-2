@@ -56,15 +56,15 @@ const ELEMENTS = {
  * 设计张力：羁绊「元素共鸣」奖励同色叠加，元素反应奖励混色轮转 —— 玩家需在两条路线间取舍。
  */
 const REACTIONS = {
-  'fire+water':  { name: '蒸发', icon: '💥', bonus: 0.85 },                                   // 水↔火：最高爆发
-  'fire+wind':   { name: '助燃', icon: '🔥', bonus: 0.35, inflict: { type: 'burn', turns: 2, power: 0.14 } }, // 风助火势：强灼烧
-  'earth+fire':  { name: '熔岩', icon: '🌋', bonus: 0.45, breakGain: 32 },                    // 火烧地：大幅破防
-  'water+wind':  { name: '冰封', icon: '❄️', bonus: 0.20, inflict: { type: 'stun', turns: 1 } }, // 风裹水：冻结控制
-  'earth+water': { name: '泥泞', icon: '🟤', bonus: 0.30, debuffDef: { power: 0.25, turns: 2 } }, // 水浸地：碎防
-  'earth+wind':  { name: '沙暴', icon: '🌫️', bonus: 0.50, debuffDef: { power: 0.15, turns: 2 } }, // 风卷沙：磨防+爆发
-  'dark+light':  { name: '湮灭', icon: '🌟', bonus: 1.10 },                                    // 光暗相消：终极爆发
+  'fire+water':  { name: '蒸发', icon: I('stun'), bonus: 0.85 },                                   // 水↔火：最高爆发
+  'fire+wind':   { name: '助燃', icon: I('burn'), bonus: 0.35, inflict: { type: 'burn', turns: 2, power: 0.14 } }, // 风助火势：强灼烧
+  'earth+fire':  { name: '熔岩', icon: I('volcano'), bonus: 0.45, breakGain: 32 },                    // 火烧地：大幅破防
+  'water+wind':  { name: '冰封', icon: I('freeze'), bonus: 0.20, inflict: { type: 'stun', turns: 1 } }, // 风裹水：冻结控制
+  'earth+water': { name: '泥泞', icon: I('rock'), bonus: 0.30, debuffDef: { power: 0.25, turns: 2 } }, // 水浸地：碎防
+  'earth+wind':  { name: '沙暴', icon: I('gale'), bonus: 0.50, debuffDef: { power: 0.15, turns: 2 } }, // 风卷沙：磨防+爆发
+  'dark+light':  { name: '湮灭', icon: I('sk_smite'), bonus: 1.10 },                                    // 光暗相消：终极爆发
 };
-const REACTION_DEFAULT = { name: '元素紊乱', icon: '✦', bonus: 0.40 };  // 其余异色组合的保底反应
+const REACTION_DEFAULT = { name: '元素紊乱', icon: I('star_up'), bonus: 0.40 };  // 其余异色组合的保底反应
 
 /**
  * 角色图鉴

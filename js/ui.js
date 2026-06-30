@@ -351,14 +351,14 @@ const UI = {
       }
     });
     const comicEps = [
-      { id: 'ep_prologue', title: '序章 · 烬火启程', src: '漫画剧场 · 分镜演出', tags: ['指挥官', '佣兵团'], icon: '🎬', kind: 'comic' },
-      { id: 'ep_twist', title: '终章 · 魔王的真相', src: '漫画剧场 · 分镜演出', tags: ['巴尔', '揭秘'], icon: '🎬', kind: 'comic' },
-      { id: 'ep_nightfall', title: '永夜将明 · 女皇的摇篮曲', src: '漫画剧场 · 分镜演出', tags: ['涅夫提斯', '第二卷'], icon: '🎬', kind: 'comic' },
+      { id: 'ep_prologue', title: '序章 · 烬火启程', src: '漫画剧场 · 分镜演出', tags: ['指挥官', '佣兵团'], icon: I('film'), kind: 'comic' },
+      { id: 'ep_twist', title: '终章 · 魔王的真相', src: '漫画剧场 · 分镜演出', tags: ['巴尔', '揭秘'], icon: I('film'), kind: 'comic' },
+      { id: 'ep_nightfall', title: '永夜将明 · 女皇的摇篮曲', src: '漫画剧场 · 分镜演出', tags: ['涅夫提斯', '第二卷'], icon: I('film'), kind: 'comic' },
     ];
     const terms = [
       { id: 't_dust', title: '褐尘', src: '术语 · 世界观', tags: ['灾厄', '本源'], icon: '🌫️', kind: 'term', desc: '自天而降的褐色尘埃，侵蚀大地与生灵，是本作一切灾厄的根源。尘落之处，魔物滋生、人心异变。' },
       { id: 't_merc', title: '佣兵团', src: '术语 · 阵营', tags: ['指挥官', '雇佣'], icon: '⚔️', kind: 'term', desc: '由指挥官统领的雇佣兵团，受雇清剿魔物、守护商路，是乱世中少数还在抵抗褐尘的力量。' },
-      { id: 't_baal', title: '魔王巴尔', src: '术语 · 人物', tags: ['第一部', 'BOSS'], icon: '👹', kind: 'term', desc: '第一部的最终敌人，盘踞魔王城，操纵被褐尘污染的魔物。其临终揭示的秘密，掀开了第二部的序幕。' },
+      { id: 't_baal', title: '魔王巴尔', src: '术语 · 人物', tags: ['第一部', 'BOSS'], icon: I('ogre'), kind: 'term', desc: '第一部的最终敌人，盘踞魔王城，操纵被褐尘污染的魔物。其临终揭示的秘密，掀开了第二部的序幕。' },
       { id: 't_night', title: '永夜', desc: '魔王陨落后仍未散去的黑暗，笼罩破碎边境。第二部的核心谜团，与女皇的传说交织。', src: '术语 · 谜团', tags: ['第二部', '黑暗'], icon: '🌙', kind: 'term' },
     ];
     const eps = { main: mainEps, char: charEps, comic: comicEps, term: terms }[this.storyTab] || [];
@@ -2273,11 +2273,11 @@ const UI = {
       const mats = [
         { icon: '🪙', name: '金币', qty: s.gold, r: 3 },
         { icon: '💎', name: '宝石', qty: s.gem, r: 5 },
-        { icon: '🔮', name: '觉醒石', qty: s.awakenStone || 0, r: 4 },
-        { icon: '⭐', name: '闪耀之星', qty: s.spark || 0, r: 5 },
-        { icon: '✨', name: '希望之粉', qty: s.powder || 0, r: 4 },
-        { icon: '🎟️', name: '活动币', qty: (s.event && s.event.coin) || 0, r: 4 },
-        { icon: '⚡', name: '体力', qty: s.stamina, r: 3 },
+        { icon: I('awaken'), name: '觉醒石', qty: s.awakenStone || 0, r: 4 },
+        { icon: I('star_spark'), name: '闪耀之星', qty: s.spark || 0, r: 5 },
+        { icon: I('hope_powder'), name: '希望之粉', qty: s.powder || 0, r: 4 },
+        { icon: I('ticket'), name: '活动币', qty: (s.event && s.event.coin) || 0, r: 4 },
+        { icon: I('stamina_potion'), name: '体力', qty: s.stamina, r: 3 },
       ];
       count = mats.length; capLabel = '材料';
       cells = mats.map(m => `<div class="bag-cell clickable border-${this.rarityClass(m.r)} mat" data-mat="${m.name}" title="${m.name}">

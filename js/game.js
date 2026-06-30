@@ -1149,41 +1149,41 @@ const Game = {
   //  多货币 + 限购周期（日 / 周 / 月 / 永久）
   // ============================================================
   SHOP_HUB: [
-    { id: 'item', name: '道具', icon: '📦', cur: 'gem', merchant: '🧝‍♀️', cd: 0,
+    { id: 'item', name: '道具', icon: I('bag'), cur: 'gem', merchant: '🧝‍♀️', cd: 0,
       npc: '这里出售各种有用的道具，也只有我才有能力找到这些物品。',
       items: [
         { id: 'it_stam',   name: '体力补给',     icon: I('stamina_potion'), price: 50,  cur: 'gem', limit: 5, period: 'day',  give: { stam: 60 } },
         { id: 'it_gold',   name: '金币袋',       icon: I('coin'), price: 80,  cur: 'gem', limit: 5, period: 'day',  give: { gold: 50000 } },
         { id: 'it_stone',  name: '觉醒石礼盒',   icon: I('awaken'), price: 100, cur: 'gem', limit: 5, period: 'week', give: { stone: 5 } },
-        { id: 'it_powder', name: '希望之粉袋',   icon: '✨', price: 150, cur: 'gem', limit: 5, period: 'week', give: { powder: 50 } },
-        { id: 'it_spark',  name: '闪耀之星袋',   icon: '⭐', price: 200, cur: 'gem', limit: 3, period: 'week', give: { spark: 30 } },
+        { id: 'it_powder', name: '希望之粉袋',   icon: I('hope_powder'), price: 150, cur: 'gem', limit: 5, period: 'week', give: { powder: 50 } },
+        { id: 'it_spark',  name: '闪耀之星袋',   icon: I('star_spark'), price: 200, cur: 'gem', limit: 3, period: 'week', give: { spark: 30 } },
         { id: 'it_gearbox',name: '装备宝箱',     icon: I('equip_chest'), price: 120, cur: 'gem', limit: 3, period: 'week', give: { gearScale: 1.6 } },
-        { id: 'it_contract',name:'高级招募契约', icon: '📜', price: 10,  cur: 'gem', limit: 1, period: 'day',  give: { powder: 10 } },
+        { id: 'it_contract',name:'高级招募契约', icon: I('scroll'), price: 10,  cur: 'gem', limit: 1, period: 'day',  give: { powder: 10 } },
       ] },
     { id: 'gold', name: '金币商店', icon: '🪙', cur: 'gold', merchant: '👩‍🦱', daily: true, cd: 0,
       npc: '你想要装备？那你可算是找对地方啦！每日都有新货色。',
       items: [
         { id: 'gd_stam',   name: '体力补给',   icon: I('stamina_potion'), price: 8000,  cur: 'gold', limit: 3, period: 'day',  give: { stam: 30 } },
         { id: 'gd_powder', name: '希望之粉',   icon: '✨', price: 20000, cur: 'gold', limit: 3, period: 'week', give: { powder: 20 } },
-        { id: 'gd_stone',  name: '觉醒石',     icon: '🔮', price: 30000, cur: 'gold', limit: 3, period: 'week', give: { stone: 3 } },
+        { id: 'gd_stone',  name: '觉醒石',     icon: I('awaken'), price: 30000, cur: 'gold', limit: 3, period: 'week', give: { stone: 3 } },
       ] },
-    { id: 'points', name: '点数', icon: '🟡', cur: 'coin', merchant: '🧙‍♀️', cd: 8,
+    { id: 'points', name: '点数', icon: I('points_coin'), cur: 'coin', merchant: '🧙‍♀️', cd: 8,
       npc: '这里有看见您希望但还没钱购买的物品，别光顾着参观，赶快购买吧！',
       items: [
-        { id: 'pt_refine',  name: '精炼石',       icon: '💠', price: 50,  cur: 'coin', limit: 5, period: 'week',  give: { stone: 3 } },
-        { id: 'pt_star3',   name: '3★升星之星',   icon: '⭐', price: 35,  cur: 'coin', limit: 5, period: 'month', give: { spark: 3 } },
-        { id: 'pt_star4',   name: '4★升星之星',   icon: '🌟', price: 225, cur: 'coin', limit: 3, period: 'month', give: { spark: 5 } },
+        { id: 'pt_refine',  name: '精炼石',       icon: I('refine_crystal'), price: 50,  cur: 'coin', limit: 5, period: 'week',  give: { stone: 3 } },
+        { id: 'pt_star3',   name: '3★升星之星',   icon: I('star_up'), price: 35,  cur: 'coin', limit: 5, period: 'month', give: { spark: 3 } },
+        { id: 'pt_star4',   name: '4★升星之星',   icon: I('star_up'), price: 225, cur: 'coin', limit: 3, period: 'month', give: { spark: 5 } },
         { id: 'pt_goldbag', name: '金币袋',       icon: I('coin'), price: 90,  cur: 'coin', limit: 5, period: 'week',  give: { gold: 50000 } },
         { id: 'pt_powder',  name: '希望之粉',     icon: '✨', price: 200, cur: 'coin', limit: 2, period: 'month', give: { powder: 30 } },
-        { id: 'pt_water',   name: '精炼水晶',     icon: '🔷', price: 67,  cur: 'coin', limit: 3, period: 'week',  give: { stone: 4 } },
+        { id: 'pt_water',   name: '精炼水晶',     icon: I('refine_crystal'), price: 67,  cur: 'coin', limit: 3, period: 'week',  give: { stone: 4 } },
       ] },
-    { id: 'recharge', name: '充值商店', icon: '💎', cur: 'gem', merchant: '💁‍♀️', cd: 0,
+    { id: 'recharge', name: '充值商店', icon: I('gem'), cur: 'gem', merchant: '💁‍♀️', cd: 0,
       npc: '欢迎光临！看看今天的超值特惠礼包吧，机会难得哦。',
       items: [
         { id: 'rc_ap',     name: 'AP 恢复礼盒',  icon: I('stamina_potion'), price: 170, cur: 'gem', limit: 5, period: 'day',  give: { stam: 120 } },
         { id: 'rc_gold',   name: '巨额金币袋',   icon: I('coin'), price: 200, cur: 'gem', limit: 2, period: 'week', give: { gold: 200000 } },
-        { id: 'rc_stone',  name: '觉醒石礼包',   icon: '🔮', price: 280, cur: 'gem', limit: 2, period: 'week', give: { stone: 15 } },
-        { id: 'rc_ur',     name: '专属装备箱',   icon: '🗡️', price: 500, cur: 'gem', limit: 1, period: 'week', give: { gear: 'arm_ur' } },
+        { id: 'rc_stone',  name: '觉醒石礼包',   icon: I('awaken'), price: 280, cur: 'gem', limit: 2, period: 'week', give: { stone: 15 } },
+        { id: 'rc_ur',     name: '专属装备箱',   icon: I('equip_chest'), price: 500, cur: 'gem', limit: 1, period: 'week', give: { gear: 'arm_ur' } },
       ] },
   ],
   CUR_ICON: { gold: '🪙', gem: '💎', coin: '🎟️' },
@@ -1344,9 +1344,9 @@ const Game = {
   // ============================================================
   FARM: [
     { id: 'gold',  icon: '🪙', name: '金币矿洞', desc: '稳定产出大量金币',     stam: 10, unlock: 1, reward: { gold: 1500 } },
-    { id: 'exp',   icon: '📘', name: '修炼之地', desc: '出战队伍获得经验',     stam: 10, unlock: 2, reward: { exp: 800 } },
+    { id: 'exp',   icon: I('exp_book'), name: '修炼之地', desc: '出战队伍获得经验',     stam: 10, unlock: 2, reward: { exp: 800 } },
     { id: 'gear',  icon: '⚒️', name: '装备秘境', desc: '掉落装备 + 金币',      stam: 12, unlock: 4, reward: { gold: 500, gearScale: 6 } },
-    { id: 'mixed', icon: '💎', name: '试炼回廊', desc: '综合产出（金/经/装）', stam: 15, unlock: 6, reward: { gold: 800, exp: 500, gearScale: 8 } },
+    { id: 'mixed', icon: I('gem'), name: '试炼回廊', desc: '综合产出（金/经/装）', stam: 15, unlock: 6, reward: { gold: 800, exp: 500, gearScale: 8 } },
   ],
   farmUnlocked(d) { return this.state.cleared.length >= d.unlock; },
   runFarm(id, times) {
@@ -1376,10 +1376,10 @@ const Game = {
   //  远征派遣（dispatch）—— 离线挂机，按真实时间结算
   // ============================================================
   DISPATCH_TIERS: [
-    { id: 't1', name: '近郊巡逻', hours: 0.5, icon: '🥾', reward: { gold: 600, exp: 200 } },
-    { id: 't2', name: '商路护卫', hours: 2,   icon: '🛡️', reward: { gold: 2000, exp: 700 } },
-    { id: 't3', name: '远方探索', hours: 4,   icon: '🧭', reward: { gold: 4200, exp: 1500, gem: 30 } },
-    { id: 't4', name: '秘境远征', hours: 8,   icon: '🗺️', reward: { gold: 9000, exp: 3200, gem: 80, stone: 3, gearScale: 6 } },
+    { id: 't1', name: '近郊巡逻', hours: 0.5, icon: I('boots'), reward: { gold: 600, exp: 200 } },
+    { id: 't2', name: '商路护卫', hours: 2,   icon: I('def'), reward: { gold: 2000, exp: 700 } },
+    { id: 't3', name: '远方探索', hours: 4,   icon: I('expd'), reward: { gold: 4200, exp: 1500, gem: 30 } },
+    { id: 't4', name: '秘境远征', hours: 8,   icon: I('map'), reward: { gold: 9000, exp: 3200, gem: 80, stone: 3, gearScale: 6 } },
   ],
   DISPATCH_SLOTS: 3,
   dispatchSlotUnlocked(i) { return i === 0 || this.state.cleared.length >= i * 2; }, // 第2/3槽位需通关进度
@@ -1438,9 +1438,9 @@ const Game = {
   // ============================================================
   ARENA_MAX_ATTEMPTS: 5,
   ARENA_RANKS: [
-    { min: 0, name: '青铜', icon: '🥉' }, { min: 1100, name: '白银', icon: '🥈' },
-    { min: 1350, name: '黄金', icon: '🥇' }, { min: 1650, name: '铂金', icon: '💠' },
-    { min: 2000, name: '钻石', icon: '💎' }, { min: 2500, name: '大师', icon: '👑' },
+    { min: 0, name: '青铜', icon: I('medal_bronze') }, { min: 1100, name: '白银', icon: I('medal_silver') },
+    { min: 1350, name: '黄金', icon: I('medal_gold') }, { min: 1650, name: '铂金', icon: I('medal_silver') },
+    { min: 2000, name: '钻石', icon: I('gem') }, { min: 2500, name: '大师', icon: I('crown') },
   ],
   arenaRank(pts) {
     let r = this.ARENA_RANKS[0];
@@ -1578,18 +1578,18 @@ const Game = {
     name: '限时活动 · 褐尘的回响',
     desc: '讨伐受褐尘侵蚀的魔物，赚取活动币，在活动商店兑换稀有资源。',
     stages: [
-      { id: 'ev1', name: '回响 · 初级', icon: '🌫️', daily: 6, coin: 20, gold: 500, exp: 250,
+      { id: 'ev1', name: '回响 · 初级', icon: I('event'), daily: 6, coin: 20, gold: 500, exp: 250,
         enemies: [{ id: 'goblin', level: 8, pos: 'front' }, { id: 'wolf', level: 8, pos: 'front' }, { id: 'goblin_archer', level: 8, pos: 'back' }] },
-      { id: 'ev2', name: '回响 · 中级', icon: '🌪️', daily: 6, coin: 36, gold: 1000, exp: 480,
+      { id: 'ev2', name: '回响 · 中级', icon: I('gale'), daily: 6, coin: 36, gold: 1000, exp: 480,
         enemies: [{ id: 'ogre', level: 12, pos: 'front' }, { id: 'wolf', level: 12, pos: 'front' }, { id: 'dark_mage', level: 12, pos: 'back' }, { id: 'dark_mage', level: 12, pos: 'back' }] },
-      { id: 'ev3', name: '回响 · 精英 BOSS', icon: '👹', daily: 3, coin: 70, gold: 2000, exp: 1000,
+      { id: 'ev3', name: '回响 · 精英 BOSS', icon: I('ogre'), daily: 3, coin: 70, gold: 2000, exp: 1000,
         enemies: [{ id: 'troll_king', level: 16, pos: 'front' }, { id: 'ogre', level: 15, pos: 'front' }, { id: 'dark_mage', level: 15, pos: 'back' }] },
     ],
     shop: [
-      { id: 's_gem', icon: '💎', name: '宝石 ×300', cost: 120, stock: 3, give: { gem: 300 } },
-      { id: 's_stone', icon: '🔮', name: '觉醒石 ×5', cost: 100, stock: 6, give: { stone: 5 } },
+      { id: 's_gem', icon: I('gem'), name: '宝石 ×300', cost: 120, stock: 3, give: { gem: 300 } },
+      { id: 's_stone', icon: I('awaken'), name: '觉醒石 ×5', cost: 100, stock: 6, give: { stone: 5 } },
       { id: 's_powder', icon: '✨', name: '希望之粉 ×100', cost: 80, stock: 5, give: { powder: 100 } },
-      { id: 's_gear', icon: '⚒️', name: 'UR 装备宝箱', cost: 150, stock: 2, give: { gearRarity: 5 } },
+      { id: 's_gear', icon: I('hammer'), name: 'UR 装备宝箱', cost: 150, stock: 2, give: { gearRarity: 5 } },
       { id: 's_gold', icon: '🪙', name: '金币 ×5000', cost: 40, stock: 8, give: { gold: 5000 } },
     ],
   },
@@ -1649,10 +1649,10 @@ const Game = {
     { id: 'season_battle', tab: '赛季活动 · 回响', cd: 8, type: 'battle', title: '限时回响', sub: '赛季活动', art: '🌫️', color: '#7a5cff' },
     { id: 'anniv_draw', tab: '幸运抽抽乐', cd: 8, type: 'draw', title: '幸运抽抽乐', sub: '3 周年纪念！', art: '🎡', color: '#d9434f',
       prizes: [
-        { id: 'p1', name: '专属武器箱', icon: '🗡️', count: 1, reward: { gear: 'arm_ur' } },
+        { id: 'p1', name: '专属武器箱', icon: I('equip_chest'), count: 1, reward: { gear: 'arm_ur' } },
         { id: 'p2', name: '宝石礼包', icon: '💎', count: 1, reward: { gem: 300 } },
         { id: 'p3', name: '觉醒石', icon: '🔮', count: 2, reward: { stone: 10 } },
-        { id: 'p4', name: '金币袋', icon: '🪙', count: 5, reward: { gold: 20000 } },
+        { id: 'p4', name: '金币袋', icon: I('coin'), count: 5, reward: { gold: 20000 } },
         { id: 'p5', name: '希望之粉', icon: '✨', count: 11, reward: { powder: 30 } },
       ] },
     { id: 'login_1p1', tab: '登录活动 1+1', cd: 36, type: 'login', title: '登录活动 I', sub: '3 周年成长支援', art: '🎁', color: '#ff6b9d',
@@ -1896,7 +1896,7 @@ const Game = {
     const D = window.GameData;
     // 剧情游戏卡：按主线章节
     const storyCards = window.World.CHAPTERS.map((ch, i) => ({
-      id: ch.id, name: ch.name, icon: { forest: '🌲', cave: '⛏️', castle: '🏰' }[ch.theme] || '🗺️',
+      id: ch.id, name: ch.name, icon: { forest: I('tree'), cave: I('pickaxe'), castle: I('castle') }[ch.theme] || '🗺️',
       owned: window.World.isChapterUnlocked(i), done: window.World.isChapterDone(ch),
       go: 'stages', vol: i + 1,
     }));
@@ -1909,11 +1909,11 @@ const Game = {
     const charTotal = Object.values(D.CHARACTERS).filter(c => c.side).length;
     // 玩法游戏卡：5 种核心玩法
     const playCards = [
-      { id: 'pvp', name: 'PvP · 竞技场', icon: '🏆', owned: true, go: 'arena', tag: 'PvP' },
-      { id: 'challenge', name: '挑战 · 试炼之塔', icon: '🗼', owned: true, go: 'stages', tag: '挑战' },
-      { id: 'growth', name: '成长 · 资源副本', icon: '⚡', owned: true, go: 'dungeon', tag: '成长' },
-      { id: 'mayhem', name: '混战 · 无尽波次', icon: '🌀', owned: true, go: 'mayhem', tag: '混战' },
-      { id: 'restaurant', name: '经营 · 格鲁菲餐厅', icon: '🍴', owned: true, go: 'restaurant', tag: '经营' },
+      { id: 'pvp', name: 'PvP · 竞技场', icon: I('arena'), owned: true, go: 'arena', tag: 'PvP' },
+      { id: 'challenge', name: '挑战 · 试炼之塔', icon: I('tower'), owned: true, go: 'stages', tag: '挑战' },
+      { id: 'growth', name: '成长 · 资源副本', icon: I('dungeon'), owned: true, go: 'dungeon', tag: '成长' },
+      { id: 'mayhem', name: '混战 · 无尽波次', icon: I('gale'), owned: true, go: 'mayhem', tag: '混战' },
+      { id: 'restaurant', name: '经营 · 格鲁菲餐厅', icon: I('bento'), owned: true, go: 'restaurant', tag: '经营' },
     ];
     // 活动游戏卡：活动中心
     const evCards = this.EVENT_HUB.map(ev => ({ id: ev.id, name: ev.title, icon: ev.art, owned: true, go: 'event', evSel: ev.id, vol: ev.cd }));
@@ -1928,24 +1928,24 @@ const Game = {
   // ---------- 成就系统 ----------
   // metric(s) 返回当前进度值；达到 target 即可领取 reward（一次性）
   ACHIEVEMENTS: [
-    { id: 'collect3',  icon: '👥', name: '初入佣兵团',   desc: '收集 3 名角色',          target: 3,  reward: { gem: 100 }, metric: s => s.roster.length },
-    { id: 'collect6',  icon: '👥', name: '佣兵团扩编',   desc: '收集 6 名角色',          target: 6,  reward: { gem: 200 }, metric: s => s.roster.length },
-    { id: 'collect10', icon: '🎖️', name: '群英荟萃',     desc: '收集 10 名角色',         target: 10, reward: { gem: 300 }, metric: s => s.roster.length },
-    { id: 'collect16', icon: '👑', name: '全员集结',     desc: '收集全部 16 名角色',     target: 16, reward: { gem: 600 }, metric: s => s.roster.length },
-    { id: 'cos5',      icon: '👗', name: '时装收藏家',   desc: '累计拥有 5 套服装',      target: 5,  reward: { gem: 150 }, metric: s => s.roster.reduce((n, o) => n + (o.costumes ? o.costumes.length : 0), 0) },
-    { id: 'cos12',     icon: '🧥', name: '衣橱满载',     desc: '累计拥有 12 套服装',     target: 12, reward: { gem: 300 }, metric: s => s.roster.reduce((n, o) => n + (o.costumes ? o.costumes.length : 0), 0) },
-    { id: 'ex3',       icon: '🗡️', name: '神兵入库',     desc: '拥有 3 件专属武器',      target: 3,  reward: { gem: 200 }, metric: s => s.inventory.filter(g => { const t = Game.getGearTpl(g.tpl); return t && t.type === 'ex'; }).length },
-    { id: 'ex8',       icon: '⚔️', name: '军械库',       desc: '拥有 8 件专属武器',      target: 8,  reward: { gem: 400 }, metric: s => s.inventory.filter(g => { const t = Game.getGearTpl(g.tpl); return t && t.type === 'ex'; }).length },
-    { id: 'win10',     icon: '🔰', name: '初战告捷',     desc: '累计胜利 10 场',         target: 10, reward: { gold: 500 }, metric: s => s.stats.wins },
-    { id: 'win50',     icon: '🏅', name: '百战之师',     desc: '累计胜利 50 场',         target: 50, reward: { gem: 200 }, metric: s => s.stats.wins },
-    { id: 'win150',    icon: '🏆', name: '征服者',       desc: '累计胜利 150 场',        target: 150, reward: { gem: 400 }, metric: s => s.stats.wins },
-    { id: 'story5',    icon: '🗺️', name: '主线推进',     desc: '通关 5 个主线关卡',      target: 5,  reward: { gem: 150 }, metric: s => s.cleared.filter(id => typeof id === 'number' && id < 100).length },
-    { id: 'story7',    icon: '🌟', name: '魔王讨伐',     desc: '通关全部主线关卡',       target: 7,  reward: { gem: 300 }, metric: s => s.cleared.filter(id => typeof id === 'number' && id < 100).length },
-    { id: 'trial3',    icon: '🗼', name: '登塔者',       desc: '试炼之塔通关 3 层',      target: 3,  reward: { gem: 200 }, metric: s => s.trialMax || 0 },
-    { id: 'trial6',    icon: '🌌', name: '通天塔',       desc: '试炼之塔登顶',           target: 6,  reward: { gem: 500 }, metric: s => s.trialMax || 0 },
-    { id: 'pull10',    icon: '🎴', name: '招募新手',     desc: '累计招募 10 次',         target: 10, reward: { gem: 100 }, metric: s => s.stats.pulls },
-    { id: 'pull50',    icon: '🎰', name: '招募狂热',     desc: '累计招募 50 次',         target: 50, reward: { gem: 200 }, metric: s => s.stats.pulls },
-    { id: 'plus5',     icon: '⭐', name: '极限突破',     desc: '任一角色突破至 +5',      target: 5,  reward: { gem: 200 }, metric: s => s.roster.reduce((m, o) => Math.max(m, o.plus || 0), 0) },
+    { id: 'collect3',  icon: I('merc'), name: '初入佣兵团',   desc: '收集 3 名角色',          target: 3,  reward: { gem: 100 }, metric: s => s.roster.length },
+    { id: 'collect6',  icon: I('merc'), name: '佣兵团扩编',   desc: '收集 6 名角色',          target: 6,  reward: { gem: 200 }, metric: s => s.roster.length },
+    { id: 'collect10', icon: I('medal_gold'), name: '群英荟萃',     desc: '收集 10 名角色',         target: 10, reward: { gem: 300 }, metric: s => s.roster.length },
+    { id: 'collect16', icon: I('crown'), name: '全员集结',     desc: '收集全部 16 名角色',     target: 16, reward: { gem: 600 }, metric: s => s.roster.length },
+    { id: 'cos5',      icon: I('costume'), name: '时装收藏家',   desc: '累计拥有 5 套服装',      target: 5,  reward: { gem: 150 }, metric: s => s.roster.reduce((n, o) => n + (o.costumes ? o.costumes.length : 0), 0) },
+    { id: 'cos12',     icon: I('costume'), name: '衣橱满载',     desc: '累计拥有 12 套服装',     target: 12, reward: { gem: 300 }, metric: s => s.roster.reduce((n, o) => n + (o.costumes ? o.costumes.length : 0), 0) },
+    { id: 'ex3',       icon: I('sword'), name: '神兵入库',     desc: '拥有 3 件专属武器',      target: 3,  reward: { gem: 200 }, metric: s => s.inventory.filter(g => { const t = Game.getGearTpl(g.tpl); return t && t.type === 'ex'; }).length },
+    { id: 'ex8',       icon: I('sword'), name: '军械库',       desc: '拥有 8 件专属武器',      target: 8,  reward: { gem: 400 }, metric: s => s.inventory.filter(g => { const t = Game.getGearTpl(g.tpl); return t && t.type === 'ex'; }).length },
+    { id: 'win10',     icon: I('atk'), name: '初战告捷',     desc: '累计胜利 10 场',         target: 10, reward: { gold: 500 }, metric: s => s.stats.wins },
+    { id: 'win50',     icon: I('medal_bronze'), name: '百战之师',     desc: '累计胜利 50 场',         target: 50, reward: { gem: 200 }, metric: s => s.stats.wins },
+    { id: 'win150',    icon: I('arena'), name: '征服者',       desc: '累计胜利 150 场',        target: 150, reward: { gem: 400 }, metric: s => s.stats.wins },
+    { id: 'story5',    icon: I('map'), name: '主线推进',     desc: '通关 5 个主线关卡',      target: 5,  reward: { gem: 150 }, metric: s => s.cleared.filter(id => typeof id === 'number' && id < 100).length },
+    { id: 'story7',    icon: I('star_spark'), name: '魔王讨伐',     desc: '通关全部主线关卡',       target: 7,  reward: { gem: 300 }, metric: s => s.cleared.filter(id => typeof id === 'number' && id < 100).length },
+    { id: 'trial3',    icon: I('tower'), name: '登塔者',       desc: '试炼之塔通关 3 层',      target: 3,  reward: { gem: 200 }, metric: s => s.trialMax || 0 },
+    { id: 'trial6',    icon: I('tower'), name: '通天塔',       desc: '试炼之塔登顶',           target: 6,  reward: { gem: 500 }, metric: s => s.trialMax || 0 },
+    { id: 'pull10',    icon: I('summon'), name: '招募新手',     desc: '累计招募 10 次',         target: 10, reward: { gem: 100 }, metric: s => s.stats.pulls },
+    { id: 'pull50',    icon: I('summon'), name: '招募狂热',     desc: '累计招募 50 次',         target: 50, reward: { gem: 200 }, metric: s => s.stats.pulls },
+    { id: 'plus5',     icon: I('star_up'), name: '极限突破',     desc: '任一角色突破至 +5',      target: 5,  reward: { gem: 200 }, metric: s => s.roster.reduce((m, o) => Math.max(m, o.plus || 0), 0) },
   ],
 
   achValue(a) { return a.metric(this.state); },
