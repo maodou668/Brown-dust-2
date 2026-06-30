@@ -2,7 +2,7 @@
 
 > 这是一个 **Brown Dust 2 风格的横版抽卡 RPG**，纯原生 HTML/CSS/JS，部署到 GitHub Pages。
 > 本文件让任何一次会话（即使零上下文）都能立刻按既定方法论工作，**不必从头摸索**。
-> 配套深入文档：`BALANCE.md`(数值契约) · `ART_PIPELINE.md`(本作美术分工/实例细节) · `GENERIC_ART_PIPELINE.md`(**全美术资产通用流水线**：角色/怪物/地图/UI/特效/立绘，跨游戏可复用) · `art/05_pixellab/fx/README.md`(VFX 流程)。
+> 配套深入文档：`dev/BALANCE.md`(数值契约) · `dev/ART_PIPELINE.md`(本作美术分工/实例细节) · `dev/GENERIC_ART_PIPELINE.md`(**全美术资产通用流水线**：角色/怪物/地图/UI/特效/立绘，跨游戏可复用) · `art/05_pixellab/fx/README.md`(VFX 流程)。
 
 ## 0. 铁律（先记住这几条）
 - **分支**：只在 `claude/brown-dust-2-dev-ma6cog` 开发与推送；不开 PR（除非明确要求）。
@@ -17,7 +17,7 @@
 - 本地预览：`python3 -m http.server PORT` 后开 `game.html`（横屏视口，竖屏会显示"请横屏"）。
 - 部署：`.github/workflows/pages.yml` —— `validate` job（数值校验+回归）通过后才 `deploy`。**不过不上线**。
 
-## 2. 数值平衡（公式驱动，禁手填）—— 详见 BALANCE.md
+## 2. 数值平衡（公式驱动，禁手填）—— 详见 dev/BALANCE.md
 - **技能**：`js/balance.js` 的 `Balance.make(spec)` 反解威力，平衡分须 `|score-1|≤0.18`。
 - **属性**：`js/budget.js` 双轴预算（O 进攻 / S 生存），按 职业×稀有度 归一，`O/Oref+S/Sref≈2.0`。新角色用 `Budget.makeCharStats(rarity,cls,shape)` 生成。
 - **装备/敌人**：装备分上限 / 敌人 O,S 理智带。
@@ -31,16 +31,16 @@
 - **PixelLab 出图流程**（已验证，照走）：`create_1_direction_object`(size64,16候选) → 挑 → `animate_object`(v3,12帧) → 下载切帧 → 写 manifest（脚本统计亮度峰值定 impactFrame）→ 挂 SKILL_VFX → 截图验收。
 - ⚠️ **画风教训**：提示词**别写** `black outline`/`low detailed`（出粗黑块状，和本作精细柔和立绘对不上）；写 `soft smooth shading, fine detailed pixels, no black outline, anime fantasy spell effect`。
 
-## 4. 美术分工 —— 详见 ART_PIPELINE.md
+## 4. 美术分工 —— 详见 dev/ART_PIPELINE.md
 - **用户只给**：动态立绘(视频)。**其余美术我全包**(PixelLab)。
 - **我出(PixelLab全自动)**：每角色 field 序列帧(8向 idle/run + north 2施法,施法自带VFX) → gnorm归一 → 接入；头像/半身裁切；怪物/BOSS/场景/图标。
-- ⚠️ **成功路径(已由 Lecliss 一次过验证，做任何角色前读 ART_PIPELINE.md)**：
+- ⚠️ **成功路径(已由 Lecliss 一次过验证，做任何角色前读 dev/ART_PIPELINE.md)**：
   ① 一致性=**锁法A**：Lecliss 作锚，其余 `create_character_state` 从她派生(继承头身比/画风)。
   ② 母图 `v3 / size64 / selective outline / soft shading no black outline / 手不持武器`；**不加**正面对称后缀。
-  ②.5 🚦 **母图姿势闸门(铁律)**：出 8 向母图后**先逐角度严格目视检测姿势标准再做动画**——east/west 必须正侧面(只露一条腿一条胳膊侧脸,露第二条腿=带角度不合格),不合格就锁法A换 seed 重派生;**绝不在坏母图上做动画**(加西亚返工三次的教训)。详见 ART_PIPELINE.md §5.5 #6。
+  ②.5 🚦 **母图姿势闸门(铁律)**：出 8 向母图后**先逐角度严格目视检测姿势标准再做动画**——east/west 必须正侧面(只露一条腿一条胳膊侧脸,露第二条腿=带角度不合格),不合格就锁法A换 seed 重派生;**绝不在坏母图上做动画**(加西亚返工三次的教训)。详见 dev/ART_PIPELINE.md §5.5 #6。
   ③ idle 用 **north-west 源**(gnorm IMIR 镜像出 NE，防抖腿)；**走路先建 mid-stride walk-state 再做 walking_cycle**(迈步更自然，用户定法)；东西方向另出 `walk_side` 纯侧面经 `rewalk_generic` 覆盖(防 3/4)；施法描述**直接写技能内容**(自带火焰/奥术 VFX)。⚠️ **walk-state 偶发把斜角朝向画反**(Teried 东接西/SE接SW)，所以**组装后必过"走路朝向闸门"**(见 ④.5)——发现接反就重生成 walk-state 或镜像该向修正，别直接上线。
   ④ 自测闸门 `fd8.js` 脚漂移全向 ≲1.5px 才过；**但 fd8 过≠不抽腿**——背向斜角两腿对称交换时质心不动、fd8 照样过却肉眼乱动(Rou 踩坑)，**必须额外目视 NW+NE idle 横条**确认脚钉地。背向斜角源**别固定 NW**：NW/NE 两个源都生成、取脚稳那个作源镜像另一向。**v3 最多 re-roll 1-2 次还抽腿就上 `scripts/synthnwne.js` 合成呼吸兜底**(脚钉死 0.0px、只上半身起伏)，别无限 re-roll(Rou 定论)。**一个一个做、不批量**，每个自测+用户验收后再下一个。
-  ⑤ 接入后必跑 `scripts/uniformsize.js`（按身体高全员归一到统一尺寸+高画布，防带光环角色偏小）；渲染画整幅脚对齐地线（不裁头顶/光环）。**问题→办法清单见 ART_PIPELINE.md §5.5 质量保障 Playbook，做每个角色都主动套用**。
+  ⑤ 接入后必跑 `scripts/uniformsize.js`（按身体高全员归一到统一尺寸+高画布，防带光环角色偏小）；渲染画整幅脚对齐地线（不裁头顶/光环）。**问题→办法清单见 dev/ART_PIPELINE.md §5.5 质量保障 Playbook，做每个角色都主动套用**。
 
 ## 5. 自测手法（沿用）
 - 无头浏览器：Playwright（`/opt/pw-browsers/.../chrome`，从 `/opt/node22/.../playwright-core` require），**横屏视口**(960×520)，开局先点几次"跳过"过剧情再截图。
@@ -51,6 +51,6 @@
 - 剧情文案 / 漫画 / 角色剧情 **润色**（目前偏生硬，框架大体不变，与用户一起打磨）。
 
 ---
-**复用到新项目**：把本文件 + `BALANCE.md` + `ART_PIPELINE.md` + `fx/README.md` + 引擎件
+**复用到新项目**：把本文件 + `dev/BALANCE.md` + `dev/ART_PIPELINE.md` + `fx/README.md` + 引擎件
 (`js/balance.js`, `js/budget.js`, main.js 的 VFX 框架, `scripts/build.js` + 自测脚本) 作为模板克隆过去，
 方法论、闸门、测试、文档即刻就位，无需重新摸索。
