@@ -2354,23 +2354,22 @@ button.ac-circle:active { transform: scale(.92); }
 .r2-splash.border-r3, .r2-splash.border-r4, .r2-splash.border-r5 {
   border-style: solid !important; border-width: 22px !important; border-color: transparent !important;
   border-image-slice: 50; border-image-repeat: stretch;
-  border-radius: 0 !important; box-shadow: none !important; background-clip: padding-box;
+  border-radius: 0 !important; box-shadow: none !important;
   image-rendering: pixelated;
-  /* 暗底压住角色色, 避免立绘 contain 留白处透出红条; 立绘自带深色背景, 无缝融合 */
-  background: #0a0711 !important;
-  /* 暗底压住角色色, 避免立绘 contain 留白处透出红条; 立绘自带深色背景, 无缝融合 */
-  background: #0a0711 !important;
+  /* 暗底压住角色色(避免立绘 contain 留白透红条); padding-box 防暗底漏到框外角 */
+  background: #0a0711 padding-box !important;
 }
 .r2-card.border-r5, .roster-card.border-r5, .r2-splash.border-r5 { border-image-source: url('../art/05_pixellab/ui/frame_ssr.png'); }
 .r2-card.border-r4, .roster-card.border-r4, .r2-splash.border-r4 { border-image-source: url('../art/05_pixellab/ui/frame_sr.png'); }
 .r2-card.border-r3, .roster-card.border-r3, .r2-splash.border-r3 { border-image-source: url('../art/05_pixellab/ui/frame_r.png'); }
-/* 卡底: 稀有度色中心微辉 (平滑无条纹) */
+/* 卡底: 稀有度色中心微辉 (平滑无条纹). background-clip 必须 padding-box —— */
+/* 否则 background 简写会把 clip 复位成 border-box, 暗底从像素框圆角宝石的缝隙漏到框外角 */
 .r2-card.border-r5, .roster-card.border-r5 {
-  background: radial-gradient(circle at 50% 30%, rgba(255,184,74,.16), var(--panel)) !important; }
+  background: radial-gradient(circle at 50% 30%, rgba(255,184,74,.16), var(--panel)) padding-box !important; }
 .r2-card.border-r4, .roster-card.border-r4 {
-  background: radial-gradient(circle at 50% 30%, rgba(176,107,255,.16), var(--panel)) !important; }
+  background: radial-gradient(circle at 50% 30%, rgba(176,107,255,.16), var(--panel)) padding-box !important; }
 .r2-card.border-r3, .roster-card.border-r3 {
-  background: radial-gradient(circle at 50% 30%, rgba(108,159,255,.16), var(--panel)) !important; }
+  background: radial-gradient(circle at 50% 30%, rgba(108,159,255,.16), var(--panel)) padding-box !important; }
 /* ============================================================= */
 
 /* ===== 套装: 玩家头像圆框 ===== */
