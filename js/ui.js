@@ -106,7 +106,7 @@ const UI = {
     // emoji → PixelLab 像素图标映射（按 go/act 键）；无映射回退 emoji
     const UI_ICON = { tasks:'quest', codex:'codex', forge:'forge', ach:'medal', story:'story',
       gacha:'summon', roster:'merc', team:'team', inventory:'bag', welfare:'gift', shop:'shop',
-      arena:'arena', dispatch:'expd' };
+      arena:'arena', dispatch:'expd', dungeon:'dungeon', event:'event' };
     const icoHtml = a => { const k = UI_ICON[a.go || a.act];
       return k ? `<img class="px-ico" src="art/05_pixellab/ui/icons/${k}.png" alt="">` : a.icon; };
     const clusterBtn = a => `<button class="ll-tile" ${a.go ? `data-go="${a.go}"` : `data-act="${a.act}"`}>
