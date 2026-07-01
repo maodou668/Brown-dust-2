@@ -298,10 +298,15 @@ const BattleUI = {
   triggerCast(uid, skillId) {
     const c = Battle.combatants.find(x => x.uid === uid);
     if (!c || !this.FIELD_SPRITE[c.charId]) return;
-    // 按技能选施法动画：大招(SP≥3)→cast_class(第二施法动作)，节奏技(SP2)→cast。缺则回退到存在的那个。
+    // 按技能选施法动画：优先用「该技能所属服装元素」的专属施法动作(cast_<元素>，如霜华水系=cast_water)；
+    // 没有该元素专属施法动作时，回退：大招(SP≥3)→cast_class，节奏技(SP2)→cast。
     const sp = this.sprites[c.charId];
     const skDef = window.GameData.SKILLS[skillId];
-    let anim = (skDef && (skDef.sp || 0) >= 3) ? 'cast_class' : 'cast';
+    const cos = Object.values(window.GameData.COSTUMES || {}).find(co => co.charId === c.charId && (co.skills || []).includes(skillId));
+    const byEl = cos ? 'cast_' + cos.element : null;
+    let anim;
+    if (byEl && sp && sp.man && sp.man.anims && sp.man.anims[byEl]) anim = byEl;
+    else anim = (skDef && (skDef.sp || 0) >= 3) ? 'cast_class' : 'cast';
     if (sp && sp.man && !(sp.man.anims && sp.man.anims[anim])) anim = (sp.man.anims && sp.man.anims.cast) ? 'cast' : 'cast_class';
     this.spriteState[uid] = { anim, start: performance.now() };
   },
