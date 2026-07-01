@@ -109,33 +109,7 @@ Object.entries(SIG_SPECS).forEach(([id, spec]) => {
   SK[id] = sk;
 });
 
-// ============================================================
-//  职业通用技（每个职业一个 sp2「节奏技」）——让每个单位都有
-//  「普攻蓄能 / 便宜节奏技 / 昂贵专属大招」三档真实抉择，而非只有 2 个按钮。
-//  威力同样由 Balance 模型求解，落在统一曲线上，不会数值崩盘。
-// ============================================================
-const CLASS_SKILL_SPECS = {
-  warrior:  { id: 'cls_cleave',  name: '横扫',     target: 'enemyRow',    effect: 'damage', sp: 2, icon: I('sk_slash'), knockback: true, d: p => `横扫敌方一排，造成 ${pct(p)}% 攻击力的伤害并击退。` },
-  archer:   { id: 'cls_aimshot', name: '瞄准射击', target: 'enemySingle', effect: 'damage', sp: 2, icon: I('sk_pierce'), pierce: true,    d: p => `瞄准要害射击单体，造成 ${pct(p)}% 攻击力的伤害（无视前排）。` },
-  mage:     { id: 'cls_arcane',  name: '奥术弹',   target: 'enemySingle', effect: 'damage', sp: 2, icon: I('sk_fireball'), pierce: true,    d: p => `凝聚奥术弹贯穿目标，造成 ${pct(p)}% 攻击力的伤害（无视前排）。` },
-  defender: { id: 'cls_guard',   name: '守护姿态', target: 'allyAll',     effect: 'shield', sp: 2, icon: I('sk_rockguard'),                  d: p => `进入守护姿态，为全体张开 ${pct(p)}% 攻击力的护盾。` },
-  healer:   { id: 'cls_mend',    name: '治愈术',   target: 'allySingle',  effect: 'heal',   sp: 2, icon: I('heal'),                  d: p => `集中治愈单个友方，恢复 ${pct(p)}% 攻击力的生命。` },
-};
-const CLASS_SKILL_OF = {};
-Object.entries(CLASS_SKILL_SPECS).forEach(([cls, spec]) => {
-  const { id, d, ...rest } = spec;
-  const sk = B.make(rest);
-  sk.desc = d(sk.power);
-  sk.classSkill = true;
-  SK[id] = sk;
-  CLASS_SKILL_OF[cls] = id;
-});
-window.GameData.CLASS_SKILL_OF = CLASS_SKILL_OF;
-
-// 个别角色用专属元素技替代通用职业技（更贴人设）。机制保持「便宜节奏技」定位。
-// 碧水法师 Diana：用「水矛」(单体穿透+降防) 替代通用「奥术弹」。
-const CLASS_SKILL_OVERRIDE = { diana: 'water_lance' };
-window.GameData.CLASS_SKILL_OVERRIDE = CLASS_SKILL_OVERRIDE;
+// 职业通用技已废弃（用户确认不再使用）：每套服装各带 2 个专属技，见文件末尾 buildKits 的 KIT 表。
 
 
 // 每个角色「初始服装」的专属招式（显式指定，16 个互不重复）
@@ -212,14 +186,13 @@ const ALTS = {
 const COSTUMES = {};
 Object.values(CH).forEach(ch => {
   const sig = BASE_SIG[ch.id] || pickSignature(ch.skills);
-  const clsSk = (CLASS_SKILL_OVERRIDE[ch.id]) || CLASS_SKILL_OF[ch.cls];
   COSTUMES['base_' + ch.id] = {
     id: 'base_' + ch.id, charId: ch.id, charName: ch.name, costumeName: '初始',
     name: ch.name + ' · 初始', rarity: ch.rarity, cls: ch.cls,
     element: ch.element, color: ch.color,
     stats: { ...ch.base }, grow: { ...ch.grow },
     signature: sig,
-    skills: [clsSk, sig].filter(Boolean),   // 该套 2 技：便宜节奏技 + 专属大招
+    skills: [sig],   // 占位；真正的 2 技由文件末尾 buildKits 的 KIT 表写入
     base: true,
     desc: ch.desc,
   };

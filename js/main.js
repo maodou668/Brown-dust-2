@@ -298,12 +298,10 @@ const BattleUI = {
   triggerCast(uid, skillId) {
     const c = Battle.combatants.find(x => x.uid === uid);
     if (!c || !this.FIELD_SPRITE[c.charId]) return;
-    // 按技能选施法动画：职业技→cast_class，专属技→cast。缺则回退到存在的那个。
+    // 按技能选施法动画：大招(SP≥3)→cast_class(第二施法动作)，节奏技(SP2)→cast。缺则回退到存在的那个。
     const sp = this.sprites[c.charId];
-    let anim = 'cast';
-    const cls = (window.GameData.CHARACTERS[c.charId] || {}).cls;
-    const classSkill = (window.GameData.CLASS_SKILL_OVERRIDE && window.GameData.CLASS_SKILL_OVERRIDE[c.charId]) || (cls && window.GameData.CLASS_SKILL_OF && window.GameData.CLASS_SKILL_OF[cls]);
-    if (skillId && skillId === classSkill) anim = 'cast_class';
+    const skDef = window.GameData.SKILLS[skillId];
+    let anim = (skDef && (skDef.sp || 0) >= 3) ? 'cast_class' : 'cast';
     if (sp && sp.man && !(sp.man.anims && sp.man.anims[anim])) anim = (sp.man.anims && sp.man.anims.cast) ? 'cast' : 'cast_class';
     this.spriteState[uid] = { anim, start: performance.now() };
   },
@@ -320,13 +318,7 @@ const BattleUI = {
   // 技能 → 演出时间线（castMs 施法收招、telegraphMs 六芒星预警时长、star 预警特效、burst 爆炸特效）
   SKILL_VFX: {
     inferno: { castMs: 380, telegraphMs: 460, burst: 'fire_explosion', tint: '#ff6a2a' },
-    cls_arcane: { castMs: 340, telegraphMs: 240, burst: 'arcane_burst', tint: '#a06bff' },
-    cls_aimshot: { castMs: 300, telegraphMs: 140, burst: 'shadow_pierce', tint: '#b58bff', projectile: true, spriteAngle: 0.785 },
     shadow_volley: { castMs: 460, telegraphMs: 220, burst: 'shadow_burst', tint: '#9a5cff', projectile: true, spriteAngle: 0.785, repeat: 3, repeatGap: 150 },
-    // —— 职业技 VFX ——
-    cls_cleave: { castMs: 320, telegraphMs: 160, burst: 'cleave_slash', tint: '#8fe9ff' },
-    cls_guard:  { castMs: 360, telegraphMs: 200, burst: 'guard_barrier', tint: '#ffd35a' },
-    cls_mend:   { castMs: 340, telegraphMs: 200, burst: 'heal_bloom', tint: '#7affc4' },
     // —— 专属技 VFX（每技能一个专属特效，正确对应）——
     flame_slash:      { castMs: 320, telegraphMs: 160, burst: 'flame_slash', tint: '#ff7a2a' },
     earth_slam:       { castMs: 360, telegraphMs: 240, burst: 'earth_slam', tint: '#c9a05a' },
