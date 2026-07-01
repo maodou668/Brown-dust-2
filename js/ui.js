@@ -1063,7 +1063,7 @@ const UI = {
       <p class="muted" style="margin:-4px 0 8px;font-size:11px;">突破说明：在「招募」中再次获得该佣兵可提升突破等级（最高 +5），每级 +8% 基础属性。</p>
       ${costumeHtml}
       ${gearHtml}
-      <div class="section-title" style="font-size:14px;">战斗技能池 <span class="muted" style="font-weight:400;font-size:11px;">· 普攻 + 各服装招式</span></div>
+      <div class="section-title" style="font-size:14px;">战斗技能池 <span class="muted" style="font-weight:400;font-size:11px;">· 普攻 + 出战服装的 2 招（换套即换 kit）</span></div>
       ${skillsHtml}
       ${loreHtml}
       ${this.affAwakenHtml(o)}

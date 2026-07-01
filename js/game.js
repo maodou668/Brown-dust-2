@@ -303,14 +303,11 @@ const Game = {
 
   /** 战斗技能池：普通攻击 + 各拥有服装的专属招式（去重） */
   battleSkills(owned) {
-    // 普攻 + 该角色拥有的每套服装各 2 个技能（都带进战斗、手动选；放哪个哪个进冷却）
-    const D = window.GameData;
+    // 出战服装制（BD2）：普攻 + **当前出战服装**的 2 个专属技能（换套即换整套 kit）。
+    // 要用别套的技能须把那套设为出战服装 —— 出战服装同时决定外观/属性/元素/技能。
+    const cos = this.activeCostumeDef(owned);
     const skills = ['basic_attack'];
-    this.ownedCostumeIds(owned).forEach(cid => {
-      const c = D.COSTUMES[cid];
-      if (!c) return;
-      (c.skills || [c.signature]).forEach(s => { if (s && !skills.includes(s)) skills.push(s); });
-    });
+    ((cos && cos.skills) || (cos && cos.signature && [cos.signature]) || []).forEach(s => { if (s && !skills.includes(s)) skills.push(s); });
     return skills;
   },
 
