@@ -63,11 +63,13 @@ const BattleUI = {
       <button class="auto-btn" id="ar-name" disabled style="opacity:1;">${D.CHARACTERS[cid].name}</button>
       <button class="auto-btn" id="ar-next">下一个 ▶</button>
       <button class="auto-btn on" id="ar-refill">补满SP · 清冷却</button>
+      <button class="auto-btn" id="ar-artlab">🖼 美术台</button>
     </div>`);
     this.root.appendChild(bar);
     bar.querySelector('#ar-prev').onclick = () => this.startArena(this._arenaIdx - 1);
     bar.querySelector('#ar-next').onclick = () => this.startArena(this._arenaIdx + 1);
     bar.querySelector('#ar-refill').onclick = () => this.arenaRefill();
+    bar.querySelector('#ar-artlab').onclick = () => { if (window.ArtLab) ArtLab.open(); };
     this.arenaRefill();
   },
   arenaRefill() {
@@ -1302,6 +1304,8 @@ const Main = {
 
     // 特效演武场：index.html?arena —— 沙包假人 + 逐技能实测(真·施法动作+投射+命中)
     if (/[?&]arena\b/.test(location.search)) setTimeout(() => window.BattleUI && BattleUI.startArena(0), 800);
+    // 美术检视台：index.html?artlab —— 任意角色×服装：走动看八向 idle/run + 放施法动作 + 看立绘
+    if (/[?&]artlab\b/.test(location.search)) setTimeout(() => window.ArtLab && ArtLab.open(), 800);
   },
 
   // ---------- 启动加载页 / 资源预加载 ----------

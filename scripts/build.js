@@ -19,7 +19,7 @@ if (!process.argv.includes('--no-validate')) {
 
 let html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'css/style.css'), 'utf8');
-const jsFiles = ['audio.js', 'data.js', 'balance.js', 'budget.js', 'lore.js', 'gear.js', 'costumes.js', 'game.js', 'battle.js', 'ui.js', 'story.js', 'comic.js', 'world.js', 'main.js'];
+const jsFiles = ['audio.js', 'data.js', 'balance.js', 'budget.js', 'lore.js', 'gear.js', 'costumes.js', 'game.js', 'battle.js', 'ui.js', 'story.js', 'comic.js', 'world.js', 'main.js', 'artlab.js'];
 const js = jsFiles.map(f => fs.readFileSync(path.join(root, 'js', f), 'utf8')).join('\n\n');
 
 // 兼容资源引用上的 ?v= 版本号查询串
