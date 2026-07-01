@@ -13,8 +13,15 @@
 | 角色 | PixelLab ID | 备注 |
 |---|---|---|
 | **Seir**（锚定母本/Anchor） | `5f48540d-f2b9-4708-9715-3e193a4d7f7d` | 锁法A 的派生源。18anim。group(+1) |
+| **Lecliss**（自有母本） | `31beeaf4-dbaa-4984-82bf-6592271273cb` | ⚠️之前漏登记。库里名字就叫"Lecliss"，在 list 第 2 页(offset 30)。做她的服装派生用这个 |
 | Refithea | `11f13348-94a9-4a07-8086-c62bf53c3b53` | 已接入(idle+run) |
 | Rigenette | `7c54b215-be04-4001-8aad-1ce38e6aaa81` | 已接入(idle) |
+| Justia | 待补（库里翻页找"Justia"或按 cast 签名定位） | ⚠️同样漏登记，用到时补 |
+
+### 服装派生（第二套服装整套 sprite，从各角色自有母本派生）
+| 服装 | PixelLab ID | 源母本 | 状态 |
+|---|---|---|---|
+| Lecliss · 霜华（冰蓝霜之魔女） | `44e38285-78f7-4e3f-8364-e874b9696710` | Lecliss `31beeaf4` | 🔄 母图生成中 |
 
 ### 锁法A 派生角色（均 Seir 派生,同 group；名字显示为 "Transform into: …" 丑名,**一律按 ID 操作**）
 
