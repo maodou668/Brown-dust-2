@@ -108,6 +108,7 @@ const CHARACTERS = {
     base: { hp: 950, atk: 110, def: 70, spd: 100, crit: 0.10 },
     grow: { hp: 88, atk: 10, def: 6 },
     skills: ['heal_wave', 'blessing'],
+    portrait: 'art/05_pixellab/ui/portraits/rou.png',   // 像素半身像（小框立绘）
     desc: '温柔的治愈者，能恢复全队生命并提升攻击力。',
   },
   helena: {
@@ -116,6 +117,7 @@ const CHARACTERS = {
     base: { hp: 1100, atk: 150, def: 85, spd: 110, crit: 0.18 },
     grow: { hp: 105, atk: 14, def: 8 },
     skills: ['slash', 'gale_strike'],
+    portrait: 'art/05_pixellab/ui/portraits/helena.png',   // 像素半身像（小框立绘）
     desc: '身法如风的剑士，能对敌方一排造成连续斩击。',
   },
   diana: {
@@ -124,6 +126,7 @@ const CHARACTERS = {
     base: { hp: 800, atk: 145, def: 58, spd: 92, crit: 0.15 },
     grow: { hp: 76, atk: 14, def: 5 },
     skills: ['water_lance', 'frost_nova'],
+    portrait: 'art/05_pixellab/ui/portraits/diana.png',   // 像素半身像（小框立绘）
     desc: '冷静的水系法师，水矛可降低敌人防御。',
   },
   garcia: {
@@ -132,6 +135,7 @@ const CHARACTERS = {
     base: { hp: 1400, atk: 95, def: 120, spd: 65, crit: 0.08 },
     grow: { hp: 132, atk: 9, def: 11 },
     skills: ['rock_guard', 'earth_slam'],
+    portrait: 'art/05_pixellab/ui/portraits/garcia.png',   // 像素半身像（小框立绘）
     desc: '坚如磐石的守护者，自身防御越高反击越强。',
   },
   // ---------- 3★ ----------
@@ -141,6 +145,7 @@ const CHARACTERS = {
     base: { hp: 1000, atk: 130, def: 75, spd: 95, crit: 0.12 },
     grow: { hp: 95, atk: 12, def: 7 },
     skills: ['slash', 'power_strike'],
+    portrait: 'art/05_pixellab/ui/portraits/teried.png',   // 像素半身像（小框立绘）
     desc: '怀抱梦想的见习剑士，攻守均衡。',
   },
   lia: {
@@ -149,6 +154,7 @@ const CHARACTERS = {
     base: { hp: 820, atk: 140, def: 60, spd: 108, crit: 0.22 },
     grow: { hp: 78, atk: 13, def: 5 },
     skills: ['piercing_shot', 'power_strike'],
+    portrait: 'art/05_pixellab/ui/portraits/lia.png',   // 像素半身像（小框立绘）
     desc: '草原出身的猎手，箭无虚发。',
   },
   mina: {
@@ -157,6 +163,7 @@ const CHARACTERS = {
     base: { hp: 880, atk: 100, def: 65, spd: 98, crit: 0.10 },
     grow: { hp: 82, atk: 9, def: 6 },
     skills: ['heal_wave', 'slash'],
+    portrait: 'art/05_pixellab/ui/portraits/mina.png',   // 像素半身像（小框立绘）
     desc: '随身携带药剂的少女，治疗虽弱但可靠。',
   },
 
@@ -168,6 +175,7 @@ const CHARACTERS = {
     base: { hp: 1050, atk: 130, def: 72, spd: 102, crit: 0.10 },
     grow: { hp: 96, atk: 12, def: 6 },
     skills: ['grand_heal', 'holy_light'],
+    portrait: 'art/05_pixellab/ui/portraits/refithea.png',   // 像素半身像（小框立绘）
     desc: '降临人间的圣女，掌握足以逆转生死的奇迹圣光，是全队的生命线。',
   },
   rigenette: {
@@ -176,6 +184,7 @@ const CHARACTERS = {
     base: { hp: 1200, atk: 175, def: 90, spd: 118, crit: 0.22 },
     grow: { hp: 112, atk: 17, def: 8 },
     skills: ['tempest_blade', 'gale_strike'],
+    portrait: 'art/05_pixellab/ui/portraits/rigenette.png',   // 像素半身像（小框立绘）
     desc: '空骑士团团长，剑速快若苍穹疾风，对单体的爆发冠绝全军。',
   },
   olstein: {
@@ -184,6 +193,7 @@ const CHARACTERS = {
     base: { hp: 1650, atk: 110, def: 140, spd: 68, crit: 0.08 },
     grow: { hp: 152, atk: 9, def: 13 },
     skills: ['taunt_shield', 'rock_guard'],
+    portrait: 'art/05_pixellab/ui/portraits/olstein.png',   // 像素半身像（小框立绘）
     desc: '号称「不动」的传奇守护者，他的盾后，是任何敌人都无法逾越的防线。',
   },
   // ---------- 4★ ----------
@@ -193,6 +203,7 @@ const CHARACTERS = {
     base: { hp: 830, atk: 150, def: 58, spd: 94, crit: 0.15 },
     grow: { hp: 78, atk: 14, def: 5 },
     skills: ['frost_nova', 'water_lance'],
+    portrait: 'art/05_pixellab/ui/portraits/glacia.png',   // 像素半身像（小框立绘）
     desc: '寡言的冰系术士，以霜冻封锁敌方全体，并削弱其防御。',
   },
   liatris: {
@@ -201,6 +212,7 @@ const CHARACTERS = {
     base: { hp: 880, atk: 165, def: 62, spd: 114, crit: 0.26 },
     grow: { hp: 82, atk: 16, def: 5 },
     skills: ['blazing_arrow', 'piercing_shot'],
+    portrait: 'art/05_pixellab/ui/portraits/liatris.png',   // 像素半身像（小框立绘）
     desc: '百发百中的红莲狙击手，一箭点燃，专破高血量目标。',
   },
   // ---------- 3★ ----------
@@ -210,6 +222,7 @@ const CHARACTERS = {
     base: { hp: 1050, atk: 128, def: 80, spd: 92, crit: 0.12 },
     grow: { hp: 98, atk: 12, def: 7 },
     skills: ['slash', 'holy_smite'],
+    portrait: 'art/05_pixellab/ui/portraits/loen.png',   // 像素半身像（小框立绘）
     desc: '正直热血的黎明骑士，立志成为照亮黑暗的光。',
   },
 };
