@@ -66,6 +66,11 @@ const Game = {
       if (!o.costumes || !o.costumes.length) o.costumes = ['base_' + o.charId];
       o.costumes = o.costumes.map(c => (c === 'base' ? 'base_' + o.charId : c));
       if (!o.activeCostume || o.activeCostume === 'base') o.activeCostume = 'base_' + o.charId;
+      // 双服装机制演示：默认补齐该角色全部服装（之后改成卡池获取时移除这段）
+      const CS = window.GameData.COSTUMES || {};
+      Object.keys(CS).forEach(cid => {
+        if (CS[cid].charId === o.charId && !o.costumes.includes(cid)) o.costumes.push(cid);
+      });
     });
     // 升星迁移：把同名角色的重复实例合并为突破等级
     this._mergeDuplicates();
@@ -207,15 +212,22 @@ const Game = {
   /** 生成一个已拥有角色实例 */
   makeOwned(charId, level = 1) {
     const uid = this.freshUid();
+    const D = window.GameData;
+    // 机制演示：默认拥有该角色全部服装（初始 + 额外）；之后改成卡池获取时收回
+    const costumes = ['base_' + charId];
+    Object.keys(D.COSTUMES || {}).forEach(cid => {
+      if (D.COSTUMES[cid].charId === charId && !costumes.includes(cid)) costumes.push(cid);
+    });
     return {
       uid, charId, level, exp: 0,
-      star: window.GameData.CHARACTERS[charId].rarity,
+      star: D.CHARACTERS[charId].rarity,
       plus: 0, // 突破等级 0~5
-      costumes: ['base_' + charId],      // 拥有的服装 id 列表
+      costumes,                          // 拥有的服装 id 列表
       activeCostume: 'base_' + charId,   // 当前装扮（决定属性/外观）
       equip: { weapon: null, armor: null, accessory: null, ex: null },
     };
   },
+
 
   save() {
     localStorage.setItem(SAVE_KEY, JSON.stringify(this.state));
@@ -291,17 +303,26 @@ const Game = {
 
   /** 战斗技能池：普通攻击 + 各拥有服装的专属招式（去重） */
   battleSkills(owned) {
-    const skills = ['basic_attack'];
-    // 职业通用节奏技（sp2）：让每个单位都有「普攻 / 便宜技 / 大招」三档抉择
+    // 普攻 + 该角色拥有的每套服装各 2 个技能（都带进战斗、手动选；放哪个哪个进冷却）
     const D = window.GameData;
-    const cls = (D.CHARACTERS[owned.charId] || {}).cls;
-    const clsSkill = (D.CLASS_SKILL_OVERRIDE && D.CLASS_SKILL_OVERRIDE[owned.charId]) || (D.CLASS_SKILL_OF && D.CLASS_SKILL_OF[cls]);
-    if (clsSkill && !skills.includes(clsSkill)) skills.push(clsSkill);
+    const skills = ['basic_attack'];
     this.ownedCostumeIds(owned).forEach(cid => {
       const c = D.COSTUMES[cid];
-      if (c && c.signature && !skills.includes(c.signature)) skills.push(c.signature);
+      if (!c) return;
+      (c.skills || [c.signature]).forEach(s => { if (s && !skills.includes(s)) skills.push(s); });
     });
     return skills;
+  },
+
+  /** 某技能属于该角色的哪套服装（用于战斗里放技时切换形象/元素） */
+  costumeOfSkill(owned, skillId) {
+    const D = window.GameData;
+    const ids = this.ownedCostumeIds(owned);
+    for (const cid of ids) {
+      const c = D.COSTUMES[cid];
+      if (c && (c.skills || [c.signature]).includes(skillId)) return cid;
+    }
+    return owned.activeCostume;
   },
 
   switchCostume(uid, costumeId) {

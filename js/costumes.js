@@ -154,61 +154,66 @@ function pickSignature(skills) {
 }
 
 // ---- 额外服装定义（属性倍率 + 专属招式）----
+// signature = 该服装主技（贵、大招）；second = 该服装第二技（配套另一招）。每套服装 = 2 技 + 普攻。
 const ALTS = {
   teried_knight: { charId: 'teried', costumeName: '圣骑士', rarity: 4, element: 'light', color: '#ffd97a',
-    mul: { hp: 1.1, atk: 1.0, def: 1.15 }, signature: 'radiant_judgment',
+    mul: { hp: 1.1, atk: 1.0, def: 1.15 }, signature: 'radiant_judgment', second: 'dawnblade',
     desc: '受封圣骑士的礼装，挥剑间降下审判圣光。' },
   lecliss_frost: { charId: 'lecliss', costumeName: '霜华', rarity: 5, element: 'water', color: '#5a9fff',
-    mul: { hp: 1.12, atk: 0.96, def: 1.0 }, signature: 'frost_nova',
+    mul: { hp: 1.12, atk: 0.96, def: 1.0 }, signature: 'frost_nova', second: 'water_lance',
     desc: '反转属性的霜之魔女，以极寒取代烈焰。' },
   justia_blade: { charId: 'justia', costumeName: '审判', rarity: 5, element: 'light', color: '#fff0a0',
-    mul: { hp: 0.9, atk: 1.35, def: 0.85 }, signature: 'radiant_judgment',
+    mul: { hp: 0.9, atk: 1.35, def: 0.85 }, signature: 'radiant_judgment', second: 'dawnblade',
     desc: '由守转攻的审判之姿，圣光化作裁决之刃。' },
   seir_twin: { charId: 'seir', costumeName: '双牙', rarity: 5, element: 'dark', color: '#c08bff',
-    mul: { hp: 0.85, atk: 1.18, def: 0.95 }, signature: 'twin_fang',
+    mul: { hp: 0.85, atk: 1.18, def: 0.95 }, signature: 'twin_fang', second: 'shadow_volley',
     desc: '双弓在握的暗夜猎手，一息之间连射两箭。' },
   helena_storm: { charId: 'helena', costumeName: '风暴', rarity: 4, element: 'wind', color: '#5ad1ff',
-    mul: { hp: 1.05, atk: 1.1, def: 1.0 }, signature: 'brave_charge',
+    mul: { hp: 1.05, atk: 1.1, def: 1.0 }, signature: 'brave_charge', second: 'galeblade_flurry',
     desc: '披上战旗的疾风骑士，策马掀起风暴。' },
   refithea_song: { charId: 'refithea', costumeName: '歌咏', rarity: 5, element: 'light', color: '#ffe7a0',
-    mul: { hp: 1.1, atk: 1.05, def: 1.0 }, signature: 'mending_song',
+    mul: { hp: 1.1, atk: 1.05, def: 1.0 }, signature: 'mending_song', second: 'grand_heal',
     desc: '以歌声治愈众人的圣女，旋律即是奇迹。' },
   // —— 第二批服装 ——
   rou_battle: { charId: 'rou', costumeName: '战旗', rarity: 4, element: 'light', color: '#ffd97a',
-    mul: { hp: 0.95, atk: 1.28, def: 0.9 }, signature: 'holy_smite',
+    mul: { hp: 0.95, atk: 1.28, def: 0.9 }, signature: 'holy_smite', second: 'blessing',
     desc: '执战旗的祭司，以圣光化作进攻的号角。' },
   diana_tide: { charId: 'diana', costumeName: '怒涛', rarity: 5, element: 'water', color: '#3a7add',
-    mul: { hp: 1.05, atk: 1.12, def: 1.0 }, signature: 'tidal_burst',
+    mul: { hp: 1.05, atk: 1.12, def: 1.0 }, signature: 'tidal_burst', second: 'water_lance',
     desc: '掌控潮汐的深海法师，怒涛之下无人幸免。' },
   garcia_iron: { charId: 'garcia', costumeName: '钢铁', rarity: 4, element: 'earth', color: '#a8a8b0',
-    mul: { hp: 1.12, atk: 1.05, def: 1.15 }, signature: 'shield_bash',
+    mul: { hp: 1.12, atk: 1.05, def: 1.15 }, signature: 'shield_bash', second: 'earth_slam',
     desc: '披挂钢铁全装的壁垒，以盾击震慑并眩晕来犯之敌。' },
   mina_combat: { charId: 'mina', costumeName: '战斗药剂', rarity: 4, element: 'wind', color: '#7affc4',
-    mul: { hp: 0.9, atk: 1.32, def: 0.95 }, signature: 'venom_shot',
+    mul: { hp: 0.9, atk: 1.32, def: 0.95 }, signature: 'venom_shot', second: 'zephyr_mend',
     desc: '改良配方的米娜，把药剂调成了攻击武器。' },
   lia_twin: { charId: 'lia', costumeName: '疾风猎手', rarity: 4, element: 'wind', color: '#9ad15a',
-    mul: { hp: 0.92, atk: 1.18, def: 0.95 }, signature: 'twin_fang',
+    mul: { hp: 0.92, atk: 1.18, def: 0.95 }, signature: 'twin_fang', second: 'rooting_shot',
     desc: '换上轻装的猎手，箭矢快如疾风。' },
   loen_paladin: { charId: 'loen', costumeName: '圣殿骑士', rarity: 4, element: 'light', color: '#ffe07a',
-    mul: { hp: 1.08, atk: 1.05, def: 1.12 }, signature: 'radiant_judgment',
+    mul: { hp: 1.08, atk: 1.05, def: 1.12 }, signature: 'radiant_judgment', second: 'dawnblade',
     desc: '晋升圣殿骑士的罗恩，肩负审判之责。' },
   rigenette_sword: { charId: 'rigenette', costumeName: '剑圣', rarity: 5, element: 'wind', color: '#5ad1ff',
-    mul: { hp: 1.0, atk: 1.18, def: 1.05 }, signature: 'brave_charge',
+    mul: { hp: 1.0, atk: 1.18, def: 1.05 }, signature: 'brave_charge', second: 'tempest_blade',
     desc: '剑技臻至化境的剑圣，一骑当千。' },
   olstein_holy: { charId: 'olstein', costumeName: '圣盾', rarity: 5, element: 'light', color: '#ffe7b0',
-    mul: { hp: 1.05, atk: 1.1, def: 1.1 }, signature: 'radiant_judgment',
+    mul: { hp: 1.05, atk: 1.1, def: 1.1 }, signature: 'radiant_judgment', second: 'mountain_bulwark',
     desc: '受圣光加护的不动壁垒，攻守兼备。' },
 };
 
 // ---- 生成全部服装：每角色「初始服装」+ 额外服装 ----
 const COSTUMES = {};
 Object.values(CH).forEach(ch => {
+  const sig = BASE_SIG[ch.id] || pickSignature(ch.skills);
+  const clsSk = (CLASS_SKILL_OVERRIDE[ch.id]) || CLASS_SKILL_OF[ch.cls];
   COSTUMES['base_' + ch.id] = {
     id: 'base_' + ch.id, charId: ch.id, charName: ch.name, costumeName: '初始',
     name: ch.name + ' · 初始', rarity: ch.rarity, cls: ch.cls,
     element: ch.element, color: ch.color,
     stats: { ...ch.base }, grow: { ...ch.grow },
-    signature: BASE_SIG[ch.id] || pickSignature(ch.skills), base: true,
+    signature: sig,
+    skills: [clsSk, sig].filter(Boolean),   // 该套 2 技：便宜节奏技 + 专属大招
+    base: true,
     desc: ch.desc,
   };
 });
@@ -236,7 +241,9 @@ Object.entries(ALTS).forEach(([id, a]) => {
       atk: Math.round((ch.grow.atk || 0) * oGap * 100) / 100,
       def: Math.round((ch.grow.def || 0) * sGap * 100) / 100,
     },
-    signature: a.signature, desc: a.desc,
+    signature: a.signature,
+    skills: [a.signature, a.second].filter(Boolean),   // 该套 2 技：专属大招 + 第二技
+    desc: a.desc,
   };
 });
 
