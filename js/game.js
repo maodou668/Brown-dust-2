@@ -311,6 +311,20 @@ const Game = {
     return skills;
   },
 
+  /** 战斗「换装轮转」用：拥有的服装环，当前出战服装排第一（战斗中用完本套 2 技即轮转到下一套）。
+   *  每项 = { id, skills:[2], element, color, signature, sigPlus }。只 1 套时不轮转。 */
+  costumeRing(owned) {
+    const D = window.GameData;
+    const active = this.normCostumeId(owned.charId, owned.activeCostume);
+    const ids = this.ownedCostumeIds(owned);
+    const ordered = [active, ...ids.filter(i => i !== active)];
+    return ordered.map(id => {
+      const c = D.COSTUMES[id]; if (!c) return null;
+      const skills = (c.skills && c.skills.length ? c.skills : (c.signature ? [c.signature] : [])).slice();
+      return { id, skills, element: c.element, color: c.color, signature: c.signature, sigPlus: owned.plus || 0 };
+    }).filter(Boolean);
+  },
+
   /** 某技能属于该角色的哪套服装（用于战斗里放技时切换形象/元素） */
   costumeOfSkill(owned, skillId) {
     const D = window.GameData;

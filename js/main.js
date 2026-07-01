@@ -743,7 +743,13 @@ const BattleUI = {
     if (Battle.finished) return;
     const cur = Battle.current();
     if (!cur || !cur.alive) { this.nextTurn(); return; }
+    // 换装轮转：本套 2 技放完 + SP 够 → 回合开始时切到下一套服装（立绘/元素/技能整套换）
+    const rotated = Battle.maybeRotateCostume(cur);
     this.refresh();
+    if (rotated) {
+      const cn = (window.GameData.COSTUMES[rotated.id] || {}).costumeName || '';
+      this.knockFloat(cur, `🎽 换装 · ${cn}`);
+    }
 
     // 眩晕：跳过本回合
     if (Battle.isStunned(cur)) {

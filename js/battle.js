@@ -12,6 +12,10 @@ class Combatant {
     this.side = opts.side;          // 'ally' | 'enemy'
     this.charId = opts.charId;      // 引用图鉴 id（角色或敌人）
     this.costume = opts.costume || null; // 当前装扮 id（战斗序列帧选哪套 sprite）
+    // 换装轮转：用完当前服装 2 技即轮转到下一套（外观/元素/技能整套换）；只 1 套则不轮转
+    this.costumeRing = (opts.costumeRing && opts.costumeRing.length > 1) ? opts.costumeRing : null;
+    this.costumeIdx = 0;
+    this.spent = new Set();         // 当前服装本次占用中「已放过」的非普攻技能（两个都放过 → 下回合轮转）
     this.cls = opts.cls;
     this.element = opts.element;
     this.color = opts.color;
@@ -121,6 +125,7 @@ const Battle = {
       this.combatants.push(new Combatant({
         uid: 'A' + i, name: def.name, side: 'ally', charId: owned.charId,
         costume: owned.activeCostume,     // 当前装扮 id（决定战斗序列帧用哪套 sprite）
+        costumeRing: Game.costumeRing(owned),  // 换装轮转环（出战服装排首）
         cls: def.cls, element: cos.element, color: cos.color, level: owned.level,
         pos, maxHp, atk: Math.round(st.atk * am), def: Math.round(st.def * dm), spd: st.spd, crit: st.crit,
         skills: Game.battleSkills(owned), // 普攻 + 各服装招式
@@ -140,7 +145,7 @@ const Battle = {
         const pos = e.pos || this.tierOfClass(cdef.cls);
         this.combatants.push(new Combatant({
           uid: 'E' + i, name: cdef.name, side: 'enemy', charId: e.char,
-          costume: ao.activeCostume,
+          costume: ao.activeCostume, costumeRing: Game.costumeRing(ao),
           cls: cdef.cls, element: cos.element, color: cos.color, level: ao.level, pos,
           maxHp: st.maxHp, atk: st.atk, def: st.def, spd: st.spd, crit: st.crit,
           skills: Game.battleSkills(ao), sigSkillId: cos.signature, sigPlus: ao.plus,
@@ -243,8 +248,31 @@ const Battle = {
     const sk = window.GameData.SKILLS[skillId];
     if (sk.basic) return true;
     if (this.isSilenced(combatant)) return false;
+    // 换装轮转：本套已放过的技能锁住（等两个都放完 → 轮转到下一套才复位）
+    if (combatant.costumeRing && combatant.spent && combatant.spent.has(skillId)) return false;
     if ((combatant.cooldowns[skillId] || 0) > 0) return false;
     return combatant.sp >= this.skillSp(combatant, skillId);
+  },
+
+  /** 换装轮转：当前服装 2 技都放过、且 SP 够放下一套 → 轮转到下一套（外观/元素/配色/技能整套换）。
+   *  在每个单位回合开始时调用；返回被换到的服装项（真值=发生了轮转，用于演出提示），否则 false。 */
+  maybeRotateCostume(c) {
+    const ring = c.costumeRing;
+    if (!ring || ring.length < 2) return false;
+    const cur = ring[c.costumeIdx];
+    const bothUsed = cur.skills.length > 0 && cur.skills.every(s => c.spent.has(s));
+    if (!bothUsed) return false;
+    const next = ring[(c.costumeIdx + 1) % ring.length];
+    const minSp = Math.min(...next.skills.map(s => (window.GameData.SKILLS[s] && window.GameData.SKILLS[s].sp) || 0));
+    if ((c.sp || 0) < minSp) return false;   // SP 不够放下一套技能 → 先不换（继续普攻攒 SP）
+    c.costumeIdx = (c.costumeIdx + 1) % ring.length;
+    const nc = ring[c.costumeIdx];
+    c.costume = nc.id; c.element = nc.element; c.color = nc.color;
+    c.sigSkillId = nc.signature; c.sigPlus = nc.sigPlus;
+    c.skills = ['basic_attack', ...nc.skills];
+    nc.skills.forEach(s => { c.cooldowns[s] = 0; });  // 新套登场即可用
+    c.spent = new Set();
+    return nc;
   },
 
   // ---------- 状态效果 ----------
@@ -535,6 +563,7 @@ const Battle = {
       combatant.sp = Math.min(combatant.maxSp, combatant.sp + 3);
     } else {
       combatant.cooldowns[skillId] = this.skillCD(sk);
+      if (combatant.costumeRing) combatant.spent.add(skillId); // 记「本套已放过」，两个都放过下回合轮转
     }
     // 我方行动积攒连携槽（大招攒更多）——攒满约需 8~10 个动作，做成「关键时刻」资源而非每回合刷
     if (combatant.side === 'ally') this.addCombo(sk.basic ? 5 : ((sk.sp || 0) >= 4 ? 13 : 9));
