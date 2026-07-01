@@ -1293,8 +1293,15 @@ const Main = {
     return Promise.race([Promise.all(all), new Promise((r) => setTimeout(r, 16000))]);
   },
 
-  /** 后台预热（不阻塞揭幕）：战斗序列帧 + 技能特效，进战斗时已就绪 */
+  /** 后台预热（不阻塞揭幕）：编队 south idle 呼吸帧(01-06) + 战斗序列帧 + 技能特效 */
   warmSecondary() {
+    try {
+      const V = window.ASSET_VER || '';
+      const C = (window.GameData && window.GameData.CHARACTERS) || {};
+      Object.keys(C).forEach(id => {
+        for (let f = 1; f <= 6; f++) { const im = new Image(); im.src = `art/05_pixellab/${id}_field/idle/south/0${f}.png?v=${V}`; }
+      });
+    } catch (e) {}
     try { if (BattleUI.loadBattleSprite) BattleUI.loadBattleSprite(); } catch (e) {}
     try { if (BattleUI.preloadSkillFx) BattleUI.preloadSkillFx(); } catch (e) {}
   },

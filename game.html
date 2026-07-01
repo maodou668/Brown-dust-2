@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=192">
+  <link rel="manifest" href="manifest.webmanifest?v=193">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=192">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=192">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=193">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=193">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2416,9 +2416,9 @@ button.ac-circle:active { transform: scale(.92); }
 /* 像素半身像(小框立绘): cover + 顶部对齐, 保证脸不被裁 */
 .char-img.char-portrait-px { object-fit: cover; object-position: top center; image-rendering: pixelated; }
 
-/* 编队/阵形: 游戏内 south idle 精灵 (脚对齐底部, 像素放大) */
-.char-field-sprite { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; image-rendering: pixelated; }
-.ts-art .char-field-sprite, .r2-fs-art .char-field-sprite, .rc-art .char-field-sprite { transform: scale(1.08); }
+/* 编队/阵形: 游戏内 south idle 呼吸精灵 (居中, 像素放大) */
+.char-field-sprite { width: 100%; height: 100%; object-fit: contain; object-position: center center; image-rendering: pixelated; display: block; }
+.ts-art, .r2-fs-art, .rc-art { display: flex; align-items: center; justify-content: center; }
 
 </style>
 </head>
@@ -2427,24 +2427,24 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=192" alt="" onerror="this.outerHTML='🎖️'"></span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=193" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
         </span>
       </button>
       <div class="resources">
-        <div class="res" title="金币"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/coin.png?v=192" alt="金"></span><span id="res-gold">0</span></div>
-        <div class="res" title="宝石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/gem.png?v=192" alt="钻"></span><span id="res-gem">0</span></div>
-        <div class="res" title="觉醒石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/awaken.png?v=192" alt="石"></span><span id="res-stone">0</span></div>
-        <div class="res" title="体力"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/stamina.png?v=192" alt="力"></span><span id="res-stam">0</span></div>
+        <div class="res" title="金币"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/coin.png?v=193" alt="金"></span><span id="res-gold">0</span></div>
+        <div class="res" title="宝石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/gem.png?v=193" alt="钻"></span><span id="res-gem">0</span></div>
+        <div class="res" title="觉醒石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/awaken.png?v=193" alt="石"></span><span id="res-stone">0</span></div>
+        <div class="res" title="体力"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/stamina.png?v=193" alt="力"></span><span id="res-stam">0</span></div>
       </div>
       <div class="topbar-sys">
-        <button id="btn-notice" class="ghost-btn" title="公告"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/notice.png?v=192" alt="公告"></button>
-        <button id="btn-mail" class="ghost-btn" title="邮件"><span class="dot-wrap"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/mail.png?v=192" alt="邮件"><span id="mail-dot" class="red-dot" style="display:none;"></span></span></button>
-        <button id="btn-settings" class="ghost-btn" title="设置"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/settings.png?v=192" alt="设置"></button>
-        <button id="btn-fullscreen" class="ghost-btn" title="全屏"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/fullscreen.png?v=192" alt="全屏"></button>
-        <button id="btn-mute" class="ghost-btn" title="音效开关"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/sound.png?v=192" alt="音效"></button>
+        <button id="btn-notice" class="ghost-btn" title="公告"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/notice.png?v=193" alt="公告"></button>
+        <button id="btn-mail" class="ghost-btn" title="邮件"><span class="dot-wrap"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/mail.png?v=193" alt="邮件"><span id="mail-dot" class="red-dot" style="display:none;"></span></span></button>
+        <button id="btn-settings" class="ghost-btn" title="设置"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/settings.png?v=193" alt="设置"></button>
+        <button id="btn-fullscreen" class="ghost-btn" title="全屏"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/fullscreen.png?v=193" alt="全屏"></button>
+        <button id="btn-mute" class="ghost-btn" title="音效开关"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/sound.png?v=193" alt="音效"></button>
         <button id="btn-reset" class="ghost-btn" title="重置存档" style="display:none;">↺</button>
       </div>
     </header>
@@ -2477,7 +2477,7 @@ button.ac-circle:active { transform: scale(.92); }
     </div>
   </div>
 
-  <script>window.ASSET_VER = '192';</script>
+  <script>window.ASSET_VER = '193';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -6754,6 +6754,23 @@ const UI = {
     this.screenEl = document.getElementById('screen');
     this.modalRoot = document.getElementById('modal-root');
     this._initIconSwap();
+    this.startFieldAnimator();
+  },
+
+  /** 编队/阵形里 south idle 精灵的呼吸动画: 单一全局定时器循环推进所有可见精灵的帧 (帧已预加载, 走缓存无闪烁) */
+  startFieldAnimator() {
+    if (this._fieldTimer) return;
+    const FRAMES = 7;   // 各角色 idle/south 均 00..06
+    this._fieldTimer = setInterval(() => {
+      const V = window.ASSET_VER || '';
+      const els = document.querySelectorAll('img.char-field-sprite[data-cf]');
+      for (const im of els) {
+        const id = im.getAttribute('data-cf');
+        const f = ((parseInt(im.getAttribute('data-ff') || '0', 10) + 1) % FRAMES);
+        im.setAttribute('data-ff', f);
+        im.src = `art/05_pixellab/${id}_field/idle/south/0${f}.png?v=${V}`;
+      }
+    }, 170);
   },
 
   // ---------- emoji → 像素图标 (全局文本节点替换, 不碰属性, em 尺寸随字号缩放如 emoji) ----------
@@ -6826,21 +6843,21 @@ const UI = {
       // 图片优先：加载失败时把 src 换成职业像素图标(不能往属性里塞 img 标签)
       const fb = `art/05_pixellab/ui/icons/cls_${c.cls}.png`;
       const cls = c.portrait ? 'char-img char-portrait-px' : 'char-img';
-      // 不 lazy：已在启动阶段预加载, 直接展示不留白
-      return `<img class="${cls}" src="${src}" alt="${c.name}" decoding="async"
+      const V = window.ASSET_VER || '';
+      // 带 ?v 与预加载 URL 完全一致 → 命中缓存直接展示(不 lazy, 不留白)
+      return `<img class="${cls}" src="${src}?v=${V}" alt="${c.name}" decoding="async"
         onerror="this.onerror=null;this.src='${fb}';this.classList.add('cls-fallback');">`;
     }
     return clsIcon;
   },
 
-  /** 游戏内 south 向 idle 精灵 (用于编队/阵形, 展示角色实际战斗形象而非立绘) */
+  /** 游戏内 south 向 idle 呼吸动画精灵 (用于编队/阵形; 逐帧由 fieldAnimator 驱动) */
   charField(charId) {
     const c = window.GameData.CHARACTERS[charId];
-    const clsIcon = window.GameData.CLASSES[c.cls].icon;
     const V = window.ASSET_VER || '';
     const fb = `art/05_pixellab/ui/icons/cls_${c.cls}.png`;
-    return `<img class="char-field-sprite" src="art/05_pixellab/${charId}_field/idle/south/00.png?v=${V}" alt="${c.name}" decoding="async"
-      onerror="this.onerror=null;this.src='${fb}';this.classList.add('cls-fallback');">`;
+    return `<img class="char-field-sprite" data-cf="${charId}" data-ff="0" src="art/05_pixellab/${charId}_field/idle/south/00.png?v=${V}" alt="${c.name}" decoding="async"
+      onerror="this.onerror=null;this.src='${fb}';this.classList.add('cls-fallback');this.removeAttribute('data-cf');">`;
   },
 
   toast(msg) {
@@ -12337,8 +12354,15 @@ const Main = {
     return Promise.race([Promise.all(all), new Promise((r) => setTimeout(r, 16000))]);
   },
 
-  /** 后台预热（不阻塞揭幕）：战斗序列帧 + 技能特效，进战斗时已就绪 */
+  /** 后台预热（不阻塞揭幕）：编队 south idle 呼吸帧(01-06) + 战斗序列帧 + 技能特效 */
   warmSecondary() {
+    try {
+      const V = window.ASSET_VER || '';
+      const C = (window.GameData && window.GameData.CHARACTERS) || {};
+      Object.keys(C).forEach(id => {
+        for (let f = 1; f <= 6; f++) { const im = new Image(); im.src = `art/05_pixellab/${id}_field/idle/south/0${f}.png?v=${V}`; }
+      });
+    } catch (e) {}
     try { if (BattleUI.loadBattleSprite) BattleUI.loadBattleSprite(); } catch (e) {}
     try { if (BattleUI.preloadSkillFx) BattleUI.preloadSkillFx(); } catch (e) {}
   },

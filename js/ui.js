@@ -10,6 +10,23 @@ const UI = {
     this.screenEl = document.getElementById('screen');
     this.modalRoot = document.getElementById('modal-root');
     this._initIconSwap();
+    this.startFieldAnimator();
+  },
+
+  /** 编队/阵形里 south idle 精灵的呼吸动画: 单一全局定时器循环推进所有可见精灵的帧 (帧已预加载, 走缓存无闪烁) */
+  startFieldAnimator() {
+    if (this._fieldTimer) return;
+    const FRAMES = 7;   // 各角色 idle/south 均 00..06
+    this._fieldTimer = setInterval(() => {
+      const V = window.ASSET_VER || '';
+      const els = document.querySelectorAll('img.char-field-sprite[data-cf]');
+      for (const im of els) {
+        const id = im.getAttribute('data-cf');
+        const f = ((parseInt(im.getAttribute('data-ff') || '0', 10) + 1) % FRAMES);
+        im.setAttribute('data-ff', f);
+        im.src = `art/05_pixellab/${id}_field/idle/south/0${f}.png?v=${V}`;
+      }
+    }, 170);
   },
 
   // ---------- emoji → 像素图标 (全局文本节点替换, 不碰属性, em 尺寸随字号缩放如 emoji) ----------
@@ -82,21 +99,21 @@ const UI = {
       // 图片优先：加载失败时把 src 换成职业像素图标(不能往属性里塞 img 标签)
       const fb = `art/05_pixellab/ui/icons/cls_${c.cls}.png`;
       const cls = c.portrait ? 'char-img char-portrait-px' : 'char-img';
-      // 不 lazy：已在启动阶段预加载, 直接展示不留白
-      return `<img class="${cls}" src="${src}" alt="${c.name}" decoding="async"
+      const V = window.ASSET_VER || '';
+      // 带 ?v 与预加载 URL 完全一致 → 命中缓存直接展示(不 lazy, 不留白)
+      return `<img class="${cls}" src="${src}?v=${V}" alt="${c.name}" decoding="async"
         onerror="this.onerror=null;this.src='${fb}';this.classList.add('cls-fallback');">`;
     }
     return clsIcon;
   },
 
-  /** 游戏内 south 向 idle 精灵 (用于编队/阵形, 展示角色实际战斗形象而非立绘) */
+  /** 游戏内 south 向 idle 呼吸动画精灵 (用于编队/阵形; 逐帧由 fieldAnimator 驱动) */
   charField(charId) {
     const c = window.GameData.CHARACTERS[charId];
-    const clsIcon = window.GameData.CLASSES[c.cls].icon;
     const V = window.ASSET_VER || '';
     const fb = `art/05_pixellab/ui/icons/cls_${c.cls}.png`;
-    return `<img class="char-field-sprite" src="art/05_pixellab/${charId}_field/idle/south/00.png?v=${V}" alt="${c.name}" decoding="async"
-      onerror="this.onerror=null;this.src='${fb}';this.classList.add('cls-fallback');">`;
+    return `<img class="char-field-sprite" data-cf="${charId}" data-ff="0" src="art/05_pixellab/${charId}_field/idle/south/00.png?v=${V}" alt="${c.name}" decoding="async"
+      onerror="this.onerror=null;this.src='${fb}';this.classList.add('cls-fallback');this.removeAttribute('data-cf');">`;
   },
 
   toast(msg) {

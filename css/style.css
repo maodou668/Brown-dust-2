@@ -2400,6 +2400,6 @@ button.ac-circle:active { transform: scale(.92); }
 /* 像素半身像(小框立绘): cover + 顶部对齐, 保证脸不被裁 */
 .char-img.char-portrait-px { object-fit: cover; object-position: top center; image-rendering: pixelated; }
 
-/* 编队/阵形: 游戏内 south idle 精灵 (脚对齐底部, 像素放大) */
-.char-field-sprite { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; image-rendering: pixelated; }
-.ts-art .char-field-sprite, .r2-fs-art .char-field-sprite, .rc-art .char-field-sprite { transform: scale(1.08); }
+/* 编队/阵形: 游戏内 south idle 呼吸精灵 (居中, 像素放大) */
+.char-field-sprite { width: 100%; height: 100%; object-fit: contain; object-position: center center; image-rendering: pixelated; display: block; }
+.ts-art, .r2-fs-art, .rc-art { display: flex; align-items: center; justify-content: center; }
