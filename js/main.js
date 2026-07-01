@@ -235,8 +235,14 @@ const BattleUI = {
     glacia:   'art/05_pixellab/glacia_field',
     liatris:  'art/05_pixellab/liatris_field',
     loen:     'art/05_pixellab/loen_field',
+    // —— 第二套服装整套 sprite（key = 服装 id；激活该服装时用这套，否则回落 charId）——
+    lecliss_frost: 'art/05_pixellab/lecliss_frost_field',
   },
   sprites: {}, spriteState: {}, _spriteRaf: 0,
+  // 战斗单位 → sprite 资源 key：当前服装若有整套 sprite 就用它，否则回落 charId。
+  spriteKey(c) {
+    return (c && c.costume && this.FIELD_SPRITE[c.costume]) ? c.costume : (c && c.charId);
+  },
 
   loadBattleSprite() {
     const V = window.ASSET_VER || '1';
@@ -269,7 +275,7 @@ const BattleUI = {
     if (!this.root) return;
     this.root.querySelectorAll('canvas.u-sprite').forEach(cv => {
       const uid = cv.dataset.uid, c = Battle.combatants.find(x => x.uid === uid); if (!c) return;
-      const sp = this.sprites[c.charId]; if (!sp || !sp.ready) return;
+      const sp = this.sprites[this.spriteKey(c)]; if (!sp || !sp.ready) return;
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const W = cv.clientWidth || 64, H = cv.clientHeight || 72;
       if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
@@ -297,10 +303,10 @@ const BattleUI = {
   },
   triggerCast(uid, skillId) {
     const c = Battle.combatants.find(x => x.uid === uid);
-    if (!c || !this.FIELD_SPRITE[c.charId]) return;
+    if (!c || !this.FIELD_SPRITE[this.spriteKey(c)]) return;
     // 按技能选施法动画：优先用「该技能所属服装元素」的专属施法动作(cast_<元素>，如霜华水系=cast_water)；
     // 没有该元素专属施法动作时，回退：大招(SP≥3)→cast_class，节奏技(SP2)→cast。
-    const sp = this.sprites[c.charId];
+    const sp = this.sprites[this.spriteKey(c)];
     const skDef = window.GameData.SKILLS[skillId];
     const cos = Object.values(window.GameData.COSTUMES || {}).find(co => co.charId === c.charId && (co.skills || []).includes(skillId));
     const byEl = cos ? 'cast_' + cos.element : null;

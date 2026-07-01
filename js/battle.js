@@ -11,6 +11,7 @@ class Combatant {
     this.name = opts.name;
     this.side = opts.side;          // 'ally' | 'enemy'
     this.charId = opts.charId;      // 引用图鉴 id（角色或敌人）
+    this.costume = opts.costume || null; // 当前装扮 id（战斗序列帧选哪套 sprite）
     this.cls = opts.cls;
     this.element = opts.element;
     this.color = opts.color;
@@ -119,6 +120,7 @@ const Battle = {
       const maxHp = Math.round(st.maxHp * hm);
       this.combatants.push(new Combatant({
         uid: 'A' + i, name: def.name, side: 'ally', charId: owned.charId,
+        costume: owned.activeCostume,     // 当前装扮 id（决定战斗序列帧用哪套 sprite）
         cls: def.cls, element: cos.element, color: cos.color, level: owned.level,
         pos, maxHp, atk: Math.round(st.atk * am), def: Math.round(st.def * dm), spd: st.spd, crit: st.crit,
         skills: Game.battleSkills(owned), // 普攻 + 各服装招式
@@ -138,6 +140,7 @@ const Battle = {
         const pos = e.pos || this.tierOfClass(cdef.cls);
         this.combatants.push(new Combatant({
           uid: 'E' + i, name: cdef.name, side: 'enemy', charId: e.char,
+          costume: ao.activeCostume,
           cls: cdef.cls, element: cos.element, color: cos.color, level: ao.level, pos,
           maxHp: st.maxHp, atk: st.atk, def: st.def, spd: st.spd, crit: st.crit,
           skills: Game.battleSkills(ao), sigSkillId: cos.signature, sigPlus: ao.plus,
