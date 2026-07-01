@@ -22,7 +22,8 @@
  "fps": {
   "idle": 8,
   "run": 12,
-  "cast": 12
+  "cast": 12,
+  "cast_water": 12
  },
  "anims": {
   "idle": {
@@ -30,9 +31,9 @@
     "south": 7,
     "south-east": 7,
     "east": 7,
-    "north-east": 1,
+    "north-east": 7,
     "north": 7,
-    "north-west": 1,
+    "north-west": 7,
     "west": 7,
     "south-west": 7
    }
@@ -49,7 +50,7 @@
     "south-west": 8
    }
   },
-  "cast": {
+  "cast_water": {
    "frames": {
     "north": 9
    }
