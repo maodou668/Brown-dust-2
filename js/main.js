@@ -1258,7 +1258,13 @@ const Main = {
     const V = window.ASSET_VER || '';
     const imgs = [];
     const C = (window.GameData && window.GameData.CHARACTERS) || {};
-    Object.values(C).forEach(c => { if (c.art) imgs.push(c.art); });
+    // 预加载全角色: 像素半身像(小框立绘) + south idle 精灵(编队/阵形) → 点进各界面直接展示不留白
+    Object.keys(C).forEach(id => {
+      const c = C[id];
+      if (c.portrait) imgs.push(c.portrait);
+      else if (c.art) imgs.push(c.art);
+      imgs.push(`art/05_pixellab/${id}_field/idle/south/00.png`);
+    });
     imgs.push('art/01_splash/lecliss_avatar.png');
     const vids = ['art/video/home_bg', 'art/01_splash/lecliss_live'];
     const total = imgs.length + vids.length || 1;

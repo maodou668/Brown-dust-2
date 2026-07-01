@@ -82,10 +82,21 @@ const UI = {
       // 图片优先：加载失败时把 src 换成职业像素图标(不能往属性里塞 img 标签)
       const fb = `art/05_pixellab/ui/icons/cls_${c.cls}.png`;
       const cls = c.portrait ? 'char-img char-portrait-px' : 'char-img';
-      return `<img class="${cls}" src="${src}" alt="${c.name}" loading="lazy"
+      // 不 lazy：已在启动阶段预加载, 直接展示不留白
+      return `<img class="${cls}" src="${src}" alt="${c.name}" decoding="async"
         onerror="this.onerror=null;this.src='${fb}';this.classList.add('cls-fallback');">`;
     }
     return clsIcon;
+  },
+
+  /** 游戏内 south 向 idle 精灵 (用于编队/阵形, 展示角色实际战斗形象而非立绘) */
+  charField(charId) {
+    const c = window.GameData.CHARACTERS[charId];
+    const clsIcon = window.GameData.CLASSES[c.cls].icon;
+    const V = window.ASSET_VER || '';
+    const fb = `art/05_pixellab/ui/icons/cls_${c.cls}.png`;
+    return `<img class="char-field-sprite" src="art/05_pixellab/${charId}_field/idle/south/00.png?v=${V}" alt="${c.name}" decoding="async"
+      onerror="this.onerror=null;this.src='${fb}';this.classList.add('cls-fallback');">`;
   },
 
   toast(msg) {
@@ -238,7 +249,7 @@ const UI = {
         const o = uid ? Game.getOwned(uid) : null;
         const c = o ? window.GameData.CHARACTERS[o.charId] : null;
         const art = o
-          ? `<div class="ts-art" style="background:radial-gradient(circle at 50% 35%, ${Game.activeColor(o)}55, transparent);">${this.charAvatar(o.charId)}</div>`
+          ? `<div class="ts-art" style="background:radial-gradient(circle at 50% 35%, ${Game.activeColor(o)}55, transparent);">${this.charField(o.charId)}</div>`
           : `<div class="ts-art empty">+</div>`;
         return `<div class="te-slot ${i === sel ? 'sel' : ''} ${o ? 'border-' + this.rarityClass(c.rarity) : 'empty'}" data-slot="${i}">
           ${art}
@@ -261,7 +272,7 @@ const UI = {
             <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${Game.activeColor(current)}44, transparent);">
               <span class="rarity-badge ${this.rarityClass(cc.rarity)}">${cc.rarity}★</span>
               ${current.plus ? `<span class="plus-badge corner">+${current.plus}</span>` : ''}
-              ${this.charAvatar(current.charId)}
+              ${this.charField(current.charId)}
             </div>
             <div class="rc-info"><div class="rc-name">${cc.name}</div><div class="rc-lv">Lv.${current.level}</div></div>
           </div>
@@ -280,7 +291,7 @@ const UI = {
           <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${Game.activeColor(o)}44, transparent);">
             <span class="rarity-badge ${this.rarityClass(c.rarity)}">${c.rarity}★</span>
             ${o.plus ? `<span class="plus-badge corner">+${o.plus}</span>` : ''}
-            ${this.charAvatar(o.charId)}
+            ${this.charField(o.charId)}
           </div>
           <div class="rc-info"><div class="rc-name">${c.name}</div><div class="rc-lv">Lv.${o.level}</div></div>
         </div>`;
@@ -837,7 +848,7 @@ const UI = {
       const uid = s.team[i]; const o = uid ? Game.getOwned(uid) : null;
       const c = o ? window.GameData.CHARACTERS[o.charId] : null;
       return `<div class="r2-form-slot ${o ? 'border-' + this.rarityClass(c.rarity) : 'empty'}" data-slot="${i}">
-        ${o ? `<div class="r2-fs-art" style="background:radial-gradient(circle at 50% 35%, ${Game.activeColor(o)}55, transparent);">${this.charAvatar(o.charId)}</div>` : '<span class="r2-fs-plus">＋</span>'}
+        ${o ? `<div class="r2-fs-art" style="background:radial-gradient(circle at 50% 35%, ${Game.activeColor(o)}55, transparent);">${this.charField(o.charId)}</div>` : '<span class="r2-fs-plus">＋</span>'}
       </div>`;
     }).join('');
 
