@@ -997,7 +997,7 @@ const UI = {
     const cosIds = Game.ownedCostumeIds(o);
     const activeId = Game.normCostumeId(o.charId, o.activeCostume);
     const costumeHtml = `
-      <div class="section-title" style="font-size:14px;">服装 <span class="muted" style="font-weight:400;font-size:11px;">· 切换改变属性/外观/招式</span></div>
+      <div class="section-title" style="font-size:14px;">出战服装 <span class="muted" style="font-weight:400;font-size:11px;">· 决定地图行走 / 战斗立绘 / 属性招式</span></div>
       <div class="costume-row">
         ${cosIds.map(cid => {
           const cd = window.GameData.COSTUMES[cid];

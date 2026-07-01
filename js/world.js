@@ -184,11 +184,14 @@ const World = {
     const prog = this.progress(ch.id);
     this.nodes = ch.steps.map((st, i) => {
       const slot = this.SLOTS[i] || this.SLOTS[this.SLOTS.length - 1];
-      const icon = st.icon || (st.type === 'battle' ? '⚔️' : st.type === 'story' ? '💬' : '❔');
+      const fallback = st.type === 'battle' ? '⚔️' : st.type === 'story' ? '💬' : st.type === 'npc' ? '🗣️' : '❔';
+      const icon = st.icon || fallback;   // 对话框用（可为 <img> HTML）
+      // 画布节点标记只能用纯字形：HTML 图标(<img…>)在画布上会被 fillText 当文字画出来 → 用 fallback emoji
+      const glyph = (typeof icon === 'string' && icon.trim()[0] === '<') ? fallback : icon;
       // 确保节点格可走
       const gx = Math.floor(slot.x), gy = Math.floor(slot.y);
       if (this.isSolid(grid[gy][gx])) grid[gy][gx] = 'grass';
-      return { ...st, idx: i, x: slot.x, y: slot.y, icon, done: i < prog };
+      return { ...st, idx: i, x: slot.x, y: slot.y, icon, glyph, done: i < prog };
     });
     this.cur = this.nodes[prog] || null;
 
@@ -499,7 +502,7 @@ const World = {
     }
     ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(sx, sy + 13, 16, 7, 0, 0, 7); ctx.fill();
     ctx.font = '26px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(n.done ? (n.type === 'battle' ? n.icon : '✓') : n.icon, sx, sy);
+    ctx.fillText(n.done ? (n.type === 'battle' ? n.glyph : '✓') : n.glyph, sx, sy);
     if (n === this.cur) {
       const bob = Math.sin(performance.now() / 200) * 3;
       ctx.font = '18px serif'; ctx.fillStyle = '#ffd35a'; ctx.fillText('▼', sx, sy - 28 + bob);
@@ -532,12 +535,17 @@ const World = {
     return names[((i % 8) + 8) % 8];
   },
 
-  // 载入 PixelLab 序列帧（地图用）——出战队每个有 field sprite 的角色都载入
+  // 单位 → sprite 资源 key：当前出战服装若有整套 field sprite 就用它，否则回落 charId。
+  _spriteKey(o) {
+    const reg = (window.BattleUI && window.BattleUI.FIELD_SPRITE) || {};
+    return (o && o.activeCostume && reg[o.activeCostume]) ? o.activeCostume : (o && o.charId);
+  },
+  // 载入 PixelLab 序列帧（地图用）——出战队每个有 field sprite 的（角色×出战服装）都载入
   loadFieldSprite() {
     const reg = (window.BattleUI && window.BattleUI.FIELD_SPRITE) || { lecliss: 'art/05_pixellab/lecliss_field' };
     const team = (window.Game && Game.state && Game.state.team) || [];
     const ids = [];
-    team.forEach(uid => { const o = Game.getOwned && Game.getOwned(uid); if (o && reg[o.charId] && !ids.includes(o.charId)) ids.push(o.charId); });
+    team.forEach(uid => { const o = Game.getOwned && Game.getOwned(uid); const k = this._spriteKey(o); if (o && reg[k] && !ids.includes(k)) ids.push(k); });
     if (!ids.length) ids.push(reg.lecliss ? 'lecliss' : Object.keys(reg)[0]);
     this._leaderCharId = ids[0];
     this.sprites = this.sprites || {};
@@ -565,12 +573,13 @@ const World = {
   buildParty() {
     const team = (window.Game && Game.state && Game.state.team) || [];
     const members = [];
-    team.forEach(uid => { const o = Game.getOwned && Game.getOwned(uid); if (o) members.push(o.charId); });
-    if (!members.length) members.push(this._leaderCharId || 'lecliss');
-    this.player.charId = members[0];                  // 队长 = 复用现有 player（移动/镜头/触发都基于它）
+    team.forEach(uid => { const o = Game.getOwned && Game.getOwned(uid); if (o) members.push({ charId: o.charId, key: this._spriteKey(o) }); });
+    if (!members.length) members.push({ charId: this._leaderCharId || 'lecliss', key: this._leaderCharId || 'lecliss' });
+    this.player.charId = members[0].charId;            // 队长 = 复用现有 player（移动/镜头/触发都基于它）
+    this.player.spriteKey = members[0].key;            // 出战服装决定队长地图立绘
     this.party = [this.player];
     for (let i = 1; i < members.length; i++)
-      this.party.push({ charId: members[i], x: this.player.x, y: this.player.y, face: 'south', dir: 'down', step: 0, color: '#b06bff' });
+      this.party.push({ charId: members[i].charId, spriteKey: members[i].key, x: this.player.x, y: this.player.y, face: 'south', dir: 'down', step: 0, color: '#b06bff' });
     this.trail = [{ x: this.player.x, y: this.player.y }];
   },
 
@@ -604,8 +613,8 @@ const World = {
     // 阴影
     ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(cx, cy + TS * 0.34, TS * 0.26, TS * 0.11, 0, 0, 7); ctx.fill();
 
-    // —— PixelLab 序列帧 ——
-    const sp = (this.sprites && this.sprites[p.charId]) || null;
+    // —— PixelLab 序列帧 ——（按出战服装 key 取图，回落 charId）
+    const sp = (this.sprites && this.sprites[p.spriteKey || p.charId]) || null;
     if (sp && sp.ready) {
       const dir = p.face || 'south';
       const anim = moving ? 'run' : 'idle';
