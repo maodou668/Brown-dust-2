@@ -1305,10 +1305,10 @@ const Main = {
       Object.keys(C).forEach(id => {
         for (let f = 1; f <= 6; f++) { const im = new Image(); im.src = `art/05_pixellab/${id}_field/idle/south/0${f}.png?v=${V}`; }
       });
-      // 常用界面图标(功能/资源/系统/职业/元素) —— UI_ICON 走无 ?v, 后台预热点开各界面直接就有
-      ['quest','codex','forge','medal','story','summon','merc','team','bag','gift','shop','arena','expd','dungeon','event',
-       'coin','gem','awaken','stamina','notice','mail','settings','fullscreen','sound',
-       'cls_warrior','cls_defender','cls_mage','cls_archer','cls_healer'].forEach(n => { const im = new Image(); im.src = `art/05_pixellab/ui/icons/${n}.png`; });
+      // 全部界面图标(163): 拉 manifest 后台全量预热, 进任何界面图标直接就有(无 ?v, 与 UI_ICON/I() 一致)
+      fetch('art/05_pixellab/ui/icons/_manifest.json?v=' + V).then(r => r.json()).then(names => {
+        names.forEach(n => { const im = new Image(); im.src = `art/05_pixellab/ui/icons/${n}.png`; });
+      }).catch(() => {});
     } catch (e) {}
     try { if (BattleUI.loadBattleSprite) BattleUI.loadBattleSprite(); } catch (e) {}
     try { if (BattleUI.preloadSkillFx) BattleUI.preloadSkillFx(); } catch (e) {}

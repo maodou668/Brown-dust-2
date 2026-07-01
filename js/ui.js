@@ -15,7 +15,7 @@ const UI = {
     const f = document.createElement('div'); f.id = 'nav-fade'; document.body.appendChild(f); this._navFade = f;
   },
 
-  /** 过场转场：淡黑(~150ms) → 黑屏中渲染新界面(资源开始加载) → 淡入(~220ms, 期间资源就绪) */
+  /** 过场转场：淡黑 → 黑屏中渲染新界面 → 等该界面图片真正解码完成(封顶700ms)才淡入 → 淡入即完整无 pop-in */
   transition(fn) {
     const f = this._navFade;
     if (!f || document.hidden) { fn(); return; }
@@ -23,9 +23,22 @@ const UI = {
     clearTimeout(this._navT);
     this._navT = setTimeout(() => {
       try { fn(); } catch (e) { console.error(e); }
-      // 双 rAF：确保新内容已插入并触发一次绘制(图片开始解码), 再淡入
-      requestAnimationFrame(() => requestAnimationFrame(() => f.classList.remove('on')));
-    }, 160);
+      this._revealWhenReady(f);
+    }, 150);
+  },
+  /** 等新界面所有 <img> 解码完成再揭幕(已预载的秒过, 未载的最多等封顶时长, 绝不卡死) */
+  _revealWhenReady(f) {
+    const reveal = () => requestAnimationFrame(() => requestAnimationFrame(() => f.classList.remove('on')));
+    const imgs = Array.from(this.screenEl.querySelectorAll('img')).filter(im => !im.complete);
+    if (!imgs.length) { reveal(); return; }
+    let pending = imgs.length, done = false;
+    const finish = () => { if (done) return; done = true; reveal(); };
+    imgs.forEach(im => {
+      const on = () => { if (--pending <= 0) finish(); };
+      im.addEventListener('load', on, { once: true });
+      im.addEventListener('error', on, { once: true });
+    });
+    setTimeout(finish, 700);
   },
 
   /** 编队/阵形里 south idle 精灵的呼吸动画: 单一全局定时器循环推进所有可见精灵的帧 (帧已预加载, 走缓存无闪烁) */
