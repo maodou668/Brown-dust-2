@@ -79,6 +79,7 @@ const CHARACTERS = {
     grow: { hp: 78, atk: 16, def: 5 },
     skills: ['fireball', 'inferno'],
     art: 'art/01_splash/lecliss_bust.png',   // 半身像（佣兵/编队/招募小框）
+    portrait: 'art/05_pixellab/ui/portraits/lecliss.png',   // 像素半身像（小框立绘）
     desc: '操纵烈焰的强大魔女，擅长对敌方全体造成毁灭性火焰伤害。',
   },
   justia: {

@@ -76,10 +76,13 @@ const UI = {
   charAvatar(charId) {
     const c = window.GameData.CHARACTERS[charId];
     const clsIcon = window.GameData.CLASSES[c.cls].icon;  // 职业像素图标 (img html)
-    if (c.art) {
+    // 小框立绘优先用像素半身像(portrait)；无则退回 art；再退职业图标
+    const src = c.portrait || c.art;
+    if (src) {
       // 图片优先：加载失败时把 src 换成职业像素图标(不能往属性里塞 img 标签)
       const fb = `art/05_pixellab/ui/icons/cls_${c.cls}.png`;
-      return `<img class="char-img" src="${c.art}" alt="${c.name}" loading="lazy"
+      const cls = c.portrait ? 'char-img char-portrait-px' : 'char-img';
+      return `<img class="${cls}" src="${src}" alt="${c.name}" loading="lazy"
         onerror="this.onerror=null;this.src='${fb}';this.classList.add('cls-fallback');">`;
     }
     return clsIcon;

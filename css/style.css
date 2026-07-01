@@ -2396,3 +2396,6 @@ button.ac-circle:active { transform: scale(.92); }
 }
 .act-btn:active { transform: scale(.94); }
 /* ============================================================= */
+
+/* 像素半身像(小框立绘): cover + 顶部对齐, 保证脸不被裁 */
+.char-img.char-portrait-px { object-fit: cover; object-position: top center; image-rendering: pixelated; }
