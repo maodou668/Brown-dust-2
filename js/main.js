@@ -237,6 +237,7 @@ const BattleUI = {
     loen:     'art/05_pixellab/loen_field',
     // —— 第二套服装整套 sprite（key = 服装 id；激活该服装时用这套，否则回落 charId）——
     lecliss_frost: 'art/05_pixellab/lecliss_frost_field',
+    olstein_holy:  'art/05_pixellab/olstein_holy_field',
   },
   sprites: {}, spriteState: {}, _spriteRaf: 0,
   // 战斗单位 → sprite 资源 key：当前服装若有整套 sprite 就用它，否则回落 charId。
