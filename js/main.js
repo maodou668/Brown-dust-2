@@ -278,8 +278,8 @@ const BattleUI = {
   FX_BASE: 'art/05_pixellab/fx/',
   // 技能 → 演出时间线（castMs 施法收招、telegraphMs 六芒星预警时长、star 预警特效、burst 爆炸特效）
   SKILL_VFX: {
-    inferno: { castMs: 380, telegraphMs: 460, star: 'hexstar', burst: 'fire_explosion', tint: '#ff6a2a' },
-    cls_arcane: { castMs: 340, telegraphMs: 240, star: 'hexstar', burst: 'arcane_burst', tint: '#a06bff' },
+    inferno: { castMs: 380, telegraphMs: 460, burst: 'fire_explosion', tint: '#ff6a2a' },
+    cls_arcane: { castMs: 340, telegraphMs: 240, burst: 'arcane_burst', tint: '#a06bff' },
     cls_aimshot: { castMs: 300, telegraphMs: 140, burst: 'shadow_pierce', tint: '#b58bff', projectile: true, spriteAngle: 0.785 },
     shadow_volley: { castMs: 460, telegraphMs: 220, burst: 'shadow_pierce', tint: '#9a5cff', projectile: true, spriteAngle: 0.785, repeat: 3, repeatGap: 150 },
     // —— 职业技 VFX ——
@@ -288,28 +288,28 @@ const BattleUI = {
     cls_mend:   { castMs: 340, telegraphMs: 200, burst: 'heal_bloom', tint: '#7affc4' },
     // —— 专属技 VFX（每技能一个专属特效，正确对应）——
     flame_slash:      { castMs: 320, telegraphMs: 160, burst: 'flame_slash', tint: '#ff7a2a' },
-    earth_slam:       { castMs: 360, telegraphMs: 240, star: 'hexstar', burst: 'earth_slam', tint: '#c9a05a' },
-    absolute_zero:    { castMs: 380, telegraphMs: 300, star: 'hexstar', burst: 'ice_nova', tint: '#8fdcff' },
+    earth_slam:       { castMs: 360, telegraphMs: 240, burst: 'earth_slam', tint: '#c9a05a' },
+    absolute_zero:    { castMs: 380, telegraphMs: 300, burst: 'ice_nova', tint: '#8fdcff' },
     galeblade_flurry: { castMs: 300, telegraphMs: 160, burst: 'gale_flurry', tint: '#7ad6ff' },
     oath_aegis:       { castMs: 360, telegraphMs: 220, burst: 'aegis_holy', tint: '#ffd35a' },
     blessing:         { castMs: 340, telegraphMs: 220, burst: 'blessing_aura', tint: '#ffe7a0' },
-    abyssal_prison:   { castMs: 380, telegraphMs: 300, star: 'hexstar', burst: 'water_vortex', tint: '#5a9fff' },
+    abyssal_prison:   { castMs: 380, telegraphMs: 300, burst: 'water_vortex', tint: '#5a9fff' },
     water_lance:      { castMs: 320, telegraphMs: 180, burst: 'water_lance', tint: '#5a9fff', projectile: true, spriteAngle: 0 },
     rooting_shot:     { castMs: 320, telegraphMs: 180, burst: 'root_snare', tint: '#7affc4' },
     zephyr_mend:      { castMs: 320, telegraphMs: 180, burst: 'zephyr_heal', tint: '#9affd6' },
-    grand_heal:       { castMs: 400, telegraphMs: 260, star: 'hexstar', burst: 'grandheal_bloom', tint: '#ffe7a0' },
+    grand_heal:       { castMs: 400, telegraphMs: 260, burst: 'grandheal_bloom', tint: '#ffe7a0' },
     tempest_blade:    { castMs: 320, telegraphMs: 160, burst: 'tempest_slash', tint: '#7ad6ff' },
     mountain_bulwark: { castMs: 400, telegraphMs: 260, burst: 'stone_wall', tint: '#c9a05a' },
     blazing_arrow:    { castMs: 300, telegraphMs: 160, burst: 'fire_arrow', tint: '#ff7a2a', projectile: true, spriteAngle: 0.785 },
     dawnblade:        { castMs: 320, telegraphMs: 160, burst: 'dawn_slash', tint: '#ffe7a0' },
     // —— 第二套服装专属技（复用现有特效素材 + 元素染色，先补齐不缺特效）——
-    frost_nova:       { castMs: 380, telegraphMs: 300, star: 'hexstar', burst: 'ice_nova', tint: '#8fdcff' },
-    radiant_judgment: { castMs: 400, telegraphMs: 260, star: 'hexstar', burst: 'aegis_holy', tint: '#ffe7a0' },
+    frost_nova:       { castMs: 380, telegraphMs: 300, burst: 'ice_nova', tint: '#8fdcff' },
+    radiant_judgment: { castMs: 400, telegraphMs: 260, burst: 'aegis_holy', tint: '#ffe7a0' },
     twin_fang:        { castMs: 320, telegraphMs: 180, burst: 'shadow_pierce', tint: '#c08bff', projectile: true, spriteAngle: 0.785, repeat: 2, repeatGap: 130 },
     brave_charge:     { castMs: 320, telegraphMs: 180, burst: 'cleave_slash', tint: '#ffd97a' },
     mending_song:     { castMs: 380, telegraphMs: 240, burst: 'grandheal_bloom', tint: '#ffe7a0' },
     holy_smite:       { castMs: 340, telegraphMs: 200, burst: 'aegis_holy', tint: '#fff0b0' },
-    tidal_burst:      { castMs: 380, telegraphMs: 300, star: 'hexstar', burst: 'water_vortex', tint: '#5a9fff' },
+    tidal_burst:      { castMs: 380, telegraphMs: 300, burst: 'water_vortex', tint: '#5a9fff' },
     shield_bash:      { castMs: 320, telegraphMs: 180, burst: 'stone_wall', tint: '#c9a05a' },
     venom_shot:       { castMs: 320, telegraphMs: 180, burst: 'shadow_pierce', tint: '#7affc4', projectile: true, spriteAngle: 0.785 },
   },
@@ -627,7 +627,7 @@ const BattleUI = {
     let im = el.querySelector('.u-imprint');
     if (c.imprint && c.imprint.turns > 0) {
       if (!im) { im = UI.el('<span class="u-imprint" title="元素印记：异色命中可引爆"></span>'); el.appendChild(im); }
-      im.textContent = window.GameData.ELEMENTS[c.imprint.element].icon;
+      im.innerHTML = window.GameData.ELEMENTS[c.imprint.element].icon;
     } else if (im) im.remove();
   },
 
