@@ -36,6 +36,44 @@ const BattleUI = {
     }
   },
 
+  // ---------- 特效演武场（沙包假人 · 逐技能实测真·施法动作+投射+命中）----------
+  startArena(idx) {
+    const D = window.GameData;
+    const chars = Object.keys(D.CHARACTERS);
+    if (!this._arenaSnap) this._arenaSnap = { roster: Game.state.roster, team: Game.state.team.slice() };
+    this._arenaChars = chars;
+    this._arenaIdx = ((idx % chars.length) + chars.length) % chars.length;
+    const cid = chars[this._arenaIdx];
+    const owned = Game.makeOwned(cid, 60); owned.uid = 'ARENA';   // 满服装、够高级
+    Game.state.roster = [owned];
+    Game.state.team = ['ARENA'];
+    this.arena = true;
+    const stage = { id: 'arena', name: '特效演武场 · ' + D.CHARACTERS[cid].name,
+      enemies: [{ id: 'troll_king', level: 1 }], mod: { hpMul: 999, atkMul: 0.01 } };
+    this.start(stage, () => {
+      if (this._arenaSnap) { Game.state.roster = this._arenaSnap.roster; Game.state.team = this._arenaSnap.team; this._arenaSnap = null; }
+      this.arena = false; UI.renderHome();
+    });
+    // 顶部控制条：切角色 + 补满SP/清冷却
+    const bar = UI.el(`<div id="arena-bar" style="position:fixed;left:0;right:0;bottom:98px;display:flex;gap:8px;justify-content:center;z-index:60;pointer-events:auto;">
+      <button class="auto-btn" id="ar-prev">◀ 上一个</button>
+      <button class="auto-btn" id="ar-name" disabled style="opacity:1;">${D.CHARACTERS[cid].name}</button>
+      <button class="auto-btn" id="ar-next">下一个 ▶</button>
+      <button class="auto-btn on" id="ar-refill">补满SP · 清冷却</button>
+    </div>`);
+    this.root.appendChild(bar);
+    bar.querySelector('#ar-prev').onclick = () => this.startArena(this._arenaIdx - 1);
+    bar.querySelector('#ar-next').onclick = () => this.startArena(this._arenaIdx + 1);
+    bar.querySelector('#ar-refill').onclick = () => this.arenaRefill();
+    this.arenaRefill();
+  },
+  arenaRefill() {
+    if (!Battle.combatants) return;
+    Battle.combatants.forEach(c => { if (c.side === 'ally') { c.sp = 999; c.cooldowns = {}; c.hp = c.maxHp; } });
+    if (!this.busy && !Battle.finished) this.beginTurn();
+    this.refresh();
+  },
+
   buildScreen() {
     const old = document.getElementById('battle-screen');
     if (old) old.remove();
@@ -1247,6 +1285,9 @@ const Main = {
 
     // 资源预加载 + 加载页：等关键美术(立绘/头像/视频)就绪再揭幕，避免"蹦图"
     this.bootReveal();
+
+    // 特效演武场：index.html?arena —— 沙包假人 + 逐技能实测(真·施法动作+投射+命中)
+    if (/[?&]arena\b/.test(location.search)) setTimeout(() => window.BattleUI && BattleUI.startArena(0), 800);
   },
 
   // ---------- 启动加载页 / 资源预加载 ----------
