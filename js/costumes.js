@@ -241,9 +241,23 @@ window.GameData.COSTUME_POOL = COSTUME_POOL;
 // ============================================================
 (function buildKits() {
   const iconOf = { fire: 'sk_inferno', water: 'sk_frost', wind: 'sk_gale', earth: 'sk_rockguard', light: 'sk_smite', dark: 'sk_shadow', heal: 'sk_healwave', shield: 'sk_taunt', buff: 'sk_blessing' };
-  const burstOf = { fire: 'fire_explosion', water: 'water_vortex', wind: 'gale_flurry', earth: 'earth_slam', light: 'aegis_holy', dark: 'shadow_pierce' };
   const tintOf = { fire: '#ff6a2a', water: '#5a9fff', wind: '#7ad6ff', earth: '#c9a05a', light: '#ffe7a0', dark: '#a06bff' };
-  const burstByEffect = { heal: 'heal_bloom', shield: 'guard_barrier', buffAtk: 'blessing_aura' };
+  // 复用现有 22 个 fx：按 元素×形态(投射/单体/一排/全体 · 治疗/护盾/增益) 选最贴的一个，尽量拉开差异、零新生成
+  function fxFor(el, target, effect, proj) {
+    if (effect === 'heal') return target === 'allyAll' ? (el === 'wind' ? 'zephyr_heal' : 'grandheal_bloom') : 'heal_bloom';
+    if (effect === 'shield') return el === 'light' ? 'aegis_holy' : (el === 'earth' ? 'stone_wall' : 'guard_barrier');
+    if (effect === 'buffAtk') return 'blessing_aura';
+    const aoe = target === 'enemyAll';
+    const M = {
+      fire:  proj ? 'fire_arrow'    : (aoe ? 'fire_explosion' : 'flame_slash'),
+      water: proj ? 'water_lance'   : (aoe ? 'water_vortex'   : 'ice_nova'),
+      wind:  proj ? 'tempest_slash' : (aoe ? 'gale_flurry'    : 'tempest_slash'),
+      earth: proj ? 'root_snare'    : 'earth_slam',
+      light: proj ? 'dawn_slash'    : (aoe ? 'aegis_holy'     : 'dawn_slash'),
+      dark:  proj ? 'shadow_pierce' : (aoe ? 'shadow_burst'   : 'shadow_pierce'),
+    };
+    return M[el] || 'arcane_burst';
+  }
   const tgtName = { enemySingle: '单体', enemyRow: '一排', enemyAll: '敌方全体', allySingle: '单个友方', allyAll: '全体友方', self: '自身' };
   const VFX = {};
   function descOf(p, target, effect, opts) {
@@ -264,7 +278,7 @@ window.GameData.COSTUME_POOL = COSTUME_POOL;
     if (opts.extra) spec.extra = opts.extra;
     if (opts.duration) spec.duration = opts.duration;
     const sk = B.make(spec); sk.desc = descOf(sk.power, target, effect, opts); SK[id] = sk;
-    VFX[id] = { castMs: 340, telegraphMs: 200, burst: burstByEffect[effect] || burstOf[element] || 'arcane_burst', tint: tintOf[element] || '#ffffff' };
+    VFX[id] = { castMs: 340, telegraphMs: 200, burst: fxFor(element, target, effect, !!opts.pierce), tint: tintOf[element] || '#ffffff' };
     if (opts.pierce) { VFX[id].projectile = true; VFX[id].spriteAngle = 0.785; }
     return id;
   }
