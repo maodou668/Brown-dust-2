@@ -1288,12 +1288,16 @@ const Main = {
       const sW = document.createElement('source'); sW.src = base + '.webm?v=' + V; sW.type = 'video/webm';
       v.appendChild(sM); v.appendChild(sW); v.load();
     });
-    const all = [...imgs.map(loadImg), ...vids.map(loadVid)];
+    // UI 框架贴图(border-image, CSS 里 url 不带 ?v) → 用 rawLoad 保持 URL 完全一致命中缓存, 消灭边框 pop-in
+    const RAW_UI = ['panel','panel_header','button','btn_gold','tab_on','tab_off','bar_frame','bar_slim','frame_r','frame_sr','frame_ssr','avatar_frame']
+      .map(n => `art/05_pixellab/ui/${n}.png`);
+    const rawLoad = (src) => new Promise((res) => { const im = new Image(); im.onload = im.onerror = () => res(); im.src = src; });
+    const all = [...imgs.map(loadImg), ...RAW_UI.map(rawLoad), ...vids.map(loadVid)];
     // 全局超时：最长等 16s，无论如何揭幕，绝不卡死
     return Promise.race([Promise.all(all), new Promise((r) => setTimeout(r, 16000))]);
   },
 
-  /** 后台预热（不阻塞揭幕）：编队 south idle 呼吸帧(01-06) + 战斗序列帧 + 技能特效 */
+  /** 后台预热（不阻塞揭幕）：编队 south idle 呼吸帧(01-06) + 常用 UI 图标 + 战斗序列帧 + 技能特效 */
   warmSecondary() {
     try {
       const V = window.ASSET_VER || '';
@@ -1301,6 +1305,10 @@ const Main = {
       Object.keys(C).forEach(id => {
         for (let f = 1; f <= 6; f++) { const im = new Image(); im.src = `art/05_pixellab/${id}_field/idle/south/0${f}.png?v=${V}`; }
       });
+      // 常用界面图标(功能/资源/系统/职业/元素) —— UI_ICON 走无 ?v, 后台预热点开各界面直接就有
+      ['quest','codex','forge','medal','story','summon','merc','team','bag','gift','shop','arena','expd','dungeon','event',
+       'coin','gem','awaken','stamina','notice','mail','settings','fullscreen','sound',
+       'cls_warrior','cls_defender','cls_mage','cls_archer','cls_healer'].forEach(n => { const im = new Image(); im.src = `art/05_pixellab/ui/icons/${n}.png`; });
     } catch (e) {}
     try { if (BattleUI.loadBattleSprite) BattleUI.loadBattleSprite(); } catch (e) {}
     try { if (BattleUI.preloadSkillFx) BattleUI.preloadSkillFx(); } catch (e) {}
@@ -1362,6 +1370,10 @@ const Main = {
   },
 
   switchScreen(name) {
+    // 过场淡黑转场：淡黑期间渲染并加载新界面资源, 淡入时已就绪 → 无空白 pop-in
+    UI.transition(() => this._applyScreen(name));
+  },
+  _applyScreen(name) {
     this.current = name;
     if (window.Sound) Sound.bgm('home');
     const isHome = name === 'home';

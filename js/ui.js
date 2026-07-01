@@ -11,6 +11,21 @@ const UI = {
     this.modalRoot = document.getElementById('modal-root');
     this._initIconSwap();
     this.startFieldAnimator();
+    // 过场淡黑遮罩(切界面用)
+    const f = document.createElement('div'); f.id = 'nav-fade'; document.body.appendChild(f); this._navFade = f;
+  },
+
+  /** 过场转场：淡黑(~150ms) → 黑屏中渲染新界面(资源开始加载) → 淡入(~220ms, 期间资源就绪) */
+  transition(fn) {
+    const f = this._navFade;
+    if (!f || document.hidden) { fn(); return; }
+    f.classList.add('on');
+    clearTimeout(this._navT);
+    this._navT = setTimeout(() => {
+      try { fn(); } catch (e) { console.error(e); }
+      // 双 rAF：确保新内容已插入并触发一次绘制(图片开始解码), 再淡入
+      requestAnimationFrame(() => requestAnimationFrame(() => f.classList.remove('on')));
+    }, 160);
   },
 
   /** 编队/阵形里 south idle 精灵的呼吸动画: 单一全局定时器循环推进所有可见精灵的帧 (帧已预加载, 走缓存无闪烁) */

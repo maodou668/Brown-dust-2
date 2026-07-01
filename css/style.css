@@ -2403,3 +2403,7 @@ button.ac-circle:active { transform: scale(.92); }
 /* 编队/阵形: 游戏内 south idle 呼吸精灵 (居中, 像素放大) */
 .char-field-sprite { width: 100%; height: 100%; object-fit: contain; object-position: center center; image-rendering: pixelated; display: block; }
 .ts-art, .r2-fs-art, .rc-art { display: flex; align-items: center; justify-content: center; }
+
+/* 过场淡黑转场遮罩 (切界面: 淡黑→黑屏渲染并加载→淡入) */
+#nav-fade { position: fixed; inset: 0; z-index: 9000; background: #0e0b14; opacity: 0; pointer-events: none; transition: opacity .16s ease; }
+#nav-fade.on { opacity: 1; }
