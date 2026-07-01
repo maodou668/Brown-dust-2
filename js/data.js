@@ -88,6 +88,7 @@ const CHARACTERS = {
     base: { hp: 1500, atk: 100, def: 130, spd: 70, crit: 0.10 },
     grow: { hp: 140, atk: 9, def: 12 },
     skills: ['taunt_shield', 'holy_smite'],
+    portrait: 'art/05_pixellab/ui/portraits/justia.png',   // 像素半身像（小框立绘）
     desc: '誓死守护同伴的圣骑士，能为全队提供护盾并吸引敌方火力。',
   },
   seir: {
