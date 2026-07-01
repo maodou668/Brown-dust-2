@@ -186,9 +186,6 @@ const UI = {
     const s = Game.state;
     Game.syncStamina();
     const cleared = s.cleared.length, total = window.GameData.STAGES.length;
-    const lead = s.team[0] && Game.getOwned(s.team[0]);
-    const leadAvatar = lead ? this.charAvatar(lead.charId) : '🗡️';
-    const leadName = lead ? window.GameData.CHARACTERS[lead.charId].name : '未编队';
     // 左上集群（系统/养成小入口）
     const leftCluster = [
       { go: 'tasks', icon: '📋', label: '任务', dot: Game.tasksAnyClaimable() ? '!' : '' },
@@ -250,9 +247,6 @@ const UI = {
           <div class="lb-funcs">${bottomFuncs.map(funcBtn).join('')}</div>
           <button class="lb-cta" data-go="gamecards">
             <span class="cta-go">出 战</span><span class="cta-sub">游戏卡 · 主线 ${cleared}/${total}</span>
-          </button>
-          <button class="lb-thumb" data-go="roster" title="${leadName}">
-            <span class="lt-art">${leadAvatar}</span>
           </button>
         </div>
       </div>`;
