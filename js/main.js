@@ -15,6 +15,9 @@ const BattleUI = {
 
   start(stage, onExit) {
     this.stage = stage;
+    // 合并独立技能的兜底 VFX（仅补未登记的 id，保留已精调的）
+    const ex = window.GameData && window.GameData.SKILL_VFX_EXTRA;
+    if (ex) Object.keys(ex).forEach(k => { if (!this.SKILL_VFX[k]) this.SKILL_VFX[k] = ex[k]; });
     this.onExitCb = onExit || null;
     this.selectedSkill = null;
     this.busy = false;

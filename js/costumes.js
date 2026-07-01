@@ -199,6 +199,13 @@ const ALTS = {
   olstein_holy: { charId: 'olstein', costumeName: '圣盾', rarity: 5, element: 'light', color: '#ffe7b0',
     mul: { hp: 1.05, atk: 1.1, def: 1.1 }, signature: 'radiant_judgment', second: 'mountain_bulwark',
     desc: '受圣光加护的不动壁垒，攻守兼备。' },
+  // —— 补齐第二套服装（格蕾西亚 / 莉亚特丽丝，原先缺失，导致技能数不齐）——
+  glacia_blizzard: { charId: 'glacia', costumeName: '暴雪', rarity: 5, element: 'water', color: '#bfe6ff',
+    mul: { hp: 1.05, atk: 1.12, def: 1.0 }, signature: 'blizzard', second: 'frost_arrow',
+    desc: '召唤极北暴雪、冰封万物的霜雪女王。' },
+  liatris_scorch: { charId: 'liatris', costumeName: '焦土', rarity: 5, element: 'fire', color: '#ff6a3a',
+    mul: { hp: 0.95, atk: 1.18, def: 0.95 }, signature: 'scorch_rain', second: 'oil_arrow',
+    desc: '所过之处尽成焦土的烈焰游猎。' },
 };
 
 // ---- 生成全部服装：每角色「初始服装」+ 额外服装 ----
@@ -253,3 +260,79 @@ Object.values(COSTUMES).forEach(c => { (COSTUME_POOL[c.rarity] || (COSTUME_POOL[
 
 window.GameData.COSTUMES = COSTUMES;
 window.GameData.COSTUME_POOL = COSTUME_POOL;
+
+// ============================================================
+//  技能全独立化（审核通过设计表）：16 角色 × 4 技，全互不重复、无职业通用技。
+//  每套服装 2 技（1 便宜节奏技 + 1 大招）。在 COSTUMES 建好后重写各套 skills，
+//  注册全部 64 个技能 + 兜底 VFX（VFX 后补：先按元素/效果复用现有素材）。
+// ============================================================
+(function buildKits() {
+  const iconOf = { fire: 'sk_inferno', water: 'sk_frost', wind: 'sk_gale', earth: 'sk_rockguard', light: 'sk_smite', dark: 'sk_shadow', heal: 'sk_healwave', shield: 'sk_taunt', buff: 'sk_blessing' };
+  const burstOf = { fire: 'fire_explosion', water: 'water_vortex', wind: 'gale_flurry', earth: 'earth_slam', light: 'aegis_holy', dark: 'shadow_pierce' };
+  const tintOf = { fire: '#ff6a2a', water: '#5a9fff', wind: '#7ad6ff', earth: '#c9a05a', light: '#ffe7a0', dark: '#a06bff' };
+  const burstByEffect = { heal: 'heal_bloom', shield: 'guard_barrier', buffAtk: 'blessing_aura' };
+  const tgtName = { enemySingle: '单体', enemyRow: '一排', enemyAll: '敌方全体', allySingle: '单个友方', allyAll: '全体友方', self: '自身' };
+  const VFX = {};
+  function descOf(p, target, effect, opts) {
+    const pc = Math.round(p * 100), t = tgtName[target] || '目标';
+    const rider = opts.inflict ? ({ burn: '并灼烧', poison: '并中毒', stun: '并眩晕', silence: '并沉默' }[opts.inflict.type] || '') : (opts.extra && opts.extra.type === 'taunt' ? '并嘲讽自身' : (opts.extra && opts.extra.type === 'debuffDef' ? '并降低其防御' : ''));
+    if (effect === 'heal') return `为${t}恢复 ${pc}% 攻击力的生命。`;
+    if (effect === 'shield') return `为${t}张开 ${pc}% 攻击力的护盾${opts.extra && opts.extra.type === 'taunt' ? '并嘲讽敌人' : ''}。`;
+    if (effect === 'buffAtk') return `为${t}提升 ${pc}% 攻击力。`;
+    return `对${t}造成 ${pc}% 攻击力的伤害${rider}。`;
+  }
+  function reg(id, name, target, effect, sp, element, opts) {
+    opts = opts || {};
+    const ik = (effect === 'heal') ? 'heal' : (effect === 'shield') ? 'shield' : (effect.indexOf('buff') === 0) ? 'buff' : element;
+    const spec = { name, target, effect, sp, icon: I(iconOf[ik] || 'sk_slash') };
+    if (opts.pierce) spec.pierce = true;
+    if (opts.knockback) spec.knockback = true;
+    if (opts.inflict) spec.inflict = opts.inflict;
+    if (opts.extra) spec.extra = opts.extra;
+    if (opts.duration) spec.duration = opts.duration;
+    const sk = B.make(spec); sk.desc = descOf(sk.power, target, effect, opts); SK[id] = sk;
+    VFX[id] = { castMs: 340, telegraphMs: 200, burst: burstByEffect[effect] || burstOf[element] || 'arcane_burst', tint: tintOf[element] || '#ffffff' };
+    if (opts.pierce) { VFX[id].projectile = true; VFX[id].spriteAngle = 0.785; }
+    return id;
+  }
+  const D2 = { type: 'debuffDef', power: 0.2, duration: 2 };
+  const KIT = {
+    base_lecliss: [['flame_bolt', '烈焰弹', 'enemySingle', 'damage', 2, 'fire', { inflict: { type: 'burn', turns: 2, power: 0.4 } }], ['inferno', '炼狱业火', 'enemyAll', 'damage', 4, 'fire', { inflict: { type: 'burn', turns: 2, power: 0.5 } }]],
+    lecliss_frost: [['ice_lance', '冰棱刺', 'enemySingle', 'damage', 2, 'water', { pierce: true }], ['frost_nova', '霜冻新星', 'enemyAll', 'damage', 4, 'water', { inflict: { type: 'stun', turns: 1 } }]],
+    base_justia: [['shield_thrust', '盾突', 'enemySingle', 'damage', 2, 'light', { extra: { type: 'taunt' } }], ['oath_aegis', '誓约圣盾', 'allyAll', 'shield', 3, 'light', { extra: { type: 'taunt' } }]],
+    justia_blade: [['verdict_slash', '裁决斩', 'enemySingle', 'damage', 2, 'light', { extra: D2 }], ['radiant_judgment', '圣裁光刃', 'enemyAll', 'damage', 4, 'light', {}]],
+    base_seir: [['shadow_arrow', '暗影箭', 'enemySingle', 'damage', 2, 'dark', { pierce: true }], ['shadow_volley', '暗影连射', 'enemySingle', 'damage', 4, 'dark', { pierce: true }]],
+    seir_twin: [['twin_fang', '双牙连射', 'enemySingle', 'damage', 2, 'dark', { pierce: true }], ['hunter_mark', '猎杀标记', 'enemySingle', 'damage', 3, 'dark', { extra: { type: 'debuffDef', power: 0.25, duration: 2 } }]],
+    base_rou: [['mend_light', '愈光术', 'allySingle', 'heal', 2, 'light', {}], ['grand_heal', '圣光普照', 'allyAll', 'heal', 4, 'light', {}]],
+    rou_battle: [['banner_thrust', '战旗突刺', 'enemyRow', 'damage', 2, 'light', {}], ['holy_smite', '圣光裁决', 'enemyRow', 'damage', 3, 'light', {}]],
+    base_helena: [['galeblade_flurry', '疾风连斩', 'enemyRow', 'damage', 2, 'wind', { knockback: true }], ['wind_dance', '风刃乱舞', 'enemyAll', 'damage', 4, 'wind', {}]],
+    helena_storm: [['dash_slash', '突进斩', 'enemySingle', 'damage', 2, 'wind', { knockback: true }], ['storm_charge', '风暴突击', 'enemyRow', 'damage', 3, 'wind', { knockback: true }]],
+    base_diana: [['water_lance', '水矛', 'enemySingle', 'damage', 2, 'water', { pierce: true, extra: D2 }], ['abyssal_prison', '深渊水牢', 'enemyAll', 'damage', 4, 'water', { extra: D2 }]],
+    diana_tide: [['tide_surge', '潮涌', 'enemyRow', 'damage', 2, 'water', {}], ['tidal_burst', '怒涛', 'enemyAll', 'damage', 4, 'water', {}]],
+    base_garcia: [['rock_fist', '岩拳', 'enemySingle', 'damage', 2, 'earth', { inflict: { type: 'stun', turns: 1 } }], ['mountain_bulwark', '山岳壁垒', 'allyAll', 'shield', 4, 'earth', {}]],
+    garcia_iron: [['steel_bash', '钢铁盾击', 'enemySingle', 'damage', 2, 'earth', { extra: D2 }], ['iron_roar', '铁壁怒吼', 'allyAll', 'shield', 3, 'earth', {}]],
+    base_teried: [['flame_slash', '烈焰斩', 'enemySingle', 'damage', 2, 'fire', { inflict: { type: 'burn', turns: 2, power: 0.5 } }], ['breaker_strike', '破魔重斩', 'enemyRow', 'damage', 3, 'fire', { extra: D2 }]],
+    teried_knight: [['dawn_thrust', '曙光刺', 'enemySingle', 'damage', 2, 'light', {}], ['dawn_judgment', '黎明审判', 'enemyRow', 'damage', 3, 'light', { knockback: true }]],
+    base_lia: [['rooting_shot', '缚地穿杨', 'enemySingle', 'damage', 2, 'earth', { pierce: true, inflict: { type: 'stun', turns: 1 } }], ['earth_rain', '大地箭雨', 'enemyAll', 'damage', 4, 'earth', {}]],
+    lia_twin: [['gale_shot', '疾风连射', 'enemySingle', 'damage', 2, 'wind', { pierce: true }], ['hunt_storm', '狩猎风暴', 'enemyRow', 'damage', 3, 'wind', {}]],
+    base_mina: [['heal_potion', '治愈药剂', 'allySingle', 'heal', 2, 'wind', {}], ['zephyr_mend', '微风治愈', 'allyAll', 'heal', 3, 'wind', {}]],
+    mina_combat: [['venom_shot', '淬毒之箭', 'enemySingle', 'damage', 2, 'wind', { pierce: true, inflict: { type: 'poison', turns: 3, power: 0.45 } }], ['blast_potion', '爆裂药剂', 'enemyAll', 'damage', 4, 'wind', { extra: D2 }]],
+    base_refithea: [['holy_mend', '圣愈术', 'allySingle', 'heal', 2, 'light', {}], ['revive_light', '复苏之光', 'allyAll', 'heal', 4, 'light', {}]],
+    refithea_song: [['mending_song', '治愈之歌', 'allyAll', 'heal', 3, 'light', {}], ['hymn_praise', '圣咏赞歌', 'allyAll', 'buffAtk', 3, 'light', { duration: 3 }]],
+    base_rigenette: [['tempest_blade', '苍穹一闪', 'enemySingle', 'damage', 2, 'wind', { knockback: true }], ['sky_dance', '天翔剑舞', 'enemyRow', 'damage', 3, 'wind', {}]],
+    rigenette_sword: [['iaido_slash', '居合斩', 'enemySingle', 'damage', 2, 'wind', {}], ['myriad_blades', '万剑归宗', 'enemyAll', 'damage', 4, 'wind', {}]],
+    base_olstein: [['shield_hammer', '盾锤', 'enemySingle', 'damage', 2, 'earth', { inflict: { type: 'stun', turns: 1 } }], ['immovable_wall', '不动壁垒', 'allyAll', 'shield', 4, 'earth', {}]],
+    olstein_holy: [['holy_charge', '圣盾突击', 'enemySingle', 'damage', 2, 'light', { extra: { type: 'taunt' } }], ['radiant_wall', '光辉护壁', 'allyAll', 'shield', 3, 'light', {}]],
+    base_glacia: [['frost_spike', '冰锥术', 'enemySingle', 'damage', 2, 'water', { pierce: true }], ['absolute_zero', '绝对零度', 'enemyAll', 'damage', 4, 'water', { inflict: { type: 'stun', turns: 1 } }]],
+    glacia_blizzard: [['frost_arrow', '寒霜箭', 'enemyRow', 'damage', 2, 'water', {}], ['blizzard', '暴风雪', 'enemyAll', 'damage', 4, 'water', { extra: D2 }]],
+    base_liatris: [['blazing_arrow', '红莲烈箭', 'enemySingle', 'damage', 2, 'fire', { pierce: true, inflict: { type: 'burn', turns: 2, power: 0.4 } }], ['flame_volley', '烈焰爆矢', 'enemyAll', 'damage', 4, 'fire', {}]],
+    liatris_scorch: [['oil_arrow', '火油箭', 'enemyRow', 'damage', 2, 'fire', { inflict: { type: 'burn', turns: 2, power: 0.4 } }], ['scorch_rain', '焦土箭雨', 'enemyAll', 'damage', 3, 'fire', { inflict: { type: 'burn', turns: 2, power: 0.4 } }]],
+    base_loen: [['dawnblade', '黎明之刃', 'enemySingle', 'damage', 2, 'light', { knockback: true }], ['daybreak_slash', '破晓斩', 'enemyRow', 'damage', 3, 'light', {}]],
+    loen_paladin: [['temple_thrust', '圣殿突刺', 'enemySingle', 'damage', 2, 'light', { extra: D2 }], ['divine_verdict', '神圣裁决', 'enemyAll', 'damage', 4, 'light', {}]],
+  };
+  Object.entries(KIT).forEach(([cid, pair]) => {
+    const ids = pair.map(a => reg.apply(null, a));
+    if (COSTUMES[cid]) { COSTUMES[cid].skills = ids; COSTUMES[cid].signature = ids[1]; }
+  });
+  window.GameData.SKILL_VFX_EXTRA = VFX;
+})();
