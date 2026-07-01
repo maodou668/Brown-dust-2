@@ -40,14 +40,14 @@
   },
   "run": {
    "frames": {
-    "south": 5,
-    "south-east": 5,
-    "east": 5,
+    "south": 6,
+    "south-east": 6,
+    "east": 6,
     "north-east": 6,
     "north": 6,
     "north-west": 6,
-    "west": 5,
-    "south-west": 5
+    "west": 6,
+    "south-west": 6
    }
   },
   "cast_light": {
