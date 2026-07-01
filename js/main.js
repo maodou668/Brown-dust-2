@@ -499,8 +499,13 @@ const BattleUI = {
   runSkillVfx(caster, skillId, vfx) {
     this._fxFlushed = false; this._fxDone = false;
     // 从缓存的伤害事件推断「被命中的敌人」，特效就打在它们身上
-    const hits = [...new Set((this._fxDefer || []).filter(e => e.type === 'damage' && e.target && e.target.side === 'enemy' && !e.dot).map(e => e.target.uid))];
-    if (!hits.length) {   // 非伤害技（治疗/护盾等）：无需爆炸演出，稍后直接 flush 收尾
+    let hits = [...new Set((this._fxDefer || []).filter(e => e.type === 'damage' && e.target && e.target.side === 'enemy' && !e.dot).map(e => e.target.uid))];
+    if (!hits.length) {
+      // 支援技（治疗/护盾/增益）：治疗事件有受益目标 → 特效打在受益者身上；纯护盾/增益无目标事件 → 打在施法者身上
+      hits = [...new Set((this._fxDefer || []).filter(e => e.type === 'heal' && e.target).map(e => e.target.uid))];
+      if (!hits.length && caster) hits = [caster.uid];
+    }
+    if (!hits.length) {   // 仍无目标：直接 flush 收尾
       setTimeout(() => this.finishSkill(), this.d(280));
       return;
     }
