@@ -39,6 +39,18 @@ if (tool === 'mcp__pixellab__animate_character') {
   }
 }
 
+// ── 规则5：立绘/半身像禁「正面证件照」——描述必须显式带角度 ─────────
+// 教训：2026-07 三套服装半身像里两套出成正面证件照返工（姿势由 description 文字
+// 驱动，不写角度词默认正对镜头）。硬性三件套见说明书·美术 §F：身份 + 角度 + 性格 pose。
+if (tool === 'mcp__pixellab__create_1_direction_object') {
+  const d = String(ti.description || '');
+  if (/portrait|bust|half[- ]body|头像|半身/i.test(d)
+    && !/three[- ]quarter|3\/4|turned|angled|side view|profile|looking (to|over|aside|into)/i.test(d)) {
+    deny('🚫闸门：半身像/立绘的 description 缺角度措辞（three-quarter / head turned / angled…）。' +
+      '正面证件照死板禁用——必须带角度 + 按角色性格配 pose。见说明书·美术 §F 硬性三件套。');
+  }
+}
+
 if (tool === 'Bash') {
   const cmd = String(ti.command || '');
 
