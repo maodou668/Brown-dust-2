@@ -11777,7 +11777,7 @@ const BattleUI = {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
       if (!c.alive) return;
       const st = this.spriteState[uid] || (this.spriteState[uid] = { anim: 'idle', start: 0 });
-      const dir = 'north';
+      const dir = c.side === 'enemy' ? 'south' : 'north';   // 敌方角色单位面向镜头
       let anim = st.anim, frame = 0;
       const isCast = anim && anim.indexOf('cast') === 0;
       const castArr = isCast && sp.imgs[anim] && sp.imgs[anim][dir];
@@ -11788,7 +11788,7 @@ const BattleUI = {
           if (frame >= castArr.length) { st.anim = 'idle'; anim = 'idle'; }
         } else { st.anim = 'idle'; anim = 'idle'; }           // 无施法帧→退回 idle
       }
-      const arr = (sp.imgs[anim] && sp.imgs[anim][dir] && sp.imgs[anim][dir].length) ? sp.imgs[anim][dir] : sp.imgs.idle.north;
+      const arr = (sp.imgs[anim] && sp.imgs[anim][dir] && sp.imgs[anim][dir].length) ? sp.imgs[anim][dir] : sp.imgs.idle[dir];
       if (anim === 'idle') frame = Math.floor(now / 1000 * ((sp.man.fps && sp.man.fps.idle) || 6)) % arr.length;
       const im = arr[Math.min(frame, arr.length - 1)], bb = sp.man.bbox;
       const scale = Math.min(W / bb.w, H / bb.h), dw = bb.w * scale, dh = bb.h * scale;
@@ -12089,9 +12089,11 @@ const BattleUI = {
 
   unitHtml(c, side, pos, idx, count) {
     const isAlly = c.side === 'ally';
-    const charDef = isAlly ? window.GameData.CHARACTERS[c.charId] : window.GameData.ENEMIES[c.charId];
-    const fallback = isAlly ? window.GameData.CLASSES[charDef.cls].icon : '👹';
-    const icon = (isAlly && this.FIELD_SPRITE[c.charId])
+    // 角色型单位（我方 & char 型敌人如剧情缉捕兵）都走序列帧；纯怪物才用怪物图/占位
+    const isCharUnit = !!window.GameData.CHARACTERS[c.charId];
+    const charDef = isCharUnit ? window.GameData.CHARACTERS[c.charId] : window.GameData.ENEMIES[c.charId];
+    const fallback = isCharUnit ? window.GameData.CLASSES[charDef.cls].icon : '👹';
+    const icon = (isCharUnit && this.FIELD_SPRITE[this.spriteKey(c)])
       ? `<canvas class="u-sprite" data-uid="${c.uid}"></canvas>`
       : ((charDef && charDef.art)
         ? `<img class="u-img" src="${charDef.art}" alt="" onerror="this.outerHTML='${fallback}'">`
