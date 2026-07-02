@@ -140,12 +140,55 @@ const SCRIPTS = {
       { text: '报酬一栏写着：全村凑的，一共三十七银，先付一半。' },
     ]},
 
-    // 幕1 · 场景演出：白天进村
-    { op: 'scene', bg: 'town', bgImg: 'art/06_story/scenes/village_day.png',
+    // 幕1 · 场景演出：白天进村（Diorama 立体舞台）
+    { op: 'scene', bg: 'town',
+      stage: {
+        w: 1600, h: 900, zoom: 1.1,
+        sky: ['#93a9bd', '#d6d8c9'],
+        mute: 0.32, tone: 'rgba(188,180,152,.07)',
+        ground: {
+          sheet: 'art/06_story/stage/village_tiles.png',
+          lut:   'art/06_story/stage/village_tiles_lut.json',
+          tile: 32, y: 24,
+          // 角点网格：'1'=草地 '0'=泥路。横贯土路（窄带）+ 通村内的支路
+          grid: [
+            '11111111111111111',
+            '11111111111111111',
+            '11111111110001111',
+            '11111111110001111',
+            '11111111110001111',
+            '11111111110001111',
+            '00000000000000000',
+            '00000000000000000',
+            '11111111111111111',
+            '11111111111111111',
+          ],
+        },
+        props: [
+          // 远景树线（小尺寸，压出纵深）
+          { img: 'art/06_story/stage/prop_oak.png', x: 5,  y: 29, s: 0.5 },
+          { img: 'art/06_story/stage/prop_oak.png', x: 18, y: 27, s: 0.42 },
+          { img: 'art/06_story/stage/prop_oak.png', x: 34, y: 28, s: 0.46 },
+          { img: 'art/06_story/stage/prop_oak.png', x: 55, y: 26, s: 0.38 },
+          { img: 'art/06_story/stage/prop_oak.png', x: 74, y: 28, s: 0.44 },
+          { img: 'art/06_story/stage/prop_oak.png', x: 90, y: 27, s: 0.4 },
+          { img: 'art/06_story/stage/prop_oak.png', x: 99, y: 31, s: 0.55 },
+          // 中景：两栋屋子 + 村口大树 + 水井
+          { img: 'art/06_story/stage/prop_house_timber.png', x: 18, y: 64, s: 1.25 },
+          { img: 'art/06_story/stage/prop_house_stone.png',  x: 84, y: 61, s: 1.35 },
+          { img: 'art/06_story/stage/prop_oak.png',  x: 44, y: 56, s: 1.3 },
+          { img: 'art/06_story/stage/prop_well.png', x: 58, y: 60, s: 0.9 },
+          // 前景栅栏（挡在小人身前，制造层次）
+          { img: 'art/06_story/stage/prop_fence.png', x: 10, y: 96, s: 1.15 },
+          { img: 'art/06_story/stage/prop_fence.png', x: 27, y: 97, s: 1.15 },
+          { img: 'art/06_story/stage/prop_fence.png', x: 74, y: 95, s: 1.15 },
+        ],
+        actorScale: 1.9,
+      },
       actors: {
-        teried:   { sprite: 'teried',   x: 6,  y: 82, dir: 'east' },
-        mina:     { sprite: 'mina',     x: 1,  y: 86, dir: 'east' },
-        villager: { sprite: 'villager', x: 62, y: 83, dir: 'west' },
+        teried:   { sprite: 'teried',   x: 6,  y: 78, dir: 'east' },
+        mina:     { sprite: 'mina',     x: 1,  y: 82, dir: 'east' },
+        villager: { sprite: 'villager', x: 62, y: 79, dir: 'west' },
       },
       steps: [
         { t: 'narr', text: '灰蒙蒙的上午。鸡在栅栏边刨食，烟囱都冒着烟。看上去是个活的村子。' },

@@ -1323,6 +1323,9 @@ const Main = {
     // 美术检视台：index.html?artlab —— 任意角色×服装：走动看八向 idle/run + 放施法动作 + 看立绘
     if (/[?&]artlab\b/.test(location.search)) setTimeout(() => window.ArtLab && ArtLab.open(), 800);
     if (/[?&]prologue\b/.test(location.search)) setTimeout(() => window.Director && Director.play('prologue', () => UI.renderHome()), 900);
+    // 剧情调试：index.html?play=chapter1 —— 直跳任意章节
+    const mPlay = location.search.match(/[?&]play=([a-z0-9_]+)/i);
+    if (mPlay) setTimeout(() => window.Director && Director.play(mPlay[1], () => UI.renderHome()), 900);
   },
 
   // ---------- 启动加载页 / 资源预加载 ----------
