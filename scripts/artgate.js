@@ -146,6 +146,9 @@ async function montage(anim, frame, outName) {
   L.push('cast 动作: ' + (casts.length ? casts.join(',') : '⚠️无'));
 
   L.push(fail ? '\n结论: ❌ 有闸门未过 —— 禁止接入，先修再来。' : '\n结论: ✅ 脚漂移闸门通过；仍须打开 _artgate_idle/run.png 逐向目视朝向。');
+  // PASS → 写通行戳（pretool-guard 的 push 闸门凭此放行：field png 变更须携带同批次的戳变更）
+  if (!fail) fs.writeFileSync(path.join(FIELD, '.artgate_pass'), new Date().toISOString() + ' PASS ' + char + '\n');
+  else { try { fs.unlinkSync(path.join(FIELD, '.artgate_pass')); } catch (e) {} }
   console.log(L.join('\n'));
   process.exit(fail ? 1 : 0);
 })();

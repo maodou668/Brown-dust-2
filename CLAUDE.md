@@ -26,6 +26,7 @@
 - 回写和代码进同一次 commit/push，别分家（防容器回滚丢文档）。
 
 ## C. 门卫闸门（跳过 = 没有交付物可贴 = 一眼露馅）
+- 🛡️ **第 0 层·hooks 硬防线（harness 强制执行，与 AI 记性无关）**：`.claude/settings.json` 注册的 PreToolUse 守卫（`scripts/hooks/pretool-guard.js`）会**直接拒绝**违规调用：模板动画 / 绕过数值校验 / field 美术缺 `.artgate_pass` 戳就 push。**被拦=照拦截理由改做法，禁止绕**；想绕=该加新规则。**元规则：凡违反了一条还不是脚本的规矩 → 立刻把它加进守卫或做成 exit-1 闸门**。新项目移植见 `dev/新项目启动包.md`。
 - **美术 sprite 接入前**：**必跑 `node scripts/artgate.js <char_field前缀>` 并把原始输出（全向脚漂移数字 + PASS/FAIL）贴给用户**；FAIL 会 `exit 1` 挡死。再打开它生成的 `_artgate_idle/run.png` **逐向目视**（背向斜角 NE/NW/N/E 最易抽腿）。
 - 🚫 **动画一律 `animate_character mode='v3'`，禁用 `template_animation_id`（breathing-idle/walking 等模板）**。模板重定向会在背向掉身份(画成别的角色)、侧向乱加头发(辫子)——加西亚之后一直用 v3 没出过事，2026-07 有人擅自换模板做 Olstein·圣盾又踩雷返工。walk 先建 walk-state 再在其上 v3 走路；**idle 也一律 v3 真呼吸**（提示词锁脚 `feet firmly planted, no leg movement`），抽腿向单向 re-roll→仍抖用「冻脚合成」(脚带钉死+上身保留真呼吸)——**整图上下压缩的合成呼吸太生硬(用户判定)，禁止当首选**。
 - 👁️ **脚漂移数字过 ≠ 通过**：artgate 只测脚不测"是不是同一个人/有没有多长东西"。**必须把每个方向每一帧放大目视**（≥300px），确认身份一致、配色对、没长辫子/多手。小缩略图会掩盖这些。

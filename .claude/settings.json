@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__pixellab__animate_character",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/pretool-guard.js",
+            "timeout": 15,
+            "statusMessage": "铁律守卫: 动画一律 v3"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/pretool-guard.js",
+            "timeout": 15,
+            "statusMessage": "铁律守卫: 闸门检查"
+          }
+        ]
+      }
+    ]
+  }
+}
