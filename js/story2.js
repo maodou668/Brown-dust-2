@@ -25,8 +25,8 @@ const SCRIPTS = {
       },
       steps: [
         { t: 'narr', text: '烛河镇外的林道。泰瑞德把灯挑在队伍最前面，出门前刚添满的油。' },
-        { t: 'say',  who: 'teried', text: '规矩说一遍。走灯照得到的地方，脚别出光圈。' },
-        { t: 'say',  who: 'teried', text: '灯外面有什么动静，看见了也当没看见。这行送走过三个爱回头的。' },
+        { t: 'say',  who: 'teried', text: '夜路就一条规矩：路边有谁喊你，喊什么名字都别应。' },
+        { t: 'say',  who: 'teried', text: '去年有个脚夫应了一声。人还在，会走路会吃饭。他老婆说那不是他。' },
         { t: 'move', who: 'teried', to: [40, 62], dur: 2400 },
         { t: 'move', who: 'katja',  to: [34, 68], dur: 2400 },
         { t: 'move', who: 'mina',   to: [28, 63], dur: 2400 },
@@ -69,8 +69,8 @@ const SCRIPTS = {
     { op: 'adv', beats: [
       { bg: 'forest', bgImg: 'art/06_story/scenes/night_road.png', text: '白灯灭了两盏。最后一盏倒在桥板上还亮着，米娜捡起来，吹了三口才吹熄。' },
       { who: 'mina', side: 'right', speaker: '米娜', text: '灯是好灯。就是主人不像话。' },
-      { text: '泰瑞德把剑在缉捕兵雪白的披风上蹭了两下，插回鞘里。' },
-      { who: 'mina', side: 'right', speaker: '米娜', text: '疗伤药喝掉两瓶，绷带一卷。都记损耗里，回头找雇主报。……要是找得到雇主的话。' },
+      { text: '米娜蹲下去翻缉捕兵的腰包：半袋盐，一小瓶灯油，一册名单。盐和油她揣进自己包里。' },
+      { who: 'mina', side: 'right', speaker: '米娜', text: '名单给你，指挥官。第一页真有卡佳。……后面还有小半本没划掉的。' },
     ]},
 
     // 幕3 · ADV：交接（接应人立绘全程用正常版——此时玩家没有对照物）
@@ -114,8 +114,8 @@ const SCRIPTS = {
       { bg: 'forest', bgImg: 'art/06_story/scenes/campfire.png', clear: true, text: '回程在林子边上扎营。工钱摊在石头上，分成三小堆。' },
       { who: 'teried', side: 'left', speaker: '泰瑞德', text: '米娜的药材钱，从我这份里扣。记账上。' },
       { who: 'mina', side: 'right', speaker: '米娜', text: '账上你已经欠到明年开春了！' },
-      { text: '桥上捡的那盏白灯立在火堆边。灯罩上的教会烛纹，被米娜用小刀刮掉了。' },
-      { who: 'mina', side: 'right', speaker: '米娜', text: '油还剩大半罐呢。灯又没做错什么。' },
+      { text: '泰瑞德把灯油罐倒过来晃了晃，就着火光眯眼估分量。' },
+      { who: 'teried', side: 'left', speaker: '泰瑞德', text: '明天进镇先买油。这单挣的，小半得喂灯。' },
       { if: 'pro_paid_back', who: 'teried', side: 'left', speaker: '泰瑞德', text: '……钱少一份，饭不能少。明天进镇我请，谁也别跟我抢着付。' },
       { ifNot: 'pro_paid_back', who: 'teried', side: 'left', speaker: '泰瑞德', text: '今天这钱挣得干净。睡吧。' },
       { who: 'mina', side: 'right', speaker: '米娜', text: '指挥官，我一直在想那个接头的人。他跟我们说了那么半天话……' },
