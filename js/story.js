@@ -32,9 +32,15 @@ const Story = {
   play(id, onDone) {
     const beats = STORY[id];
     if (!beats || !beats.length) { if (onDone) onDone(); return; }
+    this.playBeats(beats, () => { this.markSeen(id); if (onDone) onDone(); });
+  },
+
+  /** 播放任意 beat 数组（Director 的 adv 层入口，不写 seen 记录） */
+  playBeats(beats, onDone) {
     this.beats = beats;
     this.idx = 0;
-    this.onDone = () => { this.markSeen(id); if (onDone) onDone(); };
+    this.choosing = false;
+    this.onDone = onDone || null;
     if (window.Sound) Sound.bgm('story');
     this.curBg = 'void';
     this.portraits = { left: null, right: null };
@@ -90,6 +96,11 @@ const Story = {
   /** 立绘 HTML：图片优先，风格化占位兜底 */
   portraitHTML(token) {
     if (!token) return '';
+    // 剧情 NPC 立绘：'N:文件名' → art/06_story/portraits/<文件名>.png（差分=另一个文件名，如 xxx_odd）
+    if (token.startsWith('N:')) {
+      const V = window.ASSET_VER || '';
+      return `<img class="port-img" src="art/06_story/portraits/${token.slice(2)}.png?v=${V}" alt="">`;
+    }
     let def, icon, color, name;
     if (token.startsWith('E:')) {
       def = window.GameData.ENEMIES[token.slice(2)];
@@ -116,6 +127,11 @@ const Story = {
   render() {
     const beat = this.beats[this.idx];
     if (!beat) { this.finish(); return; }
+    // 条件 beat（轻度选择支的分支台词）：不满足则跳过
+    if ((beat.if && !(window.Director && Director.flag(beat.if))) ||
+        (beat.ifNot && window.Director && Director.flag(beat.ifNot))) {
+      this.idx++; this.render(); return;
+    }
 
     // 背景
     if (beat.bg && beat.bg !== this.curBg) {
@@ -159,8 +175,9 @@ const Story = {
       // 名牌颜色随角色
       let col = '#b06bff';
       if (beat.who) {
-        if (beat.who.startsWith('E:')) col = window.GameData.ENEMIES[beat.who.slice(2)].color;
-        else col = window.GameData.CHARACTERS[beat.who].color;
+        if (beat.who.startsWith('E:')) col = (window.GameData.ENEMIES[beat.who.slice(2)] || {}).color || col;
+        else if (beat.who.startsWith('N:')) col = '#9aa0ae';
+        else col = (window.GameData.CHARACTERS[beat.who] || {}).color || col;
       }
       nameEl.style.color = col;
     } else {
@@ -168,11 +185,51 @@ const Story = {
       nameEl.style.display = 'none';
     }
 
+    // CG 层（全屏图 + Ken Burns 缓动；beat.cg = 图片路径，下一个无 cg 的 beat 自动收起）
+    let cgEl = this.root.querySelector('#story-cg');
+    if (beat.cg) {
+      if (!cgEl) {
+        cgEl = UI.el('<div id="story-cg"><img decoding="async"></div>');
+        this.root.insertBefore(cgEl, this.root.querySelector('#story-box'));
+      }
+      const im = cgEl.querySelector('img');
+      const src = beat.cg + '?v=' + (window.ASSET_VER || '');
+      if (im.getAttribute('src') !== src) { im.src = src; im.className = 'kenburns'; }
+    } else if (cgEl) cgEl.remove();
+
+    // 低语（圣经 W2）：无名牌、文本固定 …………、逐字 1/3 速
+    if (beat.whisper) {
+      box.classList.add('narration', 'whisper');
+      nameEl.style.display = 'none';
+      if (window.Sound && Sound.sfx) { try { Sound.sfx('whisper'); } catch (e) {} }
+      this.typeText('…………', 96);
+      return;
+    }
+    box.classList.remove('whisper');
+
     this.typeText(beat.text || '');
+
+    // 选择支（轻度）：beat.choice = [{t:'文案', flag:'flag名'}]
+    const oldCh = this.root.querySelector('#story-choice');
+    if (oldCh) oldCh.remove();
+    if (beat.choice) {
+      this.choosing = true;
+      const ch = UI.el(`<div id="story-choice">${beat.choice.map((c, i) =>
+        `<button class="story-choice-btn" data-ci="${i}">${c.t}</button>`).join('')}</div>`);
+      this.root.appendChild(ch);
+      ch.querySelectorAll('button').forEach(b => b.onclick = (ev) => {
+        ev.stopPropagation();
+        const opt = beat.choice[parseInt(b.dataset.ci, 10)];
+        if (opt.flag && window.Director) Director.setFlag(opt.flag);
+        ch.remove();
+        this.choosing = false;
+        this.advance();
+      });
+    }
   },
 
   /** 逐字打字机效果 */
-  typeText(text) {
+  typeText(text, interval) {
     const el = this.root.querySelector('#story-text');
     const next = this.root.querySelector('#story-next');
     next.style.opacity = 0;
@@ -187,11 +244,12 @@ const Story = {
         this.typing = false;
         next.style.opacity = 1;
       }
-    }, 28);
+    }, interval || 28);
     this._fullText = text;
   },
 
   advance() {
+    if (this.choosing) return;   // 选择支挂起时禁点按推进
     if (this.typing) {
       // 第一次点：立即显示全文
       clearInterval(this.typer);

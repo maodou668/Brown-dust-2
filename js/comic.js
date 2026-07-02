@@ -15,6 +15,12 @@ const Comic = {
     this.build(ep);
   },
 
+  /** Director 的 comic 层入口：直接喂 ep 对象，读完（✕ 或底部按钮）回调 */
+  openEp(ep, onDone) {
+    this.onDone = onDone || null;
+    this.build(ep);
+  },
+
   /** 角色立绘（复用 Story 的占位立绘；指挥官用专属灰袍剪影） */
   charHTML(token) {
     if (!token) return '';
@@ -22,6 +28,10 @@ const Comic = {
       return `<div class="port-art" style="--c:#8a8f9c;">
         <div class="port-silhouette"></div>
         <div class="port-icon">🧭</div></div>`;
+    }
+    // 'IMG:路径' → 直接贴图（场景小人帧/一次性分镜素材）
+    if (token.startsWith('IMG:')) {
+      return `<img class="comic-img-px" src="${token.slice(4)}?v=${window.ASSET_VER || ''}" alt="">`;
     }
     return window.Story ? Story.portraitHTML(token) : '';
   },
@@ -65,10 +75,14 @@ const Comic = {
             <div class="comic-cover-sub">${ep.sub || ''}</div>
           </div>
           ${panels}
-          <div class="comic-end">— 完 —<br><span>${ep.end || ''}</span></div>
+          <div class="comic-end">— 完 —<br><span>${ep.end || ''}</span>
+            ${this.onDone ? '<br><button class="btn" id="comic-continue" style="margin-top:12px;">继续 ▶</button>' : ''}
+          </div>
         </div>
       </div>`);
     document.body.appendChild(this.root);
+    const cont = this.root.querySelector('#comic-continue');
+    if (cont) cont.onclick = () => this.close();
     if (window.Sound) { Sound.bgm('story'); Sound.sfx('open'); }
     this.root.querySelector('#comic-close').onclick = () => this.close();
     // 进场：面板逐个淡入
@@ -83,6 +97,8 @@ const Comic = {
     const r = this.root;
     r.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220 }).onfinish = () => { r.remove(); };
     this.root = null;
+    const cb = this.onDone; this.onDone = null;
+    if (cb) setTimeout(cb, 240);
   },
 };
 

@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>棕色尘埃 2 · Brown Dust 2</title>
   <!-- PWA / 添加到主屏幕（iOS 全屏关键） -->
-  <link rel="manifest" href="manifest.webmanifest?v=218">
+  <link rel="manifest" href="manifest.webmanifest?v=219">
   <meta name="theme-color" content="#1a1422">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="棕色尘埃2">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=218">
-  <link rel="icon" type="image/png" href="icons/icon-192.png?v=218">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=219">
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=219">
   <style>
 /* ============================================================
    棕色尘埃 2 风格 UI — 暗色奇幻风格
@@ -2424,6 +2424,51 @@ button.ac-circle:active { transform: scale(.92); }
 #nav-fade { position: fixed; inset: 0; z-index: 9000; background: #0e0b14; opacity: 0; pointer-events: none; transition: opacity .16s ease; }
 #nav-fade.on { opacity: 1; }
 
+/* ============ 剧情演出引擎 v2（Director / SceneStage）============ */
+/* 场景演出层 */
+#scene-stage { position: fixed; inset: 0; z-index: 950; background: #000; overflow: hidden; }
+#scene-stage .sc-world { position: absolute; inset: 0; transform-origin: center; transition: none; }
+#scene-stage .story-bg { position: absolute; inset: 0; }
+.sc-night { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, rgba(10,14,34,.42) 0%, rgba(4,6,18,.78) 100%); pointer-events: none; }
+#sc-actors { position: absolute; inset: 0; }
+.sc-actor { position: absolute; width: 0; height: 0; }
+.sc-actor img { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); height: 130px; image-rendering: pixelated; }
+.sc-bubble { position: absolute; left: 0; top: -148px; transform: translateX(-50%); max-width: 240px; min-width: 60px;
+  background: rgba(16,18,28,.92); border: 1px solid #3a3f52; border-radius: 10px; padding: 7px 12px;
+  color: #e8e8f0; font-size: 13px; line-height: 1.55; white-space: pre-wrap; z-index: 5; }
+.sc-bubble::after { content: ''; position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%);
+  border: 6px solid transparent; border-top-color: #3a3f52; border-bottom: 0; }
+.sc-bubble.whisper { color: #8f95ad; letter-spacing: 4px; border-color: #262a3a; background: rgba(8,9,16,.94); }
+.sc-narr { position: absolute; left: 0; right: 0; bottom: 0; padding: 16px 8vw 22px; text-align: center;
+  background: linear-gradient(transparent, rgba(0,0,0,.82) 40%); color: #cfd3e0; font-size: 14px; line-height: 1.7; z-index: 8; }
+.sc-tap { position: absolute; inset: 0; z-index: 20; cursor: pointer; }
+
+/* ADV 层扩展：CG / 低语 / 选择支 */
+#story-cg { position: absolute; inset: 0; overflow: hidden; background: #000; z-index: 2; }
+#story-cg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: auto; }
+#story-cg img.kenburns { animation: kenburns 14s ease-in-out infinite alternate; }
+@keyframes kenburns { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.12) translate(-2%, -2%); } }
+.story-dialogue.whisper .story-text { color: #8f95ad; letter-spacing: 6px; }
+#story-choice { position: absolute; left: 50%; bottom: 34%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 30; }
+.story-choice-btn { min-width: 260px; padding: 12px 26px; font-size: 14px; color: #f0e9d8; cursor: pointer;
+  background: linear-gradient(180deg, rgba(40,40,58,.96), rgba(24,24,36,.96)); border: 1px solid #56597a; border-radius: 10px; }
+.story-choice-btn:hover { border-color: #c9a961; color: #ffe9b0; }
+
+/* 战中插话 */
+#battle-interject { position: absolute; left: 6%; right: 6%; bottom: 118px; z-index: 90; cursor: pointer;
+  background: rgba(12,13,22,.94); border: 1px solid #4a4f6a; border-radius: 12px; padding: 12px 18px;
+  display: flex; align-items: baseline; gap: 12px; animation: bi-in .25s ease-out; }
+@keyframes bi-in { from { opacity: 0; transform: translateY(12px); } }
+#battle-interject .bi-name { color: #ffd97a; font-weight: 700; font-size: 13px; white-space: nowrap; }
+#battle-interject .bi-text { color: #e8e8f0; font-size: 14px; line-height: 1.6; }
+#battle-interject .bi-next { color: #8f95ad; animation: blink 1s infinite; margin-left: auto; }
+
+/* 漫画贴图小人 */
+.comic-img-px { image-rendering: pixelated; width: 100%; }
+
+/* 主界面主线按钮 */
+.lb-cta-story .cta-go { font-size: 15px; }
+
 </style>
 </head>
 <body>
@@ -2431,24 +2476,24 @@ button.ac-circle:active { transform: scale(.92); }
     <!-- 顶部栏：玩家信息 + 资源 + 系统 -->
     <header id="topbar">
       <button id="topbar-profile" class="profile-chip" title="玩家资料">
-        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=218" alt="" onerror="this.outerHTML='🎖️'"></span>
+        <span class="pc-avatar"><img src="art/01_splash/lecliss_avatar.png?v=219" alt="" onerror="this.outerHTML='🎖️'"></span>
         <span class="pc-info">
           <span class="pc-name" id="pc-name">指挥官</span>
           <span class="pc-sub">Lv.<span id="pc-lv">1</span> · ⚔<span id="pc-pow">0</span></span>
         </span>
       </button>
       <div class="resources">
-        <div class="res" title="金币"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/coin.png?v=218" alt="金"></span><span id="res-gold">0</span></div>
-        <div class="res" title="宝石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/gem.png?v=218" alt="钻"></span><span id="res-gem">0</span></div>
-        <div class="res" title="觉醒石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/awaken.png?v=218" alt="石"></span><span id="res-stone">0</span></div>
-        <div class="res" title="体力"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/stamina.png?v=218" alt="力"></span><span id="res-stam">0</span></div>
+        <div class="res" title="金币"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/coin.png?v=219" alt="金"></span><span id="res-gold">0</span></div>
+        <div class="res" title="宝石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/gem.png?v=219" alt="钻"></span><span id="res-gem">0</span></div>
+        <div class="res" title="觉醒石"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/awaken.png?v=219" alt="石"></span><span id="res-stone">0</span></div>
+        <div class="res" title="体力"><span class="res-icon"><img class="px-ico-sm" src="art/05_pixellab/ui/icons/stamina.png?v=219" alt="力"></span><span id="res-stam">0</span></div>
       </div>
       <div class="topbar-sys">
-        <button id="btn-notice" class="ghost-btn" title="公告"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/notice.png?v=218" alt="公告"></button>
-        <button id="btn-mail" class="ghost-btn" title="邮件"><span class="dot-wrap"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/mail.png?v=218" alt="邮件"><span id="mail-dot" class="red-dot" style="display:none;"></span></span></button>
-        <button id="btn-settings" class="ghost-btn" title="设置"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/settings.png?v=218" alt="设置"></button>
-        <button id="btn-fullscreen" class="ghost-btn" title="全屏"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/fullscreen.png?v=218" alt="全屏"></button>
-        <button id="btn-mute" class="ghost-btn" title="音效开关"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/sound.png?v=218" alt="音效"></button>
+        <button id="btn-notice" class="ghost-btn" title="公告"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/notice.png?v=219" alt="公告"></button>
+        <button id="btn-mail" class="ghost-btn" title="邮件"><span class="dot-wrap"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/mail.png?v=219" alt="邮件"><span id="mail-dot" class="red-dot" style="display:none;"></span></span></button>
+        <button id="btn-settings" class="ghost-btn" title="设置"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/settings.png?v=219" alt="设置"></button>
+        <button id="btn-fullscreen" class="ghost-btn" title="全屏"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/fullscreen.png?v=219" alt="全屏"></button>
+        <button id="btn-mute" class="ghost-btn" title="音效开关"><img class="px-ico-sys" src="art/05_pixellab/ui/icons/sound.png?v=219" alt="音效"></button>
         <button id="btn-reset" class="ghost-btn" title="重置存档" style="display:none;">↺</button>
       </div>
     </header>
@@ -2481,7 +2526,7 @@ button.ac-circle:active { transform: scale(.92); }
     </div>
   </div>
 
-  <script>window.ASSET_VER = '218';</script>
+  <script>window.ASSET_VER = '219';</script>
 <script>
 // ============================================================
 //  音频系统（纯 Web Audio 实时合成，无需任何音频素材文件）
@@ -5230,7 +5275,7 @@ const Game = {
 
   /** 战斗胜利结算奖励 */
   rewardStage(stage, firstClear) {
-    const r = stage.reward;
+    const r = stage.reward || { gold: 0, gem: 0, exp: 0 };   // 剧情战可不带奖励字段
     this.state.gold += r.gold;
     this.state.gem += firstClear ? r.gem : Math.round(r.gem * 0.3);
     this.incQuest('win', 1);
@@ -6215,10 +6260,13 @@ const Battle = {
         const st = Game.computeStats(ao);
         const pos = e.pos || this.tierOfClass(cdef.cls);
         this.combatants.push(new Combatant({
-          uid: 'E' + i, name: cdef.name, side: 'enemy', charId: e.char,
+          uid: 'E' + i, name: e.name || cdef.name, side: 'enemy', charId: e.char,
           costume: ao.activeCostume, costumeRing: Game.costumeRing(ao),
           cls: cdef.cls, element: cos.element, color: cos.color, level: ao.level, pos,
-          maxHp: st.maxHp, atk: st.atk, def: st.def, spd: st.spd, crit: st.crit,
+          // 关卡级倍率对角色型敌人同样生效（剧情战调难度用）
+          maxHp: Math.round(st.maxHp * (this.mod.hpMul || 1)),
+          atk: Math.round(st.atk * (this.mod.atkMul || 1)),
+          def: st.def, spd: st.spd, crit: st.crit,
           skills: Game.battleSkills(ao), sigSkillId: cos.signature, sigPlus: ao.plus,
         }));
         return;
@@ -7074,6 +7122,9 @@ const UI = {
         <!-- 底部功能行 + 出战 CTA + 角色缩略 -->
         <div class="lobby-bottombar">
           <div class="lb-funcs">${bottomFuncs.map(funcBtn).join('')}</div>
+          <button class="lb-cta lb-cta-story" data-act="mainstory">
+            <span class="cta-go">🕯 主线</span><span class="cta-sub">序章 · 点灯${Story.seen('prologue') ? ' ✓' : ''}</span>
+          </button>
           <button class="lb-cta" data-go="gamecards">
             <span class="cta-go">出 战</span><span class="cta-sub">游戏卡 · 主线 ${cleared}/${total}</span>
           </button>
@@ -7086,6 +7137,7 @@ const UI = {
         const a = c.dataset.act;
         if (a === 'team') this.showTeamEditor(0);
         else if (a === 'forge') this.showForge();
+        else if (a === 'mainstory') { if (window.Director) Director.play('prologue', () => this.renderHome()); }
         else if (a === 'story') this.showStoryReplay();
         else if (a === 'ach') this.showAchievements();
         else if (a === 'announce') this.showAnnounce();
@@ -9892,9 +9944,15 @@ const Story = {
   play(id, onDone) {
     const beats = STORY[id];
     if (!beats || !beats.length) { if (onDone) onDone(); return; }
+    this.playBeats(beats, () => { this.markSeen(id); if (onDone) onDone(); });
+  },
+
+  /** 播放任意 beat 数组（Director 的 adv 层入口，不写 seen 记录） */
+  playBeats(beats, onDone) {
     this.beats = beats;
     this.idx = 0;
-    this.onDone = () => { this.markSeen(id); if (onDone) onDone(); };
+    this.choosing = false;
+    this.onDone = onDone || null;
     if (window.Sound) Sound.bgm('story');
     this.curBg = 'void';
     this.portraits = { left: null, right: null };
@@ -9950,6 +10008,11 @@ const Story = {
   /** 立绘 HTML：图片优先，风格化占位兜底 */
   portraitHTML(token) {
     if (!token) return '';
+    // 剧情 NPC 立绘：'N:文件名' → art/06_story/portraits/<文件名>.png（差分=另一个文件名，如 xxx_odd）
+    if (token.startsWith('N:')) {
+      const V = window.ASSET_VER || '';
+      return `<img class="port-img" src="art/06_story/portraits/${token.slice(2)}.png?v=${V}" alt="">`;
+    }
     let def, icon, color, name;
     if (token.startsWith('E:')) {
       def = window.GameData.ENEMIES[token.slice(2)];
@@ -9976,6 +10039,11 @@ const Story = {
   render() {
     const beat = this.beats[this.idx];
     if (!beat) { this.finish(); return; }
+    // 条件 beat（轻度选择支的分支台词）：不满足则跳过
+    if ((beat.if && !(window.Director && Director.flag(beat.if))) ||
+        (beat.ifNot && window.Director && Director.flag(beat.ifNot))) {
+      this.idx++; this.render(); return;
+    }
 
     // 背景
     if (beat.bg && beat.bg !== this.curBg) {
@@ -10019,8 +10087,9 @@ const Story = {
       // 名牌颜色随角色
       let col = '#b06bff';
       if (beat.who) {
-        if (beat.who.startsWith('E:')) col = window.GameData.ENEMIES[beat.who.slice(2)].color;
-        else col = window.GameData.CHARACTERS[beat.who].color;
+        if (beat.who.startsWith('E:')) col = (window.GameData.ENEMIES[beat.who.slice(2)] || {}).color || col;
+        else if (beat.who.startsWith('N:')) col = '#9aa0ae';
+        else col = (window.GameData.CHARACTERS[beat.who] || {}).color || col;
       }
       nameEl.style.color = col;
     } else {
@@ -10028,11 +10097,51 @@ const Story = {
       nameEl.style.display = 'none';
     }
 
+    // CG 层（全屏图 + Ken Burns 缓动；beat.cg = 图片路径，下一个无 cg 的 beat 自动收起）
+    let cgEl = this.root.querySelector('#story-cg');
+    if (beat.cg) {
+      if (!cgEl) {
+        cgEl = UI.el('<div id="story-cg"><img decoding="async"></div>');
+        this.root.insertBefore(cgEl, this.root.querySelector('#story-box'));
+      }
+      const im = cgEl.querySelector('img');
+      const src = beat.cg + '?v=' + (window.ASSET_VER || '');
+      if (im.getAttribute('src') !== src) { im.src = src; im.className = 'kenburns'; }
+    } else if (cgEl) cgEl.remove();
+
+    // 低语（圣经 W2）：无名牌、文本固定 …………、逐字 1/3 速
+    if (beat.whisper) {
+      box.classList.add('narration', 'whisper');
+      nameEl.style.display = 'none';
+      if (window.Sound && Sound.sfx) { try { Sound.sfx('whisper'); } catch (e) {} }
+      this.typeText('…………', 96);
+      return;
+    }
+    box.classList.remove('whisper');
+
     this.typeText(beat.text || '');
+
+    // 选择支（轻度）：beat.choice = [{t:'文案', flag:'flag名'}]
+    const oldCh = this.root.querySelector('#story-choice');
+    if (oldCh) oldCh.remove();
+    if (beat.choice) {
+      this.choosing = true;
+      const ch = UI.el(`<div id="story-choice">${beat.choice.map((c, i) =>
+        `<button class="story-choice-btn" data-ci="${i}">${c.t}</button>`).join('')}</div>`);
+      this.root.appendChild(ch);
+      ch.querySelectorAll('button').forEach(b => b.onclick = (ev) => {
+        ev.stopPropagation();
+        const opt = beat.choice[parseInt(b.dataset.ci, 10)];
+        if (opt.flag && window.Director) Director.setFlag(opt.flag);
+        ch.remove();
+        this.choosing = false;
+        this.advance();
+      });
+    }
   },
 
   /** 逐字打字机效果 */
-  typeText(text) {
+  typeText(text, interval) {
     const el = this.root.querySelector('#story-text');
     const next = this.root.querySelector('#story-next');
     next.style.opacity = 0;
@@ -10047,11 +10156,12 @@ const Story = {
         this.typing = false;
         next.style.opacity = 1;
       }
-    }, 28);
+    }, interval || 28);
     this._fullText = text;
   },
 
   advance() {
+    if (this.choosing) return;   // 选择支挂起时禁点按推进
     if (this.typing) {
       // 第一次点：立即显示全文
       clearInterval(this.typer);
@@ -10109,6 +10219,127 @@ window.STORY = STORY;
 
 
 // ============================================================
+//  《掌灯人》主线剧本（剧本 DSL，由 js/director.js 执行）
+//  写作规矩见 story/圣经v2_掌灯人.md §4 行为卡 + §5 台词铁律。
+//  op: adv(beats) / scene(cfg) / battle(stage) / comic(ep) / wait
+// ============================================================
+
+const SCRIPTS = {
+
+  // ---------- 序章 · 点灯（垂直切片：五种演出各用一次） ----------
+  prologue: [
+
+    // 幕0 · ADV+CG：委托书特写
+    { op: 'adv', beats: [
+      { cg: 'art/06_story/cg/contract.png', text: '护送单。烛河镇，到磨坊桥。活人一名——卡佳。' },
+      { cg: 'art/06_story/cg/contract.png', text: '报酬栏的数字被划掉过两次。一次比一次低。' },
+      { text: '出发前，雇主只提了一个要求：走夜路。' },
+    ]},
+
+    // 幕1 · 场景演出：夜路行进 + 低语
+    { op: 'scene', bg: 'forest', night: true,
+      actors: {
+        teried: { sprite: 'teried', x: 14, y: 62, dir: 'east' },
+        katja:  { sprite: 'katja',  x: 8,  y: 68, dir: 'east' },
+        mina:   { sprite: 'mina',   x: 3,  y: 63, dir: 'east' },
+      },
+      steps: [
+        { t: 'narr', text: '烛河镇外的林道。灯提在最前面。' },
+        { t: 'move', who: 'teried', to: [40, 62], dur: 2400 },
+        { t: 'move', who: 'katja',  to: [34, 68], dur: 2400 },
+        { t: 'move', who: 'mina',   to: [28, 63], dur: 2400 },
+        { t: 'wait', ms: 300 },
+        { t: 'whisper', who: 'katja' },
+        { t: 'face', who: 'katja', dir: 'west' },
+        { t: 'wait', ms: 1400 },
+        { t: 'face', who: 'teried', dir: 'west' },
+        { t: 'say',  who: 'teried', text: '……饿了？前面镇上有卖热汤的。' },
+        { t: 'say',  who: 'mina',  text: '（小声）前辈，她看的那边，没有路。' },
+        { t: 'wait', ms: 600 },
+        { t: 'face', who: 'katja', dir: 'east' },
+        { t: 'say',  who: 'katja', text: '……没什么。走吧。' },
+        { t: 'face', who: 'teried', dir: 'east' },
+        { t: 'move', who: 'teried', to: [78, 62], dur: 2600 },
+        { t: 'move', who: 'katja',  to: [72, 68], dur: 2600 },
+        { t: 'move', who: 'mina',   to: [66, 63], dur: 2600 },
+        { t: 'narr', text: '后半段路，没有人再说话。' },
+      ],
+    },
+
+    // 幕2 · 战前对白 → 战斗（战中插话）→ 战后
+    { op: 'adv', beats: [
+      { bg: 'forest', text: '磨坊桥前。三盏白灯拦在路中间。白灯，是教会的颜色。' },
+      { speaker: '缉捕队长', text: '例行核对。这位女士的名字，在今年的名册上。' },
+      { who: 'teried', side: 'left', speaker: '泰瑞德', text: '名册上是个名字。人，在我们这。' },
+      { speaker: '缉捕队长', text: '那就换个说法——把教会的东西留下。' },
+    ]},
+    { op: 'battle', stage: {
+      id: 'sc_prologue', name: '磨坊桥 · 缉捕队', isBoss: false,
+      enemies: [
+        { char: 'loen',   level: 1, name: '圣烛缉捕兵' },
+        { char: 'garcia', level: 2, name: '缉捕队长' },
+        { char: 'loen',   level: 1, name: '圣烛缉捕兵' },
+      ],
+      mod: { atkMul: 0.8, hpMul: 0.85 },   // 新档双人 lv1 开局：能赢但要打满几个回合
+      reward: { gold: 120, gem: 30, exp: 40 },
+      interject: { frac: 0.5, speaker: '缉捕队长', text: '她报过名了！你们抢的，是教会的东西——' },
+    }},
+    { op: 'adv', beats: [
+      { bg: 'forest', text: '白灯灭了两盏。剩下那盏，米娜捡起来，吹熄了。' },
+      { who: 'mina', side: 'right', speaker: '米娜', text: '灯是好灯。就是主人不像话。' },
+    ]},
+
+    // 幕3 · ADV：交接（接应人立绘全程用正常版——此时玩家没有对照物）
+    { op: 'adv', beats: [
+      { bg: 'town', clear: true, text: '磨坊桥。桥那头，就是交接的镇子。' },
+      { who: 'N:npc_meeter', side: 'right', speaker: '接应人', text: '可算到了！卡佳小姐吧？路上冷坏了吧。' },
+      { who: 'N:npc_meeter', side: 'right', speaker: '接应人', text: '屋子备好了，炉子烧着。镇上人都盼着新邻居呢。' },
+      { speaker: '卡佳', text: '……嗯。送到这就行。谢谢你们。' },
+      { speaker: '指挥官', text: '（工钱袋，在手里。）',
+        choice: [
+          { t: '把工钱塞还给卡佳', flag: 'pro_paid_back' },
+          { t: '收下工钱' },
+        ] },
+      { if: 'pro_paid_back', speaker: '卡佳', text: '……你们这样干活的，赚不到钱。（把钱袋推回来，只抽走一枚）买灯油。' },
+      { ifNot: 'pro_paid_back', speaker: '卡佳', text: '钱货两讫。……是这么说的吧。再见。' },
+      { text: '她走上桥。没有回头。' },
+    ]},
+
+    // 幕4 · 条漫：三格同构图
+    { op: 'comic', ep: {
+      title: '序章 · 点灯',
+      sub: '掌灯人 · 主线',
+      cover: 'town',
+      end: '灯还亮着。',
+      panels: [
+        { bg: 'town', narr: '卡佳走进了镇门。', chars: [{ who: 'IMG:art/05_pixellab/katja_field/idle/north/00.png', x: 50, w: 22 }], h: 260 },
+        { bg: 'town', narr: '三步之后，街上一个人也没有。', sfx: '……', sfxPos: 'tr', h: 260 },
+        { bg: 'town', narr: '门内，一排人面向镇口站着。为首的，还在笑。', chars: [
+          { who: 'N:npc_meeter_odd', x: 50, w: 30 },
+          { who: 'N:npc_meeter_odd', x: 22, w: 24, dim: true },
+          { who: 'N:npc_meeter_odd', x: 78, w: 24, dim: true },
+        ], tall: true },
+      ],
+    }},
+
+    // 幕5 · ADV：回程结算（吃饭分账 + 收尾钩子）
+    { op: 'adv', beats: [
+      { bg: 'forest', clear: true, text: '回程。篝火。工钱摊在石头上分。' },
+      { who: 'teried', side: 'left', speaker: '泰瑞德', text: '米娜的药材钱，从我这份里扣。记账上。' },
+      { who: 'mina', side: 'right', speaker: '米娜', text: '账上你已经欠到明年了！' },
+      { if: 'pro_paid_back', who: 'teried', side: 'left', speaker: '泰瑞德', text: '……钱少一份，饭不能少。明天进镇，我请。' },
+      { ifNot: 'pro_paid_back', who: 'teried', side: 'left', speaker: '泰瑞德', text: '今天的钱是干净的。睡吧。' },
+      { who: 'mina', side: 'right', speaker: '米娜', text: '指挥官。那个镇子的人……笑起来，是不是都一个样子？' },
+      { who: 'teried', side: 'left', speaker: '泰瑞德', text: '……睡吧。明天还有单。' },
+      { clear: true, text: '那晚的灯，留到了天亮。—— 序章 · 完' },
+    ]},
+  ],
+};
+
+window.SCRIPTS = SCRIPTS;
+
+
+// ============================================================
 //  漫画演出引擎（条漫式竖向滚动）
 //  - 复用 story.js 的风格化立绘与场景背景
 //  - 关键剧情以「分镜面板 + 对话气泡 + 旁白框 + 拟声词」呈现
@@ -10125,6 +10356,12 @@ const Comic = {
     this.build(ep);
   },
 
+  /** Director 的 comic 层入口：直接喂 ep 对象，读完（✕ 或底部按钮）回调 */
+  openEp(ep, onDone) {
+    this.onDone = onDone || null;
+    this.build(ep);
+  },
+
   /** 角色立绘（复用 Story 的占位立绘；指挥官用专属灰袍剪影） */
   charHTML(token) {
     if (!token) return '';
@@ -10132,6 +10369,10 @@ const Comic = {
       return `<div class="port-art" style="--c:#8a8f9c;">
         <div class="port-silhouette"></div>
         <div class="port-icon">🧭</div></div>`;
+    }
+    // 'IMG:路径' → 直接贴图（场景小人帧/一次性分镜素材）
+    if (token.startsWith('IMG:')) {
+      return `<img class="comic-img-px" src="${token.slice(4)}?v=${window.ASSET_VER || ''}" alt="">`;
     }
     return window.Story ? Story.portraitHTML(token) : '';
   },
@@ -10175,10 +10416,14 @@ const Comic = {
             <div class="comic-cover-sub">${ep.sub || ''}</div>
           </div>
           ${panels}
-          <div class="comic-end">— 完 —<br><span>${ep.end || ''}</span></div>
+          <div class="comic-end">— 完 —<br><span>${ep.end || ''}</span>
+            ${this.onDone ? '<br><button class="btn" id="comic-continue" style="margin-top:12px;">继续 ▶</button>' : ''}
+          </div>
         </div>
       </div>`);
     document.body.appendChild(this.root);
+    const cont = this.root.querySelector('#comic-continue');
+    if (cont) cont.onclick = () => this.close();
     if (window.Sound) { Sound.bgm('story'); Sound.sfx('open'); }
     this.root.querySelector('#comic-close').onclick = () => this.close();
     // 进场：面板逐个淡入
@@ -10193,6 +10438,8 @@ const Comic = {
     const r = this.root;
     r.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220 }).onfinish = () => { r.remove(); };
     this.root = null;
+    const cb = this.onDone; this.onDone = null;
+    if (cb) setTimeout(cb, 240);
   },
 };
 
@@ -10962,6 +11209,284 @@ window.World = World;
 
 
 // ============================================================
+//  Director —— 剧情演出导演器（圣经 v2 §5 / 说明书剧情演出章）
+//  执行剧本 DSL：一段剧情 = op 序列，跨五个演出层自由混排：
+//    adv(对白) / scene(场景演出) / battle(战斗+插话) / comic(条漫) / (cg 走 adv 的 beat)
+//  剧本数据在 js/story2.js 的 window.SCRIPTS。
+// ============================================================
+
+const Director = {
+  running: false,
+
+  seen(id) { return Story.seen(id); },
+
+  async play(id, onDone) {
+    const script = (window.SCRIPTS || {})[id];
+    if (!script || !script.length) { if (onDone) onDone(); return; }
+    this.running = true;
+    for (const op of script) {
+      if (!this.running) break;
+      await this.exec(op);
+    }
+    this.running = false;
+    Story.markSeen(id);
+    if (onDone) onDone();
+  },
+
+  stop() { this.running = false; },
+
+  exec(op) {
+    return new Promise(res => {
+      switch (op.op) {
+        case 'adv':    Story.playBeats(op.beats, res); break;
+        case 'scene':  SceneStage.run(op, res); break;
+        case 'comic':  Comic.openEp(op.ep, res); break;
+        case 'battle': this.runBattle(op, res); break;
+        case 'wait':   setTimeout(res, op.ms || 500); break;
+        default: console.warn('Director: 未知 op', op.op); res();
+      }
+    });
+  },
+
+  /** 战斗（输了自动重开，直到打赢才推进剧情） */
+  runBattle(op, done) {
+    const go = () => {
+      BattleUI.start(op.stage, () => {
+        if (Battle.result === 'win') done();
+        else { UI.toast('再试一次。灯还没灭。'); setTimeout(go, 600); }
+      });
+    };
+    go();
+  },
+
+  /** 剧情 flag（choice 写入；跨 op / 跨章可查） */
+  setFlag(k, v) {
+    Game.state.storyFlags = Game.state.storyFlags || {};
+    Game.state.storyFlags[k] = v === undefined ? true : v;
+    Game.save();
+  },
+  flag(k) { return (Game.state.storyFlags || {})[k]; },
+};
+
+// ============================================================
+//  SceneStage —— 场景演出层：地图小人走位/转向/对话泡/低语/镜头
+//  actor 用 field sprite（与战斗/大世界同一套资源）。
+//  cfg = { bg, night, actors:{id:{sprite,x,y,dir}}, steps:[...] }
+//  step: {t:'move',who,to:[x,y],dur} {t:'face',who,dir} {t:'wait',ms}
+//        {t:'say',who,text} {t:'whisper',who} {t:'narr',text}
+//        {t:'camera',scale,x,y,dur} {t:'hide',who} {t:'show',who}
+// ============================================================
+const SceneStage = {
+  root: null, actors: {}, _raf: 0, camera: { scale: 1, x: 50, y: 50 },
+
+  async run(cfg, onDone) {
+    this.build(cfg);
+    await this.loadSprites(cfg);
+    this.placeActors(cfg);
+    this._raf = requestAnimationFrame(t => this.tick(t));
+    for (const step of cfg.steps || []) await this.step(step);
+    this.destroy();
+    if (onDone) setTimeout(onDone, 250);
+  },
+
+  build(cfg) {
+    const old = document.getElementById('scene-stage'); if (old) old.remove();
+    this.camera = { scale: 1, x: 50, y: 50 };
+    this.root = UI.el(`
+      <div id="scene-stage">
+        <div class="sc-world" id="sc-world">
+          <div class="story-bg bg-${cfg.bg || 'forest'}"></div>
+          ${cfg.night ? '<div class="sc-night"></div>' : ''}
+          <div class="bfx-particles" id="sc-fx"></div>
+          <div id="sc-actors"></div>
+        </div>
+        <div class="sc-narr" id="sc-narr" style="display:none;"></div>
+        <div class="sc-tap" id="sc-tap" style="display:none;"></div>
+      </div>`);
+    document.body.appendChild(this.root);
+    if (window.Story && Story.spawnParticles) {
+      const fx = this.root.querySelector('#sc-fx');
+      // 复用剧情层的氛围粒子样式（雪/叶/尘按 bg 选型在 story.css 已有）
+      try { Story.spawnParticles.call({ root: this.root }, cfg.bg); } catch (e) {}
+    }
+    if (window.Sound) Sound.bgm('story');
+  },
+
+  loadSprites(cfg) {
+    const reg = (window.BattleUI && BattleUI.FIELD_SPRITE) || {};
+    this.sprites = {};
+    const keys = [...new Set(Object.values(cfg.actors || {}).map(a => a.sprite))];
+    const V = window.ASSET_VER || '1';
+    return Promise.all(keys.map(key => new Promise(resolve => {
+      const BASE = reg[key];
+      if (!BASE) { console.warn('SceneStage: 无 sprite', key); resolve(); return; }
+      const sp = this.sprites[key] = { ready: false, man: null, imgs: {} };
+      fetch(BASE + '/manifest.json?v=' + V).then(r => r.json()).then(man => {
+        sp.man = man;
+        let pend = 0, done = 0; const fin = () => { if (++done >= pend) { sp.ready = true; resolve(); } };
+        for (const anim in man.anims) {
+          sp.imgs[anim] = {};
+          for (const d in man.anims[anim].frames) {
+            const n = man.anims[anim].frames[d];
+            sp.imgs[anim][d] = [];
+            for (let i = 0; i < n; i++) {
+              pend++;
+              const im = new Image();
+              im.onload = im.onerror = fin;
+              im.src = `${BASE}/${anim}/${d}/${String(i).padStart(2, '0')}.png?v=${V}`;
+              sp.imgs[anim][d].push(im);
+            }
+          }
+        }
+        if (!pend) { sp.ready = true; resolve(); }
+      }).catch(() => resolve());
+    })));
+  },
+
+  placeActors(cfg) {
+    this.actors = {};
+    const box = this.root.querySelector('#sc-actors');
+    for (const id in cfg.actors || {}) {
+      const a = cfg.actors[id];
+      const el = UI.el(`<div class="sc-actor" data-actor="${id}"><div class="sc-bubble" style="display:none;"></div><img decoding="async"></div>`);
+      box.appendChild(el);
+      this.actors[id] = { ...a, id, el, anim: 'idle', frame: 0, moving: null };
+      this.position(this.actors[id]);
+    }
+  },
+
+  position(act) {
+    act.el.style.left = act.x + '%';
+    act.el.style.top = act.y + '%';
+  },
+
+  dirOf(dx, dy) {
+    const a = Math.atan2(dy, dx) * 180 / Math.PI; // 0=东
+    const dirs = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east'];
+    return dirs[Math.round(((a + 360) % 360) / 45) % 8];
+  },
+
+  tick(now) {
+    for (const id in this.actors) {
+      const act = this.actors[id];
+      const sp = this.sprites[act.sprite];
+      if (!sp || !sp.ready) continue;
+      // 移动插值
+      if (act.moving) {
+        const m = act.moving, p = Math.min(1, (now - m.t0) / m.dur);
+        act.x = m.x0 + (m.x1 - m.x0) * p;
+        act.y = m.y0 + (m.y1 - m.y0) * p;
+        this.position(act);
+        if (p >= 1) { act.moving = null; act.anim = 'idle'; if (m.res) m.res(); }
+      }
+      // 帧动画：anim 缺该向时回退 idle，idle 缺时用首个可用向（静帧兜底由 gnorm 保证每向至少 1 帧）
+      const anims = sp.man.anims;
+      let anim = act.anim;
+      if (!anims[anim] || !anims[anim].frames[act.dir]) anim = 'idle';
+      const frames = (sp.imgs[anim] && sp.imgs[anim][act.dir]) || [];
+      if (frames.length) {
+        const fps = (sp.man.fps && sp.man.fps[anim]) || 8;
+        const f = Math.floor(now / 1000 * fps) % frames.length;
+        const img = act.el.querySelector('img');
+        if (img.dataset.f !== anim + act.dir + f) { img.src = frames[f].src; img.dataset.f = anim + act.dir + f; }
+      }
+    }
+    // 镜头
+    const w = this.root && this.root.querySelector('#sc-world');
+    if (w) w.style.transform = `scale(${this.camera.scale}) translate(${50 - this.camera.x}%, ${50 - this.camera.y}%)`;
+    if (this.root) this._raf = requestAnimationFrame(t => this.tick(t));
+  },
+
+  step(s) {
+    return new Promise(res => {
+      const act = s.who ? this.actors[s.who] : null;
+      switch (s.t) {
+        case 'wait': setTimeout(res, s.ms || 600); break;
+        case 'face': if (act) act.dir = s.dir; setTimeout(res, 120); break;
+        case 'hide': if (act) act.el.style.display = 'none'; res(); break;
+        case 'show': if (act) act.el.style.display = ''; res(); break;
+        case 'move': {
+          if (!act) { res(); return; }
+          const [x1, y1] = s.to;
+          act.dir = s.dirLock || this.dirOf(x1 - act.x, y1 - act.y);
+          act.anim = 'run';
+          act.moving = { x0: act.x, y0: act.y, x1, y1, t0: performance.now(), dur: s.dur || 1600, res };
+          break;
+        }
+        case 'say': {
+          if (!act) { res(); return; }
+          this.bubble(act, s.text, false, res);
+          break;
+        }
+        case 'whisper': {
+          // 低语：气泡只出「…………」，逐字 1/3 速，无名牌（圣经 W2）
+          if (!act) { res(); return; }
+          this.bubble(act, '…………', true, res);
+          break;
+        }
+        case 'narr': {
+          const bar = this.root.querySelector('#sc-narr');
+          bar.style.display = '';
+          bar.textContent = s.text;
+          this.tapOnce(() => { bar.style.display = 'none'; res(); });
+          break;
+        }
+        case 'camera': {
+          const c0 = { ...this.camera }, c1 = { scale: s.scale || 1, x: s.x != null ? s.x : 50, y: s.y != null ? s.y : 50 };
+          const t0 = performance.now(), dur = s.dur || 800;
+          const step = (now) => {
+            const p = Math.min(1, (now - t0) / dur);
+            this.camera.scale = c0.scale + (c1.scale - c0.scale) * p;
+            this.camera.x = c0.x + (c1.x - c0.x) * p;
+            this.camera.y = c0.y + (c1.y - c0.y) * p;
+            if (p < 1) requestAnimationFrame(step); else res();
+          };
+          requestAnimationFrame(step);
+          break;
+        }
+        default: res();
+      }
+    });
+  },
+
+  /** 头顶对话泡；slow=低语（逐字 1/3 速 + 40Hz 低频音） */
+  bubble(act, text, slow, done) {
+    const b = act.el.querySelector('.sc-bubble');
+    b.style.display = '';
+    b.classList.toggle('whisper', !!slow);
+    b.textContent = '';
+    if (slow && window.Sound && Sound.sfx) { try { Sound.sfx('whisper'); } catch (e) {} }
+    let i = 0;
+    const iv = setInterval(() => {
+      b.textContent = text.slice(0, ++i);
+      if (i >= text.length) {
+        clearInterval(iv);
+        this.tapOnce(() => { b.style.display = 'none'; done(); });
+      }
+    }, slow ? 200 : 40);
+  },
+
+  tapOnce(cb) {
+    const tap = this.root.querySelector('#sc-tap');
+    tap.style.display = '';
+    const h = () => { tap.style.display = 'none'; tap.removeEventListener('click', h); cb(); };
+    tap.addEventListener('click', h);
+  },
+
+  destroy() {
+    cancelAnimationFrame(this._raf); this._raf = 0;
+    if (this.root) {
+      const r = this.root; this.root = null;
+      r.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 280 }).onfinish = () => r.remove();
+    }
+  },
+};
+
+window.Director = Director;
+window.SceneStage = SceneStage;
+
+
+// ============================================================
 //  战斗界面渲染 + 交互  &  应用主入口
 // ============================================================
 
@@ -11195,6 +11720,7 @@ const BattleUI = {
     diana:    'art/05_pixellab/diana_field',
     garcia:   'art/05_pixellab/garcia_field',
     teried:   'art/05_pixellab/teried_field',
+    katja:    'art/05_pixellab/katja_field',        // 剧情 NPC（序章·护送对象）
     lia:      'art/05_pixellab/lia_field',
     mina:     'art/05_pixellab/mina_field',
     glacia:   'art/05_pixellab/glacia_field',
@@ -11711,6 +12237,17 @@ const BattleUI = {
     if (Battle.finished) return;
     const cur = Battle.current();
     if (!cur || !cur.alive) { this.nextTurn(); return; }
+    // 战中插话（剧情战）：stage.interject = {frac, speaker, text}——任一敌人血量首次跌破
+    // frac 时暂停回合，弹一条对白，点按后继续（Director 战斗层）
+    const ij = this.stage && this.stage.interject;
+    if (ij && !ij._fired && Battle.enemies().some(e => e.alive && e.hp / e.maxHp < ij.frac)) {
+      ij._fired = true;
+      this.busy = true;
+      const strip = UI.el(`<div id="battle-interject"><span class="bi-name">${ij.speaker}</span><span class="bi-text">${ij.text}</span><span class="bi-next">▼</span></div>`);
+      this.root.appendChild(strip);
+      strip.onclick = () => { strip.remove(); this.busy = false; this.beginTurn(); };
+      return;
+    }
     // 换装轮转：本套 2 技放完 + SP 够 → 回合开始时切到下一套服装（立绘/元素/技能整套换）
     const rotated = Battle.maybeRotateCostume(cur);
     this.refresh();
@@ -12158,7 +12695,7 @@ const BattleUI = {
             <div class="rw" style="color:var(--gold);">🪙 +${goldGain}</div>
             <div class="rw" style="color:var(--gem);">💎 +${gemGain}</div>
           </div>
-          <p class="muted">队伍获得 ${this.stage.reward.exp} 经验</p>
+          <p class="muted">队伍获得 ${(this.stage.reward || {}).exp || 0} 经验</p>
           ${dropHtml}
         </div>
         <div class="close-row" style="justify-content:center;">
@@ -12270,6 +12807,7 @@ const Main = {
     if (/[?&]arena\b/.test(location.search)) setTimeout(() => window.BattleUI && BattleUI.startArena(0), 800);
     // 美术检视台：index.html?artlab —— 任意角色×服装：走动看八向 idle/run + 放施法动作 + 看立绘
     if (/[?&]artlab\b/.test(location.search)) setTimeout(() => window.ArtLab && ArtLab.open(), 800);
+    if (/[?&]prologue\b/.test(location.search)) setTimeout(() => window.Director && Director.play('prologue', () => UI.renderHome()), 900);
   },
 
   // ---------- 启动加载页 / 资源预加载 ----------

@@ -144,10 +144,13 @@ const Battle = {
         const st = Game.computeStats(ao);
         const pos = e.pos || this.tierOfClass(cdef.cls);
         this.combatants.push(new Combatant({
-          uid: 'E' + i, name: cdef.name, side: 'enemy', charId: e.char,
+          uid: 'E' + i, name: e.name || cdef.name, side: 'enemy', charId: e.char,
           costume: ao.activeCostume, costumeRing: Game.costumeRing(ao),
           cls: cdef.cls, element: cos.element, color: cos.color, level: ao.level, pos,
-          maxHp: st.maxHp, atk: st.atk, def: st.def, spd: st.spd, crit: st.crit,
+          // 关卡级倍率对角色型敌人同样生效（剧情战调难度用）
+          maxHp: Math.round(st.maxHp * (this.mod.hpMul || 1)),
+          atk: Math.round(st.atk * (this.mod.atkMul || 1)),
+          def: st.def, spd: st.spd, crit: st.crit,
           skills: Game.battleSkills(ao), sigSkillId: cos.signature, sigPlus: ao.plus,
         }));
         return;

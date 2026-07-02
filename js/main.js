@@ -232,6 +232,7 @@ const BattleUI = {
     diana:    'art/05_pixellab/diana_field',
     garcia:   'art/05_pixellab/garcia_field',
     teried:   'art/05_pixellab/teried_field',
+    katja:    'art/05_pixellab/katja_field',        // 剧情 NPC（序章·护送对象）
     lia:      'art/05_pixellab/lia_field',
     mina:     'art/05_pixellab/mina_field',
     glacia:   'art/05_pixellab/glacia_field',
@@ -748,6 +749,17 @@ const BattleUI = {
     if (Battle.finished) return;
     const cur = Battle.current();
     if (!cur || !cur.alive) { this.nextTurn(); return; }
+    // 战中插话（剧情战）：stage.interject = {frac, speaker, text}——任一敌人血量首次跌破
+    // frac 时暂停回合，弹一条对白，点按后继续（Director 战斗层）
+    const ij = this.stage && this.stage.interject;
+    if (ij && !ij._fired && Battle.enemies().some(e => e.alive && e.hp / e.maxHp < ij.frac)) {
+      ij._fired = true;
+      this.busy = true;
+      const strip = UI.el(`<div id="battle-interject"><span class="bi-name">${ij.speaker}</span><span class="bi-text">${ij.text}</span><span class="bi-next">▼</span></div>`);
+      this.root.appendChild(strip);
+      strip.onclick = () => { strip.remove(); this.busy = false; this.beginTurn(); };
+      return;
+    }
     // 换装轮转：本套 2 技放完 + SP 够 → 回合开始时切到下一套服装（立绘/元素/技能整套换）
     const rotated = Battle.maybeRotateCostume(cur);
     this.refresh();
@@ -1195,7 +1207,7 @@ const BattleUI = {
             <div class="rw" style="color:var(--gold);">🪙 +${goldGain}</div>
             <div class="rw" style="color:var(--gem);">💎 +${gemGain}</div>
           </div>
-          <p class="muted">队伍获得 ${this.stage.reward.exp} 经验</p>
+          <p class="muted">队伍获得 ${(this.stage.reward || {}).exp || 0} 经验</p>
           ${dropHtml}
         </div>
         <div class="close-row" style="justify-content:center;">
@@ -1307,6 +1319,7 @@ const Main = {
     if (/[?&]arena\b/.test(location.search)) setTimeout(() => window.BattleUI && BattleUI.startArena(0), 800);
     // 美术检视台：index.html?artlab —— 任意角色×服装：走动看八向 idle/run + 放施法动作 + 看立绘
     if (/[?&]artlab\b/.test(location.search)) setTimeout(() => window.ArtLab && ArtLab.open(), 800);
+    if (/[?&]prologue\b/.test(location.search)) setTimeout(() => window.Director && Director.play('prologue', () => UI.renderHome()), 900);
   },
 
   // ---------- 启动加载页 / 资源预加载 ----------

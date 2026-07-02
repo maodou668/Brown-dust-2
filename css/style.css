@@ -2407,3 +2407,48 @@ button.ac-circle:active { transform: scale(.92); }
 /* 过场淡黑转场遮罩 (切界面: 淡黑→黑屏渲染并加载→淡入) */
 #nav-fade { position: fixed; inset: 0; z-index: 9000; background: #0e0b14; opacity: 0; pointer-events: none; transition: opacity .16s ease; }
 #nav-fade.on { opacity: 1; }
+
+/* ============ 剧情演出引擎 v2（Director / SceneStage）============ */
+/* 场景演出层 */
+#scene-stage { position: fixed; inset: 0; z-index: 950; background: #000; overflow: hidden; }
+#scene-stage .sc-world { position: absolute; inset: 0; transform-origin: center; transition: none; }
+#scene-stage .story-bg { position: absolute; inset: 0; }
+.sc-night { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, rgba(10,14,34,.42) 0%, rgba(4,6,18,.78) 100%); pointer-events: none; }
+#sc-actors { position: absolute; inset: 0; }
+.sc-actor { position: absolute; width: 0; height: 0; }
+.sc-actor img { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); height: 130px; image-rendering: pixelated; }
+.sc-bubble { position: absolute; left: 0; top: -148px; transform: translateX(-50%); max-width: 240px; min-width: 60px;
+  background: rgba(16,18,28,.92); border: 1px solid #3a3f52; border-radius: 10px; padding: 7px 12px;
+  color: #e8e8f0; font-size: 13px; line-height: 1.55; white-space: pre-wrap; z-index: 5; }
+.sc-bubble::after { content: ''; position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%);
+  border: 6px solid transparent; border-top-color: #3a3f52; border-bottom: 0; }
+.sc-bubble.whisper { color: #8f95ad; letter-spacing: 4px; border-color: #262a3a; background: rgba(8,9,16,.94); }
+.sc-narr { position: absolute; left: 0; right: 0; bottom: 0; padding: 16px 8vw 22px; text-align: center;
+  background: linear-gradient(transparent, rgba(0,0,0,.82) 40%); color: #cfd3e0; font-size: 14px; line-height: 1.7; z-index: 8; }
+.sc-tap { position: absolute; inset: 0; z-index: 20; cursor: pointer; }
+
+/* ADV 层扩展：CG / 低语 / 选择支 */
+#story-cg { position: absolute; inset: 0; overflow: hidden; background: #000; z-index: 2; }
+#story-cg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: auto; }
+#story-cg img.kenburns { animation: kenburns 14s ease-in-out infinite alternate; }
+@keyframes kenburns { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.12) translate(-2%, -2%); } }
+.story-dialogue.whisper .story-text { color: #8f95ad; letter-spacing: 6px; }
+#story-choice { position: absolute; left: 50%; bottom: 34%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 30; }
+.story-choice-btn { min-width: 260px; padding: 12px 26px; font-size: 14px; color: #f0e9d8; cursor: pointer;
+  background: linear-gradient(180deg, rgba(40,40,58,.96), rgba(24,24,36,.96)); border: 1px solid #56597a; border-radius: 10px; }
+.story-choice-btn:hover { border-color: #c9a961; color: #ffe9b0; }
+
+/* 战中插话 */
+#battle-interject { position: absolute; left: 6%; right: 6%; bottom: 118px; z-index: 90; cursor: pointer;
+  background: rgba(12,13,22,.94); border: 1px solid #4a4f6a; border-radius: 12px; padding: 12px 18px;
+  display: flex; align-items: baseline; gap: 12px; animation: bi-in .25s ease-out; }
+@keyframes bi-in { from { opacity: 0; transform: translateY(12px); } }
+#battle-interject .bi-name { color: #ffd97a; font-weight: 700; font-size: 13px; white-space: nowrap; }
+#battle-interject .bi-text { color: #e8e8f0; font-size: 14px; line-height: 1.6; }
+#battle-interject .bi-next { color: #8f95ad; animation: blink 1s infinite; margin-left: auto; }
+
+/* 漫画贴图小人 */
+.comic-img-px { image-rendering: pixelated; width: 100%; }
+
+/* 主界面主线按钮 */
+.lb-cta-story .cta-go { font-size: 15px; }

@@ -1258,7 +1258,7 @@ const Game = {
 
   /** 战斗胜利结算奖励 */
   rewardStage(stage, firstClear) {
-    const r = stage.reward;
+    const r = stage.reward || { gold: 0, gem: 0, exp: 0 };   // 剧情战可不带奖励字段
     this.state.gold += r.gold;
     this.state.gem += firstClear ? r.gem : Math.round(r.gem * 0.3);
     this.incQuest('win', 1);

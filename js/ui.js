@@ -252,6 +252,9 @@ const UI = {
         <!-- 底部功能行 + 出战 CTA + 角色缩略 -->
         <div class="lobby-bottombar">
           <div class="lb-funcs">${bottomFuncs.map(funcBtn).join('')}</div>
+          <button class="lb-cta lb-cta-story" data-act="mainstory">
+            <span class="cta-go">🕯 主线</span><span class="cta-sub">序章 · 点灯${Story.seen('prologue') ? ' ✓' : ''}</span>
+          </button>
           <button class="lb-cta" data-go="gamecards">
             <span class="cta-go">出 战</span><span class="cta-sub">游戏卡 · 主线 ${cleared}/${total}</span>
           </button>
@@ -264,6 +267,7 @@ const UI = {
         const a = c.dataset.act;
         if (a === 'team') this.showTeamEditor(0);
         else if (a === 'forge') this.showForge();
+        else if (a === 'mainstory') { if (window.Director) Director.play('prologue', () => this.renderHome()); }
         else if (a === 'story') this.showStoryReplay();
         else if (a === 'ach') this.showAchievements();
         else if (a === 'announce') this.showAnnounce();
