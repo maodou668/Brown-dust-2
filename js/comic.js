@@ -53,7 +53,8 @@ const Comic = {
     const sfx = p.sfx ? `<div class="comic-sfx ${p.sfxPos || 'br'}">${p.sfx}</div>` : '';
     const h = p.h || (p.tall ? 360 : 240);
 
-    return `<div class="comic-panel bg-${p.bg || 'void'}" style="min-height:${h}px;">
+    const bgImg = p.bgImg ? `background-image:url('${p.bgImg}?v=${window.ASSET_VER || ''}');background-size:cover;background-position:center;image-rendering:pixelated;` : '';
+    return `<div class="comic-panel bg-${p.bg || 'void'}" style="min-height:${h}px;${bgImg}">
       <div class="comic-art">${chars}${sfx}</div>
       <div class="comic-overlay">${narr}<div class="comic-bubbles">${bubbles}</div></div>
     </div>`;

@@ -133,15 +133,20 @@ const Story = {
       this.idx++; this.render(); return;
     }
 
-    // 背景
-    if (beat.bg && beat.bg !== this.curBg) {
-      this.curBg = beat.bg;
+    // 背景（bgImg=实景图优先于 CSS 风格背景；沿用到下一次显式改背景为止）
+    const bgKey = (beat.bg || '') + '|' + (beat.bgImg || '');
+    if ((beat.bg || beat.bgImg) && bgKey !== this.curBg) {
+      this.curBg = bgKey;
       const bg = this.root.querySelector('#story-bg');
-      bg.className = 'story-bg bg-' + beat.bg;
+      bg.className = 'story-bg bg-' + (beat.bg || 'void');
+      if (beat.bgImg) {
+        bg.style.backgroundImage = `url('${beat.bgImg}?v=${window.ASSET_VER || ''}')`;
+        bg.classList.add('bg-photo');
+      } else { bg.style.backgroundImage = ''; bg.classList.remove('bg-photo'); }
       bg.animate([{ opacity: 0.3 }, { opacity: 1 }], { duration: 400 });
-      this.spawnParticles(beat.bg);
+      this.spawnParticles(beat.bg || 'void');
     } else if (this.idx === 0) {
-      this.spawnParticles(this.curBg);
+      this.spawnParticles((this.curBg || '').split('|')[0] || 'void');
     }
 
     // 立绘进出场

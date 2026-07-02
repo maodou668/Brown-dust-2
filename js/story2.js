@@ -16,12 +16,12 @@ const SCRIPTS = {
       { text: '出发前，雇主只提了一个要求：走夜路。' },
     ]},
 
-    // 幕1 · 场景演出：夜路行进 + 低语
-    { op: 'scene', bg: 'forest', night: true,
+    // 幕1 · 场景演出：夜路行进 + 低语（实景图 + 泰瑞德提灯光晕）
+    { op: 'scene', bg: 'forest', bgImg: 'art/06_story/scenes/night_road.png', night: true,
       actors: {
-        teried: { sprite: 'teried', x: 14, y: 62, dir: 'east' },
-        katja:  { sprite: 'katja',  x: 8,  y: 68, dir: 'east' },
-        mina:   { sprite: 'mina',   x: 3,  y: 63, dir: 'east' },
+        teried: { sprite: 'teried', x: 14, y: 66, dir: 'east', glow: true },
+        katja:  { sprite: 'katja',  x: 8,  y: 71, dir: 'east' },
+        mina:   { sprite: 'mina',   x: 3,  y: 67, dir: 'east' },
       },
       steps: [
         { t: 'narr', text: '烛河镇外的林道。灯提在最前面。' },
@@ -48,7 +48,7 @@ const SCRIPTS = {
 
     // 幕2 · 战前对白 → 战斗（战中插话）→ 战后
     { op: 'adv', beats: [
-      { bg: 'forest', text: '磨坊桥前。三盏白灯拦在路中间。白灯，是教会的颜色。' },
+      { bg: 'forest', bgImg: 'art/06_story/scenes/night_road.png', text: '磨坊桥前。三盏白灯拦在路中间。白灯，是教会的颜色。' },
       { speaker: '缉捕队长', text: '例行核对。这位女士的名字，在今年的名册上。' },
       { who: 'teried', side: 'left', speaker: '泰瑞德', text: '名册上是个名字。人，在我们这。' },
       { speaker: '缉捕队长', text: '那就换个说法——把教会的东西留下。' },
@@ -65,13 +65,13 @@ const SCRIPTS = {
       interject: { frac: 0.5, speaker: '缉捕队长', text: '她报过名了！你们抢的，是教会的东西——' },
     }},
     { op: 'adv', beats: [
-      { bg: 'forest', text: '白灯灭了两盏。剩下那盏，米娜捡起来，吹熄了。' },
+      { bg: 'forest', bgImg: 'art/06_story/scenes/night_road.png', text: '白灯灭了两盏。剩下那盏，米娜捡起来，吹熄了。' },
       { who: 'mina', side: 'right', speaker: '米娜', text: '灯是好灯。就是主人不像话。' },
     ]},
 
     // 幕3 · ADV：交接（接应人立绘全程用正常版——此时玩家没有对照物）
     { op: 'adv', beats: [
-      { bg: 'town', clear: true, text: '磨坊桥。桥那头，就是交接的镇子。' },
+      { bg: 'town', bgImg: 'art/06_story/scenes/town_gate.png', clear: true, text: '磨坊桥。桥那头，就是交接的镇子。' },
       { who: 'N:npc_meeter', side: 'right', speaker: '接应人', text: '可算到了！卡佳小姐吧？路上冷坏了吧。' },
       { who: 'N:npc_meeter', side: 'right', speaker: '接应人', text: '屋子备好了，炉子烧着。镇上人都盼着新邻居呢。' },
       { speaker: '卡佳', text: '……嗯。送到这就行。谢谢你们。' },
@@ -92,9 +92,9 @@ const SCRIPTS = {
       cover: 'town',
       end: '灯还亮着。',
       panels: [
-        { bg: 'town', narr: '卡佳走进了镇门。', chars: [{ who: 'IMG:art/05_pixellab/katja_field/idle/north/00.png', x: 50, w: 22 }], h: 260 },
-        { bg: 'town', narr: '三步之后，街上一个人也没有。', sfx: '……', sfxPos: 'tr', h: 260 },
-        { bg: 'town', narr: '门内，一排人面向镇口站着。为首的，还在笑。', chars: [
+        { bg: 'town', bgImg: 'art/06_story/scenes/town_gate.png', narr: '卡佳走进了镇门。', chars: [{ who: 'IMG:art/05_pixellab/katja_field/idle/north/00.png', x: 50, w: 22 }], h: 260 },
+        { bg: 'town', bgImg: 'art/06_story/scenes/town_gate.png', narr: '三步之后，街上一个人也没有。', sfx: '……', sfxPos: 'tr', h: 260 },
+        { bg: 'town', bgImg: 'art/06_story/scenes/town_gate.png', narr: '门内，一排人面向镇口站着。为首的，还在笑。', chars: [
           { who: 'N:npc_meeter_odd', x: 50, w: 13 },
           { who: 'N:npc_meeter_odd', x: 28, w: 10, dim: true },
           { who: 'N:npc_meeter_odd', x: 72, w: 10, dim: true },
@@ -104,7 +104,7 @@ const SCRIPTS = {
 
     // 幕5 · ADV：回程结算（吃饭分账 + 收尾钩子）
     { op: 'adv', beats: [
-      { bg: 'forest', clear: true, text: '回程。篝火。工钱摊在石头上分。' },
+      { bg: 'forest', bgImg: 'art/06_story/scenes/campfire.png', clear: true, text: '回程。篝火。工钱摊在石头上分。' },
       { who: 'teried', side: 'left', speaker: '泰瑞德', text: '米娜的药材钱，从我这份里扣。记账上。' },
       { who: 'mina', side: 'right', speaker: '米娜', text: '账上你已经欠到明年了！' },
       { if: 'pro_paid_back', who: 'teried', side: 'left', speaker: '泰瑞德', text: '……钱少一份，饭不能少。明天进镇，我请。' },

@@ -82,10 +82,12 @@ const SceneStage = {
   build(cfg) {
     const old = document.getElementById('scene-stage'); if (old) old.remove();
     this.camera = { scale: 1, x: 50, y: 50 };
+    const V = window.ASSET_VER || '';
     this.root = UI.el(`
       <div id="scene-stage">
         <div class="sc-world" id="sc-world">
           <div class="story-bg bg-${cfg.bg || 'forest'}"></div>
+          ${cfg.bgImg ? `<img class="sc-bgimg" src="${cfg.bgImg}?v=${V}" decoding="async">` : ''}
           ${cfg.night ? '<div class="sc-night"></div>' : ''}
           <div class="bfx-particles" id="sc-fx"></div>
           <div id="sc-actors"></div>
@@ -138,7 +140,11 @@ const SceneStage = {
     const box = this.root.querySelector('#sc-actors');
     for (const id in cfg.actors || {}) {
       const a = cfg.actors[id];
-      const el = UI.el(`<div class="sc-actor" data-actor="${id}"><div class="sc-bubble" style="display:none;"></div><img decoding="async"></div>`);
+      // glow=提灯光晕（掌灯人核心视觉）；所有 actor 带地面椭圆影
+      const el = UI.el(`<div class="sc-actor" data-actor="${id}">
+        ${a.glow ? '<div class="sc-glow"></div>' : ''}
+        <div class="sc-shadow"></div>
+        <div class="sc-bubble" style="display:none;"></div><img decoding="async"></div>`);
       box.appendChild(el);
       this.actors[id] = { ...a, id, el, anim: 'idle', frame: 0, moving: null };
       this.position(this.actors[id]);
