@@ -118,15 +118,22 @@ const UI = {
   // 动态立绘（佣兵详情大框）：charId → 视频基名（自动找 .mp4/.webm）
   LIVE_SPLASH: { lecliss: 'art/01_splash/lecliss_live', seir: 'art/01_splash/seir_live' },
 
-  charAvatar(charId) {
+  charAvatar(charId, costumeId) {
     const c = window.GameData.CHARACTERS[charId];
     const clsIcon = window.GameData.CLASSES[c.cls].icon;  // 职业像素图标 (img html)
-    // 小框立绘优先用像素半身像(portrait)；无则退回 art；再退职业图标
-    const src = c.portrait || c.art;
+    // 出战服装=显示总开关：未显式传服装 id 时按该角色当前出战服装解析（服装有专属半身像则用它）
+    let cosId = costumeId;
+    if (cosId === undefined && window.Game && Game.state && Game.state.roster) {
+      const o = Game.state.roster.find(x => x.charId === charId);
+      if (o) cosId = o.activeCostume;
+    }
+    const cos = cosId && window.GameData.COSTUMES ? window.GameData.COSTUMES[cosId] : null;
+    // 小框立绘优先级：服装专属半身像 → 角色像素半身像(portrait) → art → 职业图标
+    const src = (cos && cos.portrait) || c.portrait || c.art;
     if (src) {
       // 图片优先：加载失败时把 src 换成职业像素图标(不能往属性里塞 img 标签)
       const fb = `art/05_pixellab/ui/icons/cls_${c.cls}.png`;
-      const cls = c.portrait ? 'char-img char-portrait-px' : 'char-img';
+      const cls = ((cos && cos.portrait) || c.portrait) ? 'char-img char-portrait-px' : 'char-img';
       const V = window.ASSET_VER || '';
       // 带 ?v 与预加载 URL 完全一致 → 命中缓存直接展示(不 lazy, 不留白)
       return `<img class="${cls}" src="${src}?v=${V}" alt="${c.name}" decoding="async"
@@ -837,11 +844,12 @@ const UI = {
     // 卡片
     const cards = list.map(o => {
       const c = window.GameData.CHARACTERS[o.charId];
+      const cos = Game.activeCostumeDef(o);   // 出战服装决定元素/配色徽章
       const inTeam = Game.inTeam(o.uid);
       return `<div class="r2-card border-${this.rarityClass(c.rarity)} ${o.uid === this.rosterSel ? 'sel' : ''}" data-uid="${o.uid}">
         ${inTeam ? '<span class="r2-team-tag">出战</span>' : ''}
-        <div class="r2-card-art" style="background:radial-gradient(circle at 50% 30%, ${c.color}55, transparent);">
-          <span class="r2-el">${E[c.element].icon}</span>
+        <div class="r2-card-art" style="background:radial-gradient(circle at 50% 30%, ${cos.color}55, transparent);">
+          <span class="r2-el">${E[cos.element].icon}</span>
           <span class="r2-star">${'★'.repeat(c.rarity)}</span>
           ${this.charAvatar(o.charId)}
           ${o.plus ? `<span class="plus-badge corner">+${o.plus}</span>` : ''}
@@ -866,9 +874,9 @@ const UI = {
            </video><div class="r2-live-scrim"></div>`
         : `<div class="r2-splash-avatar">${this.charAvatar(sel.charId)}</div>`;
       splash = `
-        <div class="r2-splash border-${this.rarityClass(c.rarity)}" style="background:linear-gradient(180deg, ${cos.color}66 0%, ${cos.color}22 45%, var(--bg) 90%);">
-          <span class="r2-splash-el">${E[c.element].icon}${E[c.element].name}</span>
-          <span class="r2-splash-star">${'★'.repeat(c.rarity)}</span>
+        <div class="r2-splash border-${this.rarityClass(cos.rarity)}" style="background:linear-gradient(180deg, ${cos.color}66 0%, ${cos.color}22 45%, var(--bg) 90%);">
+          <span class="r2-splash-el">${E[cos.element].icon}${E[cos.element].name}</span>
+          <span class="r2-splash-star">${'★'.repeat(cos.rarity)}</span>
           ${splashVisual}
           <div class="r2-splash-info">
             <div class="r2-splash-name">${c.name}</div>
@@ -1291,7 +1299,7 @@ const UI = {
       const pity = 90 - s.pity;
       const pickups = (pool[5] || []).slice(0, 8).map(cid => {
         const cd = window.GameData.COSTUMES[cid];
-        return `<span class="gf-pick border-r5" data-cid="${cid}" title="${cd.charName} · ${cd.costumeName}（点击查看详情）" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">${this.charAvatar(cd.charId)}</span>`;
+        return `<span class="gf-pick border-r5" data-cid="${cid}" title="${cd.charName} · ${cd.costumeName}（点击查看详情）" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">${this.charAvatar(cd.charId, cid)}</span>`;
       }).join('');
       feature = `
         <div class="gf-art b-costume">
@@ -1436,7 +1444,7 @@ const UI = {
     return `<div class="roster-card border-${this.rarityClass(cd.rarity)}">
       <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">
         <span class="rarity-badge ${this.rarityClass(cd.rarity)}">${cd.rarity}★</span>
-        ${this.charAvatar(cd.charId)}
+        ${this.charAvatar(cd.charId, cid)}
         <span class="cls-chip">${window.GameData.ELEMENTS[cd.element].icon}</span>
       </div>
       <div class="rc-info"><div class="rc-name" style="font-size:11px;">${cd.charName}</div>
@@ -1482,7 +1490,7 @@ const UI = {
       const m = this.openModal(`
         <div class="pull-result">
           <div class="pull-art border-${this.rarityClass(cd.rarity)}" data-cid="${r.costumeId}" title="点击查看详情" style="cursor:pointer;background:radial-gradient(circle at 50% 35%, ${cd.color}66, var(--panel));">
-            ${this.charAvatar(cd.charId)}
+            ${this.charAvatar(cd.charId, r.costumeId)}
           </div>
           <div class="pull-stars ${this.rarityClass(cd.rarity)}" style="-webkit-text-fill-color:initial;color:var(--${'r'+r.rarity});">${'★'.repeat(r.rarity)}</div>
           <div class="pull-name">${cd.charName} <span class="muted" style="font-size:13px;">· ${cd.costumeName}</span></div>
@@ -1502,7 +1510,7 @@ const UI = {
         return `<div class="roster-card border-${this.rarityClass(r.rarity)}" data-cid="${r.costumeId}" title="点击查看详情">
           <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${cd.color}44, transparent);">
             <span class="rarity-badge ${this.rarityClass(r.rarity)}">${r.rarity}★</span>
-            ${this.charAvatar(cd.charId)}
+            ${this.charAvatar(cd.charId, r.costumeId)}
             <span class="in-team-tag" style="background:${tagBg};">${tag}</span>
           </div>
           <div class="rc-info"><div class="rc-name" style="font-size:11px;">${cd.charName}·${cd.costumeName}</div></div>
@@ -2447,7 +2455,7 @@ const UI = {
     const tgtLab = { enemySingle: '单体', enemyRow: '一排', enemyAll: '全体敌', allySingle: '单友', allyAll: '全体友', self: '自身' }[sig && sig.target] || '';
     const m = this.openModal(`<h2>服装详情</h2><div class="gd-body">
       <div class="gd-head">
-        <div class="gd-art border-${this.rarityClass(cos.rarity)}" style="background:radial-gradient(circle at 50% 35%, ${cos.color}55, transparent);"><span class="gd-ico">${cls.icon}</span></div>
+        <div class="gd-art border-${this.rarityClass(cos.rarity)}" style="background:radial-gradient(circle at 50% 35%, ${cos.color}55, transparent);">${this.charAvatar(cos.charId, costumeId)}</div>
         <div class="gd-title">
           <div class="gd-name">${cos.name}</div>
           <div class="gd-meta"><span class="rw ${this.rarityClass(cos.rarity)}" style="font-size:10px;padding:1px 6px;">${cos.rarity}★</span> · ${el.icon}${el.name} · ${cls.icon}${cls.name}${has ? ' · <span style="color:var(--accent);">已拥有</span>' : ''}</div>
@@ -3003,7 +3011,7 @@ const UI = {
         return `<div class="roster-card border-${this.rarityClass(cd.rarity)}" data-pick="${cid}">
           <div class="rc-art" style="background:radial-gradient(circle at 50% 35%, ${cd.color}55, transparent);">
             <span class="rarity-badge ${this.rarityClass(cd.rarity)}">${cd.rarity}★</span>
-            ${this.charAvatar(cd.charId)}
+            ${this.charAvatar(cd.charId, cid)}
           </div>
           <div class="rc-info"><div class="rc-name" style="font-size:10px;">${cd.charName}·${cd.costumeName}</div></div>
         </div>`;

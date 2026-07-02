@@ -132,9 +132,11 @@ function pickSignature(skills) {
 const ALTS = {
   teried_knight: { charId: 'teried', costumeName: '圣骑士', rarity: 4, element: 'light', color: '#ffd97a',
     mul: { hp: 1.1, atk: 1.0, def: 1.15 }, signature: 'radiant_judgment', second: 'dawnblade',
+    portrait: 'art/05_pixellab/ui/portraits/teried_knight.png',
     desc: '受封圣骑士的礼装，挥剑间降下审判圣光。' },
   lecliss_frost: { charId: 'lecliss', costumeName: '霜华', rarity: 5, element: 'water', color: '#5a9fff',
     mul: { hp: 1.12, atk: 0.96, def: 1.0 }, signature: 'frost_nova', second: 'water_lance',
+    portrait: 'art/05_pixellab/ui/portraits/lecliss_frost.png',
     desc: '反转属性的霜之魔女，以极寒取代烈焰。' },
   justia_blade: { charId: 'justia', costumeName: '审判', rarity: 5, element: 'light', color: '#fff0a0',
     mul: { hp: 0.9, atk: 1.35, def: 0.85 }, signature: 'radiant_judgment', second: 'dawnblade',
@@ -172,6 +174,7 @@ const ALTS = {
     desc: '剑技臻至化境的剑圣，一骑当千。' },
   olstein_holy: { charId: 'olstein', costumeName: '圣盾', rarity: 5, element: 'light', color: '#ffe7b0',
     mul: { hp: 1.05, atk: 1.1, def: 1.1 }, signature: 'radiant_judgment', second: 'mountain_bulwark',
+    portrait: 'art/05_pixellab/ui/portraits/olstein_holy.png',
     desc: '受圣光加护的不动壁垒，攻守兼备。' },
   // —— 补齐第二套服装（格蕾西亚 / 莉亚特丽丝，原先缺失，导致技能数不齐）——
   glacia_blizzard: { charId: 'glacia', costumeName: '暴雪', rarity: 5, element: 'water', color: '#bfe6ff',
@@ -223,6 +226,7 @@ Object.entries(ALTS).forEach(([id, a]) => {
     },
     signature: a.signature,
     skills: [a.signature, a.second].filter(Boolean),   // 该套 2 技：专属大招 + 第二技
+    portrait: a.portrait,   // 服装专属半身像（可选；无则 UI 回退角色基础半身像）
     desc: a.desc,
   };
 });

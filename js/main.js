@@ -1339,6 +1339,10 @@ const Main = {
       else if (c.art) imgs.push(c.art);
       imgs.push(`art/05_pixellab/${id}_field/idle/south/00.png`);
     });
+    // 服装专属半身像（出战服装=显示总开关：roster/详情/招募都可能直接显示）
+    Object.values((window.GameData && window.GameData.COSTUMES) || {}).forEach(cd => {
+      if (cd.portrait) imgs.push(cd.portrait);
+    });
     imgs.push('art/01_splash/lecliss_avatar.png');
     const vids = ['art/video/home_bg', 'art/01_splash/lecliss_live'];
     const total = imgs.length + vids.length || 1;

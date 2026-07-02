@@ -132,9 +132,12 @@ const ArtLab = {
   },
 
   showPortrait() {
-    const inf = this.keyInfo(this.keys[this.idx]);
+    const key = this.keys[this.idx];
+    const inf = this.keyInfo(key);
     const c = window.GameData.CHARACTERS[inf.charId] || {};
-    const src = c.portrait || c.art;
+    const cos = (window.GameData.COSTUMES || {})[key];
+    // 服装 key 优先看服装专属半身像，无则回退角色基础半身像
+    const src = (cos && cos.portrait) || c.portrait || c.art;
     const img = this.root.querySelector('#al-portimg'), miss = this.root.querySelector('#al-pmiss'), port = this.root.querySelector('#al-port');
     if (src) { img.src = src + '?v=' + (window.ASSET_VER || '1'); img.style.display = ''; miss.style.display = 'none'; }
     else { img.style.display = 'none'; miss.style.display = ''; }
