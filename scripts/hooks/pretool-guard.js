@@ -68,6 +68,14 @@ if (tool === 'Bash') {
           missing.join('\n') +
           '\n先 `node scripts/artgate.js <char>` 过闸（PASS 会写戳），git add 该目录后再 push。');
       }
+      // ── 规则4：守卫规则变更必须同步进说明书第 0 章（内嵌的可移植副本）──────
+      // 防"守卫在长大、可移植启动章停在旧版"。同步命令：node scripts/make-bootstrap.js
+      if (changed.includes('scripts/hooks/pretool-guard.js')
+        && require('fs').existsSync('dev/游戏开发说明书.md')
+        && !changed.some(f => /游戏开发说明书\.md$/.test(f))) {
+        deny('🚫同步闸门：守卫规则变了但说明书第 0 章（内嵌副本）没同步。\n' +
+          '跑 `node scripts/make-bootstrap.js` 再 git add dev/游戏开发说明书.md 后 push。');
+      }
     } catch (e) { /* git 不可用等情况放行，不误伤 */ }
   }
 }
