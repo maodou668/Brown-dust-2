@@ -10258,6 +10258,8 @@ const SCRIPTS = {
       },
       steps: [
         { t: 'narr', text: '烛河镇外的林道。泰瑞德把灯挑在队伍最前面，出门前刚添满的油。' },
+        { t: 'say',  who: 'teried', text: '规矩说一遍。走灯照得到的地方，脚别出光圈。' },
+        { t: 'say',  who: 'teried', text: '灯外面有什么动静，看见了也当没看见。这行送走过三个爱回头的。' },
         { t: 'move', who: 'teried', to: [40, 62], dur: 2400 },
         { t: 'move', who: 'katja',  to: [34, 68], dur: 2400 },
         { t: 'move', who: 'mina',   to: [28, 63], dur: 2400 },
@@ -10300,6 +10302,8 @@ const SCRIPTS = {
     { op: 'adv', beats: [
       { bg: 'forest', bgImg: 'art/06_story/scenes/night_road.png', text: '白灯灭了两盏。最后一盏倒在桥板上还亮着，米娜捡起来，吹了三口才吹熄。' },
       { who: 'mina', side: 'right', speaker: '米娜', text: '灯是好灯。就是主人不像话。' },
+      { text: '泰瑞德把剑在缉捕兵雪白的披风上蹭了两下，插回鞘里。' },
+      { who: 'mina', side: 'right', speaker: '米娜', text: '疗伤药喝掉两瓶，绷带一卷。都记损耗里，回头找雇主报。……要是找得到雇主的话。' },
     ]},
 
     // 幕3 · ADV：交接（接应人立绘全程用正常版——此时玩家没有对照物）
@@ -10343,6 +10347,8 @@ const SCRIPTS = {
       { bg: 'forest', bgImg: 'art/06_story/scenes/campfire.png', clear: true, text: '回程在林子边上扎营。工钱摊在石头上，分成三小堆。' },
       { who: 'teried', side: 'left', speaker: '泰瑞德', text: '米娜的药材钱，从我这份里扣。记账上。' },
       { who: 'mina', side: 'right', speaker: '米娜', text: '账上你已经欠到明年开春了！' },
+      { text: '桥上捡的那盏白灯立在火堆边。灯罩上的教会烛纹，被米娜用小刀刮掉了。' },
+      { who: 'mina', side: 'right', speaker: '米娜', text: '油还剩大半罐呢。灯又没做错什么。' },
       { if: 'pro_paid_back', who: 'teried', side: 'left', speaker: '泰瑞德', text: '……钱少一份，饭不能少。明天进镇我请，谁也别跟我抢着付。' },
       { ifNot: 'pro_paid_back', who: 'teried', side: 'left', speaker: '泰瑞德', text: '今天这钱挣得干净。睡吧。' },
       { who: 'mina', side: 'right', speaker: '米娜', text: '指挥官，我一直在想那个接头的人。他跟我们说了那么半天话……' },
