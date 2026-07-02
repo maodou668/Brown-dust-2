@@ -10397,14 +10397,14 @@ const SCRIPTS = {
     // 幕1 · 场景演出：白天进村
     { op: 'scene', bg: 'town', bgImg: 'art/06_story/scenes/village_day.png',
       actors: {
-        teried:   { sprite: 'teried',   x: 6,  y: 66, dir: 'east' },
-        mina:     { sprite: 'mina',     x: 1,  y: 68, dir: 'east' },
-        villager: { sprite: 'villager', x: 62, y: 64, dir: 'west' },
+        teried:   { sprite: 'teried',   x: 6,  y: 82, dir: 'east' },
+        mina:     { sprite: 'mina',     x: 1,  y: 86, dir: 'east' },
+        villager: { sprite: 'villager', x: 62, y: 83, dir: 'west' },
       },
       steps: [
         { t: 'narr', text: '灰蒙蒙的上午。鸡在栅栏边刨食，烟囱都冒着烟。看上去是个活的村子。' },
-        { t: 'move', who: 'teried', to: [40, 65], dur: 2200 },
-        { t: 'move', who: 'mina',   to: [33, 67], dur: 2200 },
+        { t: 'move', who: 'teried', to: [40, 82], dur: 2200 },
+        { t: 'move', who: 'mina',   to: [33, 86], dur: 2200 },
         { t: 'say',  who: 'villager', text: '掌灯的吧？可把你们盼来了。' },
         { t: 'say',  who: 'villager', text: '磨坊在村东头。叔叔人好，就是最近不对。' },
         { t: 'say',  who: 'teried', text: '哪里不对？' },
@@ -10437,13 +10437,13 @@ const SCRIPTS = {
     // 幕3 · 场景演出：磨坊内部
     { op: 'scene', bg: 'cave', bgImg: 'art/06_story/scenes/mill_interior.png',
       actors: {
-        teried: { sprite: 'teried', x: 12, y: 70, dir: 'east', glow: true },
-        mina:   { sprite: 'mina',   x: 4,  y: 72, dir: 'east' },
+        teried: { sprite: 'teried', x: 12, y: 86, dir: 'east', glow: true },
+        mina:   { sprite: 'mina',   x: 4,  y: 89, dir: 'east' },
       },
       steps: [
         { t: 'narr', text: '门没锁。灰有小腿厚，地上只有一种脚印——他们自己的。' },
-        { t: 'move', who: 'teried', to: [42, 68], dur: 2000 },
-        { t: 'move', who: 'mina',   to: [34, 71], dur: 2000 },
+        { t: 'move', who: 'teried', to: [40, 85], dur: 2000 },
+        { t: 'move', who: 'mina',   to: [32, 88], dur: 2000 },
         { t: 'camera', scale: 1.5, x: 55, y: 55, dur: 900 },
         { t: 'narr', text: '长桌上摆着十一副碗筷。碗里的灰和地上一样厚。' },
         { t: 'say',  who: 'teried', text: '十一副。和委托书上的手印一个数。' },
