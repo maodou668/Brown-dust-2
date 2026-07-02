@@ -233,6 +233,7 @@ const BattleUI = {
     garcia:   'art/05_pixellab/garcia_field',
     teried:   'art/05_pixellab/teried_field',
     katja:    'art/05_pixellab/katja_field',        // 剧情 NPC（序章·护送对象）
+    villager: 'art/05_pixellab/villager_field',     // 剧情 NPC（第一章·老农）
     lia:      'art/05_pixellab/lia_field',
     mina:     'art/05_pixellab/mina_field',
     glacia:   'art/05_pixellab/glacia_field',

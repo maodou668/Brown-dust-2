@@ -1,8 +1,14 @@
 // ============================================================
 //  《掌灯人》主线剧本（剧本 DSL，由 js/director.js 执行）
-//  写作规矩见 story/圣经v2_掌灯人.md §4 行为卡 + §5 台词铁律。
+//  ⚠️ 文案分工：台词/旁白由用户终审改写，本文件内文本均为工程草稿口径。
 //  op: adv(beats) / scene(cfg) / battle(stage) / comic(ep) / wait
 // ============================================================
+
+// 主线章节表（章节选择弹窗 UI.showMainStory 用）
+window.MAIN_CHAPTERS = [
+  { id: 'prologue', title: '序章 · 点灯', desc: '一桩护送单' },
+  { id: 'chapter1', title: '第一章 · 空屋', desc: '磨坊的叔叔', needs: 'prologue' },
+];
 
 const SCRIPTS = {
 
@@ -124,6 +130,112 @@ const SCRIPTS = {
       { clear: true, text: '那晚的灯留到了天亮，没人去省那点灯油。—— 序章 · 完' },
     ]},
   ],
+  // ---------- 第一章 · 空屋（全村都认识磨坊的叔叔；查无此人） ----------
+  chapter1: [
+
+    // 幕0 · ADV+CG：村民凑钱的委托书
+    { op: 'adv', beats: [
+      { cg: 'art/06_story/cg/contract2.png', text: '委托书。字迹歪歪扭扭，落款按了十一个红手印。' },
+      { cg: 'art/06_story/cg/contract2.png', text: '"请掌灯的来看看磨坊的叔叔。他最近不对。"' },
+      { text: '报酬一栏写着：全村凑的，一共三十七银，先付一半。' },
+    ]},
+
+    // 幕1 · 场景演出：白天进村
+    { op: 'scene', bg: 'town', bgImg: 'art/06_story/scenes/village_day.png',
+      actors: {
+        teried:   { sprite: 'teried',   x: 6,  y: 66, dir: 'east' },
+        mina:     { sprite: 'mina',     x: 1,  y: 68, dir: 'east' },
+        villager: { sprite: 'villager', x: 62, y: 64, dir: 'west' },
+      },
+      steps: [
+        { t: 'narr', text: '灰蒙蒙的上午。鸡在栅栏边刨食，烟囱都冒着烟。看上去是个活的村子。' },
+        { t: 'move', who: 'teried', to: [40, 65], dur: 2200 },
+        { t: 'move', who: 'mina',   to: [33, 67], dur: 2200 },
+        { t: 'say',  who: 'villager', text: '掌灯的吧？可把你们盼来了。' },
+        { t: 'say',  who: 'villager', text: '磨坊在村东头。叔叔人好，就是最近不对。' },
+        { t: 'say',  who: 'teried', text: '哪里不对？' },
+        { t: 'wait', ms: 900 },
+        { t: 'say',  who: 'villager', text: '……就是不对。你们看了就知道。' },
+        { t: 'narr', text: '问第三个人，答的还是这两个字。全村像商量好了一样。' },
+      ],
+    },
+
+    // 幕2 · ADV：挨家打听（口供对不上 + 复问机制首秀）
+    { op: 'adv', beats: [
+      { bg: 'town', bgImg: 'art/06_story/scenes/village_day.png', clear: true, text: '村长家。屋里烧着奶茶，很香。' },
+      { who: 'N:npc_headman', side: 'right', speaker: '村长', text: '叔叔啊。高个，人瘦，在磨坊住了二十年喽。娃娃们都吃过他烤的饼。' },
+      { speaker: '指挥官', text: '（问：他姓什么？）' },
+      { who: 'N:npc_headman', side: 'right', speaker: '村长', text: '姓……嗐，你看我这记性。都叫叔叔，叫了二十年。' },
+      { bg: 'town', bgImg: 'art/06_story/scenes/village_day.png', clear: true, text: '隔壁院子。妇人在收晾了一半的衣裳。' },
+      { who: 'N:npc_wife', side: 'right', speaker: '村妇', text: '叔叔？矮墩墩的那个呀，胳膊粗。七年前逃荒来的，磨坊空着，就住下了。' },
+      { who: 'mina', side: 'left', speaker: '米娜', text: '（小声）村长说他又高又瘦，住了二十年。' },
+      { speaker: '指挥官', text: '（再核一遍。）',
+        choice: [
+          { t: '再问村长一遍叔叔的样子', flag: 'c1_reask' },
+          { t: '直接去磨坊' },
+        ] },
+      { if: 'c1_reask', bg: 'town', bgImg: 'art/06_story/scenes/village_day.png', clear: true, text: '又回到村长家。奶茶还是那个香法。' },
+      { if: 'c1_reask', who: 'N:npc_headman', side: 'right', speaker: '村长', text: '叔叔啊。高个，人瘦，在磨坊住了二十年喽。娃娃们都吃过他烤的饼。' },
+      { if: 'c1_reask', who: 'mina', side: 'left', speaker: '米娜', text: '（小声）……一个字都没变。连"喽"都在原来的地方。' },
+      { who: 'teried', side: 'left', speaker: '泰瑞德', text: '去磨坊。' },
+    ]},
+
+    // 幕3 · 场景演出：磨坊内部
+    { op: 'scene', bg: 'cave', bgImg: 'art/06_story/scenes/mill_interior.png',
+      actors: {
+        teried: { sprite: 'teried', x: 12, y: 70, dir: 'east', glow: true },
+        mina:   { sprite: 'mina',   x: 4,  y: 72, dir: 'east' },
+      },
+      steps: [
+        { t: 'narr', text: '门没锁。灰有小腿厚，地上只有一种脚印——他们自己的。' },
+        { t: 'move', who: 'teried', to: [42, 68], dur: 2000 },
+        { t: 'move', who: 'mina',   to: [34, 71], dur: 2000 },
+        { t: 'camera', scale: 1.5, x: 55, y: 55, dur: 900 },
+        { t: 'narr', text: '长桌上摆着十一副碗筷。碗里的灰和地上一样厚。' },
+        { t: 'say',  who: 'teried', text: '十一副。和委托书上的手印一个数。' },
+        { t: 'say',  who: 'mina', text: '这屋里有股药味。熬过很多年的那种……我在别的地方闻到过。' },
+        { t: 'wait', ms: 800 },
+        { t: 'whisper', who: 'mina' },
+        { t: 'say',  who: 'mina', text: '……楼上。' },
+        { t: 'camera', scale: 1, x: 50, y: 50, dur: 700 },
+      ],
+    },
+
+    // 幕4 · 战斗：磨坊里的东西（战中插话用村民的原话）
+    { op: 'battle', stage: {
+      id: 'sc_chapter1', name: '磨坊 · 二楼', isBoss: false,
+      enemies: [
+        { id: 'wolf', level: 3, name: '从梁上下来的东西' },
+        { id: 'dark_mage', level: 4, name: '磨坊里的东西' },
+        { id: 'wolf', level: 3, name: '从梁上下来的东西' },
+      ],
+      mod: { atkMul: 0.85, hpMul: 0.8 },
+      reward: { gold: 180, gem: 40, exp: 60 },
+      interject: { frac: 0.5, speaker: '磨坊里的东西', text: '叔叔人好。就是最近，不对。' },
+    }},
+
+    // 幕5 · ADV：收尾（真相处置选择支 + 身世钩子）
+    { op: 'adv', beats: [
+      { bg: 'town', bgImg: 'art/06_story/scenes/village_day.png', clear: true, text: '出磨坊的时候，全村人都等在坡下。十一个人，站得整整齐齐。' },
+      { who: 'N:npc_headman', side: 'right', speaker: '村长', text: '解决了？叔叔他……能安生了？' },
+      { speaker: '指挥官', text: '（怎么答。）',
+        choice: [
+          { t: '告诉他们：磨坊里从来没住过人', flag: 'c1_truth' },
+          { t: '收下尾款：解决了' },
+        ] },
+      { if: 'c1_truth', who: 'N:npc_headman_odd', side: 'right', speaker: '村长', text: '……没住过人？你这话说的。娃娃们的饼，是谁烤的？' },
+      { if: 'c1_truth', text: '十一个人都在点头。没有一个人的眼睛在看磨坊。' },
+      { ifNot: 'c1_truth', who: 'N:npc_headman', side: 'right', speaker: '村长', text: '好，好。剩下的十八银半，你们点点。' },
+      { ifNot: 'c1_truth', text: '钱是十一家凑的，铜板银角混在一起，还带着体温。' },
+      { bg: 'forest', bgImg: 'art/06_story/scenes/campfire.png', clear: true, text: '当晚在村外扎营。' },
+      { who: 'teried', side: 'left', speaker: '泰瑞德', text: '十一副碗筷……我老家吃席也这么摆。谁家有事，全村凑一桌。' },
+      { who: 'teried', side: 'left', speaker: '泰瑞德', text: '可他们凑的这一桌，主位上是空的。' },
+      { who: 'mina', side: 'right', speaker: '米娜', text: '那股药味我想起来了。我梦里学方子的那间屋，就是那个味。' },
+      { who: 'mina', side: 'right', speaker: '米娜', text: '……我从来没跟你们说过，教我方子的婆婆，住在哪。' },
+      { clear: true, text: '灯拨亮了一格。—— 第一章 · 完' },
+    ]},
+  ],
+
 };
 
 window.SCRIPTS = SCRIPTS;

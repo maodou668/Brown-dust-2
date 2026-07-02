@@ -253,7 +253,7 @@ const UI = {
         <div class="lobby-bottombar">
           <div class="lb-funcs">${bottomFuncs.map(funcBtn).join('')}</div>
           <button class="lb-cta lb-cta-story" data-act="mainstory">
-            <span class="cta-go">🕯 主线</span><span class="cta-sub">序章 · 点灯${Story.seen('prologue') ? ' ✓' : ''}</span>
+            <span class="cta-go">🕯 主线</span><span class="cta-sub">掌灯人 · ${(window.MAIN_CHAPTERS || []).filter(c => Story.seen(c.id)).length}/${(window.MAIN_CHAPTERS || []).length} 章</span>
           </button>
           <button class="lb-cta" data-go="gamecards">
             <span class="cta-go">出 战</span><span class="cta-sub">游戏卡 · 主线 ${cleared}/${total}</span>
@@ -267,7 +267,7 @@ const UI = {
         const a = c.dataset.act;
         if (a === 'team') this.showTeamEditor(0);
         else if (a === 'forge') this.showForge();
-        else if (a === 'mainstory') { if (window.Director) Director.play('prologue', () => this.renderHome()); }
+        else if (a === 'mainstory') this.showMainStory();
         else if (a === 'story') this.showStoryReplay();
         else if (a === 'ach') this.showAchievements();
         else if (a === 'announce') this.showAnnounce();
@@ -482,6 +482,27 @@ const UI = {
   },
 
   /** 剧情回顾弹窗 */
+  /** 主线章节选择（《掌灯人》· Director 驱动） */
+  showMainStory() {
+    const chs = window.MAIN_CHAPTERS || [];
+    const rows = chs.map(ch => {
+      const seen = Story.seen(ch.id);
+      const locked = ch.needs && !Story.seen(ch.needs);
+      return `<button class="btn ${locked ? 'secondary' : ''}" data-mch="${ch.id}" ${locked ? 'disabled' : ''}
+        style="width:100%;margin:5px 0;display:flex;justify-content:space-between;align-items:center;">
+        <span>${locked ? '🔒 ' : ''}${ch.title}${seen ? ' ✓' : ''}</span>
+        <span class="muted" style="font-size:11px;">${locked ? '通关上一章解锁' : ch.desc || ''}</span>
+      </button>`;
+    }).join('');
+    const m = this.openModal(`<h2>🕯 主线 · 掌灯人</h2><div style="margin-top:10px;">${rows}</div>
+      <div class="close-row"><button class="btn secondary" id="ms-close">关闭</button></div>`);
+    m.querySelector('#ms-close').onclick = () => this.closeModal(m);
+    m.querySelectorAll('[data-mch]').forEach(b => b.onclick = () => {
+      this.closeModal(m);
+      Director.play(b.dataset.mch, () => this.renderHome());
+    });
+  },
+
   showStoryReplay() {
     const main = [
       { id: 'prologue', name: '序章 · 启程' },

@@ -155,14 +155,14 @@ const Battle = {
         }));
         return;
       }
-      const def = D.ENEMIES[e.id];
+      const def = D.ENEMIES[e.id];   // 剧情战可用 e.name 覆盖显示名（如"磨坊里的东西"）
       const lv = e.level - 1;
       // 把敌人成长从「血厚」偏向「打得痛」：增加紧张感（会输）而非拖时长（变肉）
       const grow = { hp: def.base.hp * 0.062, atk: def.base.atk * 0.115, def: def.base.def * 0.07 };
       // 关卡级倍率：解耦高低级数值（线性成长在高级会爆炸，深渊用此把攻/血单独调到位）
       const hpMul = this.mod.hpMul || 1, atkMul = this.mod.atkMul || 1;
       this.combatants.push(new Combatant({
-        uid: 'E' + i, name: def.name, side: 'enemy', charId: e.id,
+        uid: 'E' + i, name: e.name || def.name, side: 'enemy', charId: e.id,
         cls: 'enemy', element: def.element, color: def.color, level: e.level,
         pos: def.tier || e.pos || 'mid',
         maxHp: Math.round((def.base.hp + grow.hp * lv) * hpMul),
