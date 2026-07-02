@@ -140,6 +140,7 @@ const ALTS = {
     desc: '反转属性的霜之魔女，以极寒取代烈焰。' },
   justia_blade: { charId: 'justia', costumeName: '审判', rarity: 5, element: 'light', color: '#fff0a0',
     mul: { hp: 0.9, atk: 1.35, def: 0.85 }, signature: 'radiant_judgment', second: 'dawnblade',
+    portrait: 'art/05_pixellab/ui/portraits/justia_blade.png',
     desc: '由守转攻的审判之姿，圣光化作裁决之刃。' },
   seir_twin: { charId: 'seir', costumeName: '双牙', rarity: 5, element: 'dark', color: '#c08bff',
     mul: { hp: 0.85, atk: 1.18, def: 0.95 }, signature: 'twin_fang', second: 'shadow_volley',

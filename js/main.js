@@ -239,6 +239,7 @@ const BattleUI = {
     loen:     'art/05_pixellab/loen_field',
     // —— 第二套服装整套 sprite（key = 服装 id；激活该服装时用这套，否则回落 charId）——
     lecliss_frost: 'art/05_pixellab/lecliss_frost_field',
+    justia_blade: 'art/05_pixellab/justia_blade_field',
     olstein_holy:  'art/05_pixellab/olstein_holy_field',
     teried_knight: 'art/05_pixellab/teried_knight_field',
   },
