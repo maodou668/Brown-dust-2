@@ -95,9 +95,9 @@ const SCRIPTS = {
         { bg: 'town', narr: '卡佳走进了镇门。', chars: [{ who: 'IMG:art/05_pixellab/katja_field/idle/north/00.png', x: 50, w: 22 }], h: 260 },
         { bg: 'town', narr: '三步之后，街上一个人也没有。', sfx: '……', sfxPos: 'tr', h: 260 },
         { bg: 'town', narr: '门内，一排人面向镇口站着。为首的，还在笑。', chars: [
-          { who: 'N:npc_meeter_odd', x: 50, w: 30 },
-          { who: 'N:npc_meeter_odd', x: 22, w: 24, dim: true },
-          { who: 'N:npc_meeter_odd', x: 78, w: 24, dim: true },
+          { who: 'N:npc_meeter_odd', x: 50, w: 13 },
+          { who: 'N:npc_meeter_odd', x: 28, w: 10, dim: true },
+          { who: 'N:npc_meeter_odd', x: 72, w: 10, dim: true },
         ], tall: true },
       ],
     }},
