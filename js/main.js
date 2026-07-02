@@ -308,16 +308,16 @@ const BattleUI = {
   triggerCast(uid, skillId) {
     const c = Battle.combatants.find(x => x.uid === uid);
     if (!c || !this.FIELD_SPRITE[this.spriteKey(c)]) return;
-    // 按技能选施法动画：优先用「该技能所属服装元素」的专属施法动作(cast_<元素>，如霜华水系=cast_water)；
-    // 没有该元素专属施法动作时，回退：大招(SP≥3)→cast_class，节奏技(SP2)→cast。
+    // 统一标准：**每套服装只有一个施法动作**（两个技能共用同一施法）。
+    // 解析：cast_<当前服装元素>（服装专属，如霜华=cast_water）→ cast（基础套标准名）→ 首个 cast_* 兜底。
     const sp = this.sprites[this.spriteKey(c)];
-    const skDef = window.GameData.SKILLS[skillId];
+    const anims = (sp && sp.man && sp.man.anims) || {};
     const cos = Object.values(window.GameData.COSTUMES || {}).find(co => co.charId === c.charId && (co.skills || []).includes(skillId));
     const byEl = cos ? 'cast_' + cos.element : null;
-    let anim;
-    if (byEl && sp && sp.man && sp.man.anims && sp.man.anims[byEl]) anim = byEl;
-    else anim = (skDef && (skDef.sp || 0) >= 3) ? 'cast_class' : 'cast';
-    if (sp && sp.man && !(sp.man.anims && sp.man.anims[anim])) anim = (sp.man.anims && sp.man.anims.cast) ? 'cast' : 'cast_class';
+    const anim = (byEl && anims[byEl]) ? byEl
+      : anims.cast ? 'cast'
+        : Object.keys(anims).find(a => a.indexOf('cast') === 0);
+    if (!anim) return;
     this.spriteState[uid] = { anim, start: performance.now() };
   },
 

@@ -64,15 +64,15 @@ const ArtLab = {
       <div class="al-stage">
         <div class="al-hud" id="al-hud"></div>
         <div class="al-top">
-          <button id="al-prev">◀ 上一个</button><button id="al-next">下一个 ▶</button><button id="al-close">✕ 关闭</button>
+          <button id="al-prev">◀ 上一个</button><button id="al-next">下一个 ▶</button><button id="al-fs">⛶ 全屏</button><button id="al-close">✕ 关闭</button>
         </div>
         <canvas id="al-canvas"></canvas>
         <div class="al-port" id="al-port"><img id="al-portimg" alt=""><span class="al-pmiss" id="al-pmiss" style="display:none;">该角色暂无半身像</span></div>
         <div class="al-ctrl">
           <div class="al-dpad">
-            <span></span><button data-d="north">▲</button><span></span>
-            <button data-d="west">◀</button><button data-d="south">▼</button><button data-d="east">▶</button>
-            <button data-d="north-west" style="font-size:12px">↖</button><button data-d="south" style="visibility:hidden"></button><button data-d="north-east" style="font-size:12px">↗</button>
+            <button data-d="north-west">↖</button><button data-d="north">▲</button><button data-d="north-east">↗</button>
+            <button data-d="west">◀</button><span></span><button data-d="east">▶</button>
+            <button data-d="south-west">↙</button><button data-d="south">▼</button><button data-d="south-east">↘</button>
           </div>
           <div class="al-casts" id="al-casts"></div>
           <button id="al-portrait" class="al-item" style="width:auto;">🖼 看立绘</button>
@@ -87,6 +87,10 @@ const ArtLab = {
     root.querySelector('#al-next').onclick = () => this.select((this.idx + 1) % this.keys.length);
     root.querySelector('#al-close').onclick = () => this.close();
     root.querySelector('#al-portrait').onclick = () => this.showPortrait();
+    root.querySelector('#al-fs').onclick = () => {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else (root.requestFullscreen ? root.requestFullscreen() : document.documentElement.requestFullscreen());
+    };
     root.querySelector('#al-port').onclick = () => { root.querySelector('#al-port').style.display = 'none'; };
     // dpad: press-and-hold to walk that way
     root.querySelectorAll('.al-dpad button[data-d]').forEach(b => {
@@ -139,9 +143,10 @@ const ArtLab = {
 
   // 由按下的方向键推出 8 向 + 是否移动
   resolveDir() {
-    const h = this.held; const up = h['north'], dn = h['south'], lf = h['west'], rt = h['east'], ne = h['north-east'], nw = h['north-west'];
+    const h = this.held; const up = h['north'], dn = h['south'], lf = h['west'], rt = h['east'];
     let dx = (rt ? 1 : 0) - (lf ? 1 : 0), dy = (dn ? 1 : 0) - (up ? 1 : 0);
-    if (ne) { dx = 1; dy = -1; } if (nw) { dx = -1; dy = -1; }
+    if (h['north-east']) { dx = 1; dy = -1; } if (h['north-west']) { dx = -1; dy = -1; }
+    if (h['south-east']) { dx = 1; dy = 1; } if (h['south-west']) { dx = -1; dy = 1; }
     if (!dx && !dy) return null;
     const dir = (dy < 0 ? 'north' : dy > 0 ? 'south' : '') + ((dy && dx) ? '-' : '') + (dx > 0 ? 'east' : dx < 0 ? 'west' : '');
     return { dir, dx, dy };
