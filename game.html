@@ -10178,12 +10178,10 @@ const Story = {
   finish() {
     clearInterval(this.typer);
     if (window.Sound && !(window.BattleUI && BattleUI.root)) Sound.bgm('home');
-    if (this.root) {
-      this.root.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300 }).onfinish = () => {
-        if (this.root) this.root.remove();
-        this.root = null;
-      };
-    }
+    // ⚠️ 只删"本次"的屏：淡出回调若引用 this.root，连播下一段 ADV 时会把新屏误删（导演器连播踩坑）
+    const r = this.root;
+    this.root = null;
+    if (r) r.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300 }).onfinish = () => r.remove();
     const cb = this.onDone;
     this.onDone = null;
     if (cb) setTimeout(cb, 280);
