@@ -140,60 +140,107 @@ const SCRIPTS = {
       { text: '报酬一栏写着：全村凑的，一共三十七银，先付一半。' },
     ]},
 
-    // 幕1 · 场景演出：白天进村（Diorama 立体舞台）
+    // 幕1 · 场景演出：白天进村（Diorama v3 纯俯视 · Ninja Adventure CC0 素材包）
     { op: 'scene', bg: 'town',
       stage: {
-        w: 1600, h: 900, zoom: 1.1,
-        sky: ['#93a9bd', '#d6d8c9'],
-        mute: 0.32, tone: 'rgba(188,180,152,.07)',
-        ground: {
-          sheet: 'art/06_story/stage/village_tiles.png',
-          lut:   'art/06_story/stage/village_tiles_lut.json',
-          tile: 32, y: 24,
-          // 角点网格：'1'=草地 '0'=泥路。横贯土路（窄带）+ 通村内的支路
-          grid: [
-            '11111111111111111',
-            '11111111111111111',
-            '11111111110001111',
-            '11111111110001111',
-            '11111111110001111',
-            '11111111110001111',
-            '00000000000000000',
-            '00000000000000000',
-            '11111111111111111',
-            '11111111111111111',
-          ],
+        pxScale: 2, actorScale: 1,
+        mute: 0.38, tone: 'rgba(70,82,120,.10)',
+        cam: { x: 38, y: 55 },
+        map: {
+          tile: 16,
+          sheet: 'art/06_story/pack/TilesetFloor.png',
+          sheets: { fd: 'art/06_story/pack/TilesetFloorDetail.png', va: 'art/06_story/pack/TilesetVillageAbandoned.png' },
+          // 角点网格 41×25（'1'=土路）：横贯主路 + 村心广场 + 北向支路
+          grid: (() => {
+            const g = [];
+            for (let i = 0; i < 4; i++) g.push('0'.repeat(41));
+            for (let i = 0; i < 5; i++) g.push('0'.repeat(20) + '1111' + '0'.repeat(17));
+            for (let i = 0; i < 4; i++) g.push('0'.repeat(17) + '1'.repeat(11) + '0'.repeat(13));
+            for (let i = 0; i < 4; i++) g.push('1'.repeat(41));
+            for (let i = 0; i < 8; i++) g.push('0'.repeat(41));
+            return g;
+          })(),
+          fullVar:  [[12, 8], [12, 8], [12, 8], [12, 8], [12, 8], [12, 8], [11, 11], [12, 11]],
+          emptyVar: [[11, 12], [11, 12], [11, 12], [11, 12], [11, 12], [11, 12], [12, 12], [13, 12], [14, 12], [15, 12]],
+          decor: {
+            // t/u=枯白草 g/l=绿草 d=枯枝 p=碎石堆 s=圆石 k=骷髅(仅坟场) b=骸骨(仅坟场)
+            legend: { t: ['fd', 0, 48], u: ['fd', 48, 48], g: ['fd', 0, 32], l: ['fd', 48, 32],
+                      d: ['fd', 112, 0], p: ['fd', 0, 16], s: ['fd', 240, 0], k: ['fd', 208, 0], b: ['fd', 224, 0] },
+            rows: [
+              '',
+              '..........t.................u..........',
+              '.....u........g........................',
+              '..t.............................l......',
+              '........p...............g..............',
+              '..g.........t...................k......',
+              '......................s.........b......',
+              '..t........l........p..................',
+              '.............t..........s..............',
+              '....g...........t......................',
+              '..........u.................p..........',
+              '.t....................s................',
+              '.....g..........g.......................',
+              '........p................p.............',
+              '..............s..............p.........',
+              '....p.....................s............',
+              '..t......g........u..........g....t....',
+              '.g....t.......l.........t.........g....',
+              '.....u.......................u.........',
+              '..........t...........g................',
+              '....g............u...............t.....',
+              '.t........l...............g............',
+              '.............t.........................',
+              '.......s................u..............',
+            ],
+          },
         },
         props: [
-          // 远景树线（小尺寸，压出纵深）
-          { img: 'art/06_story/stage/prop_oak.png', x: 5,  y: 29, s: 0.5 },
-          { img: 'art/06_story/stage/prop_oak.png', x: 18, y: 27, s: 0.42 },
-          { img: 'art/06_story/stage/prop_oak.png', x: 34, y: 28, s: 0.46 },
-          { img: 'art/06_story/stage/prop_oak.png', x: 55, y: 26, s: 0.38 },
-          { img: 'art/06_story/stage/prop_oak.png', x: 74, y: 28, s: 0.44 },
-          { img: 'art/06_story/stage/prop_oak.png', x: 90, y: 27, s: 0.4 },
-          { img: 'art/06_story/stage/prop_oak.png', x: 99, y: 31, s: 0.55 },
-          // 中景：两栋屋子 + 村口大树 + 水井
-          { img: 'art/06_story/stage/prop_house_timber.png', x: 18, y: 64, s: 1.25 },
-          { img: 'art/06_story/stage/prop_house_stone.png',  x: 84, y: 61, s: 1.35 },
-          { img: 'art/06_story/stage/prop_oak.png',  x: 44, y: 56, s: 1.3 },
-          { img: 'art/06_story/stage/prop_well.png', x: 58, y: 60, s: 0.9 },
-          // 前景栅栏（挡在小人身前，制造层次）
-          { img: 'art/06_story/stage/prop_fence.png', x: 10, y: 96, s: 1.15 },
-          { img: 'art/06_story/stage/prop_fence.png', x: 27, y: 97, s: 1.15 },
-          { img: 'art/06_story/stage/prop_fence.png', x: 74, y: 95, s: 1.15 },
+          // 北侧（小人身后）：房屋/树/坟场
+          { img: 'art/06_story/pack/props/nt_dead_grove.png',  x: 2.5,  y: 7 },
+          { img: 'art/06_story/pack/props/va_house_small.png', x: 3,    y: 12.4 },
+          { img: 'art/06_story/pack/props/va_house_barn.png',  x: 8,    y: 13.2 },
+          { img: 'art/06_story/pack/props/el_hay.png',         x: 10.6, y: 12.4 },
+          { img: 'art/06_story/pack/props/va_tree1.png',       x: 14.5, y: 6.5 },
+          { img: 'art/06_story/pack/props/nt_pine.png',        x: 17.8, y: 5.2 },
+          { img: 'art/06_story/pack/props/va_house_plank.png', x: 22,   y: 9.2 },
+          { img: 'art/06_story/pack/props/va_tower.png',       x: 28.5, y: 11.4 },
+          { img: 'art/06_story/pack/props/va_frog.png',        x: 26.6, y: 12.4 },
+          { img: 'art/06_story/pack/props/va_tree2.png',       x: 31,   y: 6.2 },
+          { img: 'art/06_story/pack/props/va_ruin.png',        x: 33.5, y: 12.8 },
+          { img: 'art/06_story/pack/props/nt_dead_small.png',  x: 36.4, y: 8.2 },
+          { img: 'art/06_story/pack/props/nt_pine.png',        x: 39,   y: 5.4 },
+          // 东北角小坟场
+          { img: 'art/06_story/pack/props/el_grave1.png',      x: 34.6, y: 5.2 },
+          { img: 'art/06_story/pack/props/el_grave2.png',      x: 35.9, y: 5.7 },
+          { img: 'art/06_story/pack/props/el_cross.png',       x: 35.1, y: 6.8 },
+          { img: 'art/06_story/pack/props/va_cross2.png',      x: 37.4, y: 6.3 },
+          // 路上/路边
+          { img: 'art/06_story/pack/props/el_cart.png',        x: 14.2, y: 14.1 },
+          { img: 'art/06_story/pack/props/va_mushroom.png',    x: 16.4, y: 12.9 },
+          // 南侧（前景遮挡）
+          { img: 'art/06_story/pack/props/el_rail.png',        x: 5.5,  y: 17.1 },
+          { img: 'art/06_story/pack/props/el_rail.png',        x: 8,    y: 17.1 },
+          { img: 'art/06_story/pack/props/el_rail.png',        x: 30.5, y: 16.9 },
+          { img: 'art/06_story/pack/props/el_rail.png',        x: 33,   y: 16.9 },
+          { img: 'art/06_story/pack/props/va_tree1.png',       x: 2,    y: 20.5 },
+          { img: 'art/06_story/pack/props/va_tree2.png',       x: 9,    y: 22.5 },
+          { img: 'art/06_story/pack/props/nt_tree_green.png',  x: 18.5, y: 21.5 },
+          { img: 'art/06_story/pack/props/nt_pine.png',        x: 27,   y: 22.5 },
+          { img: 'art/06_story/pack/props/nt_dead_grove.png',  x: 34,   y: 22.8 },
+          { img: 'art/06_story/pack/props/va_tree2.png',       x: 38,   y: 20.5 },
+          { img: 'art/06_story/pack/props/nt_pine.png',        x: 0.5,  y: 23 },
         ],
-        actorScale: 1.9,
       },
       actors: {
-        teried:   { sprite: 'teried',   x: 6,  y: 78, dir: 'east' },
-        mina:     { sprite: 'mina',     x: 1,  y: 82, dir: 'east' },
-        villager: { sprite: 'villager', x: 62, y: 79, dir: 'west' },
+        teried:   { sprite: 'teried',   x: 2,   y: 59, dir: 'east' },
+        mina:     { sprite: 'mina',     x: 0.5, y: 62, dir: 'east' },
+        villager: { sprite: 'villager', x: 58,  y: 58, dir: 'west' },
       },
       steps: [
         { t: 'narr', text: '灰蒙蒙的上午。鸡在栅栏边刨食，烟囱都冒着烟。看上去是个活的村子。' },
-        { t: 'move', who: 'teried', to: [40, 82], dur: 2200 },
-        { t: 'move', who: 'mina',   to: [33, 86], dur: 2200 },
+        { t: 'camera', x: 50, y: 55, scale: 1, dur: 2600 },
+        { t: 'move', who: 'teried', to: [48, 59], dur: 2600 },
+        { t: 'move', who: 'mina',   to: [42, 62], dur: 2200 },
         { t: 'say',  who: 'villager', text: '掌灯的吧？可把你们盼来了。' },
         { t: 'say',  who: 'villager', text: '磨坊在村东头。叔叔人好，就是最近不对。' },
         { t: 'say',  who: 'teried', text: '哪里不对？' },

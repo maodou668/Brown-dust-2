@@ -282,21 +282,33 @@ const SceneStage = {
 
 
 // ============================================================
-//  Diorama —— SceneStage v2 立体舞台（画布渲染）
-//  斜俯视地面(瓦片自动拼接) + 独立物件按深度摆放 + 小人穿行(y排序遮挡+近大远小)
-//  + 远景天幕视差 + 夜色/灯光层。step API 与 v1 完全一致（坐标=舞台百分比）。
-//  cfg.stage = { w,h(世界px), ground:{sheet,tile,grid}, props:[{img,x,y,s}],
-//                sky:[color,color], far:{img,y,s}, night }
-//  ground.grid = 字符串数组角点网格('0'=下地形/'1'=上地形)，Wang 角点自动选瓦。
+//  Diorama —— SceneStage v2 立体舞台（画布渲染 · 纯俯视地图模式）
+//  参考 Pixel Crawler 视角：地面铺满全屏、素材包瓦片 wang 自动拼接、
+//  高密度装饰层、物件/小人按脚线 y 排序遮挡、整数像素缩放保持锐利。
+//  cfg.stage = {
+//    map: { tile:16, sheet:主地形图集url, grid:[角点行 '1'=上地形(路)],
+//           fullVar:[[c,r]..全'1'格变体], emptyVar:[[c,r]..全'0'格变体],
+//           sheets:{key:url}, decor:{ legend:{ch:[key,sx,sy(px)]}, rows:[..] } },
+//    props: [{img, x, y}],   // x,y=瓦坐标(浮点)，y=脚线
+//    cam:{x,y,scale}, pxScale:2, actorScale:1, night, mute, tone,
+//  }
+//  step API 与 v1 完全一致（move/say 坐标 = 世界百分比）。
 // ============================================================
 const Diorama = {
-  root: null, cv: null, ctx: null, actors: {}, camera: { x: 0.5, y: 0.5, zoom: 1 },
-  _raf: 0, _imgs: {}, _tiles: null,
+  root: null, cv: null, ctx: null, actors: {}, sprites: {},
+  camera: { scale: 1, x: 50, y: 50 },
+  _raf: 0, _imgs: {},
+
+  // wang 角点 LUT（TilesetFloor 地形块内偏移，已校准）：mask = NW + NE*2 + SW*4 + SE*8，'1'=块内地形
+  WANG: { 8: [11, 7], 4: [13, 7], 2: [11, 9], 1: [13, 9], 12: [12, 7], 3: [12, 9], 10: [11, 8], 5: [13, 8],
+          7: [16, 8], 11: [17, 8], 13: [16, 9], 14: [17, 9], 6: [12, 8], 9: [12, 8] },
 
   async run(cfg, onDone) {
     const old = document.getElementById('scene-stage'); if (old) old.remove();
     this.cfg = cfg; this.st = cfg.stage;
-    this.camera = { scale: this.st.zoom || 1, x: 50, y: 55 };
+    const m = this.st.map;
+    this.world = { w: (m.grid[0].length - 1) * m.tile, h: (m.grid.length - 1) * m.tile };
+    this.camera = { scale: 1, x: 50, y: 50, ...(this.st.cam || {}) };
     this.root = UI.el(`
       <div id="scene-stage">
         <canvas id="sc-canvas"></canvas>
@@ -324,9 +336,9 @@ const Diorama = {
 
   loadStage() {
     const jobs = [], seen = new Set();
-    // 同一图片可能被多个 props 复用：去重 + addEventListener（onload 赋值会互相覆盖导致挂死）
+    // 同一图片可被多处复用：去重 + addEventListener（onload 赋值会互相覆盖导致挂死）
     const need = src => {
-      if (seen.has(src)) return; seen.add(src);
+      if (!src || seen.has(src)) return; seen.add(src);
       const im = this.img(src);
       jobs.push(new Promise(r => {
         if (im.complete) return r();
@@ -334,13 +346,10 @@ const Diorama = {
         im.addEventListener('error', r, { once: true });
       }));
     };
-    if (this.st.ground) {
-      need(this.st.ground.sheet);
-      if (this.st.ground.lut) jobs.push(fetch(this.st.ground.lut + '?v=' + (window.ASSET_VER || ''))
-        .then(r => r.json()).then(j => { this._lut = j.lut; }).catch(() => {}));
-    }
+    const m = this.st.map;
+    need(m.sheet);
+    for (const k in m.sheets || {}) need(m.sheets[k]);
     (this.st.props || []).forEach(pr => need(pr.img));
-    if (this.st.far && this.st.far.img) need(this.st.far.img);
     return Promise.all(jobs);
   },
 
@@ -348,8 +357,7 @@ const Diorama = {
     this.actors = {};
     for (const id in cfg.actors || {}) {
       const a = cfg.actors[id];
-      this.actors[id] = { ...a, id, anim: 'idle', moving: null,
-        el: this.mkBubble(id) };   // DOM 气泡挂点（与 v1 的 .sc-bubble 查询兼容）
+      this.actors[id] = { ...a, id, anim: 'idle', moving: null, el: this.mkBubble(id) };
     }
   },
   mkBubble(id) {
@@ -360,23 +368,6 @@ const Diorama = {
   },
   position() {},   // v1 兼容空实现（气泡位置由 tick 投影）
 
-  // 世界坐标（舞台百分比）→ 屏幕像素（camera: {scale, x%, y%} 与 v1 step 同义）
-  w2s(px, py) {
-    const W = this.cv.width, H = this.cv.height;
-    const st = this.st;
-    const wx = px / 100 * st.w, wy = py / 100 * st.h;
-    const cx = this.camera.x / 100 * st.w, cy = this.camera.y / 100 * st.h;
-    const s = Math.max(W / st.w, H / st.h) * (this.camera.scale || 1);
-    return { x: W / 2 + (wx - cx) * s, y: H / 2 + (wy - cy) * s, s };
-  },
-
-  // Wang 角点自动选瓦：LUT 来自瓦片集元数据（mask = NW + NE*2 + SW*4 + SE*8，upper=1）
-  _lut: null,
-  tileAt(mask) {
-    if (this._lut && this._lut[mask]) { const [x, y] = this._lut[mask]; return { sx: x, sy: y }; }
-    return { sx: (mask % 4) * 32, sy: Math.floor(mask / 4) * 32 };
-  },
-
   tick(now) {
     if (!this.root) return;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -385,69 +376,71 @@ const Diorama = {
     const ctx = this.ctx, W = this.cv.width, H = this.cv.height;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.imageSmoothingEnabled = false;
-    const st = this.st;
+    const st = this.st, m = st.map, T = m.tile || 16;
+    // 整数像素缩放：1 素材像素 = pxScale*camera.scale 个 css 像素
+    const S = Math.max(1, Math.round((st.pxScale || 2) * (this.camera.scale || 1) * dpr));
+    let cx = this.camera.x / 100 * this.world.w, cy = this.camera.y / 100 * this.world.h;
+    // 镜头钳制在地图内（地图小于视口时居中）
+    const vw = W / S, vh = H / S;
+    cx = this.world.w > vw ? Math.min(Math.max(cx, vw / 2), this.world.w - vw / 2) : this.world.w / 2;
+    cy = this.world.h > vh ? Math.min(Math.max(cy, vh / 2), this.world.h - vh / 2) : this.world.h / 2;
+    const ox = Math.round(W / 2 - cx * S), oy = Math.round(H / 2 - cy * S);
+    this._proj = { S, ox, oy, dpr };
 
-    // 天幕（视差 0.3×）
-    const sky = st.sky || ['#2a2633', '#171420'];
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, sky[0]); g.addColorStop(1, sky[1]);
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    if (st.far && st.far.img) {
-      const fim = this._imgs[st.far.img];
-      if (fim && fim.width) {
-        const p = this.w2s(50, st.far.y != null ? st.far.y : 18);
-        const fs = p.s * (st.far.s || 1) * 0.35;
-        const fw = fim.width * fs, fh = fim.height * fs;
-        const parX = W / 2 + (p.x - W / 2) * 0.3;
-        ctx.globalAlpha = 0.8;
-        ctx.drawImage(fim, parX - fw / 2, p.y - fh, fw, fh);
-        ctx.globalAlpha = 1;
+    ctx.fillStyle = '#101014'; ctx.fillRect(0, 0, W, H);
+
+    // 地面：wang 角点拼瓦 + 全格变体
+    const sheet = this._imgs[m.sheet];
+    if (sheet && sheet.width) {
+      const grid = m.grid, rows = grid.length - 1, cols = grid[0].length - 1;
+      const c0 = Math.max(0, Math.floor((-ox) / (T * S))), c1 = Math.min(cols - 1, Math.ceil((W - ox) / (T * S)));
+      const r0 = Math.max(0, Math.floor((-oy) / (T * S))), r1 = Math.min(rows - 1, Math.ceil((H - oy) / (T * S)));
+      const fullV = m.fullVar || [[12, 8]], emptyV = m.emptyVar || [[11, 12]];
+      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+        const mask = (grid[r][c] === '1' ? 1 : 0) + (grid[r][c + 1] === '1' ? 2 : 0)
+                   + (grid[r + 1][c] === '1' ? 4 : 0) + (grid[r + 1][c + 1] === '1' ? 8 : 0);
+        let t;
+        if (mask === 15) t = fullV[(c * 7 + r * 13) % fullV.length];
+        else if (mask === 0) t = emptyV[(c * 11 + r * 17) % emptyV.length];
+        else t = this.WANG[mask];
+        ctx.drawImage(sheet, t[0] * T, t[1] * T, T, T, ox + c * T * S, oy + r * T * S, T * S, T * S);
+      }
+      // 装饰覆盖层（透明底小件）
+      if (m.decor) {
+        const L = m.decor.legend || {};
+        (m.decor.rows || []).forEach((row, r) => {
+          if (r < r0 || r > r1) return;
+          for (let c = Math.max(0, c0); c <= Math.min(row.length - 1, c1); c++) {
+            const e = L[row[c]]; if (!e) continue;
+            const sh = this._imgs[(m.sheets || {})[e[0]]] || sheet;
+            if (sh && sh.width) ctx.drawImage(sh, e[1], e[2], T, T, ox + c * T * S, oy + r * T * S, T * S, T * S);
+          }
+        });
       }
     }
 
-    // 地面（角点网格自动拼瓦）
-    if (st.ground && st.ground.grid) {
-      const sheet = this._imgs[st.ground.sheet];
-      if (sheet && sheet.width) {
-        const T = st.ground.tile || 32;
-        const grid = st.ground.grid;              // (rows+1)×(cols+1) 角点
-        const rows = grid.length - 1, cols = grid[0].length - 1;
-        const gy0 = st.ground.y != null ? st.ground.y : 30;   // 地面带起始（舞台%）
-        const cellW = 100 / cols, cellH = (100 - gy0) / rows;
-        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-          const mask = (grid[r][c] === '1' ? 1 : 0) + (grid[r][c + 1] === '1' ? 2 : 0)
-                     + (grid[r + 1][c] === '1' ? 4 : 0) + (grid[r + 1][c + 1] === '1' ? 8 : 0);
-          const tp = this.tileAt(mask);
-          const p0 = this.w2s(c * cellW, gy0 + r * cellH);
-          const p1 = this.w2s((c + 1) * cellW, gy0 + (r + 1) * cellH);
-          ctx.drawImage(sheet, tp.sx, tp.sy, T, T, p0.x, p0.y, Math.ceil(p1.x - p0.x), Math.ceil(p1.y - p0.y));
-        }
-      }
-    }
-
-    // 物件 + 小人：按脚线 y 排序（近大远小只作用于小人）
+    // 物件 + 小人：按脚线 y 排序（纯俯视 → 统一比例，无近大远小）
     const ents = [];
-    (st.props || []).forEach(pr => ents.push({ y: pr.y, draw: () => {
+    (st.props || []).forEach(pr => {
       const im = this._imgs[pr.img]; if (!im || !im.width) return;
-      const p = this.w2s(pr.x, pr.y);
-      const sc = p.s * (pr.s || 1);
-      ctx.drawImage(im, p.x - im.width * sc / 2, p.y - im.height * sc, im.width * sc, im.height * sc);
-    }}));
+      const fx = pr.x * T, fy = pr.y * T;
+      ents.push({ y: fy, draw: () => {
+        const s = (pr.s || 1) * S;
+        ctx.drawImage(im, Math.round(ox + fx * S - im.width * s / 2), Math.round(oy + fy * S - im.height * s), im.width * s, im.height * s);
+      } });
+    });
     for (const id in this.actors) {
       const act = this.actors[id];
       const sp = this.sprites[act.sprite];
-      // 移动插值（复用 v1 语义）
       if (act.moving) {
-        const m = act.moving, pgs = Math.min(1, (now - m.t0) / m.dur);
-        act.x = m.x0 + (m.x1 - m.x0) * pgs; act.y = m.y0 + (m.y1 - m.y0) * pgs;
-        if (pgs >= 1) { act.moving = null; act.anim = 'idle'; if (m.res) m.res(); }
+        const mv = act.moving, pgs = Math.min(1, (now - mv.t0) / mv.dur);
+        act.x = mv.x0 + (mv.x1 - mv.x0) * pgs; act.y = mv.y0 + (mv.y1 - mv.y0) * pgs;
+        if (pgs >= 1) { act.moving = null; act.anim = 'idle'; if (mv.res) mv.res(); }
       }
       if (act.hidden) continue;
-      ents.push({ y: act.y, draw: () => {
+      const wx = act.x / 100 * this.world.w, wy = act.y / 100 * this.world.h;
+      ents.push({ y: wy, draw: () => {
         if (!sp || !sp.ready) return;
-        const p = this.w2s(act.x, act.y);
-        const depth = 0.72 + 0.55 * (act.y / 100);            // 近大远小
-        const sc = p.s * (st.actorScale || 1.15) * depth;
         const anims = sp.man.anims;
         let anim = act.anim;
         if (!anims[anim] || !anims[anim].frames[act.dir]) anim = 'idle';
@@ -457,22 +450,20 @@ const Diorama = {
         const f = Math.floor(now / 1000 * fps) % frames.length;
         const im = frames[f]; if (!im || !im.width) return;
         const bb = sp.man.bbox;
-        const dw = bb.w * sc, dh = bb.h * sc;
-        // 地影
-        ctx.fillStyle = 'rgba(0,0,0,.35)';
-        ctx.beginPath(); ctx.ellipse(p.x, p.y, dw * 0.32, dh * 0.09, 0, 0, 7); ctx.fill();
-        // 提灯光晕
+        const asc = (st.actorScale || 1) * S;
+        const dw = bb.w * asc, dh = bb.h * asc;
+        const px = ox + wx * S, py = oy + wy * S;
+        ctx.fillStyle = 'rgba(0,0,0,.32)';
+        ctx.beginPath(); ctx.ellipse(px, py, dw * 0.3, dh * 0.08, 0, 0, 7); ctx.fill();
         if (act.glow) {
-          const rg = ctx.createRadialGradient(p.x, p.y - dh * 0.45, 4, p.x, p.y - dh * 0.45, dw * 2.4);
-          rg.addColorStop(0, 'rgba(255,196,110,.4)'); rg.addColorStop(0.5, 'rgba(255,170,80,.16)'); rg.addColorStop(1, 'rgba(255,170,80,0)');
-          ctx.fillStyle = rg; ctx.fillRect(p.x - dw * 2.4, p.y - dh * 0.45 - dw * 2.4, dw * 4.8, dw * 4.8);
+          const rg = ctx.createRadialGradient(px, py - dh * 0.45, 4, px, py - dh * 0.45, dw * 2.2);
+          rg.addColorStop(0, 'rgba(255,196,110,.38)'); rg.addColorStop(0.5, 'rgba(255,170,80,.15)'); rg.addColorStop(1, 'rgba(255,170,80,0)');
+          ctx.fillStyle = rg; ctx.fillRect(px - dw * 2.2, py - dh * 0.45 - dw * 2.2, dw * 4.4, dw * 4.4);
         }
-        ctx.drawImage(im, bb.x, bb.y, bb.w, bb.h, p.x - dw / 2, p.y - dh, dw, dh);
-        // 气泡挂点投影
-        const bubbleHost = act.el;
-        bubbleHost.style.left = (p.x / (window.devicePixelRatio > 1 ? Math.min(2, window.devicePixelRatio) : 1)) + 'px';
-        bubbleHost.style.top = ((p.y - dh) / (window.devicePixelRatio > 1 ? Math.min(2, window.devicePixelRatio) : 1)) + 'px';
-      }});
+        ctx.drawImage(im, bb.x, bb.y, bb.w, bb.h, Math.round(px - dw / 2), Math.round(py - dh), dw, dh);
+        act.el.style.left = (px / dpr) + 'px';
+        act.el.style.top = ((py - dh) / dpr) + 'px';
+      } });
     }
     ents.sort((a, b) => a.y - b.y).forEach(e => e.draw());
 
@@ -486,8 +477,8 @@ const Diorama = {
 
     // 夜色 + 暗角
     if (st.night) { ctx.fillStyle = 'rgba(10,12,26,.42)'; ctx.fillRect(0, 0, W, H); }
-    const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.95);
-    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.4)');
+    const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.38, W / 2, H / 2, H * 0.95);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.42)');
     ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
 
     this._raf = requestAnimationFrame(t => this.tick(t));
