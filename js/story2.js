@@ -17,8 +17,8 @@ const SCRIPTS = {
 
     // 幕0 · ADV+CG：委托书特写
     { op: 'adv', beats: [
-      { cg: 'art/06_story/cg/contract.png', text: '护送单。烛河镇到磨坊桥，活人一名，卡佳。' },
-      { cg: 'art/06_story/cg/contract.png', text: '报酬那栏划掉过两次：四十银改二十五，二十五改十二。第二道墨还没干透。' },
+      { text: '护送单。烛河镇到磨坊桥，活人一名，卡佳。' },
+      { text: '报酬那栏划掉过两次：四十银改二十五，二十五改十二。第二道墨还没干透。' },
       { text: '雇主没露面。单子背面多一行小字：走夜路，灯别灭。' },
     ]},
 
@@ -119,7 +119,7 @@ const SCRIPTS = {
 
     // 幕2 · 战前对白 → 战斗（战中插话）→ 战后
     { op: 'adv', beats: [
-      { bg: 'forest', bgImg: 'art/06_story/scenes/night_road.png', text: '磨坊桥前，三盏白灯在路中间排成一排。教会的灯——白得不冒一点烟。' },
+      { bg: 'forest', text: '磨坊桥前，三盏白灯在路中间排成一排。教会的灯——白得不冒一点烟。' },
       { speaker: '缉捕队长', text: '例行核对。这位女士的名字在今年的名册上，第一页。' },
       { who: 'teried', side: 'left', speaker: '泰瑞德', text: '名册上那是三个字。人在我们这儿。' },
       { speaker: '缉捕队长', text: '那就换个说法。把教会的东西留下，你们走你们的。' },
@@ -136,7 +136,7 @@ const SCRIPTS = {
       interject: { frac: 0.5, speaker: '缉捕队长', text: '她报过名了！你们抢的，是教会的东西——' },
     }},
     { op: 'adv', beats: [
-      { bg: 'forest', bgImg: 'art/06_story/scenes/night_road.png', text: '白灯灭了两盏。最后一盏倒在桥板上还亮着，米娜捡起来，吹了三口才吹熄。' },
+      { bg: 'forest', text: '白灯灭了两盏。最后一盏倒在桥板上还亮着，米娜捡起来，吹了三口才吹熄。' },
       { who: 'mina', side: 'right', speaker: '米娜', text: '灯是好灯。就是主人不像话。' },
       { text: '米娜蹲下去翻缉捕兵的腰包：半袋盐，一小瓶灯油，一册名单。盐和油她揣进自己包里。' },
       { who: 'mina', side: 'right', speaker: '米娜', text: '名单给你，指挥官。第一页真有卡佳。……后面还有小半本没划掉的。' },
@@ -144,7 +144,7 @@ const SCRIPTS = {
 
     // 幕3 · ADV：交接（接应人立绘全程用正常版——此时玩家没有对照物）
     { op: 'adv', beats: [
-      { bg: 'town', bgImg: 'art/06_story/scenes/town_gate.png', clear: true, text: '磨坊桥。桥那头的镇门虚掩着，门缝里漏出一条暖黄的光。' },
+      { bg: 'town', clear: true, text: '磨坊桥。桥那头的镇门虚掩着，门缝里漏出一条暖黄的光。' },
       { who: 'N:npc_meeter', side: 'right', speaker: '接应人', text: '可算到了！卡佳小姐吧？快别在风口上站着。' },
       { who: 'N:npc_meeter', side: 'right', speaker: '接应人', text: '屋子给你备好了，炉子烧了一整晚。镇上人都念叨你呢——说你腌的酸菜是一绝。' },
       { text: '卡佳在桥中间停了半步。很短，短得只有走在最后的人才看得见。' },
@@ -168,9 +168,9 @@ const SCRIPTS = {
       cover: 'town',
       end: '灯还亮着。',
       panels: [
-        { bg: 'town', bgImg: 'art/06_story/scenes/town_gate.png', narr: '卡佳走进了镇门。', chars: [{ who: 'IMG:art/05_pixellab/katja_field/idle/north/00.png', x: 50, w: 22 }], h: 260 },
-        { bg: 'town', bgImg: 'art/06_story/scenes/town_gate.png', narr: '三步之后，街上一个人也没有。炉火的光还亮着。', sfx: '……', sfxPos: 'tr', h: 260 },
-        { bg: 'town', bgImg: 'art/06_story/scenes/town_gate.png', narr: '门内站着一排人，脸都朝着镇口。为首的还在笑——和刚才那个笑，一模一样。', chars: [
+        { bg: 'town', narr: '卡佳走进了镇门。', chars: [{ who: 'IMG:art/05_pixellab/katja_field/idle/north/00.png', x: 50, w: 22 }], h: 260 },
+        { bg: 'town', narr: '三步之后，街上一个人也没有。炉火的光还亮着。', sfx: '……', sfxPos: 'tr', h: 260 },
+        { bg: 'town', narr: '门内站着一排人，脸都朝着镇口。为首的还在笑——和刚才那个笑，一模一样。', chars: [
           { who: 'N:npc_meeter_odd', x: 50, w: 13 },
           { who: 'N:npc_meeter_odd', x: 28, w: 10, dim: true },
           { who: 'N:npc_meeter_odd', x: 72, w: 10, dim: true },
@@ -180,7 +180,7 @@ const SCRIPTS = {
 
     // 幕5 · ADV：回程结算（吃饭分账 + 收尾钩子）
     { op: 'adv', beats: [
-      { bg: 'forest', bgImg: 'art/06_story/scenes/campfire.png', clear: true, text: '回程在林子边上扎营。工钱摊在石头上，分成三小堆。' },
+      { bg: 'forest', clear: true, text: '回程在林子边上扎营。工钱摊在石头上，分成三小堆。' },
       { who: 'teried', side: 'left', speaker: '泰瑞德', text: '米娜的药材钱，从我这份里扣。记账上。' },
       { who: 'mina', side: 'right', speaker: '米娜', text: '账上你已经欠到明年开春了！' },
       { text: '泰瑞德把灯油罐倒过来晃了晃，就着火光眯眼估分量。' },
@@ -198,8 +198,8 @@ const SCRIPTS = {
 
     // 幕0 · ADV+CG：村民凑钱的委托书
     { op: 'adv', beats: [
-      { cg: 'art/06_story/cg/contract2.png', text: '委托书。字迹歪歪扭扭，落款按了十一个红手印。' },
-      { cg: 'art/06_story/cg/contract2.png', text: '"请掌灯的来看看磨坊的叔叔。他最近不对。"' },
+      { text: '委托书。字迹歪歪扭扭，落款按了十一个红手印。' },
+      { text: '"请掌灯的来看看磨坊的叔叔。他最近不对。"' },
       { text: '报酬一栏写着：全村凑的，一共三十七银，先付一半。' },
     ]},
 
@@ -314,11 +314,11 @@ const SCRIPTS = {
 
     // 幕2 · ADV：挨家打听（口供对不上 + 复问机制首秀）
     { op: 'adv', beats: [
-      { bg: 'town', bgImg: 'art/06_story/scenes/village_day.png', clear: true, text: '村长家。屋里烧着奶茶，很香。' },
+      { bg: 'town', clear: true, text: '村长家。屋里烧着奶茶，很香。' },
       { who: 'N:npc_headman', side: 'right', speaker: '村长', text: '叔叔啊。高个，人瘦，在磨坊住了二十年喽。娃娃们都吃过他烤的饼。' },
       { speaker: '指挥官', text: '（问：他姓什么？）' },
       { who: 'N:npc_headman', side: 'right', speaker: '村长', text: '姓……嗐，你看我这记性。都叫叔叔，叫了二十年。' },
-      { bg: 'town', bgImg: 'art/06_story/scenes/village_day.png', clear: true, text: '隔壁院子。妇人在收晾了一半的衣裳。' },
+      { bg: 'town', clear: true, text: '隔壁院子。妇人在收晾了一半的衣裳。' },
       { who: 'N:npc_wife', side: 'right', speaker: '村妇', text: '叔叔？矮墩墩的那个呀，胳膊粗。七年前逃荒来的，磨坊空着，就住下了。' },
       { who: 'mina', side: 'left', speaker: '米娜', text: '（小声）村长说他又高又瘦，住了二十年。' },
       { speaker: '指挥官', text: '（再核一遍。）',
@@ -326,14 +326,14 @@ const SCRIPTS = {
           { t: '再问村长一遍叔叔的样子', flag: 'c1_reask' },
           { t: '直接去磨坊' },
         ] },
-      { if: 'c1_reask', bg: 'town', bgImg: 'art/06_story/scenes/village_day.png', clear: true, text: '又回到村长家。奶茶还是那个香法。' },
+      { if: 'c1_reask', bg: 'town', clear: true, text: '又回到村长家。奶茶还是那个香法。' },
       { if: 'c1_reask', who: 'N:npc_headman', side: 'right', speaker: '村长', text: '叔叔啊。高个，人瘦，在磨坊住了二十年喽。娃娃们都吃过他烤的饼。' },
       { if: 'c1_reask', who: 'mina', side: 'left', speaker: '米娜', text: '（小声）……一个字都没变。连"喽"都在原来的地方。' },
       { who: 'teried', side: 'left', speaker: '泰瑞德', text: '去磨坊。' },
     ]},
 
     // 幕3 · 场景演出：磨坊内部
-    { op: 'scene', bg: 'cave', bgImg: 'art/06_story/scenes/mill_interior.png',
+    { op: 'scene', bg: 'cave', 
       actors: {
         teried: { sprite: 'teried', x: 12, y: 86, dir: 'east', glow: true },
         mina:   { sprite: 'mina',   x: 4,  y: 89, dir: 'east' },
@@ -368,7 +368,7 @@ const SCRIPTS = {
 
     // 幕5 · ADV：收尾（真相处置选择支 + 身世钩子）
     { op: 'adv', beats: [
-      { bg: 'town', bgImg: 'art/06_story/scenes/village_day.png', clear: true, text: '出磨坊的时候，全村人都等在坡下。十一个人，站得整整齐齐。' },
+      { bg: 'town', clear: true, text: '出磨坊的时候，全村人都等在坡下。十一个人，站得整整齐齐。' },
       { who: 'N:npc_headman', side: 'right', speaker: '村长', text: '解决了？叔叔他……能安生了？' },
       { speaker: '指挥官', text: '（怎么答。）',
         choice: [
@@ -379,7 +379,7 @@ const SCRIPTS = {
       { if: 'c1_truth', text: '十一个人都在点头。没有一个人的眼睛在看磨坊。' },
       { ifNot: 'c1_truth', who: 'N:npc_headman', side: 'right', speaker: '村长', text: '好，好。剩下的十八银半，你们点点。' },
       { ifNot: 'c1_truth', text: '钱是十一家凑的，铜板银角混在一起，还带着体温。' },
-      { bg: 'forest', bgImg: 'art/06_story/scenes/campfire.png', clear: true, text: '当晚在村外扎营。' },
+      { bg: 'forest', clear: true, text: '当晚在村外扎营。' },
       { who: 'teried', side: 'left', speaker: '泰瑞德', text: '十一副碗筷……我老家吃席也这么摆。谁家有事，全村凑一桌。' },
       { who: 'teried', side: 'left', speaker: '泰瑞德', text: '可他们凑的这一桌，主位上是空的。' },
       { who: 'mina', side: 'right', speaker: '米娜', text: '那股药味我想起来了。我梦里学方子的那间屋，就是那个味。' },

@@ -78,7 +78,6 @@ const CHARACTERS = {
     base: { hp: 820, atk: 165, def: 60, spd: 95, crit: 0.20 },
     grow: { hp: 78, atk: 16, def: 5 },
     skills: ['fireball', 'inferno'],
-    art: 'art/01_splash/lecliss_bust.png',   // 半身像（佣兵/编队/招募小框）
     portrait: 'art/05_pixellab/ui/portraits/lecliss.png',   // 像素半身像（小框立绘）
     desc: '操纵烈焰的强大魔女，擅长对敌方全体造成毁灭性火焰伤害。',
   },
@@ -97,7 +96,6 @@ const CHARACTERS = {
     base: { hp: 900, atk: 180, def: 65, spd: 120, crit: 0.30 },
     grow: { hp: 82, atk: 18, def: 5 },
     skills: ['piercing_shot', 'shadow_volley'],
-    art: 'art/01_splash/seir_bust.png',   // 半身像（佣兵/编队/招募小框）
     portrait: 'art/05_pixellab/ui/portraits/seir.png',   // 像素半身像（小框立绘）
     desc: '行动迅捷的神射手，对单体目标拥有恐怖的暴击爆发力。',
   },

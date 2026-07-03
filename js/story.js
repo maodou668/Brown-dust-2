@@ -110,9 +110,9 @@ const Story = {
       icon = window.GameData.CLASSES[def.cls].icon;
       color = def.color; name = def.name;
     }
-    // 预留真实立绘：若数据含 art 字段则用图片
-    if (def && def.art) {
-      return `<img class="port-img" src="${def.art}" alt="${name}">`;
+    // 立绘：像素半身像优先（全游戏风格统一）
+    if (def && (def.portrait || def.art)) {
+      return `<img class="port-img" src="${def.portrait || def.art}" alt="${name}">`;
     }
     // 风格化占位立绘：渐变人形 + 大图标
     const elem = def.element ? window.GameData.ELEMENTS[def.element].icon : '';
