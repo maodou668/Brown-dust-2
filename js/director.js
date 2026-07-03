@@ -307,7 +307,8 @@ const Diorama = {
     const old = document.getElementById('scene-stage'); if (old) old.remove();
     this.cfg = cfg; this.st = cfg.stage;
     const m = this.st.map;
-    this.world = { w: (m.grid[0].length - 1) * m.tile, h: (m.grid.length - 1) * m.tile };
+    const gsrc = m.grid || ((m.layers || []).map(l => l.grid).find(Boolean));
+    this.world = { w: (gsrc[0].length - 1) * m.tile, h: (gsrc.length - 1) * m.tile };
     this.camera = { scale: 1, x: 50, y: 50, ...(this.st.cam || {}) };
     this.root = UI.el(`
       <div id="scene-stage">
@@ -349,6 +350,12 @@ const Diorama = {
     const m = this.st.map;
     need(m.sheet);
     for (const k in m.sheets || {}) need(m.sheets[k]);
+    (m.layers || []).forEach(l => {
+      need(l.sheet);
+      if (typeof l.lut === 'string') jobs.push(fetch(l.lut + '?v=' + (window.ASSET_VER || ''))
+        .then(r => r.json()).then(j => { l._lut = j.lut || j; }).catch(() => {}));
+      else l._lut = l.lut;
+    });
     (this.st.props || []).forEach(pr => need(pr.img));
     return Promise.all(jobs);
   },
@@ -389,9 +396,46 @@ const Diorama = {
 
     ctx.fillStyle = '#101014'; ctx.fillRect(0, 0, W, H);
 
-    // 地面：wang 角点拼瓦 + 全格变体
+    // 可见格范围（多层/单层共用）
+    const rowsAll = this.world.h / T, colsAll = this.world.w / T;
+    const vc0 = Math.max(0, Math.floor((-ox) / (T * S))), vc1 = Math.min(colsAll - 1, Math.ceil((W - ox) / (T * S)));
+    const vr0 = Math.max(0, Math.floor((-oy) / (T * S))), vr1 = Math.min(rowsAll - 1, Math.ceil((H - oy) / (T * S)));
+
+    // 地面 v3：多层地形（每层各自 wang；坐标=图集像素偏移；无 grid 的层=基底整铺 fullVar）
+    if (m.layers) {
+      for (const l of m.layers) {
+        const sh = this._imgs[l.sheet]; if (!sh || !sh.width) continue;
+        const grid = l.grid, lut = l._lut || l.lut || {};
+        for (let r = vr0; r <= vr1; r++) for (let c = vc0; c <= vc1; c++) {
+          let t = null;
+          if (!grid) t = l.fullVar[(c * 7 + r * 13) % l.fullVar.length];
+          else {
+            const mask = (grid[r][c] === '1' ? 1 : 0) + (grid[r][c + 1] === '1' ? 2 : 0)
+                       + (grid[r + 1][c] === '1' ? 4 : 0) + (grid[r + 1][c + 1] === '1' ? 8 : 0);
+            if (mask === 0) t = l.emptyVar ? l.emptyVar[(c * 11 + r * 17) % l.emptyVar.length] : null;
+            else if (mask === 15 && l.fullVar) t = l.fullVar[(c * 7 + r * 13) % l.fullVar.length];
+            else t = lut[mask];
+          }
+          if (t) ctx.drawImage(sh, t[0], t[1], T, T, ox + c * T * S, oy + r * T * S, T * S, T * S);
+        }
+      }
+      // 装饰覆盖层（legend 坐标=图集像素偏移）
+      if (m.decor) {
+        const L = m.decor.legend || {};
+        (m.decor.rows || []).forEach((row, r) => {
+          if (r < vr0 || r > vr1) return;
+          for (let c = Math.max(0, vc0); c <= Math.min(row.length - 1, vc1); c++) {
+            const e = L[row[c]]; if (!e) continue;
+            const sh = this._imgs[(m.sheets || {})[e[0]]];
+            if (sh && sh.width) ctx.drawImage(sh, e[1], e[2], T, T, ox + c * T * S, oy + r * T * S, T * S, T * S);
+          }
+        });
+      }
+    }
+
+    // 地面 v2 兼容：单层双地形 wang + 全格变体（坐标=瓦格）
     const sheet = this._imgs[m.sheet];
-    if (sheet && sheet.width) {
+    if (!m.layers && sheet && sheet.width) {
       const grid = m.grid, rows = grid.length - 1, cols = grid[0].length - 1;
       const c0 = Math.max(0, Math.floor((-ox) / (T * S))), c1 = Math.min(cols - 1, Math.ceil((W - ox) / (T * S)));
       const r0 = Math.max(0, Math.floor((-oy) / (T * S))), r1 = Math.min(rows - 1, Math.ceil((H - oy) / (T * S)));
