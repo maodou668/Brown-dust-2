@@ -88,10 +88,27 @@ const ROOT = path.resolve(__dirname, '..');
   }
   ents.sort((a, b) => a.y - b.y).forEach(e => e.draw());
 
+  // 物件灯光晕（与 Diorama 同构，静态）
+  for (const pr of cfg.stage.props || []) {
+    if (!pr.glow) continue;
+    const gx = pr.x * T * S, gy = (pr.y - (pr.glow.dy || 1.2)) * T * S;
+    const gr = (pr.glow.r || 2.2) * T * S;
+    const rg = ctx.createRadialGradient(gx, gy, 2, gx, gy, gr);
+    rg.addColorStop(0, pr.glow.color || 'rgba(255,196,110,.5)');
+    rg.addColorStop(0.55, 'rgba(255,180,90,.16)');
+    rg.addColorStop(1, 'rgba(255,170,80,0)');
+    ctx.globalCompositeOperation = 'screen';
+    ctx.fillStyle = rg; ctx.fillRect(gx - gr, gy - gr, gr * 2, gr * 2);
+    ctx.globalCompositeOperation = 'source-over';
+  }
   // 色调层（与 Diorama 同构）
   if (st.mute) { ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = `rgba(128,128,128,${st.mute})`; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalCompositeOperation = 'source-over'; }
   if (st.tone) { ctx.fillStyle = st.tone; ctx.fillRect(0, 0, cv.width, cv.height); }
+  if (st.gloom) { ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = st.gloom === true ? 'rgb(152,188,168)' : st.gloom; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalCompositeOperation = 'source-over'; }
   if (st.night) { ctx.fillStyle = 'rgba(10,12,26,.42)'; ctx.fillRect(0, 0, cv.width, cv.height); }
+  if (st.rain) { ctx.strokeStyle = 'rgba(190,215,230,.16)'; ctx.lineWidth = Math.max(1, S / 3); ctx.beginPath();
+    for (let i = 0; i < 140; i++) { const px = ((i * 379 + 61) % 977) / 977 * cv.width; const py = ((i * 613) % cv.height);
+      ctx.moveTo(px, py); ctx.lineTo(px - 7 * (S / 2), py + 26 * (S / 2)); } ctx.stroke(); }
 
   fs.writeFileSync(out, cv.toBuffer('image/png'));
   console.log(`预览 ${worldW}x${worldH} @${S}x → ${out}`);

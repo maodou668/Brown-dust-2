@@ -511,13 +511,46 @@ const Diorama = {
     }
     ents.sort((a, b) => a.y - b.y).forEach(e => e.draw());
 
-    // 全局色调：降饱和(mute 0-1) + 色罩(tone)，统一瓦片/物件/小人的色感
+    // 物件灯光晕（props 带 glow: {r瓦, color}，在色调层之前以 screen 叠加）
+    for (const pr of st.props || []) {
+      if (!pr.glow) continue;
+      const gx = ox + pr.x * T * S, gy = oy + (pr.y - (pr.glow.dy || 1.2)) * T * S;
+      const gr = (pr.glow.r || 2.2) * T * S;
+      const rg = ctx.createRadialGradient(gx, gy, 2, gx, gy, gr);
+      rg.addColorStop(0, pr.glow.color || 'rgba(255,196,110,.5)');
+      rg.addColorStop(0.55, 'rgba(255,180,90,.16)');
+      rg.addColorStop(1, 'rgba(255,170,80,0)');
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = rg; ctx.fillRect(gx - gr, gy - gr, gr * 2, gr * 2);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // 全局色调：降饱和(mute 0-1) + 色罩(tone) + 墨绿 gloom(multiply 压绿压暗，参考图基调)
     if (st.mute) {
       ctx.globalCompositeOperation = 'saturation';
       ctx.fillStyle = `rgba(128,128,128,${st.mute})`; ctx.fillRect(0, 0, W, H);
       ctx.globalCompositeOperation = 'source-over';
     }
+    if (st.gloom) {
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = st.gloom === true ? 'rgb(152,188,168)' : st.gloom;
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'source-over';
+    }
     if (st.tone) { ctx.fillStyle = st.tone; ctx.fillRect(0, 0, W, H); }
+
+    // 雨幕（st.rain：斜细雨，确定性伪随机 + 时间滚动）
+    if (st.rain) {
+      ctx.strokeStyle = 'rgba(190,215,230,.16)'; ctx.lineWidth = Math.max(1, S / 3);
+      const n = 90, t = now * 0.5;
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) {
+        const px = ((i * 379 + 61) % 977) / 977 * (W + 200) - 100 + (t * 0.9 % W) * ((i % 3) ? 1 : -1) * 0;
+        const py = ((i * 613 + t) % (H + 260)) - 130;
+        ctx.moveTo(px, py); ctx.lineTo(px - 7 * (S / 2), py + 26 * (S / 2));
+      }
+      ctx.stroke();
+    }
 
     // 夜色 + 暗角
     if (st.night) { ctx.fillStyle = 'rgba(10,12,26,.42)'; ctx.fillRect(0, 0, W, H); }
