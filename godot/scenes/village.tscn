@@ -12,7 +12,7 @@
 [ext_resource type="Texture2D" path="res://assets/props/house_timber.png" id="t3"]
 [ext_resource type="Texture2D" path="res://assets/props/fence_rail.png" id="t4"]
 [ext_resource type="Texture2D" path="res://assets/props/firewood.png" id="t5"]
-[ext_resource type="Texture2D" path="res://assets/props/windmill.png" id="t6"]
+[ext_resource type="Texture2D" path="res://assets/props/windmill_big.png" id="t6"]
 [ext_resource type="Texture2D" path="res://assets/props/hay_cart.png" id="t7"]
 [ext_resource type="Texture2D" path="res://assets/props/house_stone.png" id="t8"]
 [ext_resource type="Texture2D" path="res://assets/props/lantern.png" id="t9"]
@@ -150,10 +150,10 @@ scale = Vector2(0.5, 0.5)
 texture = ExtResource("t5")
 y_sort_enabled = true
 
-[node name="prop_16_windmill" type="Sprite2D" parent="World"]
+[node name="prop_16_windmill_big" type="Sprite2D" parent="World"]
 position = Vector2(1120.0, 288.0)
-offset = Vector2(0, -88.0)
-scale = Vector2(0.92, 0.92)
+offset = Vector2(0, -165.5)
+scale = Vector2(0.62, 0.62)
 texture = ExtResource("t6")
 y_sort_enabled = true
 

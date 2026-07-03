@@ -22,20 +22,82 @@ const SCRIPTS = {
       { text: '雇主没露面。单子背面多一行小字：走夜路，灯别灭。' },
     ]},
 
-    // 幕1 · 场景演出：夜路行进 + 低语（实景图 + 泰瑞德提灯光晕）
-    { op: 'scene', bg: 'forest', bgImg: 'art/06_story/scenes/night_road.png', night: true,
+    // 幕1 · 场景演出：夜路行进 + 低语（Diorama v3：雨夜密林 + 泰瑞德提灯）
+    { op: 'scene', bg: 'forest',
+      stage: (() => {
+        const T = 'art/06_story/tiles/';
+        const P = 'art/06_story/props/';
+        const R = rs => { const a = Array(49).fill('0'); for (const [s, e] of rs) for (let i = s; i <= e; i++) a[i] = '1'; return a.join(''); };
+        const rep = (n, f) => Array.from({ length: n }, f);
+        const roadGrid = [
+          ...rep(9, () => R([])),
+          R([[5, 7], [22, 24], [38, 40]]),
+          ...rep(4, () => R([[0, 48]])),
+          R([[11, 13], [29, 31], [43, 45]]),
+          ...rep(6, () => R([])),
+        ];
+        return {
+        pxScale: 2, actorScale: 1,
+        mute: 0.28, gloom: 'rgb(152,166,160)', tone: 'rgba(30,50,80,.10)',
+        night: true, rain: true,
+        cam: { x: 18, y: 54 },
+        map: {
+          tile: 32,
+          layers: [
+            { sheet: T + 'grass_var.png', fullVar: [
+              [0,0],[0,0],[0,0],[32,0],[0,0],[64,0],[0,0],[0,0],[96,0],[0,0],[128,0],[0,0],[0,0],[160,0],[0,0],[32,0],
+            ] },
+            { sheet: T + 'road_grass.png', lut: T + 'road_grass.lut.json', grid: roadGrid },
+          ],
+        },
+        props: [
+          // 北侧密林（压向路缘，遮天蔽日）
+          { img: P + 'tree_oak.png',  x: 2,    y: 6.5, s: 0.9 },
+          { img: P + 'tree_dead.png', x: 5.5,  y: 8.5, s: 0.75 },
+          { img: P + 'tree_oak.png',  x: 8,    y: 5,   s: 0.7 },
+          { img: P + 'tree_oak.png',  x: 12,   y: 8,   s: 0.95 },
+          { img: P + 'tree_dead.png', x: 16.5, y: 6,   s: 0.8 },
+          { img: P + 'tree_oak.png',  x: 20,   y: 8.8, s: 0.85 },
+          { img: P + 'tree_oak.png',  x: 24.5, y: 5.5, s: 0.75 },
+          { img: P + 'tree_dead.png', x: 28,   y: 8.2, s: 0.9 },
+          { img: P + 'tree_oak.png',  x: 32,   y: 6.8, s: 0.8 },
+          { img: P + 'tree_oak.png',  x: 36.5, y: 8.6, s: 0.92 },
+          { img: P + 'tree_dead.png', x: 40,   y: 5.8, s: 0.72 },
+          { img: P + 'tree_oak.png',  x: 44,   y: 8,   s: 0.85 },
+          { img: P + 'tree_oak.png',  x: 47.5, y: 6,   s: 0.78 },
+          { img: P + 'rocks.png',     x: 14,   y: 9.6, s: 0.3 },
+          { img: P + 'rocks.png',     x: 34.5, y: 9.4, s: 0.35 },
+          // 南侧密林（前景更大，剪影感）
+          { img: P + 'tree_oak.png',  x: 3.5,  y: 17.5, s: 1.0 },
+          { img: P + 'tree_dead.png', x: 8.5,  y: 15.8, s: 0.85 },
+          { img: P + 'tree_oak.png',  x: 13,   y: 18.5, s: 1.05 },
+          { img: P + 'tree_oak.png',  x: 18.5, y: 16,   s: 0.9 },
+          { img: P + 'tree_dead.png', x: 23,   y: 18.8, s: 0.95 },
+          { img: P + 'tree_oak.png',  x: 27.5, y: 16.2, s: 0.88 },
+          { img: P + 'tree_oak.png',  x: 32.5, y: 18.2, s: 1.0 },
+          { img: P + 'tree_dead.png', x: 37,   y: 15.6, s: 0.8 },
+          { img: P + 'tree_oak.png',  x: 41.5, y: 18.6, s: 1.05 },
+          { img: P + 'tree_oak.png',  x: 46,   y: 16.4, s: 0.9 },
+          // 路边遗物：歪斜的旧栅栏、石堆
+          { img: P + 'fence_rail.png', x: 10.5, y: 14.6, s: 0.28 },
+          { img: P + 'fence_rail.png', x: 30,   y: 14.4, s: 0.28 },
+          { img: P + 'rocks.png',      x: 21,   y: 14.8, s: 0.28 },
+        ],
+        };
+      })(),
       actors: {
-        teried: { sprite: 'teried', x: 14, y: 66, dir: 'east', glow: true },
-        katja:  { sprite: 'katja',  x: 8,  y: 71, dir: 'east' },
-        mina:   { sprite: 'mina',   x: 3,  y: 67, dir: 'east' },
+        teried: { sprite: 'teried', x: 8, y: 55, dir: 'east', glow: true },
+        katja:  { sprite: 'katja',  x: 4, y: 58, dir: 'east' },
+        mina:   { sprite: 'mina',   x: 1, y: 53, dir: 'east' },
       },
       steps: [
         { t: 'narr', text: '烛河镇外的林道。泰瑞德把灯挑在队伍最前面，出门前刚添满的油。' },
         { t: 'say',  who: 'teried', text: '夜路就一条规矩：路边有谁喊你，喊什么名字都别应。' },
         { t: 'say',  who: 'teried', text: '去年有个脚夫应了一声。人还在，会走路会吃饭。他老婆说那不是他。' },
-        { t: 'move', who: 'teried', to: [40, 62], dur: 2400 },
-        { t: 'move', who: 'katja',  to: [34, 68], dur: 2400 },
-        { t: 'move', who: 'mina',   to: [28, 63], dur: 2400 },
+        { t: 'camera', x: 42, y: 54, scale: 1, dur: 2600 },
+        { t: 'move', who: 'teried', to: [38, 54], dur: 2600 },
+        { t: 'move', who: 'katja',  to: [33, 58], dur: 2600 },
+        { t: 'move', who: 'mina',   to: [28, 53], dur: 2600 },
         { t: 'wait', ms: 300 },
         { t: 'whisper', who: 'katja' },
         { t: 'face', who: 'katja', dir: 'west' },
@@ -47,9 +109,10 @@ const SCRIPTS = {
         { t: 'face', who: 'katja', dir: 'east' },
         { t: 'say',  who: 'katja', text: '……没什么。走吧。' },
         { t: 'face', who: 'teried', dir: 'east' },
-        { t: 'move', who: 'teried', to: [78, 62], dur: 2600 },
-        { t: 'move', who: 'katja',  to: [72, 68], dur: 2600 },
-        { t: 'move', who: 'mina',   to: [66, 63], dur: 2600 },
+        { t: 'camera', x: 72, y: 54, scale: 1, dur: 2800 },
+        { t: 'move', who: 'teried', to: [74, 54], dur: 2800 },
+        { t: 'move', who: 'katja',  to: [69, 58], dur: 2800 },
+        { t: 'move', who: 'mina',   to: [64, 53], dur: 2800 },
         { t: 'narr', text: '后半段路没人说话。只有灯芯偶尔爆一声。' },
       ],
     },
@@ -190,7 +253,7 @@ const SCRIPTS = {
           { img: P + 'tree_oak.png',     x: 25.9, y: 7.2,  s: 0.55 },
           { img: P + 'firewood.png',     x: 18.6, y: 8.9,  s: 0.5 },
           // 磨坊（焦点建筑，支路引导视线）+ 干草车
-          { img: P + 'windmill.png', x: 35,   y: 9,    s: 0.92 },
+          { img: P + 'windmill_big.png', x: 35,  y: 9,   s: 0.62 },
           { img: P + 'hay_cart.png', x: 32.3, y: 13.4, s: 0.5 },
           // 院B · 石屋（临主路）+ 灯柱
           { img: P + 'house_stone.png', x: 10,   y: 13.7, s: 0.75 },

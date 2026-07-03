@@ -464,7 +464,7 @@ const Diorama = {
     }
 
     // 物件 + 小人：按脚线 y 排序（纯俯视 → 统一比例，无近大远小）
-    const ents = [];
+    const ents = [], glows = [];   // glows 统一画在夜色之后
     (st.props || []).forEach(pr => {
       const im = this._imgs[pr.img]; if (!im || !im.width) return;
       const fx = pr.x * T, fy = pr.y * T;
@@ -499,11 +499,7 @@ const Diorama = {
         const px = ox + wx * S, py = oy + wy * S;
         ctx.fillStyle = 'rgba(0,0,0,.32)';
         ctx.beginPath(); ctx.ellipse(px, py, dw * 0.3, dh * 0.08, 0, 0, 7); ctx.fill();
-        if (act.glow) {
-          const rg = ctx.createRadialGradient(px, py - dh * 0.45, 4, px, py - dh * 0.45, dw * 2.2);
-          rg.addColorStop(0, 'rgba(255,196,110,.38)'); rg.addColorStop(0.5, 'rgba(255,170,80,.15)'); rg.addColorStop(1, 'rgba(255,170,80,0)');
-          ctx.fillStyle = rg; ctx.fillRect(px - dw * 2.2, py - dh * 0.45 - dw * 2.2, dw * 4.4, dw * 4.4);
-        }
+        if (act.glow) glows.push({ x: px, y: py - dh * 0.45, r: dw * 2.4 });
         ctx.drawImage(im, bb.x, bb.y, bb.w, bb.h, Math.round(px - dw / 2), Math.round(py - dh), dw, dh);
         act.el.style.left = (px / dpr) + 'px';
         act.el.style.top = ((py - dh) / dpr) + 'px';
@@ -511,18 +507,11 @@ const Diorama = {
     }
     ents.sort((a, b) => a.y - b.y).forEach(e => e.draw());
 
-    // 物件灯光晕（props 带 glow: {r瓦, color}，在色调层之前以 screen 叠加）
+    // 收集物件灯光（角色提灯在绘制闭包里收集）
     for (const pr of st.props || []) {
       if (!pr.glow) continue;
-      const gx = ox + pr.x * T * S, gy = oy + (pr.y - (pr.glow.dy || 1.2)) * T * S;
-      const gr = (pr.glow.r || 2.2) * T * S;
-      const rg = ctx.createRadialGradient(gx, gy, 2, gx, gy, gr);
-      rg.addColorStop(0, pr.glow.color || 'rgba(255,196,110,.5)');
-      rg.addColorStop(0.55, 'rgba(255,180,90,.16)');
-      rg.addColorStop(1, 'rgba(255,170,80,0)');
-      ctx.globalCompositeOperation = 'screen';
-      ctx.fillStyle = rg; ctx.fillRect(gx - gr, gy - gr, gr * 2, gr * 2);
-      ctx.globalCompositeOperation = 'source-over';
+      glows.push({ x: ox + pr.x * T * S, y: oy + (pr.y - (pr.glow.dy || 1.2)) * T * S,
+                   r: (pr.glow.r || 2.2) * T * S, color: pr.glow.color });
     }
 
     // 全局色调：降饱和(mute 0-1) + 色罩(tone) + 墨绿 gloom(multiply 压绿压暗，参考图基调)
@@ -552,8 +541,21 @@ const Diorama = {
       ctx.stroke();
     }
 
-    // 夜色 + 暗角
+    // 夜色
     if (st.night) { ctx.fillStyle = 'rgba(10,12,26,.42)'; ctx.fillRect(0, 0, W, H); }
+    // 灯光（夜色之后 screen 叠加，穿透夜幕）
+    if (glows.length) {
+      ctx.globalCompositeOperation = 'screen';
+      for (const g of glows) {
+        const rg = ctx.createRadialGradient(g.x, g.y, 3, g.x, g.y, g.r);
+        rg.addColorStop(0, g.color || 'rgba(255,190,105,.55)');
+        rg.addColorStop(0.5, 'rgba(255,170,80,.20)');
+        rg.addColorStop(1, 'rgba(255,170,80,0)');
+        ctx.fillStyle = rg; ctx.fillRect(g.x - g.r, g.y - g.r, g.r * 2, g.r * 2);
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    // 暗角
     const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.38, W / 2, H / 2, H * 0.95);
     vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.42)');
     ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
