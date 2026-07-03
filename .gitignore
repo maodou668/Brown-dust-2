@@ -7,3 +7,9 @@ ios/
 .gradle/
 
 assets/fonts/zpix.ttf
+tools/
+
+# Godot
+.godot/
+godot/.godot/
+*.tmp

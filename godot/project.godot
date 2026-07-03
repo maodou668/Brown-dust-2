@@ -1,0 +1,21 @@
+; Godot 4.7 工程 —— 《掌灯人》场景试点（M0）
+; 本地上手见 godot/README_本地上手.md
+
+config_version=5
+
+[application]
+
+config/name="掌灯人 Lamplighters"
+run/main_scene="res://scenes/village.tscn"
+config/features=PackedStringArray("4.3")
+
+[display]
+
+window/size/viewport_width=960
+window/size/viewport_height=520
+window/stretch/mode="canvas_items"
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+environment/defaults/default_clear_color=Color(0.06, 0.06, 0.08, 1)

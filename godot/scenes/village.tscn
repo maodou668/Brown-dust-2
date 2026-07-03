@@ -1,0 +1,397 @@
+[gd_scene load_steps=20 format=3]
+
+[ext_resource type="TileSet" path="res://tiles/village_tileset.tres" id="ts"]
+[ext_resource type="Script" path="res://scripts/ground_builder.gd" id="gb"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="pl"]
+[ext_resource type="Script" path="res://scripts/shot_taker.gd" id="shot"]
+[ext_resource type="Texture2D" path="res://assets/light_radial.png" id="light"]
+[ext_resource type="Texture2D" path="res://assets/chars/teried_south.png" id="char"]
+[ext_resource type="Texture2D" path="res://assets/props/tree_oak.png" id="t0"]
+[ext_resource type="Texture2D" path="res://assets/props/tree_dead.png" id="t1"]
+[ext_resource type="Texture2D" path="res://assets/props/graves.png" id="t2"]
+[ext_resource type="Texture2D" path="res://assets/props/house_timber.png" id="t3"]
+[ext_resource type="Texture2D" path="res://assets/props/fence_rail.png" id="t4"]
+[ext_resource type="Texture2D" path="res://assets/props/firewood.png" id="t5"]
+[ext_resource type="Texture2D" path="res://assets/props/windmill.png" id="t6"]
+[ext_resource type="Texture2D" path="res://assets/props/hay_cart.png" id="t7"]
+[ext_resource type="Texture2D" path="res://assets/props/house_stone.png" id="t8"]
+[ext_resource type="Texture2D" path="res://assets/props/lantern.png" id="t9"]
+[ext_resource type="Texture2D" path="res://assets/props/crate_barrel.png" id="t10"]
+[ext_resource type="Texture2D" path="res://assets/props/well.png" id="t11"]
+[ext_resource type="Texture2D" path="res://assets/props/rocks.png" id="t12"]
+
+[node name="Village" type="Node2D"]
+
+[node name="Gloom" type="CanvasModulate" parent="."]
+color = Color(0.80, 0.84, 0.80, 1)
+
+[node name="Ground" type="TileMapLayer" parent="."]
+tile_set = ExtResource("ts")
+script = ExtResource("gb")
+layer_key = "ground"
+
+[node name="Road" type="TileMapLayer" parent="."]
+tile_set = ExtResource("ts")
+script = ExtResource("gb")
+layer_key = "road"
+
+[node name="World" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="prop_0_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(96.0, 83.2)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_1_tree_dead" type="Sprite2D" parent="World"]
+position = Vector2(256.0, 70.4)
+offset = Vector2(0, -82.0)
+scale = Vector2(0.6, 0.6)
+texture = ExtResource("t1")
+y_sort_enabled = true
+
+[node name="prop_2_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(432.0, 92.8)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.62, 0.62)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_3_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(537.6, 57.6)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_4_tree_dead" type="Sprite2D" parent="World"]
+position = Vector2(1264.0, 86.4)
+offset = Vector2(0, -82.0)
+scale = Vector2(0.65, 0.65)
+texture = ExtResource("t1")
+y_sort_enabled = true
+
+[node name="prop_5_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(1254.4, 153.6)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_6_tree_dead" type="Sprite2D" parent="World"]
+position = Vector2(915.2, 147.2)
+offset = Vector2(0, -82.0)
+scale = Vector2(0.62, 0.62)
+texture = ExtResource("t1")
+y_sort_enabled = true
+
+[node name="prop_7_graves" type="Sprite2D" parent="World"]
+position = Vector2(972.8, 179.2)
+offset = Vector2(0, -85.0)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("t2")
+y_sort_enabled = true
+
+[node name="prop_8_tree_dead" type="Sprite2D" parent="World"]
+position = Vector2(1043.2, 124.8)
+offset = Vector2(0, -82.0)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("t1")
+y_sort_enabled = true
+
+[node name="prop_9_house_timber" type="Sprite2D" parent="World"]
+position = Vector2(688.0, 288.0)
+offset = Vector2(0, -88.0)
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("t3")
+y_sort_enabled = true
+
+[node name="prop_10_fence_rail" type="Sprite2D" parent="World"]
+position = Vector2(540.8, 329.6)
+offset = Vector2(0, -77.5)
+scale = Vector2(0.28, 0.28)
+texture = ExtResource("t4")
+y_sort_enabled = true
+
+[node name="prop_11_fence_rail" type="Sprite2D" parent="World"]
+position = Vector2(592.0, 329.6)
+offset = Vector2(0, -77.5)
+scale = Vector2(0.28, 0.28)
+texture = ExtResource("t4")
+y_sort_enabled = true
+
+[node name="prop_12_fence_rail" type="Sprite2D" parent="World"]
+position = Vector2(787.2, 329.6)
+offset = Vector2(0, -77.5)
+scale = Vector2(0.28, 0.28)
+texture = ExtResource("t4")
+y_sort_enabled = true
+
+[node name="prop_13_fence_rail" type="Sprite2D" parent="World"]
+position = Vector2(838.4, 329.6)
+offset = Vector2(0, -77.5)
+scale = Vector2(0.28, 0.28)
+texture = ExtResource("t4")
+y_sort_enabled = true
+
+[node name="prop_14_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(828.8, 230.4)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_15_firewood" type="Sprite2D" parent="World"]
+position = Vector2(595.2, 284.8)
+offset = Vector2(0, -30.0)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("t5")
+y_sort_enabled = true
+
+[node name="prop_16_windmill" type="Sprite2D" parent="World"]
+position = Vector2(1120.0, 288.0)
+offset = Vector2(0, -88.0)
+scale = Vector2(0.92, 0.92)
+texture = ExtResource("t6")
+y_sort_enabled = true
+
+[node name="prop_17_hay_cart" type="Sprite2D" parent="World"]
+position = Vector2(1033.6, 428.8)
+offset = Vector2(0, -74.0)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("t7")
+y_sort_enabled = true
+
+[node name="prop_18_house_stone" type="Sprite2D" parent="World"]
+position = Vector2(320.0, 438.4)
+offset = Vector2(0, -88.0)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("t8")
+y_sort_enabled = true
+
+[node name="prop_19_lantern" type="Sprite2D" parent="World"]
+position = Vector2(422.4, 432.0)
+offset = Vector2(0, -82.0)
+scale = Vector2(0.45, 0.45)
+texture = ExtResource("t9")
+y_sort_enabled = true
+
+[node name="light_19" type="PointLight2D" parent="World"]
+position = Vector2(422.4, 392.0)
+texture = ExtResource("light")
+color = Color(1, 0.77, 0.43, 1)
+energy = 1.2
+texture_scale = 0.9244444444444445
+
+[node name="prop_20_fence_rail" type="Sprite2D" parent="World"]
+position = Vector2(217.6, 444.8)
+offset = Vector2(0, -77.5)
+scale = Vector2(0.28, 0.28)
+texture = ExtResource("t4")
+y_sort_enabled = true
+
+[node name="prop_21_crate_barrel" type="Sprite2D" parent="World"]
+position = Vector2(390.4, 435.2)
+offset = Vector2(0, -59.0)
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("t10")
+y_sort_enabled = true
+
+[node name="prop_22_well" type="Sprite2D" parent="World"]
+position = Vector2(720.0, 396.8)
+offset = Vector2(0, -86.0)
+scale = Vector2(0.38, 0.38)
+texture = ExtResource("t11")
+y_sort_enabled = true
+
+[node name="prop_23_lantern" type="Sprite2D" parent="World"]
+position = Vector2(851.2, 374.4)
+offset = Vector2(0, -82.0)
+scale = Vector2(0.45, 0.45)
+texture = ExtResource("t9")
+y_sort_enabled = true
+
+[node name="light_23" type="PointLight2D" parent="World"]
+position = Vector2(851.2, 334.4)
+texture = ExtResource("light")
+color = Color(1, 0.77, 0.43, 1)
+energy = 1.2
+texture_scale = 0.9244444444444445
+
+[node name="prop_24_fence_rail" type="Sprite2D" parent="World"]
+position = Vector2(115.2, 595.2)
+offset = Vector2(0, -77.5)
+scale = Vector2(0.28, 0.28)
+texture = ExtResource("t4")
+y_sort_enabled = true
+
+[node name="prop_25_fence_rail" type="Sprite2D" parent="World"]
+position = Vector2(166.4, 595.2)
+offset = Vector2(0, -77.5)
+scale = Vector2(0.28, 0.28)
+texture = ExtResource("t4")
+y_sort_enabled = true
+
+[node name="prop_26_fence_rail" type="Sprite2D" parent="World"]
+position = Vector2(979.2, 588.8)
+offset = Vector2(0, -77.5)
+scale = Vector2(0.28, 0.28)
+texture = ExtResource("t4")
+y_sort_enabled = true
+
+[node name="prop_27_fence_rail" type="Sprite2D" parent="World"]
+position = Vector2(1030.4, 588.8)
+offset = Vector2(0, -77.5)
+scale = Vector2(0.28, 0.28)
+texture = ExtResource("t4")
+y_sort_enabled = true
+
+[node name="prop_28_rocks" type="Sprite2D" parent="World"]
+position = Vector2(400.0, 608.0)
+offset = Vector2(0, -71.5)
+scale = Vector2(0.28, 0.28)
+texture = ExtResource("t12")
+y_sort_enabled = true
+
+[node name="prop_29_rocks" type="Sprite2D" parent="World"]
+position = Vector2(1235.2, 352.0)
+offset = Vector2(0, -71.5)
+scale = Vector2(0.35, 0.35)
+texture = ExtResource("t12")
+y_sort_enabled = true
+
+[node name="prop_30_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(64.0, 665.6)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.82, 0.82)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_31_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(147.2, 723.2)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.58, 0.58)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_32_tree_dead" type="Sprite2D" parent="World"]
+position = Vector2(211.2, 678.4)
+offset = Vector2(0, -82.0)
+scale = Vector2(0.66, 0.66)
+texture = ExtResource("t1")
+y_sort_enabled = true
+
+[node name="prop_33_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(108.8, 800.0)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.72, 0.72)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_34_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(560.0, 755.2)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.85, 0.85)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_35_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(659.2, 691.2)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.6, 0.6)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_36_tree_dead" type="Sprite2D" parent="World"]
+position = Vector2(729.6, 787.2)
+offset = Vector2(0, -82.0)
+scale = Vector2(0.68, 0.68)
+texture = ExtResource("t1")
+y_sort_enabled = true
+
+[node name="prop_37_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(1072.0, 678.4)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_38_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(1177.6, 736.0)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.62, 0.62)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_39_tree_dead" type="Sprite2D" parent="World"]
+position = Vector2(1248.0, 659.2)
+offset = Vector2(0, -82.0)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("t1")
+y_sort_enabled = true
+
+[node name="prop_40_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(1126.4, 812.8)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.85, 0.85)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_41_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(32.0, 224.0)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_42_tree_dead" type="Sprite2D" parent="World"]
+position = Vector2(48.0, 384.0)
+offset = Vector2(0, -82.0)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("t1")
+y_sort_enabled = true
+
+[node name="prop_43_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(1376.0, 256.0)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.72, 0.72)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_44_tree_dead" type="Sprite2D" parent="World"]
+position = Vector2(1392.0, 400.0)
+offset = Vector2(0, -82.0)
+scale = Vector2(0.6, 0.6)
+texture = ExtResource("t1")
+y_sort_enabled = true
+
+[node name="prop_45_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(1363.2, 560.0)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.68, 0.68)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="prop_46_tree_oak" type="Sprite2D" parent="World"]
+position = Vector2(1388.8, 736.0)
+offset = Vector2(0, -87.5)
+scale = Vector2(0.78, 0.78)
+texture = ExtResource("t0")
+y_sort_enabled = true
+
+[node name="Player" type="CharacterBody2D" parent="World"]
+position = Vector2(732, 416)
+script = ExtResource("pl")
+y_sort_enabled = true
+
+[node name="Sprite" type="Sprite2D" parent="World/Player"]
+offset = Vector2(0, -36)
+texture = ExtResource("char")
+
+[node name="Camera" type="Camera2D" parent="World/Player"]
+zoom = Vector2(2, 2)
+
+[node name="ShotTaker" type="Node" parent="."]
+script = ExtResource("shot")
