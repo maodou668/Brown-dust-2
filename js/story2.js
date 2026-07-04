@@ -132,7 +132,7 @@ const SCRIPTS = {
         { char: 'loen',   level: 1, name: '圣烛缉捕兵' },
       ],
       mod: { atkMul: 0.65, hpMul: 0.55 },   // 教学战：新档双人 lv1 必赢，回合数控制在 4-6
-      reward: { gold: 120, gem: 30, exp: 40 },
+      reward: { gold: 120, gem: 30, exp: 80 },   // exp80: 打完正好升 Lv2(升级线62)，衔接第一章
       interject: { frac: 0.5, speaker: '缉捕队长', text: '她报过名了！你们抢的，是教会的东西——' },
     }},
     { op: 'adv', beats: [
@@ -369,8 +369,9 @@ const SCRIPTS = {
         { id: 'dark_mage', level: 4, name: '磨坊里的东西' },
         { id: 'wolf', level: 3, name: '从梁上下来的东西' },
       ],
-      mod: { atkMul: 0.85, hpMul: 0.8 },
-      reward: { gold: 180, gem: 40, exp: 60 },
+      // 数值闸门实测(2026-07): 0.85/0.8 时双人Lv1-2 胜率0%,是新手死墙; 0.6/0.5 → Lv1 68%/Lv2 100%
+      mod: { atkMul: 0.6, hpMul: 0.5 },
+      reward: { gold: 180, gem: 40, exp: 90 },
       interject: { frac: 0.5, speaker: '磨坊里的东西', text: '叔叔人好。就是最近，不对。' },
     }},
 
