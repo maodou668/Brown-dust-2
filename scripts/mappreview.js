@@ -75,7 +75,15 @@ const ROOT = path.resolve(__dirname, '..');
   for (const pr of st.props || []) {
     const im = await img(pr.img);
     const fx = pr.x * T, fy = pr.y * T, s = (pr.s || 1) * S;
-    ents.push({ y: fy, draw: () => ctx.drawImage(im, Math.round(fx * S - im.width * s / 2), Math.round(fy * S - im.height * s), im.width * s, im.height * s) });
+    ents.push({ y: fy, draw: () => {
+      if (!pr.flat) {
+        ctx.fillStyle = 'rgba(0,0,0,.28)';
+        ctx.beginPath();
+        ctx.ellipse(fx * S, fy * S, im.width * s * 0.32, Math.max(2, im.width * s * 0.09), 0, 0, 7);
+        ctx.fill();
+      }
+      ctx.drawImage(im, Math.round(fx * S - im.width * s / 2), Math.round(fy * S - im.height * s), im.width * s, im.height * s);
+    } });
   }
   for (const id in cfg.actors || {}) {
     const a = cfg.actors[id];

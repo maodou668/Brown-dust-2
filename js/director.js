@@ -470,6 +470,13 @@ const Diorama = {
       const fx = pr.x * T, fy = pr.y * T;
       ents.push({ y: fy, draw: () => {
         const s = (pr.s || 1) * S;
+        // 接地影：所有立体物脚下椭圆影（flat=true 的贴地件除外）——把物件"焊"在地上
+        if (!pr.flat) {
+          ctx.fillStyle = 'rgba(0,0,0,.28)';
+          ctx.beginPath();
+          ctx.ellipse(ox + fx * S, oy + fy * S, im.width * s * 0.32, Math.max(2, im.width * s * 0.09), 0, 0, 7);
+          ctx.fill();
+        }
         ctx.drawImage(im, Math.round(ox + fx * S - im.width * s / 2), Math.round(oy + fy * S - im.height * s), im.width * s, im.height * s);
       } });
     });

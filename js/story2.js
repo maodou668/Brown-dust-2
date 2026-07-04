@@ -221,7 +221,7 @@ const SCRIPTS = {
         ];
         return {
         pxScale: 2, actorScale: 1,
-        mute: 0.24, gloom: 'rgb(203,214,203)', tone: 'rgba(60,95,80,.07)',
+        mute: 0.15, gloom: 'rgb(203,214,203)', tone: 'rgba(60,95,80,.07)',
         cam: { x: 22, y: 52 },
         map: {
           tile: 32,
