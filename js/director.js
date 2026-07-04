@@ -326,6 +326,7 @@ const Diorama = {
     this.ctx = this.cv.getContext('2d');
     if (window.Sound) Sound.bgm('story');
     await Promise.all([this.loadStage(), SceneStage.loadSprites.call(this, cfg)]);
+    if (this.bm) this._bmBuildMask();
     this.placeActors(cfg);
     this._raf = requestAnimationFrame(t => this.tick(t));
     for (const step of cfg.steps || []) await SceneStage.step.call(this, step);
@@ -374,6 +375,23 @@ const Diorama = {
     for (const [x, y, r] of (bm.block || {}).circles || []) { ctx.beginPath(); ctx.arc(x * s, y * s, r * s, 0, 7); ctx.fill(); }
     for (const [x, y, w, h] of (bm.block || {}).rects || []) ctx.fillRect(x * s, y * s, w * s, h * s);
     ((bm.block || {}).polys || []).forEach(poly);
+    // 用户手绘掩码覆盖图（红=挡 绿=通 透明=不改）叠在几何掩码之上——精修碰撞无需改代码
+    const ov = bm.maskImg && this._imgs[bm.maskImg];
+    if (ov && ov.width) {
+      const oc = document.createElement('canvas');
+      oc.width = cv.width; oc.height = cv.height;
+      const octx = oc.getContext('2d', { willReadFrequently: true });
+      octx.drawImage(ov, 0, 0, cv.width, cv.height);
+      const od = octx.getImageData(0, 0, cv.width, cv.height).data;
+      const id = ctx.getImageData(0, 0, cv.width, cv.height);
+      for (let i = 0; i < od.length; i += 4) {
+        if (od[i + 3] < 100) continue;
+        const red = od[i] > 140 && od[i + 1] < 110, green = od[i + 1] > 140 && od[i] < 110;
+        if (red) id.data[i] = id.data[i + 1] = id.data[i + 2] = 0;
+        else if (green) id.data[i] = id.data[i + 1] = id.data[i + 2] = 255;
+      }
+      ctx.putImageData(id, 0, 0);
+    }
     this._bmMaskData = { w: cv.width, h: cv.height, d: ctx.getImageData(0, 0, cv.width, cv.height).data };
   },
 
@@ -402,6 +420,7 @@ const Diorama = {
     this.ctx = this.cv.getContext('2d');
     if (window.Sound) Sound.bgm('story');
     await Promise.all([this.loadStage(), SceneStage.loadSprites.call(this, cfg)]);
+    if (this.bm) this._bmBuildMask();
     this.placeActors(cfg);
     this.ctl = { input: { up: 0, down: 0, left: 0, right: 0 }, joy: { active: false, x: 0, y: 0 }, last: performance.now() };
     this._bindExplore(opts);
@@ -465,8 +484,30 @@ const Diorama = {
       const spTiles = 0.0045 * dt * Math.min(1, mag);   // ~4.3 瓦/秒
       const nx = act.x + (dx / mag) * spTiles * T / this.world.w * 100;
       const ny = act.y + (dy / mag) * spTiles * T / this.world.h * 100;
+      const ox0 = act.x, oy0 = act.y;
       if (!this.blockedAt(nx, act.y)) act.x = nx;
       if (!this.blockedAt(act.x, ny)) act.y = ny;
+      // 贴墙滑动：实际位移不足步长 35% 即视为顶死 → 沿"垂直于输入"的方向找 6 步内的绕行口，
+      // 找到就朝那侧侧步一格（只侧步、不跳跃、绝不反向输入——反向会原地震荡）
+      const movedPx = Math.hypot((act.x - ox0) / 100 * this.world.w, (act.y - oy0) / 100 * this.world.h);
+      if (movedPx < spTiles * T * 0.35) {
+        const sx = spTiles * T / this.world.w * 100, sy = spTiles * T / this.world.h * 100;
+        const horiz = Math.abs(dx) >= Math.abs(dy);
+        outer: for (let k = 1; k <= 6; k++) {
+          const cands = horiz
+            ? [[nx, act.y - k * sy, 0, -1], [nx, act.y + k * sy, 0, 1]]
+            : [[act.x - k * sx, ny, -1, 0], [act.x + k * sx, ny, 1, 0]];
+          for (const [tx2, ty2, ux, uy] of cands) {
+            if (!this.blockedAt(tx2, ty2)) {
+              // 先试贴墙侧步一格（平滑）；一步内仍被挡（墙鼓包）就直接跳到探到的自由点
+              const px2 = act.x + ux * sx, py2 = act.y + uy * sy;
+              if (!this.blockedAt(px2, py2)) { act.x = px2; act.y = py2; }
+              else { act.x = tx2; act.y = ty2; }
+              break outer;
+            }
+          }
+        }
+      }
       act.dir = this._dir8(dx, dy);
       act.anim = 'run';
     } else if (act.anim !== 'idle') act.anim = 'idle';
@@ -481,7 +522,8 @@ const Diorama = {
       const mk = this._bmMaskData; if (!mk) return false;
       const mx = Math.round(wx * 0.5), my = Math.round(wy * 0.5);
       if (mx < 0 || my < 0 || mx >= mk.w || my >= mk.h) return true;
-      return mk.d[(my * mk.w + mx) * 4] < 128;
+      // 阈值 96：半覆盖边界像素(≈127)判可走，给贴墙滑动留半像素余量
+      return mk.d[(my * mk.w + mx) * 4] < 96;
     }
     if (wx < T * 0.6 || wx > this.world.w - T * 0.6 || wy < T * 0.6 || wy > this.world.h - T * 0.6) return true;
     for (const pr of this.st.props || []) {
@@ -507,7 +549,7 @@ const Diorama = {
         im.addEventListener('error', r, { once: true });
       }));
     };
-    if (this.bm) { need(this.bm.img); this._bmBuildMask(); }
+    if (this.bm) { need(this.bm.img); if (this.bm.maskImg) need(this.bm.maskImg); }
     const m = this.st.map;
     need(m.sheet);
     for (const k in m.sheets || {}) need(m.sheets[k]);
@@ -634,14 +676,21 @@ const Diorama = {
     // 物件 + 小人：按脚线 y 排序（纯俯视 → 统一比例，无近大远小）
     const ents = [], glows = [];   // glows 统一画在夜色之后
     // 大图遮挡件：把原图区域按脚线 baseY 参与排序回贴（人在物后即被盖住）
+    // 玩家被挡住时该件半透明（0.55）——既保留前后关系又不至于找不到人
     if (this.bm && bimg && bimg.width) {
+      const pl = this.actors.player || this.actors.teried;
+      const pw = pl ? pl.x / 100 * this.world.w : -9e9, ph2 = pl ? pl.y / 100 * this.world.h : -9e9;
       for (const o of this.bm.occ || []) {
-        ents.push({ y: o[4], draw: () =>
+        const hide = pl && ph2 < o[4] && pw > o[0] - 14 && pw < o[0] + o[2] + 14 && ph2 > o[1] && ph2 < o[4] + 46;
+        ents.push({ y: o[4], draw: () => {
+          if (hide) ctx.globalAlpha = 0.55;
           ctx.drawImage(bimg, o[0], o[1], o[2], o[3],
-            Math.round(ox + o[0] * S), Math.round(oy + o[1] * S), o[2] * S, o[3] * S) });
+            Math.round(ox + o[0] * S), Math.round(oy + o[1] * S), o[2] * S, o[3] * S);
+          if (hide) ctx.globalAlpha = 1;
+        } });
       }
       for (const g of this.bm.glows || [])
-        glows.push({ x: ox + g[0] * S, y: oy + g[1] * S, r: g[2] * S, color: g[3] });
+        glows.push({ x: ox + g[0] * S, y: oy + g[1] * S, r: g[2] * S, color: g[3], flick: true });
     }
     (st.props || []).forEach(pr => {
       const im = this._imgs[pr.img]; if (!im || !im.width) return;
@@ -686,7 +735,7 @@ const Diorama = {
         ctx.beginPath(); ctx.ellipse(px, py, dw * 0.3, dh * 0.08, 0, 0, 7); ctx.fill();
         // 大图白天模式提灯减弱上移（全强度会把小人洗白）
         if (act.glow) glows.push(this.bm
-          ? { x: px, y: py - dh * 0.62, r: dw * 1.6, color: 'rgba(255,180,95,.34)' }
+          ? { x: px, y: py - dh * 0.62, r: dw * 1.6, color: 'rgba(255,180,95,.34)', flick: true }
           : { x: px, y: py - dh * 0.45, r: dw * 2.4 });
         ctx.drawImage(im, bb.x, bb.y, bb.w, bb.h, Math.round(px - dw / 2), Math.round(py - dh), dw, dh);
         act.el.style.left = (px / dpr) + 'px';
@@ -698,13 +747,15 @@ const Diorama = {
     // 氛围粒子（st.parts）：烟囱烟/飘叶/萤火虫 —— 确定性时间驱动，无状态，参与后续调色
     for (const em of st.parts || []) {
       if (em.type === 'smoke') {
-        const bx = ox + em.x * T * S, by = oy + em.y * T * S;
-        for (let i = 0; i < 6; i++) {
-          const ph = (now * 0.014 + i * 17) % 100;               // 0-100 生命周期
-          const px = bx + Math.sin(ph * 0.11 + i * 2.1) * (0.06 + ph * 0.004) * T * S;
-          const py = by - ph * 0.028 * T * S;
-          const r = (0.07 + ph * 0.0036) * T * S;
-          ctx.fillStyle = `rgba(218,213,204,${(0.36 * (1 - ph / 100)).toFixed(3)})`;
+        // 烟囱烟 v2：细缕上升 + 摆动 + 微风右飘，px 锚点（大图）或 tile 锚点（瓦片场景）
+        const bx = ox + (em.px ? em.px[0] : em.x * T) * S, by = oy + (em.px ? em.px[1] : em.y * T) * S;
+        for (let i = 0; i < 9; i++) {
+          const ph = (now * (0.010 + (i % 3) * 0.0013) + i * 29) % 130;   // 0-130 生命周期
+          const px = bx + Math.sin(ph * 0.085 + i * 1.9) * (0.03 + ph * 0.0032) * T * S + ph * 0.007 * T * S;
+          const py = by - ph * 0.026 * T * S;
+          const r = (0.05 + ph * 0.0023) * T * S;
+          const a = 0.20 * (1 - ph / 130) * Math.min(1, ph / 12);         // 淡入淡出
+          ctx.fillStyle = `rgba(206,206,214,${a.toFixed(3)})`;
           ctx.beginPath(); ctx.arc(px, py, r, 0, 7); ctx.fill();
         }
       } else if (em.type === 'leaves') {
@@ -769,12 +820,21 @@ const Diorama = {
     // 灯光（夜色之后 screen 叠加，穿透夜幕）
     if (glows.length) {
       ctx.globalCompositeOperation = 'screen';
-      for (const g of glows) {
-        const rg = ctx.createRadialGradient(g.x, g.y, 3, g.x, g.y, g.r);
+      for (let gi = 0; gi < glows.length; gi++) {
+        const g = glows[gi];
+        let rr = g.r;
+        // 烛火式闪烁：双频正弦 + 相位错开（确定性，无状态）
+        if (g.flick) {
+          const f = 0.87 + 0.09 * Math.sin(now * 0.0036 + gi * 2.13) + 0.05 * Math.sin(now * 0.0121 + gi * 5.31);
+          rr = g.r * f;
+          ctx.globalAlpha = Math.min(1, f + 0.06);
+        }
+        const rg = ctx.createRadialGradient(g.x, g.y, 3, g.x, g.y, rr);
         rg.addColorStop(0, g.color || 'rgba(255,190,105,.55)');
         rg.addColorStop(0.5, 'rgba(255,170,80,.20)');
         rg.addColorStop(1, 'rgba(255,170,80,0)');
-        ctx.fillStyle = rg; ctx.fillRect(g.x - g.r, g.y - g.r, g.r * 2, g.r * 2);
+        ctx.fillStyle = rg; ctx.fillRect(g.x - rr, g.y - rr, rr * 2, rr * 2);
+        if (g.flick) ctx.globalAlpha = 1;
       }
       ctx.globalCompositeOperation = 'source-over';
     }
