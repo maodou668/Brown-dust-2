@@ -89,10 +89,10 @@ const A = '/home/user/Maodou/';
   }
   // 重冷调(压抑档): 降饱和+冷灰绿乘算+青蓝罩+暗角
   ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = 'rgba(128,128,128,0.22)'; ctx.fillRect(0, 0, W, H);
-  ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = 'rgb(176,190,186)'; ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = 'rgb(186,198,194)'; ctx.fillRect(0, 0, W, H);
   ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = 'rgba(36,56,64,.12)'; ctx.fillRect(0, 0, W, H);
   const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.95);
-  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(4,8,10,.5)');
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(4,8,10,.38)');
   ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
   const OUT = process.env.OUT || 'iso_out';
   const full = createCanvas(1400, 700), fctx = full.getContext('2d');

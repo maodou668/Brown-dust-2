@@ -60,7 +60,7 @@ module.exports = { stage: {
     { img: P + 'house_d.png',        x: 35,   y: 8.4, s: 0.8 },
     { img: P + 'crate_barrel.png',   x: 32.2, y: 8.2, s: 0.4 },
     // ---- 广场 ----
-    { img: P + 'well.png',           x: 22.5, y: 12.2, s: 0.38 },
+    { img: P + 'well.png',           x: 22.5, y: 12.2, s: 0.5 },
     { img: P + 'lantern.png',        x: 18,   y: 10.6, s: 0.45, glow: { r: 2.6 } },
     { img: P + 'lantern.png',        x: 27,   y: 10.6, s: 0.45, glow: { r: 2.6 } },
     { img: P + 'crate_barrel.png',   x: 27.6, y: 12.8, s: 0.4 },
