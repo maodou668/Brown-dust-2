@@ -514,6 +514,41 @@ const Diorama = {
     }
     ents.sort((a, b) => a.y - b.y).forEach(e => e.draw());
 
+    // 氛围粒子（st.parts）：烟囱烟/飘叶/萤火虫 —— 确定性时间驱动，无状态，参与后续调色
+    for (const em of st.parts || []) {
+      if (em.type === 'smoke') {
+        const bx = ox + em.x * T * S, by = oy + em.y * T * S;
+        for (let i = 0; i < 6; i++) {
+          const ph = (now * 0.014 + i * 17) % 100;               // 0-100 生命周期
+          const px = bx + Math.sin(ph * 0.11 + i * 2.1) * (0.06 + ph * 0.004) * T * S;
+          const py = by - ph * 0.028 * T * S;
+          const r = (0.07 + ph * 0.0036) * T * S;
+          ctx.fillStyle = `rgba(218,213,204,${(0.36 * (1 - ph / 100)).toFixed(3)})`;
+          ctx.beginPath(); ctx.arc(px, py, r, 0, 7); ctx.fill();
+        }
+      } else if (em.type === 'leaves') {
+        const n = em.n || 12;
+        for (let i = 0; i < n; i++) {
+          const sd = i * 271 + 13;
+          const lx = ((sd * 7 + now * (0.026 + (i % 5) * 0.006)) % (W + 80)) - 40;
+          const ly = ((sd * 13 + now * (0.011 + (i % 3) * 0.004) + Math.sin(now * 0.0016 + i) * 40) % (H + 60)) - 30;
+          ctx.save(); ctx.translate(lx, ly); ctx.rotate(now * 0.0022 + i * 1.7);
+          ctx.fillStyle = ['rgba(150,136,74,.42)', 'rgba(128,122,70,.38)', 'rgba(158,118,66,.35)'][i % 3];
+          ctx.fillRect(-1.3 * S, -0.7 * S, 2.6 * S, 1.4 * S);
+          ctx.restore();
+        }
+      } else if (em.type === 'fireflies') {
+        const n = em.n || 10;
+        for (let i = 0; i < n; i++) {
+          const sd = i * 173 + 41;
+          const fx2 = ox + (((sd * 5) % 90) / 90 * this.world.w + Math.sin(now * 0.0009 + i * 2.3) * 30) * S / 2 * 2;
+          const fy2 = oy + (((sd * 11) % 90) / 90 * this.world.h + Math.cos(now * 0.0011 + i * 1.7) * 22) * S / 2 * 2;
+          const tw = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(now * 0.004 + i * 2.9));
+          glows.push({ x: fx2, y: fy2, r: 5 * S * tw, color: `rgba(190,230,120,${(0.5 * tw).toFixed(2)})` });
+        }
+      }
+    }
+
     // 收集物件灯光（角色提灯在绘制闭包里收集）
     for (const pr of st.props || []) {
       if (!pr.glow) continue;
@@ -562,9 +597,9 @@ const Diorama = {
       }
       ctx.globalCompositeOperation = 'source-over';
     }
-    // 暗角
+    // 暗角（st.vignette 可调强度，默认 .42；白天场景建议 .24-.3）
     const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.38, W / 2, H / 2, H * 0.95);
-    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.42)');
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(0,0,0,${st.vignette != null ? st.vignette : 0.42})`);
     ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
 
     this._raf = requestAnimationFrame(t => this.tick(t));
