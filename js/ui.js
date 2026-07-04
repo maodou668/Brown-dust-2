@@ -494,9 +494,18 @@ const UI = {
         <span class="muted" style="font-size:11px;">${locked ? '通关上一章解锁' : ch.desc || ''}</span>
       </button>`;
     }).join('');
-    const m = this.openModal(`<h2>🕯 主线 · 掌灯人</h2><div style="margin-top:10px;">${rows}</div>
+    const stroll = `<button class="btn secondary" id="ms-stroll"
+        style="width:100%;margin:5px 0;display:flex;justify-content:space-between;align-items:center;">
+        <span>🚶 烛河村 · 自由行走</span>
+        <span class="muted" style="font-size:11px;">摇杆 / WASD 随便逛</span>
+      </button>`;
+    const m = this.openModal(`<h2>🕯 主线 · 掌灯人</h2><div style="margin-top:10px;">${rows}${stroll}</div>
       <div class="close-row"><button class="btn secondary" id="ms-close">关闭</button></div>`);
     m.querySelector('#ms-close').onclick = () => this.closeModal(m);
+    m.querySelector('#ms-stroll').onclick = () => {
+      this.closeModal(m);
+      Diorama.explore({ stage: window.TOWN_STAGE, sprite: 'teried', x: 11.4, y: 60.8 });
+    };
     m.querySelectorAll('[data-mch]').forEach(b => b.onclick = () => {
       this.closeModal(m);
       Director.play(b.dataset.mch, () => this.renderHome());

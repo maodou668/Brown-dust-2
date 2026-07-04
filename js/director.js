@@ -335,6 +335,114 @@ const Diorama = {
     return (this._imgs[src] = im);
   },
 
+  // ============ 自由行走探索模式（摇杆/WASD + 物件碰撞 + 相机跟随） ============
+  async explore(opts) {
+    const old = document.getElementById('scene-stage'); if (old) old.remove();
+    const cfg = { stage: opts.stage, actors: { player: { sprite: opts.sprite || 'teried', x: opts.x, y: opts.y, dir: 'south' } } };
+    this.cfg = cfg; this.st = cfg.stage;
+    const m = this.st.map;
+    const gsrc = m.grid || ((m.layers || []).map(l => l.grid).find(Boolean));
+    this.world = { w: (gsrc[0].length - 1) * m.tile, h: (gsrc.length - 1) * m.tile };
+    this.camera = { scale: opts.scale || 0.8, x: opts.x, y: opts.y };
+    this.root = UI.el(`
+      <div id="scene-stage">
+        <canvas id="sc-canvas"></canvas>
+        <div id="sc-bubbles"></div>
+        <button class="btn secondary" id="explore-exit" style="position:absolute;top:10px;right:12px;z-index:6;">离开</button>
+        <div class="joystick" id="explore-joy" style="position:absolute;left:26px;bottom:26px;z-index:6;"><div class="joy-knob" id="explore-knob"></div></div>
+      </div>`);
+    document.body.appendChild(this.root);
+    this.cv = this.root.querySelector('#sc-canvas');
+    this.ctx = this.cv.getContext('2d');
+    if (window.Sound) Sound.bgm('story');
+    await Promise.all([this.loadStage(), SceneStage.loadSprites.call(this, cfg)]);
+    this.placeActors(cfg);
+    this.ctl = { input: { up: 0, down: 0, left: 0, right: 0 }, joy: { active: false, x: 0, y: 0 }, last: performance.now() };
+    this._bindExplore(opts);
+    this._raf = requestAnimationFrame(t => this.tick(t));
+  },
+
+  _bindExplore(opts) {
+    const joy = this.root.querySelector('#explore-joy'), knob = this.root.querySelector('#explore-knob');
+    const J = this.ctl.joy;
+    const radius = () => joy.clientWidth / 2;
+    const move = (e) => {
+      if (!J.active) return; e.preventDefault();
+      const t = (e.touches && e.touches[0]) || e;
+      const r = joy.getBoundingClientRect();
+      let dx = t.clientX - (r.left + r.width / 2), dy = t.clientY - (r.top + r.height / 2);
+      const rad = radius(), len = Math.hypot(dx, dy);
+      if (len > rad) { dx = dx / len * rad; dy = dy / len * rad; }
+      knob.style.transform = `translate(${dx}px,${dy}px)`;
+      J.x = dx / rad; J.y = dy / rad;
+    };
+    const start = (e) => { J.active = true; move(e); };
+    const end = () => { J.active = false; J.x = J.y = 0; knob.style.transform = ''; };
+    joy.addEventListener('touchstart', start, { passive: false });
+    joy.addEventListener('touchmove', move, { passive: false });
+    joy.addEventListener('touchend', end); joy.addEventListener('touchcancel', end);
+    joy.addEventListener('mousedown', start);
+    this._exMouseMove = move; this._exMouseUp = end;
+    window.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
+    this._exKey = (e) => {
+      const mp = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right' };
+      const dir = mp[e.key]; if (!dir) return;
+      this.ctl.input[dir] = (e.type === 'keydown') ? 1 : 0; e.preventDefault();
+    };
+    window.addEventListener('keydown', this._exKey);
+    window.addEventListener('keyup', this._exKey);
+    this.root.querySelector('#explore-exit').onclick = () => {
+      window.removeEventListener('keydown', this._exKey); window.removeEventListener('keyup', this._exKey);
+      window.removeEventListener('mousemove', this._exMouseMove); window.removeEventListener('mouseup', this._exMouseUp);
+      this.ctl = null;
+      this.destroy();
+      if (opts.onExit) opts.onExit();
+    };
+  },
+
+  _dir8(vx, vy) {
+    const names = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east'];
+    const i = Math.round(Math.atan2(vy, vx) / (Math.PI / 4));
+    return names[((i % 8) + 8) % 8];
+  },
+
+  updatePlayer(now) {
+    const act = this.actors.player; if (!act) return;
+    const dt = Math.min(40, now - this.ctl.last); this.ctl.last = now;
+    let dx = 0, dy = 0;
+    const j = this.ctl.joy, k = this.ctl.input;
+    if (j.active && Math.hypot(j.x, j.y) > 0.18) { dx = j.x; dy = j.y; }
+    else { dx = k.right - k.left; dy = k.down - k.up; }
+    const mag = Math.hypot(dx, dy);
+    if (mag > 0.01) {
+      const T = this.st.map.tile;
+      const spTiles = 0.0045 * dt * Math.min(1, mag);   // ~4.3 瓦/秒
+      const nx = act.x + (dx / mag) * spTiles * T / this.world.w * 100;
+      const ny = act.y + (dy / mag) * spTiles * T / this.world.h * 100;
+      if (!this.blockedAt(nx, act.y)) act.x = nx;
+      if (!this.blockedAt(act.x, ny)) act.y = ny;
+      act.dir = this._dir8(dx, dy);
+      act.anim = 'run';
+    } else if (act.anim !== 'idle') act.anim = 'idle';
+    this.camera.x = act.x; this.camera.y = act.y;   // tick 里已有地图边界钳制
+  },
+
+  // 碰撞：地图边缘 + 立体物件脚部椭圆（flat 贴地件不挡路）
+  blockedAt(px, py) {
+    const T = this.st.map.tile;
+    const wx = px / 100 * this.world.w, wy = py / 100 * this.world.h;
+    if (wx < T * 0.6 || wx > this.world.w - T * 0.6 || wy < T * 0.6 || wy > this.world.h - T * 0.6) return true;
+    for (const pr of this.st.props || []) {
+      if (pr.flat) continue;
+      const im = this._imgs[pr.img]; if (!im || !im.width) continue;
+      const rx = im.width * (pr.s || 1) * 0.32 + T * 0.18, ry = rx * 0.42;
+      const ddx = wx - pr.x * T, ddy = wy - pr.y * T + ry * 0.5;
+      if ((ddx * ddx) / (rx * rx) + (ddy * ddy) / (ry * ry) < 1) return true;
+    }
+    return false;
+  },
+
+
   loadStage() {
     const jobs = [], seen = new Set();
     // 同一图片可被多处复用：去重 + addEventListener（onload 赋值会互相覆盖导致挂死）
@@ -377,6 +485,7 @@ const Diorama = {
 
   tick(now) {
     if (!this.root) return;
+    if (this.ctl) this.updatePlayer(now);   // 探索模式：输入→移动→相机跟随
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const cw = this.root.clientWidth, chh = this.root.clientHeight;
     if (this.cv.width !== Math.round(cw * dpr)) { this.cv.width = Math.round(cw * dpr); this.cv.height = Math.round(chh * dpr); }

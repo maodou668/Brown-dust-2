@@ -205,7 +205,7 @@ const SCRIPTS = {
 
     // 幕1 · 场景演出：白天进村（Diorama v3 · PixelLab 全自产锚点风格A + 构图规范）
     { op: 'scene', bg: 'town',
-      stage: (() => {
+      stage: window.TOWN_STAGE = (() => {
         const T = 'art/06_story/tiles/';
         const P = 'art/06_story/props/';
         const R = rs => { const a = Array(45).fill('0'); for (const [s, e] of rs) for (let i = s; i <= e; i++) a[i] = '1'; return a.join(''); };
