@@ -306,9 +306,13 @@ const Diorama = {
   async run(cfg, onDone) {
     const old = document.getElementById('scene-stage'); if (old) old.remove();
     this.cfg = cfg; this.st = cfg.stage;
+    this._bmInit();
     const m = this.st.map;
-    const gsrc = m.grid || ((m.layers || []).map(l => l.grid).find(Boolean));
-    this.world = { w: (gsrc[0].length - 1) * m.tile, h: (gsrc.length - 1) * m.tile };
+    if (this.bm) this.world = { w: this.bm.w, h: this.bm.h };
+    else {
+      const gsrc = m.grid || ((m.layers || []).map(l => l.grid).find(Boolean));
+      this.world = { w: (gsrc[0].length - 1) * m.tile, h: (gsrc.length - 1) * m.tile };
+    }
     this.camera = { scale: 1, x: 50, y: 50, ...(this.st.cam || {}) };
     this.root = UI.el(`
       <div id="scene-stage">
@@ -335,14 +339,56 @@ const Diorama = {
     return (this._imgs[src] = im);
   },
 
+  // ============ 大图铺底模式（js/bigmap.js 数据：手绘大图 2x 硬放大 + 掩码碰撞 + 原图回贴遮挡） ============
+  _bmInit() {
+    const st = this.st;
+    this.bm = null; this._bmMaskData = null;
+    if (!st || !st.bigmap) return;
+    const bm = this.bm = (typeof st.bigmap === 'string') ? (window.BIGMAPS || {})[st.bigmap] : st.bigmap;
+    if (!bm) { console.warn('Diorama: 未知 bigmap', st.bigmap); return; }
+    st.map = st.map || { tile: 32 };
+    if (st.pxScale == null) st.pxScale = bm.pxScale || 2;
+    if (st.actorScale == null) st.actorScale = bm.actorScale || 0.6;
+    if (st.vignette == null && bm.vignette != null) st.vignette = bm.vignette;
+    if (!st.parts && bm.parts) st.parts = bm.parts;
+  },
+
+  /** 把 walk/block 几何烘成半分辨率位图掩码（白=可走），blockedAt O(1) 采样 */
+  _bmBuildMask() {
+    const bm = this.bm, s = 0.5;
+    const cv = document.createElement('canvas');
+    cv.width = Math.ceil(bm.w * s); cv.height = Math.ceil(bm.h * s);
+    const ctx = cv.getContext('2d', { willReadFrequently: true });
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cv.width, cv.height);
+    const poly = p => { ctx.beginPath(); p.forEach(([x, y], i) => i ? ctx.lineTo(x * s, y * s) : ctx.moveTo(x * s, y * s)); ctx.closePath(); ctx.fill(); };
+    ctx.fillStyle = ctx.strokeStyle = '#fff';
+    ctx.lineCap = ctx.lineJoin = 'round';
+    for (const stk of (bm.walk || {}).strokes || []) {
+      ctx.lineWidth = stk.w * s;
+      ctx.beginPath();
+      stk.pts.forEach(([x, y], i) => i ? ctx.lineTo(x * s, y * s) : ctx.moveTo(x * s, y * s));
+      ctx.stroke();
+    }
+    ((bm.walk || {}).polys || []).forEach(poly);
+    ctx.fillStyle = '#000';
+    for (const [x, y, r] of (bm.block || {}).circles || []) { ctx.beginPath(); ctx.arc(x * s, y * s, r * s, 0, 7); ctx.fill(); }
+    for (const [x, y, w, h] of (bm.block || {}).rects || []) ctx.fillRect(x * s, y * s, w * s, h * s);
+    ((bm.block || {}).polys || []).forEach(poly);
+    this._bmMaskData = { w: cv.width, h: cv.height, d: ctx.getImageData(0, 0, cv.width, cv.height).data };
+  },
+
   // ============ 自由行走探索模式（摇杆/WASD + 物件碰撞 + 相机跟随） ============
   async explore(opts) {
     const old = document.getElementById('scene-stage'); if (old) old.remove();
-    const cfg = { stage: opts.stage, actors: { player: { sprite: opts.sprite || 'teried', x: opts.x, y: opts.y, dir: 'south' } } };
+    const cfg = { stage: opts.stage, actors: { player: { sprite: opts.sprite || 'teried', x: opts.x, y: opts.y, dir: 'south', glow: opts.glow } } };
     this.cfg = cfg; this.st = cfg.stage;
+    this._bmInit();
     const m = this.st.map;
-    const gsrc = m.grid || ((m.layers || []).map(l => l.grid).find(Boolean));
-    this.world = { w: (gsrc[0].length - 1) * m.tile, h: (gsrc.length - 1) * m.tile };
+    if (this.bm) this.world = { w: this.bm.w, h: this.bm.h };
+    else {
+      const gsrc = m.grid || ((m.layers || []).map(l => l.grid).find(Boolean));
+      this.world = { w: (gsrc[0].length - 1) * m.tile, h: (gsrc.length - 1) * m.tile };
+    }
     this.camera = { scale: opts.scale || 0.8, x: opts.x, y: opts.y };
     this.root = UI.el(`
       <div id="scene-stage">
@@ -427,10 +473,16 @@ const Diorama = {
     this.camera.x = act.x; this.camera.y = act.y;   // tick 里已有地图边界钳制
   },
 
-  // 碰撞：地图边缘 + 立体物件脚部椭圆（flat 贴地件不挡路）
+  // 碰撞：bigmap=掩码采样；瓦片模式=地图边缘 + 立体物件脚部椭圆（flat 贴地件不挡路）
   blockedAt(px, py) {
     const T = this.st.map.tile;
     const wx = px / 100 * this.world.w, wy = py / 100 * this.world.h;
+    if (this.bm) {
+      const mk = this._bmMaskData; if (!mk) return false;
+      const mx = Math.round(wx * 0.5), my = Math.round(wy * 0.5);
+      if (mx < 0 || my < 0 || mx >= mk.w || my >= mk.h) return true;
+      return mk.d[(my * mk.w + mx) * 4] < 128;
+    }
     if (wx < T * 0.6 || wx > this.world.w - T * 0.6 || wy < T * 0.6 || wy > this.world.h - T * 0.6) return true;
     for (const pr of this.st.props || []) {
       if (pr.flat) continue;
@@ -455,6 +507,7 @@ const Diorama = {
         im.addEventListener('error', r, { once: true });
       }));
     };
+    if (this.bm) { need(this.bm.img); this._bmBuildMask(); }
     const m = this.st.map;
     need(m.sheet);
     for (const k in m.sheets || {}) need(m.sheets[k]);
@@ -504,6 +557,12 @@ const Diorama = {
     this._proj = { S, ox, oy, dpr };
 
     ctx.fillStyle = '#101014'; ctx.fillRect(0, 0, W, H);
+
+    // 大图铺底：整幅硬放大绘制（imageSmoothingEnabled=false 保笔触，2x 定档工艺）
+    const bimg = this.bm && this._imgs[this.bm.img];
+    if (this.bm && bimg && bimg.width) {
+      ctx.drawImage(bimg, 0, 0, this.bm.w, this.bm.h, ox, oy, this.bm.w * S, this.bm.h * S);
+    }
 
     // 可见格范围（多层/单层共用）
     const rowsAll = this.world.h / T, colsAll = this.world.w / T;
@@ -574,6 +633,16 @@ const Diorama = {
 
     // 物件 + 小人：按脚线 y 排序（纯俯视 → 统一比例，无近大远小）
     const ents = [], glows = [];   // glows 统一画在夜色之后
+    // 大图遮挡件：把原图区域按脚线 baseY 参与排序回贴（人在物后即被盖住）
+    if (this.bm && bimg && bimg.width) {
+      for (const o of this.bm.occ || []) {
+        ents.push({ y: o[4], draw: () =>
+          ctx.drawImage(bimg, o[0], o[1], o[2], o[3],
+            Math.round(ox + o[0] * S), Math.round(oy + o[1] * S), o[2] * S, o[3] * S) });
+      }
+      for (const g of this.bm.glows || [])
+        glows.push({ x: ox + g[0] * S, y: oy + g[1] * S, r: g[2] * S, color: g[3] });
+    }
     (st.props || []).forEach(pr => {
       const im = this._imgs[pr.img]; if (!im || !im.width) return;
       const fx = pr.x * T, fy = pr.y * T;
@@ -615,7 +684,10 @@ const Diorama = {
         const px = ox + wx * S, py = oy + wy * S;
         ctx.fillStyle = 'rgba(0,0,0,.32)';
         ctx.beginPath(); ctx.ellipse(px, py, dw * 0.3, dh * 0.08, 0, 0, 7); ctx.fill();
-        if (act.glow) glows.push({ x: px, y: py - dh * 0.45, r: dw * 2.4 });
+        // 大图白天模式提灯减弱上移（全强度会把小人洗白）
+        if (act.glow) glows.push(this.bm
+          ? { x: px, y: py - dh * 0.62, r: dw * 1.6, color: 'rgba(255,180,95,.34)' }
+          : { x: px, y: py - dh * 0.45, r: dw * 2.4 });
         ctx.drawImage(im, bb.x, bb.y, bb.w, bb.h, Math.round(px - dw / 2), Math.round(py - dh), dw, dh);
         act.el.style.left = (px / dpr) + 'px';
         act.el.style.top = ((py - dh) / dpr) + 'px';

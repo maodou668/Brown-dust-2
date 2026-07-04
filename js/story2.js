@@ -203,116 +203,28 @@ const SCRIPTS = {
       { text: '报酬一栏写着：全村凑的，一共三十七银，先付一半。' },
     ]},
 
-    // 幕1 · 场景演出：白天进村（Diorama v3 · PixelLab 全自产锚点风格A + 构图规范）
+    // 幕1 · 场景演出：白天进村（大图铺底：image2 围墙村 art/06_story/bigmap/town_day.png）
+    // 坐标=世界百分比（原图 1792×1024）。碰撞/遮挡/灯光标定见 js/bigmap.js。
     { op: 'scene', bg: 'town',
-      stage: window.TOWN_STAGE = (() => {
-        const T = 'art/06_story/tiles/';
-        const P = 'art/06_story/props/';
-        const R = rs => { const a = Array(45).fill('0'); for (const [s, e] of rs) for (let i = s; i <= e; i++) a[i] = '1'; return a.join(''); };
-        const rep = (n, f) => Array.from({ length: n }, f);
-        const roadGrid = [
-          ...rep(9, () => R([])),
-          ...rep(2, () => R([[20, 23], [33, 36]])),
-          ...rep(2, () => R([[17, 28], [33, 36]])),
-          R([[17, 28], [33, 36], [3, 4], [10, 11], [30, 31]]),
-          ...rep(4, () => R([[0, 38]])),
-          R([[7, 8], [14, 15], [20, 21], [28, 29], [36, 37]]),
-          ...rep(8, () => R([])),
-        ];
-        return {
-        pxScale: 2, actorScale: 1,
-        mute: 0.15, gloom: 'rgb(203,214,203)', tone: 'rgba(60,95,80,.07)', vignette: 0.26,
-        cam: { x: 22, y: 52 },
-        parts: [
-          { type: 'smoke', x: 20.6, y: 2.8 },    // 村长家烟囱
-          { type: 'smoke', x: 8.8,  y: 16.9 },   // 贫户屋烟囱
-          { type: 'leaves', n: 10 },             // 风吹落叶
-        ],
-        map: {
-          tile: 32,
-          layers: [
-            { sheet: T + 'grass_var.png', fullVar: [
-              [0,0],[0,0],[0,0],[32,0],[0,0],[64,0],[0,0],[0,0],[96,0],[0,0],[128,0],[0,0],[0,0],[160,0],[0,0],[32,0],
-            ] },   // L0 草地基底（锚点+5变体散布）
-            { sheet: T + 'road_grass.png', lut: T + 'road_grass.lut.json', grid: roadGrid },   // L1 土路
-          ],
-        },
-        props: [
-          // 北缘树线（收边，疏密不均）
-          { img: P + 'tree_oak.png',  x: 3,    y: 2.6, s: 0.7 },
-          { img: P + 'tree_dead.png', x: 8,    y: 2.2, s: 0.6 },
-          { img: P + 'tree_oak.png',  x: 13.5, y: 2.9, s: 0.62 },
-          { img: P + 'tree_oak.png',  x: 16.8, y: 1.8, s: 0.5 },
-          { img: P + 'tree_dead.png', x: 39.5, y: 2.7, s: 0.65 },
-          { img: P + 'tree_oak.png',  x: 39.2, y: 4.8, s: 0.55 },
-          // 坟场（磨坊西侧林缘）
-          { img: P + 'tree_dead.png', x: 28.6, y: 4.6, s: 0.62 },
-          { img: P + 'graves.png',    x: 30.4, y: 5.6, s: 0.55 },
-          { img: P + 'tree_dead.png', x: 32.6, y: 3.9, s: 0.5 },
-          // 村长家 · 木构大宅（新标准件A，门朝南正对广场轴线）+ 院界栅栏（门前留口）
-          { img: P + 'house_timber_a.png', x: 21.8, y: 8.8, s: 0.9 },
-          { img: P + 'fence_rail.png',   x: 16.9, y: 10.3, s: 0.28 },
-          { img: P + 'fence_rail.png',   x: 18.5, y: 10.3, s: 0.28 },
-          { img: P + 'fence_rail.png',   x: 24.6, y: 10.3, s: 0.28 },
-          { img: P + 'fence_rail.png',   x: 26.2, y: 10.3, s: 0.28 },
-          { img: P + 'tree_oak.png',     x: 26.4, y: 7.2,  s: 0.55 },
-          { img: P + 'firewood.png',     x: 17.9, y: 8.7,  s: 0.5 },
-          // 磨坊（新件，焦点建筑，支路引导视线）+ 干草车
-          { img: P + 'windmill_new.png', x: 35,  y: 9.2,  s: 1.05 },
-          { img: P + 'hay_cart.png', x: 32.3, y: 13.4, s: 0.5 },
-          // 主路北侧西段 · 石屋（新标准件）+ 木屋B + 灯柱
-          { img: P + 'house_stone_a.png',  x: 10,  y: 13.7, s: 0.8 },
-          { img: P + 'house_timber_b.png', x: 4.2, y: 13.6, s: 0.8 },
-          { img: P + 'lantern.png',     x: 13.4, y: 13.5, s: 0.45, glow: { r: 2.6 } },
-          { img: P + 'crate_barrel.png', x: 12.6, y: 13.6, s: 0.4 },
-          // 主路南侧 · 贫户小屋C + 鸡圈（农家片区，行8连接支路）
-          { img: P + 'house_poor_c.png',  x: 8.2,  y: 21.6, s: 0.75 },
-          { img: P + 'chicken_coop.png',  x: 14.2, y: 21.4, s: 0.75 },
-          // 广场：水井 + 灯柱
-          { img: P + 'well.png',     x: 22.5, y: 12.4, s: 0.38 },
-          { img: P + 'lantern.png',  x: 26.6, y: 11.7, s: 0.45, glow: { r: 2.6 } },
-          // 主路南侧栅栏段（草地上，压路缘）
-          { img: P + 'fence_rail.png', x: 3.6,  y: 18.6, s: 0.28 },
-          { img: P + 'fence_rail.png', x: 5.2,  y: 18.6, s: 0.28 },
-          { img: P + 'fence_rail.png', x: 30.6, y: 18.4, s: 0.28 },
-          { img: P + 'fence_rail.png', x: 32.2, y: 18.4, s: 0.28 },
-          { img: P + 'rocks.png',      x: 12.5, y: 19,   s: 0.28 },
-          { img: P + 'rocks.png',      x: 38.6, y: 11,   s: 0.35 },
-          // 南缘树林（三簇 + 大留白，簇内大小错落）
-          { img: P + 'tree_oak.png',  x: 2,    y: 20.8, s: 0.82 },
-          { img: P + 'tree_oak.png',  x: 4.6,  y: 22.6, s: 0.58 },
-          { img: P + 'tree_dead.png', x: 6.6,  y: 21.2, s: 0.66 },
-          { img: P + 'tree_oak.png',  x: 3.4,  y: 25,   s: 0.72 },
-          { img: P + 'tree_oak.png',  x: 17.5, y: 23.6, s: 0.85 },
-          { img: P + 'tree_oak.png',  x: 20.6, y: 21.6, s: 0.6 },
-          { img: P + 'tree_dead.png', x: 22.8, y: 24.6, s: 0.68 },
-          { img: P + 'tree_oak.png',  x: 33.5, y: 21.2, s: 0.75 },
-          { img: P + 'tree_oak.png',  x: 36.8, y: 23,   s: 0.62 },
-          { img: P + 'tree_dead.png', x: 39,   y: 20.6, s: 0.55 },
-          { img: P + 'tree_oak.png',  x: 35.2, y: 25.4, s: 0.85 },
-          // 西缘
-          { img: P + 'tree_oak.png',  x: 1,   y: 7,  s: 0.7 },
-          { img: P + 'tree_dead.png', x: 1.5, y: 12, s: 0.55 },
-          // 东缘树线收口
-          { img: P + 'tree_oak.png',  x: 43,   y: 8,    s: 0.72 },
-          { img: P + 'tree_dead.png', x: 43.5, y: 12.5, s: 0.6 },
-          { img: P + 'tree_oak.png',  x: 42.6, y: 17.5, s: 0.68 },
-          { img: P + 'tree_oak.png',  x: 43.4, y: 23,   s: 0.78 },
-        ],
-        };
-      })(),
+      stage: window.TOWN_STAGE = { bigmap: 'town_day', cam: { x: 10, y: 86 } },
       actors: {
-        teried:   { sprite: 'teried',   x: 3,  y: 57, dir: 'east' },
-        mina:     { sprite: 'mina',     x: 1,  y: 60, dir: 'east' },
-        villager: { sprite: 'villager', x: 54, y: 51, dir: 'west' },
+        teried:   { sprite: 'teried',   x: 3.5,  y: 93,   dir: 'north-east', glow: true },
+        mina:     { sprite: 'mina',     x: 1.5,  y: 95.5, dir: 'north-east' },
+        villager: { sprite: 'villager', x: 35.7, y: 59.4, dir: 'south-west' },
       },
       steps: [
-        { t: 'narr', text: '灰蒙蒙的上午。鸡在栅栏边刨食，烟囱都冒着烟。看上去是个活的村子。' },
-        { t: 'camera', x: 50, y: 52, scale: 1, dur: 2800 },
-        { t: 'move', who: 'teried', to: [47, 56], dur: 2800 },
-        { t: 'move', who: 'mina',   to: [41, 59], dur: 2200 },
+        { t: 'narr', text: '灰蒙蒙的上午。烟囱都冒着烟，栅墙外的枯树上一只鸟都没有。看上去是个活的村子。' },
+        { t: 'camera', x: 21, y: 70, scale: 1, dur: 2600 },
+        { t: 'move', who: 'teried', to: [15, 82], dur: 2600 },
+        { t: 'move', who: 'mina',   to: [12, 85], dur: 2600 },
+        { t: 'narr', text: '栅门虚掩着，门轴上了新油——推起来一点声音都没有。' },
+        { t: 'camera', x: 31, y: 61, scale: 1, dur: 2600 },
+        { t: 'move', who: 'teried', to: [26, 67], dur: 1400, dirLock: 'north-east' },
+        { t: 'move', who: 'teried', to: [33, 62.5], dur: 1600 },
+        { t: 'move', who: 'mina',   to: [23, 69.5], dur: 1500, dirLock: 'north-east' },
+        { t: 'move', who: 'mina',   to: [30, 65.6], dur: 1600 },
         { t: 'say',  who: 'villager', text: '掌灯的吧？可把你们盼来了。' },
-        { t: 'say',  who: 'villager', text: '磨坊在村东头。叔叔人好，就是最近不对。' },
+        { t: 'say',  who: 'villager', text: '磨坊在溪东边，过了桥上坡就是。叔叔人好，就是最近不对。' },
         { t: 'say',  who: 'teried', text: '哪里不对？' },
         { t: 'wait', ms: 900 },
         { t: 'say',  who: 'villager', text: '……就是不对。你们看了就知道。' },

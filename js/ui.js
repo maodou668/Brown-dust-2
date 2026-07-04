@@ -504,7 +504,10 @@ const UI = {
     m.querySelector('#ms-close').onclick = () => this.closeModal(m);
     m.querySelector('#ms-stroll').onclick = () => {
       this.closeModal(m);
-      Diorama.explore({ stage: window.TOWN_STAGE, sprite: 'teried', x: 11.4, y: 60.8 });
+      const bm = (window.BIGMAPS || {}).town_day;
+      if (bm) Diorama.explore({ stage: { bigmap: 'town_day' }, sprite: 'teried', glow: true, scale: 1,
+        x: bm.spawn[0] / bm.w * 100, y: bm.spawn[1] / bm.h * 100 });
+      else Diorama.explore({ stage: window.TOWN_STAGE, sprite: 'teried', x: 11.4, y: 60.8 });
     };
     m.querySelectorAll('[data-mch]').forEach(b => b.onclick = () => {
       this.closeModal(m);
