@@ -10,7 +10,7 @@
 |---|---|---|
 | 1. 调色板 | 全局主调色板 48+1 色（`art/_palette/master_palette.json`，抽取自 16 人物+锚点瓦片）；新资产吸附后色距≤20 | `scripts/palmap.js` 归一 + scenegate 色距 |
 | 2. 饱和/明度带 | 场景资产：饱和 18–50%、明度 22–52%（人物允许 35–65% 饱和作前景强调，VFX 豁免） | `scripts/styleaudit.js` 数值 |
-| 3. 描边 | 立体物深描边占比 ≥14%（不足用 `scripts/darkoutline.js` 确定性加深，2圈 k=0.26 起） | scenegate |
+| 3. 描边 | 立体物深描边占比 ≥14%（不足用 `scripts/darkoutline.js` 确定性加深，2圈 k=0.26 起）。**RD 源（rd_pro selective outline 细线画风）实测 9–14% 属正常，对 RD 件放宽至 ≥9%，以独立目视复核"无纯黑大块、线稿闭合"为准（2026-07 建筑批 7 件标定）** | scenegate |
 | 4. 像素密度 | 1m ≈ 38px（角色 64px≈1.7m）；缩小 <0.5x 禁止、放大仅整数倍 | SCENE_COMPOSITION §九 |
 | 5. 相机 | 3/4 顶视轴对齐：顶面为主 + 南侧立面可见（民房比例≈顶 70%/立面 30%）；禁旋转/等距菱形/卫星平摊 | 逐件目视 + 同框图 |
 

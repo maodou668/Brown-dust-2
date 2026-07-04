@@ -224,8 +224,8 @@ const SCRIPTS = {
         mute: 0.15, gloom: 'rgb(203,214,203)', tone: 'rgba(60,95,80,.07)', vignette: 0.26,
         cam: { x: 22, y: 52 },
         parts: [
-          { type: 'smoke', x: 20.9, y: 3.5 },    // 村长家烟囱
-          { type: 'smoke', x: 9.3,  y: 17.3 },   // 贫户屋烟囱
+          { type: 'smoke', x: 20.6, y: 2.8 },    // 村长家烟囱
+          { type: 'smoke', x: 8.8,  y: 16.9 },   // 贫户屋烟囱
           { type: 'leaves', n: 10 },             // 风吹落叶
         ],
         map: {
@@ -250,7 +250,7 @@ const SCRIPTS = {
           { img: P + 'graves.png',    x: 30.4, y: 5.6, s: 0.55 },
           { img: P + 'tree_dead.png', x: 32.6, y: 3.9, s: 0.5 },
           // 村长家 · 木构大宅（新标准件A，门朝南正对广场轴线）+ 院界栅栏（门前留口）
-          { img: P + 'house_timber_a.png', x: 21.8, y: 8.8, s: 1.0 },
+          { img: P + 'house_timber_a.png', x: 21.8, y: 8.8, s: 0.9 },
           { img: P + 'fence_rail.png',   x: 16.9, y: 10.3, s: 0.28 },
           { img: P + 'fence_rail.png',   x: 18.5, y: 10.3, s: 0.28 },
           { img: P + 'fence_rail.png',   x: 24.6, y: 10.3, s: 0.28 },
@@ -258,16 +258,16 @@ const SCRIPTS = {
           { img: P + 'tree_oak.png',     x: 26.4, y: 7.2,  s: 0.55 },
           { img: P + 'firewood.png',     x: 17.9, y: 8.7,  s: 0.5 },
           // 磨坊（新件，焦点建筑，支路引导视线）+ 干草车
-          { img: P + 'windmill_new.png', x: 35,  y: 9.2,  s: 1.0 },
+          { img: P + 'windmill_new.png', x: 35,  y: 9.2,  s: 1.05 },
           { img: P + 'hay_cart.png', x: 32.3, y: 13.4, s: 0.5 },
           // 主路北侧西段 · 石屋（新标准件）+ 木屋B + 灯柱
-          { img: P + 'house_stone_a.png',  x: 10,  y: 13.7, s: 1.0 },
-          { img: P + 'house_timber_b.png', x: 4.2, y: 13.6, s: 0.95 },
+          { img: P + 'house_stone_a.png',  x: 10,  y: 13.7, s: 0.8 },
+          { img: P + 'house_timber_b.png', x: 4.2, y: 13.6, s: 0.8 },
           { img: P + 'lantern.png',     x: 13.4, y: 13.5, s: 0.45, glow: { r: 2.6 } },
           { img: P + 'crate_barrel.png', x: 12.6, y: 13.6, s: 0.4 },
           // 主路南侧 · 贫户小屋C + 鸡圈（农家片区，行8连接支路）
-          { img: P + 'house_poor_c.png',  x: 8.2,  y: 21.6, s: 0.9 },
-          { img: P + 'chicken_coop.png',  x: 14.2, y: 21.4, s: 0.9 },
+          { img: P + 'house_poor_c.png',  x: 8.2,  y: 21.6, s: 0.75 },
+          { img: P + 'chicken_coop.png',  x: 14.2, y: 21.4, s: 0.75 },
           // 广场：水井 + 灯柱
           { img: P + 'well.png',     x: 22.5, y: 12.4, s: 0.38 },
           { img: P + 'lantern.png',  x: 26.6, y: 11.7, s: 0.45, glow: { r: 2.6 } },
