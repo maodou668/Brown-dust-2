@@ -52,9 +52,18 @@ const A = '/home/user/Maodou/';
   for (const pr of st.props) {
     const im = await loadImage(A + pr.img);
     const [sx, sy] = iso(pr.x, pr.y);
-    items.push({ sy, draw: () => {
+    items.push({ sy: pr.flat ? sy - 1 : sy, draw: () => {
       const s = pr.s || 1;
-      if (!pr.flat) softShadow(im, sx, sy, s);
+      if (pr.flat) {
+        // 贴地件: 随地面一起等距投影
+        const wx = pr.x * T, wy = pr.y * T;
+        ctx.save();
+        ctx.setTransform(1, 0.5, -1, 0.5, H0, 0);
+        ctx.drawImage(im, Math.round(wx - im.width * s / 2), Math.round(wy - im.height * s / 2), im.width * s, im.height * s);
+        ctx.restore();
+        return;
+      }
+      softShadow(im, sx, sy, s);
       ctx.drawImage(im, Math.round(sx - im.width * s / 2), Math.round(sy - im.height * s), im.width * s, im.height * s);
     } });
   }
