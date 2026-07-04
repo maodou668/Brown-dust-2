@@ -2,7 +2,7 @@
 // 用法: node palmap2.js <in> <out> [satBand=0.18,0.5] [vBand=0.22,0.52] [snap=0.35]
 const { createCanvas, loadImage } = require('@napi-rs/canvas');
 const fs = require('fs');
-const PAL = JSON.parse(fs.readFileSync(__dirname + '/master_palette.json'));
+const PAL = JSON.parse(fs.readFileSync('/home/user/Maodou/art/_palette/master_palette.json'));
 const rgb2hsv = (r,g,b) => { const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn; let h=0;
   if(d){ if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; }
   return [h, mx?d/mx:0, mx/255]; };

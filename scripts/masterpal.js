@@ -54,13 +54,14 @@ const R = '/home/user/Maodou/art/';
   // 下采样加速
   const samp = [];
   for (let i = 0; i < px.length; i += Math.max(1, Math.floor(px.length / 60000))) samp.push(px[i]);
-  const pal = medianCut(samp, 48);
+  const N = +(process.argv[2] || 48);
+  const pal = medianCut(samp, N);
   // 保证有纯暗描边色
   pal.push([26, 22, 24]);
-  fs.writeFileSync(__dirname + '/master_palette.json', JSON.stringify(pal));
+  fs.writeFileSync('/home/user/Maodou/art/_palette/master_palette.json', JSON.stringify(pal));
   // 可视化
   const cv = createCanvas(49 * 24, 40), ctx = cv.getContext('2d');
   pal.forEach((c, i) => { ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; ctx.fillRect(i * 24, 0, 24, 40); });
-  fs.writeFileSync(__dirname + '/master_palette.png', cv.toBuffer('image/png'));
+  fs.writeFileSync('/home/user/Maodou/art/_palette/master_palette.png', cv.toBuffer('image/png'));
   console.log('主调色板', pal.length, '色 → master_palette.json/png');
 })();
