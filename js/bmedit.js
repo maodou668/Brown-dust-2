@@ -1,13 +1,12 @@
 // ============================================================
-//  BmEdit —— 大图标定工坊（用户可视化标定工具，游戏本体不受影响）
-//  打开方式：游戏网址后加 ?bmedit  （如 https://…/Brown-dust-2/?bmedit）
-//  能干什么（全鼠标操作，PC 推荐）：
-//    🔦 灯：点空处加灯，拖动挪位，滚轮悬停/滑杆改半径，实时闪烁预览
-//    💨 烟：点空处加烟囱烟出烟口，拖动挪位，实时烟柱预览
-//    🖌 碰撞笔：红=不可走 / 绿=强制可走，直接在图上描；橡皮擦除
-//    🧱 遮挡件：拖动黄框挪位，拖右下角改大小，拖青线改脚线(baseY)
-//    导出：JSON(灯/烟/遮挡) 复制发给 AI；掩码 PNG 下载后传 inbox/
-//  坐标系 = 原图像素 1792×1024，与 js/bigmap.js 完全一致。
+//  BmEdit v2 —— 标定工坊（用户手绘碰撞层/遮挡层的专用画图工具）
+//  打开: 游戏网址加 ?bmedit   （PC + 鼠标推荐）
+//  🖌 碰撞层: 红笔=不可走(默认全图可走) / 绿笔=修正回可走 / 橡皮
+//  🧱 遮挡层: 每个"件"用笔刷描出轮廓(房子/井/树冠) + 拖青色脚线;
+//             人物站在脚线上方时会被该件盖住 —— 假人模式可实时验证
+//  通用: 滚轮缩放 / 空格或🖐拖图 / Ctrl+Z 撤销 / 导入导出 PNG
+//  导出: 碰撞 town_day_mask.png(红绿) · 遮挡 town_day_occ.png(颜色=脚线y编码)
+//  交付: 两张 PNG 传 GitHub inbox/ 告诉 AI 接线
 // ============================================================
 (function () {
   if (!/bmedit/.test(location.search)) return;
@@ -18,165 +17,212 @@
     if (!bm) { alert('BmEdit: BIGMAPS 未加载'); return; }
     const W0 = bm.w, H0 = bm.h;
 
-    // ---------- 数据（从 bigmap.js 拷贝，编辑不回写游戏运行时） ----------
     const st = {
-      glows: (bm.glows || []).map(g => g.slice()),
-      smokes: (bm.parts || []).filter(p => p.type === 'smoke').map(p => (p.px ? p.px.slice() : [p.x * 32, p.y * 32])),
-      occ: (bm.occ || []).map(o => o.slice()),
-      tool: 'pan', ink: 'red', brush: 30,
-      sel: null,                    // {k:'glow'|'smoke'|'occ', i}
-      cam: { x: W0 / 2, y: H0 / 2, z: Math.max(0.3, Math.min(innerWidth / W0, innerHeight / H0)) },
-      showBase: true, drag: null, newOcc: false,
+      tool: 'pan', ink: 'red', brush: 26,
+      cam: { x: W0 / 2, y: H0 / 2, z: Math.max(0.2, Math.min(innerWidth / W0, innerHeight / H0)) },
+      drag: null, space: false, cursor: null,
+      pieces: [],            // 遮挡件: {cv, ctx, baseY, name}
+      cur: -1,
+      undo: [],
+      showMask: true, showOcc: true, dummy: null,
+    };
+
+    const maskCv = document.createElement('canvas');
+    maskCv.width = W0; maskCv.height = H0;
+    const maskCtx = maskCv.getContext('2d', { willReadFrequently: true });
+
+    const newPiece = (name) => {
+      const cv2 = document.createElement('canvas');
+      cv2.width = W0; cv2.height = H0;
+      st.pieces.push({ cv: cv2, ctx: cv2.getContext('2d', { willReadFrequently: true }), baseY: Math.round(st.cam.y) + 60, name: name || ('件' + (st.pieces.length + 1)) });
+      st.cur = st.pieces.length - 1;
     };
 
     // ---------- DOM ----------
     const root = document.createElement('div');
     root.id = 'bmedit';
-    root.style.cssText = 'position:fixed;inset:0;z-index:100000;background:#0a0a0e;';
+    root.style.cssText = 'position:fixed;inset:0;z-index:100000;background:#0a0a0e;font:13px/1.5 sans-serif;color:#cfc8e0;';
     root.innerHTML = `
-      <canvas id="bme-cv" style="position:absolute;inset:0;touch-action:none;"></canvas>
-      <div id="bme-bar" style="position:absolute;top:8px;left:8px;right:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;
-           background:rgba(16,14,22,.88);border:1px solid #3a3350;border-radius:10px;padding:8px 10px;font:13px/1.4 sans-serif;color:#cfc8e0;">
-        <b style="color:#e8c66a;">🛠 标定工坊</b>
+      <canvas id="bme-cv" style="position:absolute;inset:0;touch-action:none;cursor:crosshair;"></canvas>
+      <div id="bme-bar" style="position:absolute;top:8px;left:8px;right:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:rgba(16,14,22,.92);border:1px solid #3a3350;border-radius:10px;padding:8px 10px;">
+        <b style="color:#e8c66a;">🛠 标定工坊 v2</b>
         <button data-t="pan">🖐 拖图</button>
-        <button data-t="glow">🔦 灯</button>
-        <button data-t="smoke">💨 烟</button>
-        <button data-t="mask">🖌 碰撞笔</button>
-        <button data-t="occ">🧱 遮挡件</button>
-        <span id="bme-sub"></span>
+        <button data-t="mask">🖌 碰撞层</button>
+        <button data-t="occ">🧱 遮挡层</button>
+        <button data-t="dummy">🚶 假人验证</button>
+        <span id="bme-sub" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;"></span>
         <span style="flex:1;"></span>
-        <button id="bme-base">底色开/关</button>
-        <button id="bme-json" style="background:#2c4a2c;">📋 导出JSON</button>
-        <button id="bme-png" style="background:#4a2c2c;">🖼 导出掩码PNG</button>
+        <button id="bme-undo" title="Ctrl+Z">↩ 撤销</button>
+        <label style="cursor:pointer;">👁碰撞<input id="bme-vm" type="checkbox" checked style="vertical-align:middle;"></label>
+        <label style="cursor:pointer;">👁遮挡<input id="bme-vo" type="checkbox" checked style="vertical-align:middle;"></label>
         <button id="bme-quit">退出</button>
         <div id="bme-tip" style="width:100%;color:#8f87a8;font-size:12px;"></div>
       </div>
-      <div id="bme-pos" style="position:absolute;bottom:8px;left:10px;color:#9a92b5;font:12px monospace;background:rgba(0,0,0,.5);padding:2px 8px;border-radius:6px;"></div>`;
+      <div id="bme-pieces" style="position:absolute;right:8px;top:110px;width:200px;max-height:60%;overflow:auto;background:rgba(16,14,22,.92);border:1px solid #3a3350;border-radius:10px;padding:8px;display:none;"></div>
+      <div id="bme-pos" style="position:absolute;bottom:8px;left:10px;color:#9a92b5;font:12px monospace;background:rgba(0,0,0,.5);padding:2px 8px;border-radius:6px;"></div>
+      <input id="bme-file" type="file" accept="image/png" style="display:none;">`;
     document.body.appendChild(root);
-    root.querySelectorAll('button').forEach(b => b.style.cssText += 'background:#262038;border:1px solid #4a4266;color:#d8d2ea;border-radius:7px;padding:4px 10px;cursor:pointer;' + (b.style.background ? 'background:' + b.style.background + ';' : ''));
+    root.querySelectorAll('button').forEach(b => b.style.cssText += 'background:#262038;border:1px solid #4a4266;color:#d8d2ea;border-radius:7px;padding:4px 10px;cursor:pointer;');
     const cv = root.querySelector('#bme-cv'), ctx = cv.getContext('2d');
-    const tip = root.querySelector('#bme-tip'), sub = root.querySelector('#bme-sub'), posEl = root.querySelector('#bme-pos');
+    const tip = root.querySelector('#bme-tip'), sub = root.querySelector('#bme-sub');
+    const posEl = root.querySelector('#bme-pos'), piecesEl = root.querySelector('#bme-pieces');
+    const fileEl = root.querySelector('#bme-file');
+    root.querySelector('#bme-vm').onchange = e => st.showMask = e.target.checked;
+    root.querySelector('#bme-vo').onchange = e => st.showOcc = e.target.checked;
+    root.querySelector('#bme-quit').onclick = () => { if (confirm('退出前记得导出！确定退出？')) location.href = location.pathname; };
+    root.querySelector('#bme-undo').onclick = doUndo;
 
     const TIPS = {
-      pan: '拖动平移，滚轮缩放。',
-      glow: '点空处=加灯；拖动=挪位；选中后在滑杆改半径；⌫删除。放大看闪烁预览。',
-      smoke: '点空处=加烟（点在烟囱口上）；拖动=挪位；⌫删除。',
-      mask: '按住描画：红=不可走，绿=强制可走（覆盖我的自动碰撞），橡皮=擦掉你画的。画完点"导出掩码PNG"，把文件传到 inbox/。',
-      occ: '黄框=遮挡件（人走到框内脚线以上会被盖住）。拖框身=挪位，拖右下角=改大小，拖青线=改脚线。"新建"后在图上拉框。',
+      pan: '拖动平移，滚轮缩放（任何工具下按住空格也能拖图）。',
+      mask: '红笔描"不可走"（墙脚/水面/树干脚下——只描地面上挡人的范围，不用涂屋顶）。绿笔改回可走。完成点【💾导出碰撞】。',
+      occ: '每个会挡人的物件建一个"件"：【＋新建件】→ 笔刷把它整个身子涂满(含屋顶) → 拖它的青色脚线到落地线。人在脚线上方经过就被盖住。随时【🚶假人验证】。',
+      dummy: '按住拖动假人走走看——它会被脚线在它下方的件盖住。',
     };
 
-    // ---------- 手绘掩码画布（透明底，红/绿笔迹） ----------
-    const maskCv = document.createElement('canvas');
-    maskCv.width = W0; maskCv.height = H0;
-    const maskCtx = maskCv.getContext('2d');
+    const toMap = (sx2, sy2) => [(sx2 - cv.width / 2) / st.cam.z + st.cam.x, (sy2 - cv.height / 2) / st.cam.z + st.cam.y];
 
-    // ---------- 几何底掩码（展示我当前的可走区，绿色半透明） ----------
-    const base = document.createElement('canvas');
-    base.width = W0 / 2; base.height = H0 / 2;
-    (function bakeBase() {
-      const c = base.getContext('2d'), s = 0.5;
-      const poly = p => { c.beginPath(); p.forEach(([x, y], i) => i ? c.lineTo(x * s, y * s) : c.moveTo(x * s, y * s)); c.closePath(); c.fill(); };
-      c.fillStyle = c.strokeStyle = 'rgba(70,255,120,.30)'; c.lineCap = c.lineJoin = 'round';
-      for (const k of (bm.walk || {}).strokes || []) { c.lineWidth = k.w * s; c.beginPath(); k.pts.forEach(([x, y], i) => i ? c.lineTo(x * s, y * s) : c.moveTo(x * s, y * s)); c.stroke(); }
-      ((bm.walk || {}).polys || []).forEach(poly);
-      c.globalCompositeOperation = 'destination-out';
-      c.fillStyle = '#000';
-      for (const [x, y, r] of (bm.block || {}).circles || []) { c.beginPath(); c.arc(x * s, y * s, r * s, 0, 7); c.fill(); }
-      for (const [x, y, w, h] of (bm.block || {}).rects || []) c.fillRect(x * s, y * s, w * s, h * s);
-      ((bm.block || {}).polys || []).forEach(poly);
-    })();
-
-    const img = new Image();
-    img.src = bm.img + '?v=' + (window.ASSET_VER || '');
-
-    // ---------- 坐标换算 ----------
-    const toMap = (sx, sy) => [(sx - cv.width / 2) / st.cam.z + st.cam.x, (sy - cv.height / 2) / st.cam.z + st.cam.y];
-    const toScr = (mx, my) => [(mx - st.cam.x) * st.cam.z + cv.width / 2, (my - st.cam.y) * st.cam.z + cv.height / 2];
+    // ---------- 撤销 ----------
+    function snap(kind) {
+      const c = kind === 'mask' ? maskCtx : st.pieces[st.cur].ctx;
+      st.undo.push({ kind, idx: st.cur, data: c.getImageData(0, 0, W0, H0) });
+      if (st.undo.length > 18) st.undo.shift();
+    }
+    function doUndo() {
+      const u = st.undo.pop(); if (!u) { tip.textContent = '没有可撤销的了'; return; }
+      const c = u.kind === 'mask' ? maskCtx : (st.pieces[u.idx] && st.pieces[u.idx].ctx);
+      if (c) c.putImageData(u.data, 0, 0);
+    }
+    window.addEventListener('keydown', e => {
+      if (e.code === 'Space') { st.space = true; e.preventDefault(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') { doUndo(); e.preventDefault(); }
+    });
+    window.addEventListener('keyup', e => { if (e.code === 'Space') st.space = false; });
 
     // ---------- 工具栏 ----------
-    const setTool = t => {
-      st.tool = t; st.sel = null; st.newOcc = false;
-      tip.textContent = TIPS[t];
+    function setTool(t) {
+      st.tool = t; tip.textContent = TIPS[t];
       root.querySelectorAll('[data-t]').forEach(b => b.style.outline = b.dataset.t === t ? '2px solid #e8c66a' : 'none');
+      piecesEl.style.display = t === 'occ' ? 'block' : 'none';
       sub.innerHTML = '';
       if (t === 'mask') {
-        sub.innerHTML = `<button data-i="red">🔴挡</button><button data-i="green">🟢通</button><button data-i="erase">🧹橡皮</button>
-          笔刷<input id="bme-brush" type="range" min="8" max="90" value="${st.brush}" style="width:90px;vertical-align:middle;">`;
-        sub.querySelectorAll('[data-i]').forEach(b => {
-          b.style.cssText = 'background:#262038;border:1px solid #4a4266;color:#d8d2ea;border-radius:7px;padding:4px 8px;cursor:pointer;';
-          b.onclick = () => { st.ink = b.dataset.i; sub.querySelectorAll('[data-i]').forEach(x => x.style.outline = x === b ? '2px solid #e8c66a' : 'none'); };
-        });
-        sub.querySelector('#bme-brush').oninput = e => st.brush = +e.target.value;
+        sub.innerHTML = `<button data-i="red">🔴不可走</button><button data-i="green">🟢可走</button>
+          笔刷<input id="bme-brush" type="range" min="4" max="120" value="${st.brush}" style="width:110px;vertical-align:middle;"><span id="bme-bs">${st.brush}</span>
+          <button id="bme-imp-m">📂导入碰撞</button><button id="bme-exp-m">💾导出碰撞</button>`;
+        st.ink = 'red';
+      } else if (t === 'occ') {
+        sub.innerHTML = `<button data-i="paint">🖌涂件</button><button data-i="erase">🧹橡皮</button>
+          笔刷<input id="bme-brush" type="range" min="4" max="120" value="${st.brush}" style="width:110px;vertical-align:middle;"><span id="bme-bs">${st.brush}</span>
+          <button id="bme-newp">＋新建件</button>
+          <button id="bme-imp-o">📂导入遮挡</button><button id="bme-exp-o">💾导出遮挡</button>`;
+        st.ink = 'paint';
+        renderPieces();
       }
-      if (t === 'glow') sub.innerHTML = `半径<input id="bme-r" type="range" min="20" max="130" value="55" style="width:90px;vertical-align:middle;"> <button id="bme-del">⌫删除</button>`;
-      if (t === 'smoke') sub.innerHTML = `<button id="bme-del">⌫删除</button>`;
-      if (t === 'occ') sub.innerHTML = `<button id="bme-new">▧ 新建遮挡件</button> <button id="bme-del">⌫删除</button>`;
-      const del = sub.querySelector('#bme-del');
-      if (del) { del.style.cssText = 'background:#4a2020;border:1px solid #6a3a3a;color:#ecc;border-radius:7px;padding:4px 8px;cursor:pointer;'; del.onclick = delSel; }
-      const nw = sub.querySelector('#bme-new');
-      if (nw) { nw.style.cssText = 'background:#262038;border:1px solid #4a4266;color:#d8d2ea;border-radius:7px;padding:4px 8px;cursor:pointer;'; nw.onclick = () => { st.newOcc = true; tip.textContent = '在图上按住拖出一个框（松手时框底边=脚线）'; }; }
-      const rr = sub.querySelector('#bme-r');
-      if (rr) rr.oninput = e => { if (st.sel && st.sel.k === 'glow') st.glows[st.sel.i][2] = +e.target.value; };
-    };
+      sub.querySelectorAll('button').forEach(b => b.style.cssText += 'background:#262038;border:1px solid #4a4266;color:#d8d2ea;border-radius:7px;padding:4px 8px;cursor:pointer;');
+      sub.querySelectorAll('[data-i]').forEach(b => b.onclick = () => { st.ink = b.dataset.i; sub.querySelectorAll('[data-i]').forEach(x => x.style.outline = x === b ? '2px solid #e8c66a' : 'none'); });
+      const first = sub.querySelector('[data-i]'); if (first) first.style.outline = '2px solid #e8c66a';
+      const br = sub.querySelector('#bme-brush');
+      if (br) br.oninput = e => { st.brush = +e.target.value; sub.querySelector('#bme-bs').textContent = st.brush; };
+      const np = sub.querySelector('#bme-newp');
+      if (np) np.onclick = () => { newPiece(); renderPieces(); tip.textContent = '新件已建：笔刷涂满它的身子，然后把青色脚线拖到它落地的那条线。'; };
+      const em = sub.querySelector('#bme-exp-m'); if (em) em.onclick = exportMask;
+      const eo = sub.querySelector('#bme-exp-o'); if (eo) eo.onclick = exportOcc;
+      const im2 = sub.querySelector('#bme-imp-m'); if (im2) im2.onclick = () => importPng('mask');
+      const io = sub.querySelector('#bme-imp-o'); if (io) io.onclick = () => importPng('occ');
+    }
     root.querySelectorAll('[data-t]').forEach(b => b.onclick = () => setTool(b.dataset.t));
-    root.querySelector('#bme-base').onclick = () => st.showBase = !st.showBase;
-    root.querySelector('#bme-quit').onclick = () => { location.href = location.pathname; };
 
-    function delSel() {
-      if (!st.sel) return;
-      if (st.sel.k === 'glow') st.glows.splice(st.sel.i, 1);
-      if (st.sel.k === 'smoke') st.smokes.splice(st.sel.i, 1);
-      if (st.sel.k === 'occ') st.occ.splice(st.sel.i, 1);
-      st.sel = null;
+    function renderPieces() {
+      piecesEl.innerHTML = '<b style="color:#e8c66a;">遮挡件列表</b>' + (st.pieces.map((p, i) =>
+        `<div data-p="${i}" style="margin:4px 0;padding:4px 6px;border-radius:6px;cursor:pointer;display:flex;gap:4px;align-items:center;background:${i === st.cur ? '#3a3350' : '#1c1828'};">
+          <span style="flex:1;">${p.name}</span><span style="color:#7ee;">y${p.baseY}</span>
+          <button data-del="${i}" style="background:#4a2020;border:none;color:#ecc;border-radius:5px;cursor:pointer;padding:1px 6px;">✕</button>
+        </div>`).join('') || '<div style="color:#666;margin-top:4px;">还没有件，点"＋新建件"</div>');
+      piecesEl.querySelectorAll('[data-p]').forEach(el => el.onclick = (e) => {
+        if (e.target.dataset.del !== undefined) return;
+        st.cur = +el.dataset.p; renderPieces();
+      });
+      piecesEl.querySelectorAll('[data-del]').forEach(el => el.onclick = () => {
+        st.pieces.splice(+el.dataset.del, 1);
+        st.cur = Math.min(st.cur, st.pieces.length - 1);
+        renderPieces();
+      });
     }
 
-    // ---------- 导出 ----------
-    root.querySelector('#bme-json').onclick = () => {
-      const out = {
-        glows: st.glows,
-        parts: st.smokes.map(p => ({ type: 'smoke', px: [Math.round(p[0]), Math.round(p[1])] })).concat([{ type: 'leaves', n: 8 }]),
-        occ: st.occ.map(o => o.map(Math.round)),
-      };
-      const txt = JSON.stringify(out);
-      const ta = document.createElement('textarea');
-      ta.style.cssText = 'position:fixed;left:10%;top:15%;width:80%;height:60%;z-index:100001;background:#14121c;color:#cfc8e0;border:2px solid #e8c66a;border-radius:10px;padding:10px;font:12px monospace;';
-      ta.value = '【把下面整段复制发给 AI 即可】\n' + txt;
-      document.body.appendChild(ta); ta.select();
-      try { navigator.clipboard.writeText(txt); tip.textContent = '已复制到剪贴板；也可手动全选复制。点文本框外关闭。'; } catch (e) {}
-      ta.onblur = () => ta.remove();
-    };
-    root.querySelector('#bme-png').onclick = () => {
-      maskCv.toBlob(b => {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(b); a.download = 'town_day_mask.png'; a.click();
-        tip.textContent = '已下载 town_day_mask.png —— 去 GitHub 网页把它上传到 inbox/ 然后告诉 AI。';
-      });
-    };
-
-    // ---------- 命中检测 ----------
-    function hit(mx, my) {
-      if (st.tool === 'glow') {
-        for (let i = st.glows.length - 1; i >= 0; i--) if (Math.hypot(mx - st.glows[i][0], my - st.glows[i][1]) < Math.max(18, 14 / st.cam.z)) return { k: 'glow', i };
-      }
-      if (st.tool === 'smoke') {
-        for (let i = st.smokes.length - 1; i >= 0; i--) if (Math.hypot(mx - st.smokes[i][0], my - st.smokes[i][1]) < Math.max(18, 14 / st.cam.z)) return { k: 'smoke', i };
-      }
-      if (st.tool === 'occ') {
-        for (let i = st.occ.length - 1; i >= 0; i--) {
-          const o = st.occ[i], tol = 8 / st.cam.z;
-          if (Math.abs(my - o[4]) < tol && mx > o[0] && mx < o[0] + o[2]) return { k: 'occ', i, part: 'base' };
-          if (Math.abs(mx - (o[0] + o[2])) < tol * 1.5 && Math.abs(my - (o[1] + o[3])) < tol * 1.5) return { k: 'occ', i, part: 'size' };
-          if (mx > o[0] && mx < o[0] + o[2] && my > o[1] && my < o[1] + o[3]) return { k: 'occ', i, part: 'move' };
+    // ---------- 导入导出 ----------
+    function dl(canvas, name) {
+      canvas.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; a.click(); });
+    }
+    function exportMask() {
+      dl(maskCv, 'town_day_mask.png');
+      tip.textContent = '已下载 town_day_mask.png → 传到 GitHub inbox/ 告诉 AI。';
+    }
+    function exportOcc() {
+      const out = document.createElement('canvas');
+      out.width = W0; out.height = H0;
+      const o = out.getContext('2d');
+      const od = o.getImageData(0, 0, W0, H0);
+      for (const p of st.pieces) {
+        const pd = p.ctx.getImageData(0, 0, W0, H0);
+        const r = (p.baseY >> 8) & 255, g2 = p.baseY & 255;
+        for (let i = 0; i < pd.data.length; i += 4) {
+          if (pd.data[i + 3] < 100) continue;
+          od.data[i] = r; od.data[i + 1] = g2; od.data[i + 2] = 60; od.data[i + 3] = 255;
         }
       }
-      return null;
+      o.putImageData(od, 0, 0);
+      dl(out, 'town_day_occ.png');
+      tip.textContent = '已下载 town_day_occ.png（' + st.pieces.length + ' 件）→ 传 inbox/ 告诉 AI。';
+    }
+    let importKind = 'mask';
+    function importPng(kind) { importKind = kind; fileEl.click(); }
+    fileEl.onchange = () => {
+      const f = fileEl.files[0]; if (!f) return;
+      const img2 = new Image();
+      img2.onload = () => {
+        if (importKind === 'mask') {
+          maskCtx.clearRect(0, 0, W0, H0);
+          maskCtx.drawImage(img2, 0, 0, W0, H0);
+          tip.textContent = '碰撞层已导入，继续画。';
+        } else {
+          const t = document.createElement('canvas'); t.width = W0; t.height = H0;
+          const tc = t.getContext('2d'); tc.drawImage(img2, 0, 0, W0, H0);
+          const d = tc.getImageData(0, 0, W0, H0).data;
+          const found = {};
+          for (let i = 0; i < d.length; i += 4) {
+            if (d[i + 3] < 128) continue;
+            const y = (d[i] << 8) | d[i + 1];
+            if (!found[y]) { newPiece('导入y' + y); st.pieces[st.cur].baseY = y; found[y] = st.pieces[st.cur]; }
+          }
+          for (const y in found) {
+            const p = found[y], pd = p.ctx.getImageData(0, 0, W0, H0);
+            for (let i = 0; i < d.length; i += 4) {
+              if (d[i + 3] >= 128 && (((d[i] << 8) | d[i + 1]) === +y)) {
+                pd.data[i] = 255; pd.data[i + 1] = 200; pd.data[i + 2] = 60; pd.data[i + 3] = 200;
+              }
+            }
+            p.ctx.putImageData(pd, 0, 0);
+          }
+          renderPieces();
+          tip.textContent = '遮挡层已导入 ' + Object.keys(found).length + ' 件（同脚线的件合并显示）。';
+        }
+        fileEl.value = '';
+      };
+      img2.src = URL.createObjectURL(f);
+    };
+
+    // ---------- 绘画 ----------
+    function paintStroke(c, x0, y0, x1, y1, erase, color) {
+      c.globalCompositeOperation = erase ? 'destination-out' : 'source-over';
+      c.strokeStyle = color; c.lineWidth = st.brush; c.lineCap = c.lineJoin = 'round';
+      c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+      c.globalCompositeOperation = 'source-over';
     }
 
     // ---------- 交互 ----------
     cv.addEventListener('wheel', e => {
       e.preventDefault();
       const [mx, my] = toMap(e.offsetX, e.offsetY);
-      const z2 = Math.min(4, Math.max(0.25, st.cam.z * (e.deltaY < 0 ? 1.15 : 0.87)));
+      const z2 = Math.min(6, Math.max(0.12, st.cam.z * (e.deltaY < 0 ? 1.15 : 0.87)));
       st.cam.x = mx - (e.offsetX - cv.width / 2) / z2;
       st.cam.y = my - (e.offsetY - cv.height / 2) / z2;
       st.cam.z = z2;
@@ -185,61 +231,57 @@
     cv.addEventListener('pointerdown', e => {
       cv.setPointerCapture(e.pointerId);
       const [mx, my] = toMap(e.offsetX, e.offsetY);
-      if (st.tool === 'pan' || e.button === 1) { st.drag = { t: 'pan', sx: e.offsetX, sy: e.offsetY, cx: st.cam.x, cy: st.cam.y }; return; }
-      if (st.tool === 'mask') { st.drag = { t: 'paint' }; paint(mx, my, mx, my); return; }
-      if (st.tool === 'occ' && st.newOcc) { st.drag = { t: 'newocc', x0: mx, y0: my }; st.occ.push([mx, my, 2, 2, my + 2]); st.sel = { k: 'occ', i: st.occ.length - 1 }; return; }
-      const h = hit(mx, my);
-      if (h) {
-        st.sel = h;
-        if (h.k === 'glow') { const r = sub.querySelector('#bme-r'); if (r) r.value = st.glows[h.i][2]; }
-        st.drag = { t: 'obj', h, mx, my, snap: JSON.stringify(h.k === 'occ' ? st.occ[h.i] : (h.k === 'glow' ? st.glows[h.i] : st.smokes[h.i])) };
-      } else if (st.tool === 'glow') { st.glows.push([Math.round(mx), Math.round(my), 55]); st.sel = { k: 'glow', i: st.glows.length - 1 }; }
-      else if (st.tool === 'smoke') { st.smokes.push([Math.round(mx), Math.round(my)]); st.sel = { k: 'smoke', i: st.smokes.length - 1 }; }
-      else st.sel = null;
+      if (st.tool === 'pan' || st.space || e.button === 1) { st.drag = { t: 'pan', sx: e.offsetX, sy: e.offsetY, cx: st.cam.x, cy: st.cam.y }; return; }
+      if (st.tool === 'mask') {
+        snap('mask');
+        st.drag = { t: 'mask', lx: mx, ly: my };
+        paintStroke(maskCtx, mx, my, mx, my, false, st.ink === 'green' ? 'rgba(0,220,60,1)' : 'rgba(230,30,30,1)');
+        return;
+      }
+      if (st.tool === 'occ') {
+        if (st.cur < 0) { tip.textContent = '先点"＋新建件"'; return; }
+        const p = st.pieces[st.cur];
+        if (Math.abs(my - p.baseY) < 12 / st.cam.z && st.ink !== 'erase') { st.drag = { t: 'base' }; return; }
+        snap('piece');
+        st.drag = { t: 'piece', lx: mx, ly: my };
+        paintStroke(p.ctx, mx, my, mx, my, st.ink === 'erase', 'rgba(255,200,60,.78)');
+        return;
+      }
+      if (st.tool === 'dummy') { st.dummy = [mx, my]; st.drag = { t: 'dummy' }; }
     });
 
     cv.addEventListener('pointermove', e => {
       const [mx, my] = toMap(e.offsetX, e.offsetY);
-      posEl.textContent = `(${Math.round(mx)}, ${Math.round(my)})  缩放 ${st.cam.z.toFixed(2)}x`;
+      st.cursor = [mx, my];
+      posEl.textContent = `(${Math.round(mx)}, ${Math.round(my)})  缩放${st.cam.z.toFixed(2)}x` +
+        (st.tool === 'occ' && st.cur >= 0 ? `  当前件:${st.pieces[st.cur].name} 脚线y${st.pieces[st.cur].baseY}` : '');
       if (!st.drag) return;
       if (st.drag.t === 'pan') {
         st.cam.x = st.drag.cx - (e.offsetX - st.drag.sx) / st.cam.z;
         st.cam.y = st.drag.cy - (e.offsetY - st.drag.sy) / st.cam.z;
-      } else if (st.drag.t === 'paint') {
-        paint(st.drag.lx == null ? mx : st.drag.lx, st.drag.ly == null ? my : st.drag.ly, mx, my);
+      } else if (st.drag.t === 'mask') {
+        paintStroke(maskCtx, st.drag.lx, st.drag.ly, mx, my, false, st.ink === 'green' ? 'rgba(0,220,60,1)' : 'rgba(230,30,30,1)');
         st.drag.lx = mx; st.drag.ly = my;
-      } else if (st.drag.t === 'newocc') {
-        const o = st.occ[st.sel.i];
-        o[0] = Math.min(st.drag.x0, mx); o[1] = Math.min(st.drag.y0, my);
-        o[2] = Math.abs(mx - st.drag.x0); o[3] = Math.abs(my - st.drag.y0);
-        o[4] = o[1] + o[3];
-      } else if (st.drag.t === 'obj') {
-        const dx = mx - st.drag.mx, dy = my - st.drag.my;
-        const s0 = JSON.parse(st.drag.snap), h = st.drag.h;
-        if (h.k === 'glow') { st.glows[h.i][0] = Math.round(s0[0] + dx); st.glows[h.i][1] = Math.round(s0[1] + dy); }
-        if (h.k === 'smoke') { st.smokes[h.i][0] = Math.round(s0[0] + dx); st.smokes[h.i][1] = Math.round(s0[1] + dy); }
-        if (h.k === 'occ') {
-          const o = st.occ[h.i];
-          if (h.part === 'move') { o[0] = s0[0] + dx; o[1] = s0[1] + dy; o[4] = s0[4] + dy; }
-          if (h.part === 'size') { o[2] = Math.max(10, s0[2] + dx); o[3] = Math.max(10, s0[3] + dy); }
-          if (h.part === 'base') o[4] = s0[4] + dy;
-        }
+      } else if (st.drag.t === 'piece') {
+        const p = st.pieces[st.cur];
+        paintStroke(p.ctx, st.drag.lx, st.drag.ly, mx, my, st.ink === 'erase', 'rgba(255,200,60,.78)');
+        st.drag.lx = mx; st.drag.ly = my;
+      } else if (st.drag.t === 'base') {
+        st.pieces[st.cur].baseY = Math.round(my); renderPieces();
+      } else if (st.drag.t === 'dummy') {
+        st.dummy = [mx, my];
       }
     });
-    const endDrag = () => { if (st.drag && st.drag.t === 'newocc') st.newOcc = false; st.drag = null; };
+    const endDrag = () => st.drag = null;
     cv.addEventListener('pointerup', endDrag);
     cv.addEventListener('pointercancel', endDrag);
 
-    function paint(x0, y0, x1, y1) {
-      maskCtx.globalCompositeOperation = st.ink === 'erase' ? 'destination-out' : 'source-over';
-      maskCtx.strokeStyle = st.ink === 'green' ? 'rgba(0,220,60,1)' : 'rgba(230,30,30,1)';
-      maskCtx.lineWidth = st.brush; maskCtx.lineCap = 'round';
-      maskCtx.beginPath(); maskCtx.moveTo(x0, y0); maskCtx.lineTo(x1, y1); maskCtx.stroke();
-      maskCtx.globalCompositeOperation = 'source-over';
-    }
+    // ---------- 底图 ----------
+    const img = new Image();
+    img.src = bm.img + '?v=' + (window.ASSET_VER || '');
 
     // ---------- 渲染 ----------
-    function draw(now) {
+    function draw() {
       if (!document.getElementById('bmedit')) return;
       if (cv.width !== root.clientWidth) { cv.width = root.clientWidth; cv.height = root.clientHeight; }
       const z = st.cam.z;
@@ -247,55 +289,39 @@
       ctx.fillStyle = '#0a0a0e'; ctx.fillRect(0, 0, cv.width, cv.height);
       ctx.setTransform(z, 0, 0, z, cv.width / 2 - st.cam.x * z, cv.height / 2 - st.cam.y * z);
       ctx.imageSmoothingEnabled = z < 1;
-      if (img.complete && img.width) ctx.drawImage(img, 0, 0);
-      if (st.showBase) { ctx.globalAlpha = 0.85; ctx.drawImage(base, 0, 0, W0, H0); ctx.globalAlpha = 1; }
-      ctx.globalAlpha = 0.6; ctx.drawImage(maskCv, 0, 0); ctx.globalAlpha = 1;
-
-      // 烟预览
-      for (let si = 0; si < st.smokes.length; si++) {
-        const [bx, by] = st.smokes[si];
-        for (let i = 0; i < 9; i++) {
-          const ph = (now * (0.010 + (i % 3) * 0.0013) + i * 29 + si * 41) % 130;
-          const px = bx + Math.sin(ph * 0.085 + i * 1.9) * (1 + ph * 0.1) + ph * 0.22;
-          const py = by - ph * 0.83;
-          const a = 0.22 * (1 - ph / 130) * Math.min(1, ph / 12);
-          ctx.fillStyle = `rgba(206,206,214,${a.toFixed(3)})`;
-          ctx.beginPath(); ctx.arc(px, py, 1.6 + ph * 0.075, 0, 7); ctx.fill();
+      if (img.complete && img.width) ctx.drawImage(img, 0, 0, W0, H0);
+      if (st.showMask) { ctx.globalAlpha = 0.55; ctx.drawImage(maskCv, 0, 0); ctx.globalAlpha = 1; }
+      if (st.showOcc) {
+        const dy = st.dummy ? st.dummy[1] : 9e9;
+        const before = [], after = [];
+        st.pieces.forEach((p, i) => (p.baseY <= dy ? before : after).push([p, i]));
+        const drawPiece = ([p, i]) => {
+          ctx.globalAlpha = (st.tool === 'occ' && i === st.cur) ? 0.85 : 0.5;
+          ctx.drawImage(p.cv, 0, 0);
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = i === st.cur ? '#7ff' : 'rgba(80,200,230,.45)';
+          ctx.lineWidth = (i === st.cur ? 2.4 : 1.1) / z;
+          ctx.beginPath(); ctx.moveTo(0, p.baseY); ctx.lineTo(W0, p.baseY); ctx.stroke();
+        };
+        before.forEach(drawPiece);
+        if (st.dummy) {
+          const [dx2, dy2] = st.dummy;
+          ctx.fillStyle = 'rgba(0,0,0,.35)';
+          ctx.beginPath(); ctx.ellipse(dx2, dy2, 16, 6, 0, 0, 7); ctx.fill();
+          ctx.fillStyle = '#f5a878'; ctx.strokeStyle = '#40200a'; ctx.lineWidth = 2 / z;
+          ctx.fillRect(dx2 - 12, dy2 - 60, 24, 46); ctx.strokeRect(dx2 - 12, dy2 - 60, 24, 46);
+          ctx.beginPath(); ctx.arc(dx2, dy2 - 72, 13, 0, 7); ctx.fill(); ctx.stroke();
         }
-        const on = st.sel && st.sel.k === 'smoke' && st.sel.i === si;
-        ctx.strokeStyle = on ? '#fff' : 'rgba(140,200,255,.9)'; ctx.lineWidth = 1.6 / z;
-        ctx.strokeRect(bx - 7, by - 7, 14, 14);
+        after.forEach(drawPiece);
       }
-      // 灯预览（闪烁）
-      ctx.globalCompositeOperation = 'screen';
-      for (let gi = 0; gi < st.glows.length; gi++) {
-        const g = st.glows[gi];
-        const f = 0.87 + 0.09 * Math.sin(now * 0.0036 + gi * 2.13) + 0.05 * Math.sin(now * 0.0121 + gi * 5.31);
-        const rr = g[2] * f;
-        const rg = ctx.createRadialGradient(g[0], g[1], 2, g[0], g[1], rr);
-        rg.addColorStop(0, g[3] || 'rgba(255,190,105,.55)');
-        rg.addColorStop(0.5, 'rgba(255,170,80,.20)'); rg.addColorStop(1, 'rgba(255,170,80,0)');
-        ctx.fillStyle = rg; ctx.fillRect(g[0] - rr, g[1] - rr, rr * 2, rr * 2);
-      }
-      ctx.globalCompositeOperation = 'source-over';
-      for (let gi = 0; gi < st.glows.length; gi++) {
-        const g = st.glows[gi], on = st.sel && st.sel.k === 'glow' && st.sel.i === gi;
-        ctx.strokeStyle = on ? '#fff' : 'rgba(255,220,90,.9)'; ctx.lineWidth = 1.6 / z;
-        ctx.beginPath(); ctx.arc(g[0], g[1], 8, 0, 7); ctx.stroke();
-      }
-      // 遮挡件
-      if (st.tool === 'occ') for (let i = 0; i < st.occ.length; i++) {
-        const o = st.occ[i], on = st.sel && st.sel.k === 'occ' && st.sel.i === i;
-        ctx.strokeStyle = on ? '#fff' : 'rgba(255,220,60,.85)'; ctx.lineWidth = (on ? 2.4 : 1.4) / z;
-        ctx.strokeRect(o[0], o[1], o[2], o[3]);
-        ctx.strokeStyle = 'rgba(80,230,255,.95)';
-        ctx.beginPath(); ctx.moveTo(o[0], o[4]); ctx.lineTo(o[0] + o[2], o[4]); ctx.stroke();
-        ctx.fillStyle = on ? '#fff' : 'rgba(255,220,60,.85)';
-        ctx.fillRect(o[0] + o[2] - 5 / z, o[1] + o[3] - 5 / z, 10 / z, 10 / z);
+      if ((st.tool === 'mask' || st.tool === 'occ') && st.cursor) {
+        ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.4 / z;
+        ctx.beginPath(); ctx.arc(st.cursor[0], st.cursor[1], st.brush / 2, 0, 7); ctx.stroke();
       }
       requestAnimationFrame(draw);
     }
     setTool('pan');
+    tip.textContent = '流程：①🖌碰撞层红笔描不可走→💾导出 ②🧱遮挡层逐件涂身子+拖脚线→💾导出 ③两张PNG传inbox/找AI接线。中途可📂导入接着画，Ctrl+Z撤销。';
     requestAnimationFrame(draw);
   }
 })();

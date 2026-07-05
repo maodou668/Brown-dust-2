@@ -326,7 +326,7 @@ const Diorama = {
     this.ctx = this.cv.getContext('2d');
     if (window.Sound) Sound.bgm('story');
     await Promise.all([this.loadStage(), SceneStage.loadSprites.call(this, cfg)]);
-    if (this.bm) this._bmBuildMask();
+    if (this.bm) { this._bmBuildMask(); this._bmBuildOcc(); }
     this.placeActors(cfg);
     this._raf = requestAnimationFrame(t => this.tick(t));
     for (const step of cfg.steps || []) await SceneStage.step.call(this, step);
@@ -360,7 +360,25 @@ const Diorama = {
     const cv = document.createElement('canvas');
     cv.width = Math.ceil(bm.w * s); cv.height = Math.ceil(bm.h * s);
     const ctx = cv.getContext('2d', { willReadFrequently: true });
-    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cv.width, cv.height);
+    const userMask = bm.maskOnly && bm.maskImg && this._imgs[bm.maskImg] && this._imgs[bm.maskImg].width;
+    ctx.fillStyle = userMask ? '#fff' : '#000';   // 用户全权模式: 默认全图可走, 只认他画的红线
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    if (userMask) {
+      const ov = this._imgs[bm.maskImg];
+      const oc = document.createElement('canvas');
+      oc.width = cv.width; oc.height = cv.height;
+      const octx = oc.getContext('2d', { willReadFrequently: true });
+      octx.drawImage(ov, 0, 0, cv.width, cv.height);
+      const od = octx.getImageData(0, 0, cv.width, cv.height).data;
+      const id = ctx.getImageData(0, 0, cv.width, cv.height);
+      for (let i = 0; i < od.length; i += 4) {
+        if (od[i + 3] < 100) continue;
+        if (od[i] > 140 && od[i + 1] < 110) id.data[i] = id.data[i + 1] = id.data[i + 2] = 0;
+      }
+      ctx.putImageData(id, 0, 0);
+      this._bmMaskData = { w: cv.width, h: cv.height, d: ctx.getImageData(0, 0, cv.width, cv.height).data };
+      return;
+    }
     const poly = p => { ctx.beginPath(); p.forEach(([x, y], i) => i ? ctx.lineTo(x * s, y * s) : ctx.moveTo(x * s, y * s)); ctx.closePath(); ctx.fill(); };
     ctx.fillStyle = ctx.strokeStyle = '#fff';
     ctx.lineCap = ctx.lineJoin = 'round';
@@ -396,6 +414,47 @@ const Diorama = {
     this._bmMaskData = { w: cv.width, h: cv.height, d: ctx.getImageData(0, 0, cv.width, cv.height).data };
   },
 
+  /** 用户手绘遮挡层: occImg 像素 r*256+g = 该件脚线y; 切成独立件参与 y 排序 */
+  _bmBuildOcc() {
+    this._bmOcc = null;
+    const bm = this.bm;
+    const im = bm.occImg && this._imgs[bm.occImg];
+    const bimg = this._imgs[bm.img];
+    if (!im || !im.width || !bimg || !bimg.width) return;
+    const c = document.createElement('canvas');
+    c.width = im.width; c.height = im.height;
+    const cx = c.getContext('2d', { willReadFrequently: true });
+    cx.drawImage(im, 0, 0);
+    const d = cx.getImageData(0, 0, c.width, c.height).data;
+    const groups = {};
+    for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+      const i = (y * c.width + x) * 4;
+      if (d[i + 3] < 128) continue;
+      const key = (d[i] << 8) | d[i + 1];   // 脚线y
+      let g = groups[key];
+      if (!g) g = groups[key] = { baseY: key, x0: x, y0: y, x1: x, y1: y, n: 0 };
+      g.n++;
+      if (x < g.x0) g.x0 = x; if (x > g.x1) g.x1 = x;
+      if (y < g.y0) g.y0 = y; if (y > g.y1) g.y1 = y;
+    }
+    this._bmOcc = [];
+    const sx = bm.w / c.width, sy = bm.h / c.height;   // 允许遮挡图低于原图分辨率
+    for (const k in groups) {
+      const g = groups[k];
+      const w = g.x1 - g.x0 + 1, h = g.y1 - g.y0 + 1;
+      if (g.n < 60) continue;   // 抗锯齿碎边兜底
+      const pc = document.createElement('canvas');
+      const mw = Math.round(w * sx), mh = Math.round(h * sy);
+      pc.width = mw; pc.height = mh;
+      const pctx = pc.getContext('2d');
+      pctx.drawImage(im, g.x0, g.y0, w, h, 0, 0, mw, mh);       // 件掩码
+      pctx.globalCompositeOperation = 'source-in';
+      const mx0 = Math.round(g.x0 * sx), my0 = Math.round(g.y0 * sy);
+      pctx.drawImage(bimg, mx0, my0, mw, mh, 0, 0, mw, mh);     // 换成底图像素
+      this._bmOcc.push({ px: mx0, py: my0, y: g.baseY, cv: pc });
+    }
+  },
+
   // ============ 自由行走探索模式（摇杆/WASD + 物件碰撞 + 相机跟随） ============
   async explore(opts) {
     const old = document.getElementById('scene-stage'); if (old) old.remove();
@@ -421,7 +480,7 @@ const Diorama = {
     this.ctx = this.cv.getContext('2d');
     if (window.Sound) Sound.bgm('story');
     await Promise.all([this.loadStage(), SceneStage.loadSprites.call(this, cfg)]);
-    if (this.bm) this._bmBuildMask();
+    if (this.bm) { this._bmBuildMask(); this._bmBuildOcc(); }
     this.placeActors(cfg);
     this.ctl = { input: { up: 0, down: 0, left: 0, right: 0 }, joy: { active: false, x: 0, y: 0 }, last: performance.now() };
     this._bindExplore(opts);
@@ -553,6 +612,7 @@ const Diorama = {
     if (this.bm) {
       need(this.bm.img);
       if (this.bm.maskImg) need(this.bm.maskImg);
+      if (this.bm.occImg) need(this.bm.occImg);
       (this.bm.objects || []).forEach(o => need('art/06_story/bigmap/lib/' + o.img + '.png'));
       (this.bm.decals || []).forEach(d => need('art/06_story/bigmap/lib/' + d.img + '.png'));
     }
@@ -773,6 +833,14 @@ const Diorama = {
         ents.push({ y: o.y, draw: () => {
           if (hide) ctx.globalAlpha = 0.55;
           ctx.drawImage(im, Math.round(ox + o.px * S), Math.round(oy + o.py * S), im.width * os * S, im.height * os * S);
+          if (hide) ctx.globalAlpha = 1;
+        } });
+      }
+      for (const o of this._bmOcc || []) {
+        const hide = pl && ph2 < o.y && pw > o.px - 12 && pw < o.px + o.cv.width + 12 && ph2 > o.py && ph2 < o.y + 46;
+        ents.push({ y: o.y, draw: () => {
+          if (hide) ctx.globalAlpha = 0.55;
+          ctx.drawImage(o.cv, Math.round(ox + o.px * S), Math.round(oy + o.py * S), o.cv.width * S, o.cv.height * S);
           if (hide) ctx.globalAlpha = 1;
         } });
       }
