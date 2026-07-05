@@ -553,7 +553,8 @@ const Diorama = {
     if (this.bm) {
       need(this.bm.img);
       if (this.bm.maskImg) need(this.bm.maskImg);
-      (this.bm.objects || []).forEach(o => need('art/06_story/bigmap/obj/' + o.img + '.png'));
+      (this.bm.objects || []).forEach(o => need('art/06_story/bigmap/lib/' + o.img + '.png'));
+      (this.bm.decals || []).forEach(d => need('art/06_story/bigmap/lib/' + d.img + '.png'));
     }
     const m = this.st.map;
     need(m.sheet);
@@ -609,6 +610,11 @@ const Diorama = {
     const bimg = this.bm && this._imgs[this.bm.img];
     if (this.bm && bimg && bimg.width) {
       ctx.drawImage(bimg, 0, 0, this.bm.w, this.bm.h, ox, oy, this.bm.w * S, this.bm.h * S);
+      // 贴地面片层（广场/菜园等, 无碰撞不遮挡）
+      for (const d of this.bm.decals || []) {
+        const dm = this._imgs['art/06_story/bigmap/lib/' + d.img + '.png'];
+        if (dm && dm.width) ctx.drawImage(dm, Math.round(ox + d.px * S), Math.round(oy + d.py * S), dm.width * S, dm.height * S);
+      }
     }
 
     // 可见格范围（多层/单层共用）
@@ -760,12 +766,13 @@ const Diorama = {
       const pl = this.actors.player || this.actors.teried;
       const pw = pl ? pl.x / 100 * this.world.w : -9e9, ph2 = pl ? pl.y / 100 * this.world.h : -9e9;
       for (const o of this.bm.objects || []) {
-        const im = this._imgs['art/06_story/bigmap/obj/' + o.img + '.png'];
+        const im = this._imgs['art/06_story/bigmap/lib/' + o.img + '.png'];
         if (!im || !im.width) continue;
-        const hide = pl && ph2 < o.y && pw > o.px - 12 && pw < o.px + im.width + 12 && ph2 > o.py && ph2 < o.y + 46;
+        const os = o.s || 1;
+        const hide = pl && ph2 < o.y && pw > o.px - 12 && pw < o.px + im.width * os + 12 && ph2 > o.py && ph2 < o.y + 46;
         ents.push({ y: o.y, draw: () => {
           if (hide) ctx.globalAlpha = 0.55;
-          ctx.drawImage(im, Math.round(ox + o.px * S), Math.round(oy + o.py * S), im.width * S, im.height * S);
+          ctx.drawImage(im, Math.round(ox + o.px * S), Math.round(oy + o.py * S), im.width * os * S, im.height * os * S);
           if (hide) ctx.globalAlpha = 1;
         } });
       }
