@@ -687,8 +687,8 @@ const Diorama = {
           }
         }
         ctx.lineCap = 'round';
-        for (let i = 0; i < 22; i++) {
-          const t = ((i * 0.1373 + wi * 0.41) + now * 0.000045 * (1 + (i % 3) * 0.25)) % 1;
+        for (let i = 0; i < 30; i++) {
+          const t = ((i * 0.1373 + wi * 0.41) + now * 0.00009 * (1 + (i % 3) * 0.25)) % 1;
           let d = t * wtr._len, seg = wtr._seg[0];
           for (const sgm of wtr._seg) { if (d >= sgm.l0 && d <= sgm.l0 + sgm.L) { seg = sgm; break; } }
           const along = d - seg.l0;
@@ -697,9 +697,9 @@ const Diorama = {
           const len = 5 + (i % 4) * 4;
           const tw = 0.5 + 0.5 * Math.sin(now * 0.005 + i * 2.7);
           ctx.strokeStyle = (i % 5 === 4)
-            ? `rgba(8,12,16,${(0.10 + 0.05 * tw).toFixed(3)})`
-            : `rgba(198,218,228,${(0.05 + 0.09 * tw).toFixed(3)})`;
-          ctx.lineWidth = (1 + (i % 3) * 0.7) * S * 0.6;
+            ? `rgba(8,12,16,${(0.14 + 0.07 * tw).toFixed(3)})`
+            : `rgba(205,224,234,${(0.09 + 0.14 * tw).toFixed(3)})`;
+          ctx.lineWidth = (1.2 + (i % 3) * 0.8) * S * 0.6;
           ctx.beginPath();
           ctx.moveTo(ox + px2 * S, oy + py2 * S);
           ctx.lineTo(ox + (px2 + seg.dx * len) * S, oy + (py2 + seg.dy * len) * S);
