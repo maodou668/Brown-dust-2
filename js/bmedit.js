@@ -13,8 +13,9 @@
   window.addEventListener('load', () => setTimeout(boot, 900));
 
   function boot() {
-    const bm = (window.BIGMAPS || {}).town_day;
-    if (!bm) { alert('BmEdit: BIGMAPS 未加载'); return; }
+    const mapKey = new URLSearchParams(location.search).get('map') || 'town_day';
+    const bm = (window.BIGMAPS || {})[mapKey];
+    if (!bm) { alert('BmEdit: 找不到地图 ' + mapKey); return; }
     const W0 = bm.w, H0 = bm.h;
 
     const st = {
@@ -153,8 +154,8 @@
       canvas.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; a.click(); });
     }
     function exportMask() {
-      dl(maskCv, 'town_day_mask.png');
-      tip.textContent = '已下载 town_day_mask.png → 传到 GitHub inbox/ 告诉 AI。';
+      dl(maskCv, mapKey + '_mask.png');
+      tip.textContent = '已下载 ' + mapKey + '_mask.png → 传到 GitHub inbox/ 告诉 AI。';
     }
     function exportOcc() {
       const out = document.createElement('canvas');
@@ -170,8 +171,8 @@
         }
       }
       o.putImageData(od, 0, 0);
-      dl(out, 'town_day_occ.png');
-      tip.textContent = '已下载 town_day_occ.png（' + st.pieces.length + ' 件）→ 传 inbox/ 告诉 AI。';
+      dl(out, mapKey + '_occ.png');
+      tip.textContent = '已下载 ' + mapKey + '_occ.png（' + st.pieces.length + ' 件）→ 传 inbox/ 告诉 AI。';
     }
     let importKind = 'mask';
     function importPng(kind) { importKind = kind; fileEl.click(); }

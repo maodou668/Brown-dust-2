@@ -131,4 +131,20 @@ window.BIGMAPS = {
     vignette: 0.32,
   },
 
+  // 烛河村 · 白天 v2（用户 Gemini 无烟版全图, 2744×1568; 水印/签名已修）
+  // 标定工坊入口: ?bmedit&map=town_day2 —— 用户在此图上手绘碰撞/遮挡层
+  // 图层到货接线后将替换 town_day 成为第一章底图
+  town_day2: {
+    img: 'art/06_story/bigmap/town_day2.png',
+    w: 2744, h: 1568,
+    pxScale: 2, actorScale: 0.92,
+    spawn: [530, 1360],           // 西南村道·主门外
+    walk: { strokes: [{ w: 2744, pts: [[0, 784], [2744, 784]] }], polys: [] },  // 占位全通(等用户碰撞层)
+    // maskImg: 'art/06_story/bigmap/town_day2_mask.png', maskOnly: true,
+    // occImg: 'art/06_story/bigmap/town_day2_occ.png',
+    glows: [],
+    parts: [{ type: 'leaves', n: 8 }],
+    vignette: 0.32,
+  },
+
 };
