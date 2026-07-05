@@ -343,7 +343,7 @@ const Diorama = {
   // ============ 大图铺底模式（js/bigmap.js 数据：手绘大图 2x 硬放大 + 掩码碰撞 + 原图回贴遮挡） ============
   _bmInit() {
     const st = this.st;
-    this.bm = null; this._bmMaskData = null;
+    this.bm = null; this._bmMaskData = null; this._crit = null;
     if (!st || !st.bigmap) return;
     const bm = this.bm = (typeof st.bigmap === 'string') ? (window.BIGMAPS || {})[st.bigmap] : st.bigmap;
     if (!bm) { console.warn('Diorama: 未知 bigmap', st.bigmap); return; }
@@ -673,8 +673,117 @@ const Diorama = {
       }
     }
 
+    // 溪流流动光效（大图）：波光沿中心线滚动 + 明暗双色 + 微闪，画在底图之上、实体之下
+    if (this.bm && this.bm.water) {
+      for (let wi = 0; wi < this.bm.water.length; wi++) {
+        const wtr = this.bm.water[wi];
+        if (!wtr._len) {   // 缓存分段长度
+          wtr._seg = []; wtr._len = 0;
+          for (let i = 1; i < wtr.pts.length; i++) {
+            const dx2 = wtr.pts[i][0] - wtr.pts[i - 1][0], dy2 = wtr.pts[i][1] - wtr.pts[i - 1][1];
+            const L = Math.hypot(dx2, dy2);
+            wtr._seg.push({ x: wtr.pts[i - 1][0], y: wtr.pts[i - 1][1], dx: dx2 / L, dy: dy2 / L, l0: wtr._len, L });
+            wtr._len += L;
+          }
+        }
+        ctx.lineCap = 'round';
+        for (let i = 0; i < 22; i++) {
+          const t = ((i * 0.1373 + wi * 0.41) + now * 0.000045 * (1 + (i % 3) * 0.25)) % 1;
+          let d = t * wtr._len, seg = wtr._seg[0];
+          for (const sgm of wtr._seg) { if (d >= sgm.l0 && d <= sgm.l0 + sgm.L) { seg = sgm; break; } }
+          const along = d - seg.l0;
+          const off = (((i * 0.618) % 1) - 0.5) * wtr.w * 0.62;
+          const px2 = seg.x + seg.dx * along - seg.dy * off, py2 = seg.y + seg.dy * along + seg.dx * off;
+          const len = 5 + (i % 4) * 4;
+          const tw = 0.5 + 0.5 * Math.sin(now * 0.005 + i * 2.7);
+          ctx.strokeStyle = (i % 5 === 4)
+            ? `rgba(8,12,16,${(0.10 + 0.05 * tw).toFixed(3)})`
+            : `rgba(198,218,228,${(0.05 + 0.09 * tw).toFixed(3)})`;
+          ctx.lineWidth = (1 + (i % 3) * 0.7) * S * 0.6;
+          ctx.beginPath();
+          ctx.moveTo(ox + px2 * S, oy + py2 * S);
+          ctx.lineTo(ox + (px2 + seg.dx * len) * S, oy + (py2 + seg.dy * len) * S);
+          ctx.stroke();
+        }
+      }
+    }
+
     // 物件 + 小人：按脚线 y 排序（纯俯视 → 统一比例，无近大远小）
     const ents = [], glows = [];   // glows 统一画在夜色之后
+
+    // 活物（大图）：鸡圈散养鸡——圈内游走/啄食/怕人惊跑，参与 y 排序
+    if (this.bm && this.bm.critters) {
+      if (!this._crit) {
+        this._crit = []; this._critT = now;
+        const inPoly = (p, x, y) => {
+          let c = false;
+          for (let a = 0, b = p.length - 1; a < p.length; b = a++)
+            if ((p[a][1] > y) !== (p[b][1] > y) && x < (p[b][0] - p[a][0]) * (y - p[a][1]) / (p[b][1] - p[a][1]) + p[a][0]) c = !c;
+          return c;
+        };
+        const randIn = (p) => {
+          let x0 = 9e9, y0 = 9e9, x1 = -9e9, y1 = -9e9;
+          for (const [x, y] of p) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+          for (let k = 0; k < 16; k++) {
+            const x = x0 + Math.random() * (x1 - x0), y = y0 + Math.random() * (y1 - y0);
+            if (inPoly(p, x, y)) return [x, y];
+          }
+          return [(x0 + x1) / 2, (y0 + y1) / 2];
+        };
+        this._critIn = inPoly; this._critRand = randIn;
+        for (const grp of this.bm.critters) {
+          for (let i = 0; i < grp.n; i++) {
+            const [cx2, cy2] = randIn(grp.area);
+            this._crit.push({ grp, img: this.img('art/06_story/bigmap/critters/' + grp.sprites[i % grp.sprites.length] + '.png'),
+              x: cx2, y: cy2, tx: cx2, ty: cy2, face: 1, state: 'peck', t: 800 + Math.random() * 2000, ph: Math.random() * 9 });
+          }
+        }
+      }
+      const cdt = Math.min(60, now - this._critT); this._critT = now;
+      const plc = this.actors.player;
+      const plx = plc ? plc.x / 100 * this.world.w : -9e9, ply = plc ? plc.y / 100 * this.world.h : -9e9;
+      for (const c of this._crit) {
+        // 怕人：玩家靠近 44px 内 → 逃向圈内远离点
+        const pd = Math.hypot(plx - c.x, ply - c.y);
+        if (pd < 44 && c.state !== 'flee') {
+          c.tx = c.x + (c.x - plx) * 1.6; c.ty = c.y + (c.y - ply) * 1.6;
+          if (!this._critIn(c.grp.area, c.tx, c.ty)) { const r2 = this._critRand(c.grp.area); c.tx = r2[0]; c.ty = r2[1]; }
+          c.state = 'flee';
+        }
+        if (c.state === 'walk' || c.state === 'flee') {
+          const dx2 = c.tx - c.x, dy2 = c.ty - c.y, dd = Math.hypot(dx2, dy2);
+          const sp = (c.state === 'flee' ? 26 : 9) * cdt / 1000;
+          if (dd < 2.5) { c.state = 'peck'; c.t = 900 + Math.random() * 2400; }
+          else { c.x += dx2 / dd * sp; c.y += dy2 / dd * sp; c.face = dx2 < 0 ? -1 : 1; }
+        } else {
+          c.t -= cdt;
+          if (c.t <= 0) {
+            let nx2 = c.x + (Math.random() - 0.5) * 70, ny2 = c.y + (Math.random() - 0.5) * 50;
+            if (Math.random() > 0.6 || !this._critIn(c.grp.area, nx2, ny2)) { const r2 = this._critRand(c.grp.area); nx2 = r2[0]; ny2 = r2[1]; }
+            c.tx = nx2; c.ty = ny2; c.state = 'walk';
+          }
+        }
+        const cc = c;
+        ents.push({ y: cc.y, draw: () => {
+          const im = cc.img; if (!im || !im.width) return;
+          const s2 = (cc.grp.scale || 0.5) * S;
+          const w2 = im.width * s2, h2 = im.height * s2;
+          const moving = cc.state === 'walk' || cc.state === 'flee';
+          const bob = moving ? Math.abs(Math.sin(now * (cc.state === 'flee' ? 0.02 : 0.011) + cc.ph)) * 2.2 * S : 0;
+          const tilt = (!moving && Math.sin(now * 0.006 + cc.ph) > 0.3) ? 0.30 : 0;
+          const px2 = ox + cc.x * S, py2 = oy + cc.y * S;
+          ctx.fillStyle = 'rgba(0,0,0,.22)';
+          ctx.beginPath(); ctx.ellipse(px2, py2, w2 * 0.26, w2 * 0.09, 0, 0, 7); ctx.fill();
+          ctx.save();
+          ctx.translate(px2, py2 - bob);
+          if (cc.face < 0) ctx.scale(-1, 1);
+          if (tilt) ctx.rotate(tilt);
+          ctx.drawImage(im, -w2 / 2, -h2 * 0.86, w2, h2);
+          ctx.restore();
+        } });
+      }
+    }
+
     // 大图遮挡件：把原图区域按脚线 baseY 参与排序回贴（人在物后即被盖住）
     // 玩家被挡住时该件半透明（0.55）——既保留前后关系又不至于找不到人
     if (this.bm && bimg && bimg.width) {
