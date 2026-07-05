@@ -50,11 +50,19 @@ jobs:
           # 若仓库尚未开启 Pages，则自动启用（source = GitHub Actions）
           enablement: true
 
+      - name: 组装站点目录（只带线上需要的文件）
+        run: |
+          mkdir _site
+          cp index.html game.html manifest.webmanifest _site/
+          cp -r js css art icons assets _site/
+
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # 整个仓库即静态站点，index.html 在根目录
-          path: '.'
+          # 只带线上需要的文件（index/game/js/css/art/icons/assets），
+          # 不再整仓上传——2026-07-05 整仓 92MB 产物连续触发 Pages 端
+          # "Deployment failed, try again later"，瘦身产物同时排除此因
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment
