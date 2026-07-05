@@ -375,6 +375,7 @@ const Diorama = {
     for (const [x, y, r] of (bm.block || {}).circles || []) { ctx.beginPath(); ctx.arc(x * s, y * s, r * s, 0, 7); ctx.fill(); }
     for (const [x, y, w, h] of (bm.block || {}).rects || []) ctx.fillRect(x * s, y * s, w * s, h * s);
     ((bm.block || {}).polys || []).forEach(poly);
+    for (const o of bm.objects || []) (o.foot || []).forEach(poly);   // 物件碰撞脚印
     // 用户手绘掩码覆盖图（红=挡 绿=通 透明=不改）叠在几何掩码之上——精修碰撞无需改代码
     const ov = bm.maskImg && this._imgs[bm.maskImg];
     if (ov && ov.width) {
@@ -549,7 +550,11 @@ const Diorama = {
         im.addEventListener('error', r, { once: true });
       }));
     };
-    if (this.bm) { need(this.bm.img); if (this.bm.maskImg) need(this.bm.maskImg); }
+    if (this.bm) {
+      need(this.bm.img);
+      if (this.bm.maskImg) need(this.bm.maskImg);
+      (this.bm.objects || []).forEach(o => need('art/06_story/bigmap/obj/' + o.img + '.png'));
+    }
     const m = this.st.map;
     need(m.sheet);
     for (const k in m.sheets || {}) need(m.sheets[k]);
@@ -673,41 +678,6 @@ const Diorama = {
       }
     }
 
-    // 溪流流动光效（大图）：波光沿中心线滚动 + 明暗双色 + 微闪，画在底图之上、实体之下
-    if (this.bm && this.bm.water) {
-      for (let wi = 0; wi < this.bm.water.length; wi++) {
-        const wtr = this.bm.water[wi];
-        if (!wtr._len) {   // 缓存分段长度
-          wtr._seg = []; wtr._len = 0;
-          for (let i = 1; i < wtr.pts.length; i++) {
-            const dx2 = wtr.pts[i][0] - wtr.pts[i - 1][0], dy2 = wtr.pts[i][1] - wtr.pts[i - 1][1];
-            const L = Math.hypot(dx2, dy2);
-            wtr._seg.push({ x: wtr.pts[i - 1][0], y: wtr.pts[i - 1][1], dx: dx2 / L, dy: dy2 / L, l0: wtr._len, L });
-            wtr._len += L;
-          }
-        }
-        ctx.lineCap = 'round';
-        for (let i = 0; i < 30; i++) {
-          const t = ((i * 0.1373 + wi * 0.41) + now * 0.00009 * (1 + (i % 3) * 0.25)) % 1;
-          let d = t * wtr._len, seg = wtr._seg[0];
-          for (const sgm of wtr._seg) { if (d >= sgm.l0 && d <= sgm.l0 + sgm.L) { seg = sgm; break; } }
-          const along = d - seg.l0;
-          const off = (((i * 0.618) % 1) - 0.5) * wtr.w * 0.62;
-          const px2 = seg.x + seg.dx * along - seg.dy * off, py2 = seg.y + seg.dy * along + seg.dx * off;
-          const len = 5 + (i % 4) * 4;
-          const tw = 0.5 + 0.5 * Math.sin(now * 0.005 + i * 2.7);
-          ctx.strokeStyle = (i % 5 === 4)
-            ? `rgba(8,12,16,${(0.14 + 0.07 * tw).toFixed(3)})`
-            : `rgba(205,224,234,${(0.09 + 0.14 * tw).toFixed(3)})`;
-          ctx.lineWidth = (1.2 + (i % 3) * 0.8) * S * 0.6;
-          ctx.beginPath();
-          ctx.moveTo(ox + px2 * S, oy + py2 * S);
-          ctx.lineTo(ox + (px2 + seg.dx * len) * S, oy + (py2 + seg.dy * len) * S);
-          ctx.stroke();
-        }
-      }
-    }
-
     // 物件 + 小人：按脚线 y 排序（纯俯视 → 统一比例，无近大远小）
     const ents = [], glows = [];   // glows 统一画在夜色之后
 
@@ -784,17 +754,18 @@ const Diorama = {
       }
     }
 
-    // 大图遮挡件：把原图区域按脚线 baseY 参与排序回贴（人在物后即被盖住）
+    // 大图物件层：抠出的独立精灵原位回摆，与人/鸡按脚线 y 排序 → 像素级遮挡
     // 玩家被挡住时该件半透明（0.55）——既保留前后关系又不至于找不到人
     if (this.bm && bimg && bimg.width) {
       const pl = this.actors.player || this.actors.teried;
       const pw = pl ? pl.x / 100 * this.world.w : -9e9, ph2 = pl ? pl.y / 100 * this.world.h : -9e9;
-      for (const o of this.bm.occ || []) {
-        const hide = pl && ph2 < o[4] && pw > o[0] - 14 && pw < o[0] + o[2] + 14 && ph2 > o[1] && ph2 < o[4] + 46;
-        ents.push({ y: o[4], draw: () => {
+      for (const o of this.bm.objects || []) {
+        const im = this._imgs['art/06_story/bigmap/obj/' + o.img + '.png'];
+        if (!im || !im.width) continue;
+        const hide = pl && ph2 < o.y && pw > o.px - 12 && pw < o.px + im.width + 12 && ph2 > o.py && ph2 < o.y + 46;
+        ents.push({ y: o.y, draw: () => {
           if (hide) ctx.globalAlpha = 0.55;
-          ctx.drawImage(bimg, o[0], o[1], o[2], o[3],
-            Math.round(ox + o[0] * S), Math.round(oy + o[1] * S), o[2] * S, o[3] * S);
+          ctx.drawImage(im, Math.round(ox + o.px * S), Math.round(oy + o.py * S), im.width * S, im.height * S);
           if (hide) ctx.globalAlpha = 1;
         } });
       }
