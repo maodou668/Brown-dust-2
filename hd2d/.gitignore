@@ -1,0 +1,5 @@
+# Godot 导入缓存(可重建)
+/.godot/
+# 渲染产物/截图(scratch, 每次重跑生成; 交付图走 artifact)
+/*.png
+/*.png.import
