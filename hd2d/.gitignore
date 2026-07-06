@@ -1,5 +1,9 @@
 # Godot 导入缓存(可重建)
 /.godot/
-# 渲染产物/截图(scratch, 每次重跑生成; 交付图走 artifact)
+# 渲染产物/截图/GIF(scratch, 每次重跑生成; 交付图走 artifact)
 /*.png
 /*.png.import
+/*.gif
+
+# 3D模型输入(大二进制, Tripo/Hunyuan生成, 不入库)
+/mesh/*.glb
